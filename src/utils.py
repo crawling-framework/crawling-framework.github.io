@@ -1,0 +1,81 @@
+import networkx as nx
+
+DEFAULT_EDGE_LIST_FORMAT = 'ij'
+WEIGHT_LABEL = 'w'  # weight attribute name in networkx graph
+TMSTMP_LABEL = 't'  # timestamp attribute name in networkx graph
+
+
+def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
+    """
+    Read graph from a specified file according to specified format. Ignores strings starting with '#'.
+    Default format is "ij", (unweighted edges), or can be file extension.
+
+    :param path: full path to edge list file
+    :param directed: whether to create nx.DiGraph or nx.Graph
+    :param format: any combination of `i j w t` where i-source_id, j-target_id, w-weight, t-timestamp, 'GML', 'paj'
+    :return: networkx graph
+    """
+    g = nx.Graph()
+    if directed:
+        g = nx.DiGraph()
+
+    # if format is None:
+    #     format = path.split('.')[-1]
+    #     logging.warning("Graph format extracted from file extension: '%s'" % format)
+
+    # TODO make file extension correspond to format e.g. '.ijw'
+    if set(format).issubset(set("ijwt")):
+        # i-source_id, j-target_id, w-weight, t-timestamp
+        source_index = format.index('i')
+        target_index = format.index('j')
+        weight_index = format.index('w') if 'w' in format else None
+        tmstmp_index = format.index('t') if 't' in format else None
+
+        def decode_line(line):
+            elems = [x for x in line.split()]
+            attr_dict = {}
+            if weight_index is not None:
+                attr_dict[WEIGHT_LABEL] = float(elems[weight_index])
+            if tmstmp_index is not None:
+                attr_dict[TMSTMP_LABEL] = float(elems[tmstmp_index])
+            g.add_edge(int(elems[source_index]), int(elems[target_index]), attr_dict)
+
+        with open(path) as graph_file:
+            line = ''
+            try:
+                for line in graph_file:
+                    # Filter comments.
+                    # if not line.startswith("#"):
+                    # if line.isalnum():
+                    if line[0].isdigit():
+                        decode_line(line)
+            except Exception as e:
+                raise IOError("Couldn't parse edge list file at line '%s' using format '%s': %s" % (line, format, e))
+    # TODO we read just edges and weights here, no labels!
+    # GML format
+    elif format == "GML":
+        g = nx.read_gml(path)
+        return g
+    # paj format
+    elif format == "paj":
+        with open(path) as graph_file:
+            weight = 1
+            pos = 0
+            lines = graph_file.readlines()
+            try:
+                pos = lines.index("*arcs\r\n")  # FIXME \r\n is very bad
+                pos += 1
+                # Read edges.
+                while pos < len(lines):
+                    abw = [x for x in lines[pos].split()]
+                    if len(abw) < 2:  # no more edges
+                        break
+                    # if weighted:
+                    weight = float(abw[2])
+                    g.add_edge(int(abw[0]), int(abw[1]), w=weight)
+                    pos += 1
+            except:
+                raise IOError("Couldn't read data from file '%s', namely at string %d." % (path, pos))
+    else:
+        raise Exception("Unknown graph format '%s'" % format)
+    return g
