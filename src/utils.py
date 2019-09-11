@@ -1,8 +1,18 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[3]:
+
+
 import networkx as nx
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+import json
 
 DEFAULT_EDGE_LIST_FORMAT = 'ij'
 WEIGHT_LABEL = 'w'  # weight attribute name in networkx graph
 TMSTMP_LABEL = 't'  # timestamp attribute name in networkx graph
+metrics_list = ['degrees', 'k_cores','eccentricity','betweenness_centrality']
 
 
 def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
@@ -79,3 +89,46 @@ def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
     else:
         raise Exception("Unknown graph format '%s'" % format)
     return g
+
+
+
+def import_graph(graph_name):
+    # Работа с графами. Выбирается один из списка (всё определяет graph_name и *_graph) 
+    with  open('../data/Graphs/'+graph_name+ ".edges", 'rb') as fh:
+        Graph=nx.read_edgelist(fh, delimiter = ' ')#,create_using=nx.Graph())
+    Graph.remove_edges_from(Graph.selfloop_edges())  # удаляем петли
+    return max(nx.connected_component_subgraphs(Graph), key=len) # берём за граф только самую большую его компоненту 
+
+def draw_graph(Graph, title = 'graph'): 
+    if Graph.number_of_nodes()<5000:
+        t0 = time.time()
+        plt.figure(figsize=(20,20))
+        nx.draw(Graph, with_labels=False ,edge_cmap=plt.cm.Blues , node_size = 10)
+        plt.title(graph_name)
+        plt.savefig('../results/'+graph_name+'.png')
+        plt.show()
+        print(int(time.time() -t0) , 'sec')
+    else:
+        print("graph is too big")
+        
+# берём квантиль примерно на top_percent лучших вершин. 
+# Квантиль это словарь percentile['degrees']=24 значит что топ вершин с макс степенью имеют степени 24 и больше
+def get_percentile(Graph,graph_name,top_percent):
+    properties = json.load(open('../data/Graphs/'+graph_name+'_properties.txt','r'))
+
+    total = Graph.number_of_nodes()
+    percentile = {'degrees':[],'k_cores':[],'eccentricity':[],'betweenness_centrality':[]}
+    percentile_history = {'degrees':[],'k_cores':[],'eccentricity':[],'betweenness_centrality':[]}
+    percentile_set = {}
+    prop_color = {'degrees':'green','k_cores':'black','eccentricity':'red','betweenness_centrality':'blue'}
+    for prop in metrics_list:
+        percentile[prop] = properties[prop][min(int(total*top_percent//100),len(properties[prop]))-1]
+        percentile_set[prop] = set([node for node in properties[prop+'_dict'] if properties[prop+'_dict'][node]>=percentile[prop]])
+        percentile_history[prop].append(len(percentile_set[prop]))
+    #print('percent:',top_percent,' percentile',percentile)
+    return (percentile, percentile_set)
+
+
+
+
+
