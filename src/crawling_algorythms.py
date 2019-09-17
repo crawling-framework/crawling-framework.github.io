@@ -6,11 +6,14 @@
 import random
 import networkx as nx
 import matplotlib.pyplot as plt
-
+import time
+#from .vkprint import vkprint
 METRICS_LIST = ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality']
 
-
 class Crawler:
+    """
+    Crawler class with a lot of stuff (to comment)
+    """
     def __init__(self, big_graph, node_seed, budget, percentile_set):
 
         self.big_graph = big_graph  # сам конечный граф
@@ -59,28 +62,24 @@ class Crawler:
         raise NotImplementedError()
 
     def draw(self):
-        # print(self.observed_history)
-        pass
-        return plt.plot(self.observed_history)
+        raise NotImplementedError()
 
     def sampling_process(self):  # сам  процесс сэмплирования
-
-        # print(self.current, self.v_observed, self.v_closed)
+        """
+        One step of sampling process. Noting closed, remembering history for every metric
+        :return:
+        """
         self._change_current()
         self._observing()
         if self.current in self.v_observed:  # условие для пустых итераций рандом волка tbd - надо исправить
             self.v_observed.remove(self.current)  # теперь она обработанная, а не просто видимая
         self.v_closed.add(self.current)
         self.node_array.append(self.current)  # отметили, что обработали эту вершину
-        for prop in METRICS_LIST:
+        for prop in METRICS_LIST:# для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
             self.observed_history[prop].append(len(self.percentile_set[prop].intersection(set(self.v_closed))))
             # self.observed_history.append(len(self.v_observed) + len(self.v_closed))
 
-        # for prop in self.METRICS_LIST:
         self.observed_history['nodes'].append(len(self.v_closed)+len(self.v_observed))
-        # print(self.property_history,prop,self.counter)
-        # self.property_history[prop][self.counter]+=len(self.v_closed.intersection(self.percentile_set[prop]))
-        # self.draw()
         return self.observed_history  # ,self.property_history)
     # раскомментить если захочется экспортировать граф
     # nx.write_gml(G, "./Sampling/"+ graph_name +"/"+method+'_b='+str(b)+'_seed='+str(n_seed)+'.graph')
@@ -181,3 +180,5 @@ class Crawler_RW(Crawler):
             new_node = random.sample(set(self.big_graph.adj[self.previous]), 1)[0]
             # print('whiling in ',new_node,'and his friends',big_graph.adj[previous])
         self.current = new_node
+
+

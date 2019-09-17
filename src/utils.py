@@ -16,6 +16,7 @@ DEFAULT_EDGE_LIST_FORMAT = 'ij'
 WEIGHT_LABEL = 'w'  # weight attribute name in networkx graph
 TMSTMP_LABEL = 't'  # timestamp attribute name in networkx graph
 METRICS_LIST = ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality']
+METHOD_COLOR = {'AFD':'pink','RC':'grey','RW':'green','DFS':'black', 'BFS':'blue', 'MED':'cyan','MOD':'red'}
 
 def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
     """
@@ -182,32 +183,33 @@ def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, normalized=T
     return table
 
 
-def draw_nodes_history(history,crawler_avg, methods,graph_name,seed_count,method_color):
+def draw_nodes_history(history,crawler_avg, methods,graph_name,seed_count,b):
     """
     Drawing history for every method(average are bold) and every seed(thin)
     """
-    # TBD - ,graph_name,seed_count,method_color are only for filenames. need to clean them
+    # TBD - ,graph_name,seed_count are only for filenames. need to clean them
     plt.figure(figsize=(16, 16))
     plt.grid()
     for method in methods:
         for seed_num in range(seed_count):
-            plt.plot(history[method][seed_num]['nodes'], linewidth=0.5, color=method_color[method])
-        plt.plot(crawler_avg[method]['nodes'] / seed_count, linewidth=5, color=method_color[method], label=method)
+            plt.plot(history[method][seed_num]['nodes'], linewidth=0.5, color=METHOD_COLOR[method])
+        plt.plot(crawler_avg[method]['nodes'] / seed_count, linewidth=5, color=METHOD_COLOR[method], label=method)
 
     plt.legend()
     plt.savefig('../results/' + graph_name + '_history_' + str(seed_count) + '_seeds_' + str(b) + 'iterations.png')
     plt.show()
 
-def draw_scores_history(percentile_set,methods,graph_name,seed_count,b):
+def draw_scores_history(percentile_set,crawler_avg,methods,graph_name,seed_count,b):
 # tbd - последние три нужны лишь для названия
 # tbd - от percentile_set нужен только размер, это надо поменять
+# tbd - method color это ремап цветов по названиям методов. надо в глобальные
     fig,axs = plt.subplots(2,2,figsize=(15,15))
     plt.figure(figsize=(30,30))
 
     for prop in METRICS_LIST:
         j = {'degrees':0,'k_cores':1,'eccentricity':2,'betweenness_centrality':3}[prop]  # ремап для красивой отрисовки 2*2
         for method in methods:
-            axs[(j)//2][j%2].plot(crawler_avg[method][prop]/seed_count/len(percentile_set[prop]), label =method+' '+prop, color = method_color[method] )
+            axs[(j)//2][j%2].plot(crawler_avg[method][prop]/seed_count/len(percentile_set[prop]), label =method+' '+prop, color = METHOD_COLOR[method] )
             axs[(j)//2][j%2].set_title('fraction of found nodes with '+prop+ ' from '+str(len(percentile_set[prop])))
             axs[(j)//2][j%2].legend()
 
