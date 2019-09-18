@@ -51,7 +51,7 @@ def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
                 attr_dict[WEIGHT_LABEL] = float(elems[weight_index])
             if tmstmp_index is not None:
                 attr_dict[TMSTMP_LABEL] = float(elems[tmstmp_index])
-            g.add_edge(int(elems[source_index]), int(elems[target_index]), attr_dict)
+            g.add_edge(int(elems[source_index]), int(elems[target_index]))#, attr_dict)
 
         with open(path) as graph_file:
             line = ''
@@ -92,6 +92,8 @@ def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
     else:
         raise Exception("Unknown graph format '%s'" % format)
     return g
+
+#def dump_history(): TBD - история экспорта
 
 
 def import_graph(graph_name):
@@ -136,7 +138,7 @@ def get_percentile(Graph, graph_name, top_percent):
 
 def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, normalized=True, venn_on=True):
     """
-    Drawing and returning table (heatmap) based on intersection of metrics percentile_set.
+    Drawing and returning table (heatmap) based on intersection of metrics percentile_set (Jaccard coefficient).
     percentile_set is a dictionary (for every metric in METRICS_LIST) of sets (nodes, that are in percentile)
     normalized - if True, writes fraction of nodes, if False - total number of nodes in intersection
     ALSO: it draws Venn's 3-diagram from 1-3 METRICS.
@@ -150,7 +152,9 @@ def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, normalized=T
             j = METRICS_LIST.index(prop2)
             table[i][j] = len(percentile_set[prop1].intersection(percentile_set[prop2]))
             if normalized:  # если нормализуем
-                table[i][j] /= max(len(percentile_set[prop1]), len(percentile_set[prop2]))
+                table[i][j] /= len(percentile_set[prop1].union(percentile_set[prop2])) #Jaccard coefficient
+                #table[i][j] /= max(len(percentile_set[prop1]), len(percentile_set[prop2]))
+
 
     fig, ax = plt.subplots()
     im = ax.imshow(np.array(table))
@@ -170,16 +174,20 @@ def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, normalized=T
             else:
                 text = ax.text(j, i, int(table[i, j]), ha="center", va="center", color="black")
     plt.show()
-
+    fig.savefig('../results/' + graph_name + '_percentile.png')
     if venn_on:
         try:
+            plt.figure(figsize=(10, 10))
             from matplotlib_venn import venn3
             venn3([percentile_set[metric] for metric in METRICS_LIST if metric != 'betweenness_centrality'],
                   set_labels=(METRICS_LIST))
+
+            plt.show()
+            fig.savefig('../results/' + graph_name + '_venn.png')
         except BaseException:
             print("need to install matplotlib_venn with command: !pip install  matplotlib_venn")
             #!pip install  matplotlib_venn
-    fig.savefig('../results/' + graph_name + '_percentile_' + str(seed_count) + '_seeds_' + str(b) + 'iterations.png')
+
     return table
 
 
@@ -216,3 +224,25 @@ def draw_scores_history(percentile_set,crawler_avg,methods,graph_name,seed_count
         axs[(j)//2][j%2].grid(True)
     fig.savefig('../results/'+graph_name+'_scores_'+str(seed_count) +'_seeds_'+str(b)+'iterations.png')
     plt.show()
+
+
+def dump_results(graph_name,crawler_avg,history,b):
+    """
+    Dumping history of crawling results (graphics) into the ./results/dumps/' + graph_name + '_results_budget'+str(b)+'.json
+    :param graph_name:
+    :param crawler_avg:
+    :param history:
+    :param b:
+    :return:
+    """
+    class NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            return json.JSONEncoder.default(self, obj)
+
+    results = dict({'graph_name':graph_name, 'crawler_avg': crawler_avg,'history': history})
+    json_file = open('../results/dumps/' + graph_name + '_results_budget'+str(b)+'.json', 'w+')
+    json.dump(results, json_file, cls=NumpyEncoder)
+    json_file.close()
+    print('dumped '+str(b))
