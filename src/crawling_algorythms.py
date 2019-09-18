@@ -182,3 +182,88 @@ class Crawler_RW(Crawler):
         self.current = new_node
 
 
+class Crawler_DE(Crawler):
+    def __init__(self, big_graph, node_seed, budget, percentile_set) :
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+        self.degree_dict = dict()
+        self.method = 'DE'
+        self._s_e = 0
+        self._s_d = 0
+    
+    def _avg_deg(self):
+        sum_ = 0
+        for i in list(self.G.node):
+            sum_ += self.G.degree(i)
+        if (sum_ == 0):
+            return 1
+        return sum_ / len(list(self.G.node))
+    
+    def _max_deg(self):
+        max_ = 0
+        max_id = random.sample(list(self.G.node), 1)[0] # берём случайную вершину за основу
+        for i in list(self.G.node):
+            if max_ < self.G.degree(i):
+                max_ = self.G.degree(i)
+                max_id = i
+        return max_id
+    
+    def _count_s_d(self, s_d_previous, node) :
+        betha1 = 0.5
+        d_new = len(self.big_graph.adj[node]) - len(self.G.adj[node])
+        d_ex = self.big_graph.degree(node) - self.G.degree(node)
+        if d_ex == 0:
+            return 0
+        alpha1 = self._max_deg() / self._avg_deg()
+        return alpha1 * d_new / d_ex + betha1 * s_d_previous
+    
+    def _count_s_e(self, s_e_previous, node):
+        alpha2 = 1
+        betha2 = 0.5
+        d_ex = self.big_graph.degree(node) - self.G.degree(node)     
+        if d_ex == 0:
+            return 1
+        d_seen = self.G.degree(node)
+        return alpha2 * d_seen / d_ex + betha2 * s_e_previous
+    
+    def _change_current(self):
+        next_node = -1
+        self.degree_dict = dict((key, 0) for key in self.v_observed)
+        for friend in self.v_observed:
+            self.degree_dict[friend] = self.G.degree(friend)
+        sorted_by_degree = sorted(self.degree_dict.keys(), key=self.degree_dict.get)
+        if self._s_d < self._s_e:
+            print('Expansion')                    
+            nx.draw(self.G)   
+            plt.show()
+            low80vertices = sorted_by_degree[:math.floor(0.8 * len(sorted_by_degree))]
+            random_index = random.randint(0, len(low80vertices) - 1)
+            next_node = low80vertices[random_index]
+        else:
+            print('Densification')                    
+            nx.draw(self.G)   
+            plt.show()
+            top20vertices = sorted_by_degree[math.floor(0.8 * len(sorted_by_degree)):]
+            f_statistic = -1
+            normalized_divisor = 1 if len(self.G) == 1 else len(self.G) - 1
+            for node in top20vertices:
+                if self.degree_dict[node] / normalized_divisor * (1 - nx.clustering(self.G)[node]) > f_statistic:
+                    next_node = node
+                    f_statistic = self.degree_dict[node] / normalized_divisor * (1 - nx.clustering(self.G)[node])
+        self.current = next_node
+                            
+    def _observing(self):
+        self.v_observed.remove(self.current)
+        self.G.add_node(self.current)
+        self.v_observed.update(set(self.big_graph.adj[self.current]).difference(set(self.G.adj[self.current])))
+        for friend in self.v_observed:
+            if friend in self.big_graph[self.current]:
+                self.G.add_edge(friend, self.current)
+    
+    def sampling_process(self):
+        self._change_current()
+        s_d_previous = self._s_d
+        s_e_previous = self._s_e
+        self._s_d = self._count_s_d(s_d_previous, self.current)
+        self._s_e = self._count_s_e(s_e_previous, self.current) 
+        self._observing()
+
