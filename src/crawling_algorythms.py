@@ -4,6 +4,8 @@
 # In[90]:
 
 import random
+from abc import ABC
+import math
 import networkx as nx
 import matplotlib.pyplot as plt
 import time
@@ -194,18 +196,21 @@ class Crawler_DE(Crawler):
         sum_ = 0
         for i in list(self.G.node):
             sum_ += self.G.degree(i)
-        if (sum_ == 0):
+        if sum_ == 0:
             return 1
         return sum_ / len(list(self.G.node))
     
-    def _max_deg(self):
+    def _max_deg(self,return_id =False ):
         max_ = 0
         max_id = random.sample(list(self.G.node), 1)[0] # берём случайную вершину за основу
         for i in list(self.G.node):
             if max_ < self.G.degree(i):
                 max_ = self.G.degree(i)
                 max_id = i
-        return max_id
+        if return_id:
+            return max_id
+        else:
+            return max_
     
     def _count_s_d(self, s_d_previous, node) :
         betha1 = 0.5
@@ -213,7 +218,7 @@ class Crawler_DE(Crawler):
         d_ex = self.big_graph.degree(node) - self.G.degree(node)
         if d_ex == 0:
             return 0
-        alpha1 = self._max_deg() / self._avg_deg()
+        alpha1 = self._max_deg(False) / self._avg_deg()
         return alpha1 * d_new / d_ex + betha1 * s_d_previous
     
     def _count_s_e(self, s_e_previous, node):
