@@ -237,16 +237,16 @@ class Crawler_DE(Crawler):
             self.degree_dict[friend] = self.G.degree(friend)
         sorted_by_degree = sorted(self.degree_dict.keys(), key=self.degree_dict.get)
         if self._s_d < self._s_e:
-            print('Expansion')                    
-            nx.draw(self.G)   
-            plt.show()
+            #print('Expansion')
+            #nx.draw(self.G)
+            #plt.show()
             low80vertices = sorted_by_degree[:math.floor(0.8 * len(sorted_by_degree))]
             random_index = random.randint(0, len(low80vertices) - 1)
             next_node = low80vertices[random_index]
         else:
-            print('Densification')                    
-            nx.draw(self.G)   
-            plt.show()
+            #print('Densification')
+            #nx.draw(self.G)
+            #plt.show()
             top20vertices = sorted_by_degree[math.floor(0.8 * len(sorted_by_degree)):]
             f_statistic = -1
             normalized_divisor = 1 if len(self.G) == 1 else len(self.G) - 1
