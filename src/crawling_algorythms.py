@@ -155,6 +155,19 @@ class Crawler_MOD(Crawler):
                 maximal, max_id = self.graph_for_max_deg.degree(i), i
         self.current = max_id
 
+class Crawler_MEUD(Crawler_MOD): # ищем вершину с максимальной разностью известной степени и настоящей
+    def __init__(self, big_graph, node_seed, budget, percentile_set):
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+        self.method = 'MEUD'
+        #self.graph_for_max_deg = self.G
+
+    def _change_current(self):
+        maximal, max_id = 0, random.sample(self.v_observed, 1)[0]  # берём случайную вершину за основу
+        for i in self.v_observed:
+            if maximal < self.big_graph.degree(i)-self.G.degree(i):
+                maximal, max_id = self.big_graph.degree(i)-self.G.degree(i), i
+        self.current = max_id
+
 
 class Crawler_MED(Crawler_MOD):  # унаследовали от MOD только степени берём из большого графа
     def __init__(self, big_graph, node_seed, budget, percentile_set):
