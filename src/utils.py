@@ -136,7 +136,7 @@ def get_percentile(Graph, graph_name, top_percent):
     return (percentile, percentile_set)
 
 
-def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, normalized=True, venn_on=True):
+def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, size,normalized=True, venn_on=True):
     """
     Drawing and returning table (heatmap) based on intersection of metrics percentile_set (Jaccard coefficient).
     percentile_set is a dictionary (for every metric in METRICS_LIST) of sets (nodes, that are in percentile)
@@ -164,7 +164,7 @@ def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, normalized=T
     ax.set_xticklabels(METRICS_LIST)
     ax.set_yticklabels(METRICS_LIST)
     # Rotate the tick labels and set their alignment.
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+    plt.setp(ax.get_xticklabels(), rotation=0, ha="right", rotation_mode="anchor")
 
     # Loop over data dimensions and create text annotations.
     for i in range(len(METRICS_LIST)):
@@ -177,7 +177,7 @@ def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, normalized=T
     fig.savefig('../results/' + graph_name + '_percentile.png')
     if venn_on:
         try:
-            plt.figure(figsize=(10, 10))
+            plt.figure(figsize=(size, size))
             from matplotlib_venn import venn3
             venn3([percentile_set[metric] for metric in METRICS_LIST if metric != 'betweenness_centrality'],
                   set_labels=(METRICS_LIST))
@@ -196,12 +196,12 @@ def draw_nodes_history(history,crawler_avg, methods,graph_name,seed_count,b):
     Drawing history for every method(average are bold) and every seed(thin)
     """
     # TBD - ,graph_name,seed_count are only for filenames. need to clean them
-    plt.figure(figsize=(16, 16))
+    plt.figure(figsize=(10, 10))
     plt.grid()
     for method in methods:
         for seed_num in range(seed_count):
             plt.plot(history[method][seed_num]['nodes'], linewidth=0.5, color=METHOD_COLOR[method])
-        plt.plot(crawler_avg[method]['nodes'] / seed_count, linewidth=5, color=METHOD_COLOR[method], label=method)
+        plt.plot(crawler_avg[method]['nodes'] / seed_count, linewidth=4, color=METHOD_COLOR[method], label=method)
 
     plt.legend()
     plt.savefig('../results/' + graph_name + '_history_' + str(seed_count) + '_seeds_' + str(b) + 'iterations.png')
@@ -211,14 +211,14 @@ def draw_scores_history(percentile_set,crawler_avg,methods,graph_name,seed_count
 # tbd - последние три нужны лишь для названия
 # tbd - от percentile_set нужен только размер, это надо поменять
 # tbd - method color это ремап цветов по названиям методов. надо в глобальные
-    fig,axs = plt.subplots(2,2,figsize=(15,15))
-    plt.figure(figsize=(30,30))
+    fig,axs = plt.subplots(2,2,figsize=(10,10))
+    plt.figure(figsize=(20,20))
 
     for prop in METRICS_LIST:
         j = {'degrees':0,'k_cores':1,'eccentricity':2,'betweenness_centrality':3}[prop]  # ремап для красивой отрисовки 2*2
         for method in methods:
-            axs[(j)//2][j%2].plot(crawler_avg[method][prop]/seed_count/len(percentile_set[prop]), label =method+' '+prop, color = METHOD_COLOR[method] )
-            axs[(j)//2][j%2].set_title('fraction of found nodes with '+prop+ ' from '+str(len(percentile_set[prop])))
+            axs[(j)//2][j%2].plot(crawler_avg[method][prop]/seed_count/len(percentile_set[prop]), label =method, color = METHOD_COLOR[method] )
+            axs[(j)//2][j%2].set_title(graph_name+'% nodes with '+prop + ' from '+str(len(percentile_set[prop])))
             axs[(j)//2][j%2].legend()
 
         axs[(j)//2][j%2].grid(True)
