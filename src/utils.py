@@ -16,7 +16,7 @@ DEFAULT_EDGE_LIST_FORMAT = 'ij'
 WEIGHT_LABEL = 'w'  # weight attribute name in networkx graph
 TMSTMP_LABEL = 't'  # timestamp attribute name in networkx graph
 METRICS_LIST = ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality']
-METHOD_COLOR = {'AFD':'pink','RC':'grey','RW':'green','DFS':'black', 'BFS':'blue', 'MED':'cyan','MOD':'red'}
+METHOD_COLOR = {'AFD':'pink','RC':'grey','RW':'green','DFS':'black', 'BFS':'blue', 'MED':'cyan','MOD':'red','DE':'magenta'}
 
 def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
     """
