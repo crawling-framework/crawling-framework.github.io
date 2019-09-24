@@ -216,17 +216,12 @@ class Crawler_DE(Crawler):
             return 1
         return sum_ / len(list(self.G.node))
 
-    def _max_deg(self, return_id=False):
+    def _max_deg(self):
         max_ = 0
-        max_id = random.sample(list(self.G.node), 1)[0]  # берём случайную вершину за основу
         for i in list(self.G.node):
             if max_ < self.G.degree(i):
                 max_ = self.G.degree(i)
-                max_id = i
-        if return_id:
-            return max_id
-        else:
-            return max_
+        return max_
 
     def _count_s_d(self, s_d_previous, node):
         betha1 = 0.5
@@ -234,7 +229,7 @@ class Crawler_DE(Crawler):
         d_ex = self.big_graph.degree(node) - self.G.degree(node)
         if d_ex == 0:
             return 0
-        alpha1 = self._max_deg(False) / self._avg_deg()
+        alpha1 = self._max_deg() / self._avg_deg()
         return alpha1 * d_new / d_ex + betha1 * s_d_previous
 
     def _count_s_e(self, s_e_previous, node):
@@ -254,7 +249,7 @@ class Crawler_DE(Crawler):
         # t0 = time.time()
         sorted_by_degree = sorted(self.degree_dict.keys(), key=self.degree_dict.get)
         # print('de sorting',round(((time.time() -t0)),3))
-        if self._s_d < self._s_e:
+        if self._s_d <= self._s_e:
             #print('Expansion')
             # nx.draw(self.G)
             # plt.show()
@@ -294,7 +289,6 @@ class Crawler_DE(Crawler):
         self._s_e = self._count_s_e(s_e_previous, self.current)
         # print('DE: s_d=',self._s_d,' s_e=', self._s_e)
         self._observing()
-        # дописал денис
         self.node_array.append(self.current)  # отметили, что обработали эту вершину
         for prop in METRICS_LIST:  # для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
             self.observed_history[prop].append(len(self.percentile_set[prop].intersection(self.v_closed)))
