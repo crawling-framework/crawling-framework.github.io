@@ -78,7 +78,9 @@ class Crawler:
         self.v_closed.add(self.current)
         self.node_array.append(self.current)  # отметили, что обработали эту вершину
         for prop in METRICS_LIST:# для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
-            self.observed_history[prop].append(len(self.percentile_set[prop].intersection(set(self.v_closed))))
+            # self.observed_history[prop].append(len(self.percentile_set[prop].intersection(set(self.v_closed))))
+            self.observed_history[prop].append(
+                len(self.percentile_set[prop].intersection(set(self.G.nodes))))
             # self.observed_history.append(len(self.v_observed) + len(self.v_closed))
 
         self.observed_history['nodes'].append(len(self.v_closed)+len(self.v_observed))
@@ -297,7 +299,9 @@ class Crawler_DE(Crawler):
             self._observing()
         self.node_array.append(self.current)  # отметили, что обработали эту вершину
         for prop in METRICS_LIST:  # для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
-            self.observed_history[prop].append(len(self.percentile_set[prop].intersection(self.v_closed)))
+            # self.observed_history[prop].append(len(self.percentile_set[prop].intersection(self.v_closed)))
+            self.observed_history[prop].append(
+                len(self.percentile_set[prop].intersection(set(self.G.nodes))))
             # self.observed_history.append(len(self.v_observed) + len(self.v_closed))
 
         self.observed_history['nodes'].append(len(set(self.G.nodes()).union(self.v_observed)))
