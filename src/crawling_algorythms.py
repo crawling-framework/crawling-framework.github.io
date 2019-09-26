@@ -254,8 +254,11 @@ class Crawler_DE(Crawler):
             # nx.draw(self.G)
             # plt.show()
             low80vertices = sorted_by_degree[:math.floor(0.8 * len(sorted_by_degree))]
-            random_index = random.randint(0, len(low80vertices) - 1)
-            next_node = low80vertices[random_index]
+            if len(low80vertices) == 0:
+                next_node = sorted_by_degree[0]
+            else:
+                random_index = random.randint(0, len(low80vertices) - 1)
+                next_node = low80vertices[random_index]
         else:
             #print('Densification')
             # nx.draw(self.G)
@@ -282,13 +285,16 @@ class Crawler_DE(Crawler):
                 self.G.add_edge(friend, self.current)
 
     def sampling_process(self):
-        self._change_current()
-        s_d_previous = self._s_d
-        s_e_previous = self._s_e
-        self._s_d = self._count_s_d(s_d_previous, self.current)
-        self._s_e = self._count_s_e(s_e_previous, self.current)
-        # print('DE: s_d=',self._s_d,' s_e=', self._s_e)
-        self._observing()
+        if len(self.v_observed) == 0:
+            self.current = 0
+        else:
+            self._change_current()
+            s_d_previous = self._s_d
+            s_e_previous = self._s_e
+            self._s_d = self._count_s_d(s_d_previous, self.current)
+            self._s_e = self._count_s_e(s_e_previous, self.current)
+            # print('DE: s_d=',self._s_d,' s_e=', self._s_e)
+            self._observing()
         self.node_array.append(self.current)  # отметили, что обработали эту вершину
         for prop in METRICS_LIST:  # для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
             self.observed_history[prop].append(len(self.percentile_set[prop].intersection(self.v_closed)))
