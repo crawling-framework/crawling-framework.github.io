@@ -1,0 +1,6 @@
+networkx
+numpy
+matpotlib
+matplotlib_venn
+tqdm
+
