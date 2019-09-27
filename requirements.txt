@@ -1,6 +1,6 @@
 networkx
 numpy
-matpotlib
+matplotlib
 matplotlib_venn
 tqdm
 
