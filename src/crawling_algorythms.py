@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[90]:
-
 import random
 from abc import ABC
 import math
 import networkx as nx
 import matplotlib.pyplot as plt
 import time
-#from .vkprint import vkprint
+from sortedcontainers import SortedKeyList
+# from .vkprint import vkprint
 METRICS_LIST = ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality']
+
 
 class Crawler:
     """
@@ -200,9 +200,11 @@ class Crawler_RW(Crawler):
 
 
 class Crawler_DE(Crawler):
+
     def __init__(self, big_graph, node_seed, budget, percentile_set):
         Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
-        self.degree_dict = dict()
+        self.v_observed = SortedKeyList(self.v_observed, key=lambda node: self.G.degree[node] if node in self.G.degree else 0)
+        # self.degree_dict = dict()
         self.method = 'DE'
         self._s_e = 0
         self._s_d = 0
@@ -210,20 +212,19 @@ class Crawler_DE(Crawler):
         for prop in METRICS_LIST:
             self.property_history[prop].append(len(set(self.G.nodes()).intersection(self.percentile_set[prop])))
 
-    def _avg_deg(self):
+    def _alpha1(self):
         sum_ = 0
-        for i in list(self.G.node):
-            sum_ += self.G.degree(i)
-        if sum_ == 0:
-            return 1
-        return sum_ / len(list(self.G.node))
-
-    def _max_deg(self):
         max_ = 0
         for i in list(self.G.node):
             if max_ < self.G.degree(i):
                 max_ = self.G.degree(i)
-        return max_
+            sum_ += self.G.degree(i)
+        if sum_ == 0:
+            sum_ = 1
+        else:
+            sum_ = sum_ / len(list(self.G.node))
+
+        return max_ / sum_
 
     def _count_s_d(self, s_d_previous, node):
         betha1 = 0.5
@@ -231,7 +232,7 @@ class Crawler_DE(Crawler):
         d_ex = self.big_graph.degree(node) - self.G.degree(node)
         if d_ex == 0:
             return 0
-        alpha1 = self._max_deg() / self._avg_deg()
+        alpha1 = self._alpha1()
         return alpha1 * d_new / d_ex + betha1 * s_d_previous
 
     def _count_s_e(self, s_e_previous, node):
@@ -245,46 +246,48 @@ class Crawler_DE(Crawler):
 
     def _change_current(self):
         next_node = -1
-        self.degree_dict = dict((key, 0) for key in self.v_observed)  # set(self.G.node())
-        for friend in self.v_observed:
-            self.degree_dict[friend] = self.G.degree(friend)
         # t0 = time.time()
-        sorted_by_degree = sorted(self.degree_dict.keys(), key=self.degree_dict.get)
         # print('de sorting',round(((time.time() -t0)),3))
+
         if self._s_d <= self._s_e:
-            #print('Expansion')
+            # print('Expansion')
             # nx.draw(self.G)
             # plt.show()
-            low80vertices = sorted_by_degree[:math.floor(0.8 * len(sorted_by_degree))]
+            low80vertices = self.v_observed[:math.floor(0.8 * len(self.v_observed))]
             if len(low80vertices) == 0:
-                next_node = sorted_by_degree[0]
+                next_node = self.v_observed[0]
             else:
                 random_index = random.randint(0, len(low80vertices) - 1)
                 next_node = low80vertices[random_index]
         else:
-            #print('Densification')
+            # print('Densification')
             # nx.draw(self.G)
             # plt.show()
-            top20vertices = sorted_by_degree[math.floor(0.8 * len(sorted_by_degree)):]
+            top20vertices = self.v_observed[math.floor(0.8 * len(self.v_observed)):]
             f_statistic = -1
             normalized_divisor = 1 if len(self.G) == 1 else len(self.G) - 1
             # t0 = time.time()
+            clustering = nx.clustering(self.G, nodes=top20vertices)
             for node in top20vertices:
-                if self.degree_dict[node] / normalized_divisor * (1 - nx.clustering(self.G)[node]) > f_statistic:
+                f_statistic_node = self.G.degree[node] / normalized_divisor * (1 - clustering[node])
+                if f_statistic_node > f_statistic:
                     next_node = node
-                    f_statistic = self.degree_dict[node] / normalized_divisor * (1 - nx.clustering(self.G)[node])
+                    f_statistic = f_statistic_node
+
         #    print('de f_stat',round(((time.time() -t0)),3))
         # print ("sd,se",self._s_d , self._s_e)
         self.current = next_node
 
     def _observing(self):
         self.v_observed.remove(self.current)
-        self.G.add_node(self.current)
         self.v_closed.add(self.current)
-        self.v_observed.update(set(self.big_graph.adj[self.current]).difference(set(self.G.adj[self.current])))
-        for friend in self.v_observed:
-            if friend in self.big_graph[self.current]:
+
+        for friend in self.big_graph.adj[self.current]:
+            if friend not in self.v_closed:
+                self.v_observed.discard(friend)
+                self.G.add_node(friend)
                 self.G.add_edge(friend, self.current)
+                self.v_observed.add(friend)
 
     def sampling_process(self):
         if len(self.v_observed) == 0:
@@ -298,12 +301,12 @@ class Crawler_DE(Crawler):
             # print('DE: s_d=',self._s_d,' s_e=', self._s_e)
             self._observing()
         self.node_array.append(self.current)  # отметили, что обработали эту вершину
-        for prop in METRICS_LIST:  # для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
+        # для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
+        for prop in METRICS_LIST:
             # self.observed_history[prop].append(len(self.percentile_set[prop].intersection(self.v_closed)))
             self.observed_history[prop].append(
                 len(self.percentile_set[prop].intersection(set(self.G.nodes))))
             # self.observed_history.append(len(self.v_observed) + len(self.v_closed))
 
         self.observed_history['nodes'].append(len(set(self.G.nodes()).union(self.v_observed)))
-        #print('v observed', len(self.v_observed), len(self.v_closed), self.v_observed, self.v_closed)
         return self.observed_history  # ,self.property_history)

@@ -98,7 +98,7 @@ def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
 
 def import_graph(graph_name):
     # Работа с графами. Выбирается один из списка (всё определяет graph_name и *_graph) 
-    with  open('../data/Graphs/' + graph_name + ".edges", 'rb') as fh:
+    with open('../data/Graphs/' + graph_name + ".edges", 'rb') as fh:
         Graph = nx.read_edgelist(fh, delimiter=' ')  # ,create_using=nx.big_graph())
     Graph.remove_edges_from(Graph.selfloop_edges())  # удаляем петли
     return max(nx.connected_component_subgraphs(Graph), key=len)  # берём за граф только самую большую его компоненту
