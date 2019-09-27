@@ -42,7 +42,8 @@ def treading_crawler(big_graph, crawling_method, node_seed, budget, percentile_s
             #         json.dump(crawler.observed_history, thread_dump_file)
             crawler.sampling_process()
     finally:
-        dump_file_name = get_dump_name(crawler, node_seed, counter + 1, budget)
+        dump_file_name = get_dump_name(crawler, node_seed,
+                                       len(crawler.observed_history['nodes']), budget)
         with open(os.path.join(dumps_dir, dump_file_name), 'w') as thread_dump_file:
             json.dump(crawler.observed_history, thread_dump_file)
 
