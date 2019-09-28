@@ -4,6 +4,7 @@
 import random
 from abc import ABC
 import math
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import time
@@ -29,8 +30,8 @@ class Crawler:
         self.v_observed = set()  # множество увиденных вершин
         self.v_observed.add(node_seed)
         self.v_closed = set()  # множество уже обработанных вершин
-        self.node_degree = []  # общее число друзей вершины. А не в бюджетном
-        self.node_array = []  # последовательность вершин, которые мы обходим
+        # self.node_degree = []  # общее число друзей вершины. А не в бюджетном
+        # self.node_array = []  # последовательность вершин, которые мы обходим
         self.G = nx.Graph()  # наш насемплированный граф
         self.G.add_node(node_seed)  # добавляем начальную вершину
 
@@ -203,26 +204,33 @@ class Crawler_DE(Crawler):
 
     def __init__(self, big_graph, node_seed, budget, percentile_set):
         Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
-        self.v_observed = SortedKeyList(self.v_observed, key=lambda node: self.G.degree[node] if node in self.G.degree else 0)
-        # self.degree_dict = dict()
+        self.v_observed = SortedKeyList(self.v_observed,
+                                        key=lambda node: self.G.degree(node) if node in self.G
+                                        else 0)
         self.method = 'DE'
         self._s_e = 0
         self._s_d = 0
         self.percentile_set = percentile_set
         for prop in METRICS_LIST:
-            self.property_history[prop].append(len(set(self.G.nodes()).intersection(self.percentile_set[prop])))
+            self.property_history[prop]\
+                .append(len(self.percentile_set[prop].intersection(self.G)))
+        # Not used?
+        # self.degree_dict = dict()
+        # self.node_degree = np.array([])
+        # self.node_array = np.array([])
 
     def _alpha1(self):
         sum_ = 0
         max_ = 0
-        for i in list(self.G.node):
-            if max_ < self.G.degree(i):
-                max_ = self.G.degree(i)
-            sum_ += self.G.degree(i)
+        for _, degree in self.G.degree:
+            # degree = self.G.degree(i)
+            if max_ < degree:
+                max_ = degree
+            sum_ += degree
         if sum_ == 0:
             sum_ = 1
         else:
-            sum_ = sum_ / len(list(self.G.node))
+            sum_ = sum_ / self.G.number_of_nodes()
 
         return max_ / sum_
 
@@ -238,10 +246,11 @@ class Crawler_DE(Crawler):
     def _count_s_e(self, s_e_previous, node):
         alpha2 = 1
         betha2 = 0.5
-        d_ex = self.big_graph.degree(node) - self.G.degree(node)
+        seen_degree = self.G.degree(node)
+        d_ex = self.big_graph.degree(node) - seen_degree
         if d_ex == 0:
             return 1
-        d_seen = self.G.degree(node)
+        d_seen = seen_degree
         return alpha2 * d_seen / d_ex + betha2 * s_e_previous
 
     def _change_current(self):
@@ -265,11 +274,11 @@ class Crawler_DE(Crawler):
             # plt.show()
             top20vertices = self.v_observed[math.floor(0.8 * len(self.v_observed)):]
             f_statistic = -1
-            normalized_divisor = 1 if len(self.G) == 1 else len(self.G) - 1
+            normalized_divisor = 1 if self.G.number_of_nodes() == 1 else self.G.number_of_nodes() - 1
             # t0 = time.time()
             clustering = nx.clustering(self.G, nodes=top20vertices)
-            for node in top20vertices:
-                f_statistic_node = self.G.degree[node] / normalized_divisor * (1 - clustering[node])
+            for node, degree in self.G.degree(top20vertices):
+                f_statistic_node = degree / normalized_divisor * (1 - clustering[node])
                 if f_statistic_node > f_statistic:
                     next_node = node
                     f_statistic = f_statistic_node
@@ -300,13 +309,15 @@ class Crawler_DE(Crawler):
             self._s_e = self._count_s_e(s_e_previous, self.current)
             # print('DE: s_d=',self._s_d,' s_e=', self._s_e)
             self._observing()
-        self.node_array.append(self.current)  # отметили, что обработали эту вершину
+        # np.append(self.node_array, self.current)  # отметили, что обработали эту вершину
         # для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
         for prop in METRICS_LIST:
-            # self.observed_history[prop].append(len(self.percentile_set[prop].intersection(self.v_closed)))
+            # self.observed_history[prop].append(len(self.percentile_set[prop].
+            # intersection(self.v_closed)))
             self.observed_history[prop].append(
-                len(self.percentile_set[prop].intersection(set(self.G.nodes))))
+                len(self.percentile_set[prop].intersection(self.G)))
             # self.observed_history.append(len(self.v_observed) + len(self.v_closed))
-
-        self.observed_history['nodes'].append(len(set(self.G.nodes()).union(self.v_observed)))
+        processed_degrees_num = len(self.v_observed) + len(self.v_closed)
+        # processed_degrees_num_old = len(set(self.v_observed).union(self.G))
+        self.observed_history['nodes'].append(processed_degrees_num)
         return self.observed_history  # ,self.property_history)

@@ -78,14 +78,18 @@ def crawl_one_graph(graph_name, methods, budget, seed_count, top_percentile):
     threads = []
     for method in methods:
         for seed in seeds:
+            # treading_crawler(big_graph, CRAWLING_METHODS[method], seed, budget, percentile_set,
+            #                  dumps_dir)
             thread = mp.Process(
                 target=treading_crawler,
                 args=(
                     big_graph, CRAWLING_METHODS[method], seed,
                     budget, percentile_set, dumps_dir),
             )
+
             thread.start()
             threads.append(thread)
+
         for thread in threads:
             thread.join()
 
