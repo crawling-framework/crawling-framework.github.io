@@ -6,7 +6,7 @@ import sys
 
 from tqdm import tqdm
 
-from crawling_algorythms import Crawler_MOD, Crawler_RW, Crawler_RC, Crawler_DFS, Crawler_BFS, Crawler_DE
+from crawling_algorithms import Crawler_MOD, Crawler_RW, Crawler_RC, Crawler_DFS, Crawler_BFS, Crawler_DE
 from utils import import_graph, get_percentile
 
 
