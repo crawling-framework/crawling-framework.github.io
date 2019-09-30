@@ -4,3 +4,5 @@ matplotlib
 matplotlib_venn
 tqdm
 sortedcontainers
+jupyter
+scikit-learn

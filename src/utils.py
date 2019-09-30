@@ -1,22 +1,30 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import networkx as nx
-import numpy as np
-import matplotlib.pyplot as plt
+import json
 import time
 
-import matplotlib_venn # mb needed to be installed
-
-import pip
-from matplotlib.pyplot import figure
-import json
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+from matplotlib_venn import venn3
 
 DEFAULT_EDGE_LIST_FORMAT = 'ij'
 WEIGHT_LABEL = 'w'  # weight attribute name in networkx graph
 TMSTMP_LABEL = 't'  # timestamp attribute name in networkx graph
 METRICS_LIST = ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality']
-METHOD_COLOR = {'AFD':'pink','RC':'grey','RW':'green','DFS':'black', 'BFS':'blue', 'MED':'cyan','MOD':'red','DE':'magenta', 'MEUD':'indigo'}
+METHOD_COLOR = {
+    # 'AFD': 'pink',
+    'RC': 'grey',
+    'RW': 'green',
+    'DFS': 'black',
+    'BFS': 'blue',
+    'MOD': 'red',
+    'DE': 'magenta'
+    # 'MED': 'cyan',
+    # 'MEUD': 'indigo'
+}
+
 
 def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
     """
@@ -51,7 +59,7 @@ def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
                 attr_dict[WEIGHT_LABEL] = float(elems[weight_index])
             if tmstmp_index is not None:
                 attr_dict[TMSTMP_LABEL] = float(elems[tmstmp_index])
-            g.add_edge(int(elems[source_index]), int(elems[target_index]))#, attr_dict)
+            g.add_edge(int(elems[source_index]), int(elems[target_index]))  # , attr_dict)
 
         with open(path) as graph_file:
             line = ''
@@ -63,7 +71,8 @@ def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
                     if line[0].isdigit():
                         decode_line(line)
             except Exception as e:
-                raise IOError("Couldn't parse edge list file at line '%s' using format '%s': %s" % (line, format, e))
+                raise IOError("Couldn't parse edge list file at line '%s' using format '%s': %s" % (
+                line, format, e))
     # TODO we read just edges and weights here, no labels!
     # GML format
     elif format == "GML":
@@ -88,12 +97,14 @@ def read_networkx_graph(path, directed=False, format=DEFAULT_EDGE_LIST_FORMAT):
                     g.add_edge(int(abw[0]), int(abw[1]), w=weight)
                     pos += 1
             except:
-                raise IOError("Couldn't read data from file '%s', namely at string %d." % (path, pos))
+                raise IOError(
+                    "Couldn't read data from file '%s', namely at string %d." % (path, pos))
     else:
         raise Exception("Unknown graph format '%s'" % format)
     return g
 
-#def dump_history(): TBD - история экспорта
+
+# def dump_history(): TBD - история экспорта
 
 
 def import_graph(graph_name):
@@ -101,7 +112,8 @@ def import_graph(graph_name):
     with open('../data/Graphs/' + graph_name + ".edges", 'rb') as fh:
         Graph = nx.read_edgelist(fh, delimiter=' ')  # ,create_using=nx.big_graph())
     Graph.remove_edges_from(Graph.selfloop_edges())  # удаляем петли
-    return max(nx.connected_component_subgraphs(Graph), key=len)  # берём за граф только самую большую его компоненту
+    return max(nx.connected_component_subgraphs(Graph),
+               key=len)  # берём за граф только самую большую его компоненту
 
 
 def draw_graph(Graph, title='graph'):
@@ -118,33 +130,42 @@ def draw_graph(Graph, title='graph'):
 
 
 # берём квантиль примерно на top_percent лучших вершин. 
-# Квантиль это словарь percentile['degrees']=24 значит что топ вершин с макс степенью имеют степени 24 и больше
-def get_percentile(Graph, graph_name, top_percent):
+# Квантиль это словарь percentile['degrees']=24 значит что топ вершин с макс степенью имеют
+# степени 24 и больше
+def get_percentile(graph, graph_name, top_percent):
     properties = json.load(open('../data/Graphs/' + graph_name + '_properties.txt', 'r'))
 
-    total = Graph.number_of_nodes()
+    total = graph.number_of_nodes()
     percentile = {'degrees': [], 'k_cores': [], 'eccentricity': [], 'betweenness_centrality': []}
-    percentile_history = {'degrees': [], 'k_cores': [], 'eccentricity': [], 'betweenness_centrality': []}
+    percentile_history = {'degrees': [], 'k_cores': [], 'eccentricity': [],
+                          'betweenness_centrality': []}
     percentile_set = {}
-    prop_color = {'degrees': 'green', 'k_cores': 'black', 'eccentricity': 'red', 'betweenness_centrality': 'blue'}
+    prop_color = {'degrees': 'green', 'k_cores': 'black', 'eccentricity': 'red',
+                  'betweenness_centrality': 'blue'}
     for prop in METRICS_LIST:
-        percentile[prop] = properties[prop][min(int(total * top_percent // 100), len(properties[prop])) - 1]
+        percentile[prop] = properties[prop][
+            min(int(total * top_percent // 100), len(properties[prop])) - 1]
         percentile_set[prop] = set(
-            [node for node in properties[prop + '_dict'] if properties[prop + '_dict'][node] >= percentile[prop]])
+            [node for node in properties[prop + '_dict'] if
+             properties[prop + '_dict'][node] >= percentile[prop]])
         percentile_history[prop].append(len(percentile_set[prop]))
     # print('percent:',top_percent,' percentile',percentile)
-    return (percentile, percentile_set)
+    return percentile, percentile_set
 
 
-def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, size,normalized=True, venn_on=True):
+def draw_percentile_heatmap(percentile_set, graph_name, seed_count, b, size, normalized=True,
+                            venn_on=True):
     """
-    Drawing and returning table (heatmap) based on intersection of metrics percentile_set (Jaccard coefficient).
-    percentile_set is a dictionary (for every metric in METRICS_LIST) of sets (nodes, that are in percentile)
-    normalized - if True, writes fraction of nodes, if False - total number of nodes in intersection
+    Drawing and returning table (heatmap) based on intersection of metrics percentile_set (Jaccard
+    coefficient).percentile_set is a dictionary (for every metric in METRICS_LIST) of sets
+    (nodes, that are in percentile) normalized - if True, writes fraction of nodes, if False -
+    total number of nodes in intersection
+
     ALSO: it draws Venn's 3-diagram from 1-3 METRICS.
     """
-# tbd - последние три нужны лишь для названия
-    table = np.zeros((len(METRICS_LIST), len(METRICS_LIST)))  # dict((i,dict((j,[]) for j in METRICS_LIST)) for i in METRICS_LIST)
+    # tbd - последние три нужны лишь для названия
+    table = np.zeros((len(METRICS_LIST), len(
+        METRICS_LIST)))  # dict((i,dict((j,[]) for j in METRICS_LIST)) for i in METRICS_LIST)
 
     for prop1 in METRICS_LIST:
         for prop2 in METRICS_LIST:
@@ -152,9 +173,9 @@ def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, size,normali
             j = METRICS_LIST.index(prop2)
             table[i][j] = len(percentile_set[prop1].intersection(percentile_set[prop2]))
             if normalized:  # если нормализуем
-                table[i][j] /= len(percentile_set[prop1].union(percentile_set[prop2])) #Jaccard coefficient
-                #table[i][j] /= max(len(percentile_set[prop1]), len(percentile_set[prop2]))
-
+                table[i][j] /= len(
+                    percentile_set[prop1].union(percentile_set[prop2]))  # Jaccard coefficient
+                # table[i][j] /= max(len(percentile_set[prop1]), len(percentile_set[prop2]))
 
     fig, ax = plt.subplots()
     im = ax.imshow(np.array(table))
@@ -170,7 +191,8 @@ def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, size,normali
     for i in range(len(METRICS_LIST)):
         for j in range(len(METRICS_LIST)):
             if normalized:
-                text = ax.text(j, i, str(round(table[i, j] * 100, 1)) + '%', ha="center", va="center", color="black")
+                text = ax.text(j, i, str(round(table[i, j] * 100, 1)) + '%', ha="center",
+                               va="center", color="black")
             else:
                 text = ax.text(j, i, int(table[i, j]), ha="center", va="center", color="black")
     plt.show()
@@ -178,55 +200,72 @@ def draw_percentile_heatmap(percentile_set,graph_name,seed_count,b, size,normali
     if venn_on:
         try:
             plt.figure(figsize=(size, size))
-            from matplotlib_venn import venn3
-            venn3([percentile_set[metric] for metric in METRICS_LIST if metric != 'betweenness_centrality'],
+            venn3([percentile_set[metric] for metric in METRICS_LIST if
+                   metric != 'betweenness_centrality'],
                   set_labels=(METRICS_LIST))
 
             plt.show()
             fig.savefig('../results/' + graph_name + '_venn.png')
         except BaseException:
             print("need to install matplotlib_venn with command: !pip install  matplotlib_venn")
-            #!pip install  matplotlib_venn
+            # !pip install  matplotlib_venn
 
     return table
 
 
-def draw_nodes_history(history,crawler_avg, methods,graph_name,seed_count,b):
+def draw_nodes_history(history, crawler_avg, print_methods, graph_name, seed_count, budget):
     """
     Drawing history for every method(average are bold) and every seed(thin)
     """
     # TBD - ,graph_name,seed_count are only for filenames. need to clean them
     plt.figure(figsize=(10, 10))
     plt.grid()
-    for method in methods:
-        for seed_num in range(seed_count):
-            plt.plot(history[method][seed_num]['nodes'], linewidth=0.5, color=METHOD_COLOR[method])
-        plt.plot(crawler_avg[method]['nodes'] / seed_count, linewidth=4, color=METHOD_COLOR[method], label=method)
+    for method, method_data in history.items():
+        if method in print_methods:
+            for seed_num, seed_data in list(method_data.items())[:seed_count]:
+                plt.plot(seed_data['nodes'][:budget].values,
+                         linewidth=0.5,
+                         color=METHOD_COLOR[method])
+
+    for method, avg_data in crawler_avg.items():
+        if method in print_methods:
+            plt.plot(np.array(avg_data['nodes'][:budget].values) / seed_count,
+                     linewidth=4,
+                     color=METHOD_COLOR[method],
+                     label=method)
 
     plt.legend()
-    plt.savefig('../results/' + graph_name + '_history_' + str(seed_count) + '_seeds_' + str(b) + 'iterations.png')
+    # plt.savefig('../results/' + graph_name + '_history_' +
+    #             str(seed_count) + '_seeds_' +
+    #             str(budget) + 'iterations.png')
     plt.show()
 
-def draw_scores_history(percentile_set,crawler_avg,methods,graph_name,seed_count,b):
-# tbd - последние три нужны лишь для названия
-# tbd - от percentile_set нужен только размер, это надо поменять
-# tbd - method color это ремап цветов по названиям методов. надо в глобальные
-    fig,axs = plt.subplots(2,2,figsize=(10,10))
-    plt.figure(figsize=(20,20))
+
+def draw_scores_history(percentile_set, crawler_avg, methods, graph_name, seed_count, b):
+    # tbd - последние три нужны лишь для названия
+    # tbd - от percentile_set нужен только размер, это надо поменять
+    # tbd - method color это ремап цветов по названиям методов. надо в глобальные
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+    plt.figure(figsize=(20, 20))
 
     for prop in METRICS_LIST:
-        j = {'degrees':0,'k_cores':1,'eccentricity':2,'betweenness_centrality':3}[prop]  # ремап для красивой отрисовки 2*2
+        j = {'degrees': 0, 'k_cores': 1, 'eccentricity': 2, 'betweenness_centrality': 3}[
+            prop]  # ремап для красивой отрисовки 2*2
         for method in methods:
-            axs[(j)//2][j%2].plot(crawler_avg[method][prop]/seed_count/len(percentile_set[prop]), label =method, color = METHOD_COLOR[method] )
-            axs[(j)//2][j%2].set_title(graph_name+'% nodes with '+prop + ' from '+str(len(percentile_set[prop])))
-            axs[(j)//2][j%2].legend()
+            axs[j // 2][j % 2].plot(
+                crawler_avg[method][prop] / seed_count / len(percentile_set[prop]), label=method,
+                color=METHOD_COLOR[method])
+            axs[j // 2][j % 2].set_title(
+                graph_name + '% nodes with ' + prop + ' from ' + str(len(percentile_set[prop])))
+            axs[j // 2][j % 2].legend()
 
-        axs[(j)//2][j%2].grid(True)
-    fig.savefig('../results/'+graph_name+'_scores_'+str(seed_count) +'_seeds_'+str(b)+'iterations.png')
+        axs[j // 2][j % 2].grid(True)
+    fig.savefig('../results/' + graph_name + '_scores_' + str(seed_count) + '_seeds_' + str(
+        b) + 'iterations.png')
     plt.show()
 
 
-def dump_results(graph_name,crawler_avg,history,b):
+def dump_results(graph_name, crawler_avg, history, b):
     """
     Dumping history of crawling results (graphics) into the ./results/dumps/' + graph_name + '_results_budget'+str(b)+'.json
     :param graph_name:
@@ -235,14 +274,15 @@ def dump_results(graph_name,crawler_avg,history,b):
     :param b:
     :return:
     """
+
     class NumpyEncoder(json.JSONEncoder):
         def default(self, obj):
             if isinstance(obj, np.ndarray):
                 return obj.tolist()
             return json.JSONEncoder.default(self, obj)
 
-    results = dict({'graph_name':graph_name, 'crawler_avg': crawler_avg,'history': history})
-    json_file = open('../results/dumps/' + graph_name + '_results_budget'+str(b)+'.json', 'w+')
+    results = dict({'graph_name': graph_name, 'crawler_avg': crawler_avg, 'history': history})
+    json_file = open('../results/dumps/' + graph_name + '_results_budget' + str(b) + '.json', 'w+')
     json.dump(results, json_file, cls=NumpyEncoder)
     json_file.close()
-    print('dumped '+str(b))
+    print('dumped ' + str(b))

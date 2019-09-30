@@ -8,9 +8,9 @@ import numpy as np
 from utils import dump_results
 
 
-def find_dump_files(base_dir, graph):
-    graph_dump_dir = os.path.join(base_dir, graph)
-    file_pattern = '(\w+)-seed_(\d+)-iter_(\d+)_of_\d+.json'
+def find_dump_files(base_dir, graph_name):
+    graph_dump_dir = os.path.join(base_dir, graph_name)
+    file_pattern = r'(\w+)-seed_(\d+)-iter_(\d+)_of_\d+.json'
     for filename in os.listdir(graph_dump_dir):
         match = re.match(file_pattern, filename)
         if match:
@@ -20,10 +20,10 @@ def find_dump_files(base_dir, graph):
             yield method, seed, budget, os.path.join(graph_dump_dir, filename)
 
 
-def collect_avg_stats(base_dir, graph):
+def collect_avg_stats(base_dir, graph_name):
     history = defaultdict(lambda: defaultdict(dict))  # budget > method > seed > props
 
-    for method, seed, budget, path in find_dump_files(base_dir, graph):
+    for method, seed, budget, path in find_dump_files(base_dir, graph_name):
         with open(path) as stats_dump_file:
             history[budget][method][seed] = json.load(stats_dump_file)
 
@@ -36,7 +36,7 @@ def collect_avg_stats(base_dir, graph):
                     accumulator[prop].append(prop_history)
             for prop, accumulated_values in accumulator.items():
                 crawler_avg[method][prop] = np.array(accumulated_values).mean(axis=0)
-        dump_results(graph, crawler_avg, budget_history, budget)
+        dump_results(graph_name, crawler_avg, budget_history, budget)
 
 
 DUMPS_DIR = '../results/dumps'
