@@ -21,10 +21,11 @@ METHOD_COLOR = {
 }
 
 PROPERTIES_COLOR = {
-    'degrees': 'g',
-    'k_cores': 'b',
-    'eccentricity': 'r',
-    'betweenness_centrality': 'y'}
+    'nodes': 'k-',
+    'degrees': 'g-',
+    'k_cores': 'b-',
+    'eccentricity': 'r-',
+    'betweenness_centrality': 'y-'}
 property_name = {
     'degrees': 'degrees',
     'k_cores': 'k-cores',
@@ -78,6 +79,12 @@ def draw_nodes_history(history, crawler_avg, print_methods, graph_name, seed_cou
     #             plt.plot(data,
     #                      linewidth=0.5, linestyle=':',
     #                      color=METHOD_COLOR[method])
+
+    maxmethod = np.zeros(budget)
+    for i in range(budget):
+        for method in print_methods:
+            if crawler_avg[method]['nodes'][i] > maxmethod[i]:
+                maxmethod[i] = crawler_avg[method]['nodes'][i]
 
     for method, avg_data in crawler_avg.items():
         if method not in print_methods:
@@ -214,6 +221,18 @@ def plot_graph(graph_name, print_methods, budget_slices, prop=None, **plt_kw):
     #     plt.grid()
     #     print('Properties AUC: ' + str(auc_res))
 
+        plt.figure("AUC res")
+        for prop in METRICS_LIST:
+            plt.plot([auc_res[i][prop] for i in print_methods], label=prop,
+                     color=PROPERTIES_COLOR[prop])
+            plt.xticks(range(len(print_methods)), print_methods)
+
+        plt.xlabel('method')
+        plt.ylabel('AUC value in [0,1] (epigraph square)')
+        plt.tight_layout()
+        plt.grid()
+        plt.legend()
+        print('Properties AUC: ' + str(auc_res))
 
 ### Several plots united in a common subplot
 
