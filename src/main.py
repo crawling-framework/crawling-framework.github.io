@@ -20,10 +20,11 @@ METHOD_COLOR = {
 }
 
 PROPERTIES_COLOR = {
-    'degrees': 'g',
-    'k_cores': 'b',
-    'eccentricity': 'r',
-    'betweenness_centrality': 'y'}
+    'nodes': 'k-',
+    'degrees': 'g-',
+    'k_cores': 'b-',
+    'eccentricity': 'r-',
+    'betweenness_centrality': 'y-'}
 property_name = {
     'degrees': 'degrees',
     'k_cores': 'k-cores',
@@ -76,18 +77,24 @@ def draw_nodes_history(history, crawler_avg, print_methods, graph_name, seed_cou
     #                      linewidth=0.5, linestyle=':',
     #                      color=METHOD_COLOR[method])
 
+    maxmethod = np.zeros(budget)
+    for i in range(budget):
+        for method in print_methods:
+            if crawler_avg[method]['nodes'][i] > maxmethod[i]:
+                maxmethod[i] = crawler_avg[method]['nodes'][i]
+
     for method, avg_data in crawler_avg.items():
         if method not in print_methods:
             continue
         data = np.array(avg_data['nodes'][:budget])
         # auc_res[method]['average'] = auc(x=np.arange(len(data)), y=data)
-        plt.plot(data,
-                 linewidth=2,
+        plt.plot(data-maxmethod-1,
+                 linewidth=3,
                  color=METHOD_COLOR[method],
                  label=method)
 
-    plt.xscale('log')
-    plt.yscale('log')
+    #plt.xscale('log')
+    #plt.yscale('log')
     plt.xlabel('iteration number')
     plt.ylabel('node count')
     plt.legend()
@@ -167,21 +174,25 @@ def plot_graph(graph_name, print_methods, budget_slices):
                 data = np.array(crawler_avg[method][prop][:budget_slice]) / len(percentile_set[prop])
                 auc_res[method][prop] = auc(x=np.arange(len(data)), y=data)
 
+            data = np.array(crawler_avg[method]['nodes'][:budget_slice]) / big_graph.number_of_nodes()
+            auc_res[method]['nodes'] = auc(x=np.arange(len(data)), y=data)
+
         plt.figure("AUC res")
-        for prop in METRICS_LIST:
-            plt.plot([auc_res[i][prop] for i in print_methods], label=prop,
-                     color=PROPERTIES_COLOR[prop])
+        for prop in ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality','nodes']:
+            plt.plot([auc_res[i][prop]/big_graph.number_of_nodes() for i in print_methods], PROPERTIES_COLOR[prop], label=prop
+                     ,linewidth=3)
             plt.xticks(range(len(print_methods)), print_methods)
 
         plt.xlabel('method')
-        plt.ylabel('AUC value')
+        plt.ylabel('AUC value in [0,1] (epigraph square)')
         plt.tight_layout()
         plt.grid()
+        plt.legend()
         print('Properties AUC: ' + str(auc_res))
 
 
-# plot_graph(graph_names[1], ['RC','RW','BFS','DFS','MOD','DE'], [])
-plot_graph(graph_names[2], ['RC','RW','BFS','DFS','MOD','DE'], [])
+plot_graph(graph_names[1], ['RC', 'RW', 'BFS', 'DFS', 'MOD', 'DE'], [])
+#plot_graph(graph_names[2], ['RC','RW','BFS','DFS','MOD','DE'], [])
 # plot_graph(graph_names[5], ['RC','RW','BFS','DFS','MOD','DE'], [])
 
 plt.show()
