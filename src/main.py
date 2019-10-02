@@ -27,6 +27,7 @@ PROPERTIES_COLOR = {
     'eccentricity': 'r-',
     'betweenness_centrality': 'y-'}
 property_name = {
+    'nodes': 'nodes',
     'degrees': 'degrees',
     'k_cores': 'k-cores',
     'eccentricity': 'eccentricity',
@@ -34,6 +35,7 @@ property_name = {
 }
 
 DUMPS_DIR = '../results/dumps_shared'
+# DUMPS_DIR = '../results/dumps'
 SEED_COUNT = 8
 TOP_PERCENTILE = 10
 
@@ -174,6 +176,42 @@ def draw_property_history(percentile_set, crawler_avg, print_methods, graph_name
                 str(budget) + 'iterations.png')
 
 
+def draw_auc(percentile_set, crawler_avg, print_methods, graph_name, SEED_COUNT, budget_slice,
+             big_graph_nodes_count, ax=None, draw_title=False, legend=False, **plt_kw):
+    if not ax:
+        ax = plt.figure("AUC res").gca()
+    if draw_title:
+        ax.set_title(graph_name)
+
+    auc_res = {}
+    for method in print_methods:
+        auc_res[method] = {}
+        for prop in METRICS_LIST:
+            data = np.array(crawler_avg[method][prop][:budget_slice]) / len(percentile_set[prop])
+            auc_res[method][prop] = auc(x=np.arange(len(data)), y=data)
+
+        data = np.array(crawler_avg[method]['nodes'][:budget_slice]) / big_graph_nodes_count
+        auc_res[method]['nodes'] = auc(x=np.arange(len(data)), y=data)
+
+    # plt.figure("AUC res")
+    for prop in ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality','nodes']:
+        ax.plot([auc_res[i][prop]/big_graph_nodes_count for i in print_methods],
+                 PROPERTIES_COLOR[prop], label=property_name[prop], linewidth=1, marker='.',
+                 linestyle='-')
+    # ax.set_xticklabels(range(len(print_methods)), print_methods)
+    # plt.xticks(range(len(print_methods)), print_methods)
+    locs = ax.set_xticks(range(len(print_methods)))
+    labels = ax.set_xticklabels(print_methods)
+
+    # ax.set_xlabel('method')
+    ax.set_ylabel('AUC value')
+    # ax.tight_layout()
+    ax.grid(linestyle=':')
+    if legend:
+        ax.legend()
+    print('Properties AUC: ' + str(auc_res))
+
+
 def plot_graph(graph_name, print_methods, budget_slices, prop=None, **plt_kw):
     crawler_avg, history, max_budget = load_results(DUMPS_DIR, graph_name)
     budget_slices.append(max_budget)
@@ -186,10 +224,10 @@ def plot_graph(graph_name, print_methods, budget_slices, prop=None, **plt_kw):
         percentile_set['eccentricity'] = set(big_graph.nodes()). \
             difference(percentile_set['eccentricity'])
 
-    # Draw node coverage
-    for budget_slice in budget_slices:
-        draw_nodes_history(history, crawler_avg, print_methods, graph_name, SEED_COUNT,
-                                     budget_slice, **plt_kw)
+    # # Draw node coverage
+    # for budget_slice in budget_slices:
+    #     draw_nodes_history(history, crawler_avg, print_methods, graph_name, SEED_COUNT,
+    #                                  budget_slice, **plt_kw)
 
     # # Draw Props
     # for budget_slice in budget_slices:
@@ -200,39 +238,13 @@ def plot_graph(graph_name, print_methods, budget_slices, prop=None, **plt_kw):
     #         draw_property_history(percentile_set, crawler_avg, print_methods,
     #                                 graph_name, SEED_COUNT, budget_slice, prop=prop, **plt_kw)
 
-    # # Draw AUC
-    # for budget_slice in budget_slices:
-    #     auc_res = {}
-    #     for method in print_methods:
-    #         auc_res[method] = {}
-    #         for prop in METRICS_LIST:
-    #             data = np.array(crawler_avg[method][prop][:budget_slice]) / len(percentile_set[prop])
-    #             auc_res[method][prop] = auc(x=np.arange(len(data)), y=data)
-    #
-    #     plt.figure("AUC res")
-    #     for prop in METRICS_LIST:
-    #         plt.plot([auc_res[i][prop] for i in print_methods], label=prop,
-    #                  color=PROPERTIES_COLOR[prop])
-    #         plt.xticks(range(len(print_methods)), print_methods)
-    #
-    #     plt.xlabel('method')
-    #     plt.ylabel('AUC value')
-    #     plt.tight_layout()
-    #     plt.grid()
-    #     print('Properties AUC: ' + str(auc_res))
+    # Draw AUC
+    for budget_slice in budget_slices:
+        draw_auc(percentile_set, crawler_avg, print_methods,
+                 graph_name, SEED_COUNT, budget_slice, big_graph.number_of_nodes(), **plt_kw)
 
-        plt.figure("AUC res")
-        for prop in METRICS_LIST:
-            plt.plot([auc_res[i][prop] for i in print_methods], label=prop,
-                     color=PROPERTIES_COLOR[prop])
-            plt.xticks(range(len(print_methods)), print_methods)
 
-        plt.xlabel('method')
-        plt.ylabel('AUC value in [0,1] (epigraph square)')
-        plt.tight_layout()
-        plt.grid()
-        plt.legend()
-        print('Properties AUC: ' + str(auc_res))
+# plot_graph(graph_names[2], ['RC','RW','BFS','DFS','MOD'], [])
 
 ### Several plots united in a common subplot
 
@@ -261,7 +273,7 @@ index = 0
 for i in [0, 1, 2, 3, 4, 5]:
     ax = grid[index]
     plot_graph(graph_names[i], ['RC', 'RW', 'BFS', 'DFS', 'MOD', 'DE'], [],
-               ax=ax, draw_title=True)
+               ax=ax, draw_title=True, legend=index == 4)
     index += 1
 
 # for prop in METRICS_LIST:
@@ -273,8 +285,5 @@ for i in [0, 1, 2, 3, 4, 5]:
 #                    ax=ax, draw_title=index<grid._ncols)
 #         index += 1
 
-plt.xlim((0, 1))
-plt.ylim((0, 1))
 
-# plt.layout(top=0.902, bottom=0.173, left=0.034, right=0.995, hspace=0.2, wspace=0.0)
 plt.show()
