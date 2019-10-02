@@ -3,6 +3,7 @@ import json
 import multiprocessing as mp
 import os
 import random
+import time
 
 from crawling_algorithms import Crawler_MOD, Crawler_RW, Crawler_RC, Crawler_DFS, Crawler_BFS, \
     Crawler_DE
@@ -33,10 +34,9 @@ def treading_crawler(big_graph, crawling_method, node_seed, budget,
     # total = dict({'nodes': big_graph.number_of_nodes()},
     # **{i: len(percentile_set[i]) for i in percentile_set})
     # print('Total:', total)
+    progress = tqdm(range(budget), desc=f'{crawler.method}-{node_seed}')
     try:
-        # for counter in atpbar(range(budget), name=f'{crawling_method}-{node_seed}'):
-        # for counter in range(budget):
-        for counter in tqdm(range(budget), desc=f'{crawler.method}-{node_seed}'):
+        for counter in progress:
             # if (counter % 1000 == 1) or (counter == budget - 1):
             #     # print('Dumping history:', crawling_method, counter, seed_num)
             #     dump_file_name = get_dump_name(crawler, node_seed, counter, budget)
@@ -44,6 +44,8 @@ def treading_crawler(big_graph, crawling_method, node_seed, budget,
             #         json.dump(crawler.observed_history, thread_dump_file)
             crawler.sampling_process()
     finally:
+        crawler.observed_history['time'] = time.time() - progress.start_t
+        progress.close()
         dump_file_name = get_dump_name(crawler, node_seed,
                                        len(crawler.observed_history['nodes']), budget)
         with open(os.path.join(dumps_dir, dump_file_name), 'w') as thread_dump_file:

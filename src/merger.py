@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import re
@@ -6,6 +7,7 @@ from collections import defaultdict
 
 import numpy as np
 from utils import dump_results
+from launcher import GRAPH_NAMES
 
 
 def find_dump_files(base_dir, graph_name):
@@ -35,11 +37,20 @@ def collect_avg_stats(base_dir, graph_name):
                 for prop, prop_history in seed_history.items():
                     accumulator[prop].append(prop_history)
             for prop, accumulated_values in accumulator.items():
+                if not accumulated_values:
+                    continue
                 crawler_avg[method][prop] = np.array(accumulated_values).mean(axis=0)
-        dump_results(graph_name, crawler_avg, budget_history, budget)
+        dump_results(graph_name, crawler_avg, budget_history, budget, base_dir)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Average traversal metrics by seeds')
+    parser.add_argument('graph', choices=GRAPH_NAMES, help='graph name')
+    parser.add_argument('-d', '--dumps-dir', default='../results/dumps', dest='dumps_dir',
+                        help='dumps directory')
+    args = parser.parse_args()
+    collect_avg_stats(args.dumps_dir, args.graph)
 
 
 if __name__ == '__main__':
-    dumps_dir = sys.argv[1]
-    graph = sys.argv[2]
-    collect_avg_stats(dumps_dir, graph)
+    main()

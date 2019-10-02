@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import json
+import os
 import time
 
 import matplotlib.pyplot as plt
@@ -282,7 +283,7 @@ def dump_results(graph_name, crawler_avg, history, b, output_dir='../results/dum
             return json.JSONEncoder.default(self, obj)
 
     results = dict({'graph_name': graph_name, 'crawler_avg': crawler_avg, 'history': history})
-    json_file = open(output_dir + graph_name + '_results_budget' + str(b) + '.json', 'w+')
-    json.dump(results, json_file, cls=NumpyEncoder)
-    json_file.close()
+    dump_name = graph_name + '_results_budget' + str(b) + '.json'
+    with open(os.path.join(output_dir, dump_name), 'w+') as json_file:
+        json.dump(results, json_file, cls=NumpyEncoder)
     print('dumped ' + str(b))
