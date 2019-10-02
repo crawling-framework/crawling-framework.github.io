@@ -39,8 +39,7 @@ def collect_avg_stats(base_dir, graph_name):
         dump_results(graph_name, crawler_avg, budget_history, budget)
 
 
-DUMPS_DIR = '../results/dumps'
-
 if __name__ == '__main__':
-    graph = sys.argv[1]
-    collect_avg_stats(DUMPS_DIR, graph)
+    dumps_dir = sys.argv[1]
+    graph = sys.argv[2]
+    collect_avg_stats(dumps_dir, graph)

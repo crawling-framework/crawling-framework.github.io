@@ -1,12 +1,12 @@
+import argparse
 import json
 import multiprocessing as mp
 import os
 import random
-import sys
 
+from crawling_algorithms import Crawler_MOD, Crawler_RW, Crawler_RC, Crawler_DFS, Crawler_BFS, \
+    Crawler_DE
 from tqdm import tqdm
-
-from crawling_algorithms import Crawler_MOD, Crawler_RW, Crawler_RC, Crawler_DFS, Crawler_BFS, Crawler_DE
 from utils import import_graph, get_percentile
 
 
@@ -14,7 +14,8 @@ def get_dump_name(crawler, node_seed, counter, budget):
     return f'{crawler.method}-seed_{node_seed}-iter_{counter}_of_{budget}.json'
 
 
-def treading_crawler(big_graph, crawling_method, node_seed, budget, percentile_set, dumps_dir):
+def treading_crawler(big_graph, crawling_method, node_seed, budget,
+                     percentile_set, calc_metrics_on, dumps_dir):
     """
     Paralleling algorythm. 1 process for 1 seed. Using global multiprocessing.Queue for export results
     :param seed_num:
@@ -26,7 +27,8 @@ def treading_crawler(big_graph, crawling_method, node_seed, budget, percentile_s
     :return:
     """
     crawler = crawling_method(big_graph, node_seed=node_seed, budget=budget,
-                              percentile_set=percentile_set)
+                              percentile_set=percentile_set,
+                              calc_metrics_on_closed=(calc_metrics_on == 'closed'))
 
     # total = dict({'nodes': big_graph.number_of_nodes()},
     # **{i: len(percentile_set[i]) for i in percentile_set})
@@ -48,7 +50,8 @@ def treading_crawler(big_graph, crawling_method, node_seed, budget, percentile_s
             json.dump(crawler.observed_history, thread_dump_file)
 
 
-def crawl_one_graph(graph_name, methods, budget, seed_count, top_percentile):
+def crawl_one_graph(graph_name, methods, budget, seed_count,
+                    top_percentile, calc_metrics_on, output_dir):
     big_graph = import_graph(graph_name)
     budget = min(big_graph.number_of_nodes(), budget)
     percentile, percentile_set = get_percentile(big_graph, graph_name,
@@ -57,7 +60,7 @@ def crawl_one_graph(graph_name, methods, budget, seed_count, top_percentile):
         percentile_set['eccentricity'] = set(big_graph.nodes()).difference(
             percentile_set['eccentricity'])  # XXX
 
-    dumps_dir = '../results/dumps/' + graph_name + '/'
+    dumps_dir = os.path.join(output_dir, graph_name)
     os.makedirs(dumps_dir, exist_ok=True)
 
     seeds = random.sample(set(big_graph.nodes), seed_count)
@@ -83,8 +86,8 @@ def crawl_one_graph(graph_name, methods, budget, seed_count, top_percentile):
             thread = mp.Process(
                 target=treading_crawler,
                 args=(
-                    big_graph, CRAWLING_METHODS[method], seed,
-                    budget, percentile_set, dumps_dir),
+                    big_graph, CRAWLING_METHODS[method], seed, budget,
+                    percentile_set, calc_metrics_on, dumps_dir),
             )
 
             thread.start()
@@ -118,9 +121,25 @@ GRAPH_NAMES = [
     'github'
 ]  # 'slashdot',
 
+
+def main():
+    parser = argparse.ArgumentParser(description='Traverse graph with given methods '
+                                                 'and dump some stats.')
+    parser.add_argument('graph', choices=GRAPH_NAMES, help='graph name')
+    parser.add_argument('methods', nargs='*', choices=['all', *CRAWLING_METHODS.keys()],
+                        default='all', help='crawling methods')
+    parser.add_argument('-o', '--output-dir', default='../results/dumps', dest='out',
+                        help='output directory')
+    parser.add_argument('-m', '--metrics', choices=['closed', 'discovered'], default='closed',
+                        help='whether to calculate metrics on closed or discovered vertices',
+                        dest='calc_metrics_on')
+
+    args = parser.parse_args()
+    if not args.methods or 'all' in args.methods:
+        args.methods = CRAWLING_METHODS.keys()
+    crawl_one_graph(args.graph, args.methods, BUDGET, SEED_COUNT, TOP_PERCENTILE,
+                    args.calc_metrics_on, args.out)
+
+
 if __name__ == '__main__':
-    graph_name = sys.argv[1]
-    methods = sys.argv[2:]
-    if not methods or 'all' in methods:
-        methods = CRAWLING_METHODS.keys()
-    crawl_one_graph(graph_name, methods, BUDGET, SEED_COUNT, TOP_PERCENTILE)
+    main()

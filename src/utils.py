@@ -265,7 +265,7 @@ def draw_scores_history(percentile_set, crawler_avg, methods, graph_name, seed_c
     plt.show()
 
 
-def dump_results(graph_name, crawler_avg, history, b):
+def dump_results(graph_name, crawler_avg, history, b, output_dir='../results/dumps/'):
     """
     Dumping history of crawling results (graphics) into the ./results/dumps/' + graph_name + '_results_budget'+str(b)+'.json
     :param graph_name:
@@ -282,7 +282,7 @@ def dump_results(graph_name, crawler_avg, history, b):
             return json.JSONEncoder.default(self, obj)
 
     results = dict({'graph_name': graph_name, 'crawler_avg': crawler_avg, 'history': history})
-    json_file = open('../results/dumps/' + graph_name + '_results_budget' + str(b) + '.json', 'w+')
+    json_file = open(output_dir + graph_name + '_results_budget' + str(b) + '.json', 'w+')
     json.dump(results, json_file, cls=NumpyEncoder)
     json_file.close()
     print('dumped ' + str(b))

@@ -17,7 +17,8 @@ class Crawler(metaclass=ABCMeta):
     Crawler class with a lot of stuff (to comment)
     """
 
-    def __init__(self, big_graph, node_seed, budget, percentile_set):
+    def __init__(self, big_graph, node_seed, budget, percentile_set,
+                 calc_metrics_on_closed=True):
 
         self.big_graph = big_graph  # сам конечный граф
         self.total = self.big_graph.number_of_nodes()  # total это общее число вершин
@@ -25,6 +26,7 @@ class Crawler(metaclass=ABCMeta):
         self.node_seed = node_seed  # начальная сида, с которой начинаем
         self.percentile_set = percentile_set  # множество вершин графа, удовлетворяющих квантилю
         self.method = 'RC'
+        self.calc_metrics_on_closed = calc_metrics_on_closed
 
         self.current = node_seed  # в начале текущая вершина это стартовая нода
         self.v_observed = set()  # множество увиденных вершин
@@ -80,29 +82,33 @@ class Crawler(metaclass=ABCMeta):
             self.v_observed.remove(self.current)  # теперь она обработанная, а не просто видимая
         self.v_closed.add(self.current)
         self.node_array.append(self.current)  # отметили, что обработали эту вершину
-        for prop in METRICS_LIST:  # для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
-            # self.observed_history[prop].append(len(self.percentile_set[prop].intersection(set(self.v_closed))))
-            self.observed_history[prop].append(
-                len(self.percentile_set[prop].intersection(set(self.G.nodes))))
-            # self.observed_history.append(len(self.v_observed) + len(self.v_closed))
-
-        self.observed_history['nodes'].append(len(self.v_closed) + len(self.v_observed))
+        self._update_history()
         return self.observed_history  # ,self.property_history)
     # раскомментить если захочется экспортировать граф
     # nx.write_gml(G, "./Sampling/"+ graph_name +"/"+method+'_b='+str(b)+'_seed='+str(n_seed)+'.graph')
 
+    def _calculate_metric(self, metric_name):
+        target = self.percentile_set[metric_name]
+        actual = self.v_closed if self.calc_metrics_on_closed else self.G.nodes
+        return len(target.intersection(actual))
+
+    def _update_history(self):
+        for prop in METRICS_LIST:  # для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
+            self.observed_history[prop].append(self._calculate_metric(prop))
+        self.observed_history['nodes'].append(len(self.v_closed) + len(self.v_observed))
+
 
 class Crawler_RC(Crawler):
-    def __init__(self, big_graph, node_seed, budget, percentile_set):
-        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+    def __init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed=True):
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed)
 
     def _change_current(self):
         self.current = random.sample(self.v_observed, 1)[0]
 
 
 class Crawler_DFS(Crawler):
-    def __init__(self, big_graph, node_seed, budget, percentile_set):
-        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+    def __init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed=True):
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed)
         self.method = 'DFS'
         self.dfs_counter = 0
         self.dfs_queue = [self.node_seed]
@@ -126,8 +132,8 @@ class Crawler_DFS(Crawler):
 
 
 class Crawler_BFS(Crawler):
-    def __init__(self, big_graph, node_seed, budget, percentile_set):
-        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+    def __init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed=True):
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed)
         self.method = 'BFS'
         self.bfs_queue = [self.node_seed]
 
@@ -148,8 +154,8 @@ class Crawler_BFS(Crawler):
 
 
 class Crawler_MOD(Crawler):
-    def __init__(self, big_graph, node_seed, budget, percentile_set):
-        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+    def __init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed=True):
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed)
         self.method = 'MOD'
         self.graph_for_max_deg = self.G
 
@@ -164,8 +170,8 @@ class Crawler_MOD(Crawler):
 
 class Crawler_MEUD(
     Crawler_MOD):  # ищем вершину с максимальной разностью известной степени и настоящей
-    def __init__(self, big_graph, node_seed, budget, percentile_set):
-        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+    def __init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed=True):
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed)
         self.method = 'MEUD'
         # self.graph_for_max_deg = self.G
 
@@ -179,15 +185,15 @@ class Crawler_MEUD(
 
 
 class Crawler_MED(Crawler_MOD):  # унаследовали от MOD только степени берём из большого графа
-    def __init__(self, big_graph, node_seed, budget, percentile_set):
-        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+    def __init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed=True):
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed)
         self.method = 'MED'
         self.graph_for_max_deg = self.big_graph
 
 
 class Crawler_RW(Crawler):
-    def __init__(self, big_graph, node_seed, budget, percentile_set):
-        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+    def __init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed=True):
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed)
         self.method = 'RW'
         self.previous = self.current
 
@@ -208,8 +214,8 @@ class Crawler_RW(Crawler):
 
 class Crawler_DE(Crawler):
 
-    def __init__(self, big_graph, node_seed, budget, percentile_set):
-        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set)
+    def __init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed=True):
+        Crawler.__init__(self, big_graph, node_seed, budget, percentile_set, calc_metrics_on_closed)
         self.v_observed = SortedKeyList(self.v_observed,
                                         key=lambda node: self.G.degree(node) if node in self.G
                                         else 0)
@@ -316,14 +322,5 @@ class Crawler_DE(Crawler):
             # print('DE: s_d=',self._s_d,' s_e=', self._s_e)
             self._observing()
         # np.append(self.node_array, self.current)  # отметили, что обработали эту вершину
-        # для каждой метрики считаем, сколько вершин из бюджетного множества попало в граф
-        for prop in METRICS_LIST:
-            # self.observed_history[prop].append(len(self.percentile_set[prop].
-            # intersection(self.v_closed)))
-            self.observed_history[prop].append(
-                len(self.percentile_set[prop].intersection(self.G)))
-            # self.observed_history.append(len(self.v_observed) + len(self.v_closed))
-        processed_degrees_num = len(self.v_observed) + len(self.v_closed)
-        # processed_degrees_num_old = len(set(self.v_observed).union(self.G))
-        self.observed_history['nodes'].append(processed_degrees_num)
+        self._update_history()
         return self.observed_history  # ,self.property_history)
