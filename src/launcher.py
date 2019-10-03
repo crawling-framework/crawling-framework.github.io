@@ -5,8 +5,8 @@ import os
 import random
 import time
 
-from crawling_algorithms import Crawler_MOD, Crawler_RW, Crawler_RC, Crawler_DFS, Crawler_BFS, \
-    Crawler_DE
+from crawling_algorithms import CrawlerMOD, CrawlerRW, CrawlerRC, CrawlerDFS, CrawlerBFS, \
+    CrawlerDE
 from tqdm import tqdm
 from utils import import_graph, get_percentile
 
@@ -100,28 +100,30 @@ def crawl_one_graph(graph_name, methods, budget, seed_count,
 
 
 CRAWLING_METHODS = {
-    'RW': Crawler_RW,
-    'RC': Crawler_RC,
-    'DFS': Crawler_DFS,
-    'BFS': Crawler_BFS,
-    'MOD': Crawler_MOD,
-    # 'MED': Crawler_MED,
-    # 'MEUD': Crawler_MEUD,
-    'DE': Crawler_DE
+    'RW': CrawlerRW,
+    'RC': CrawlerRC,
+    'DFS': CrawlerDFS,
+    'BFS': CrawlerBFS,
+    'MOD': CrawlerMOD,
+    # 'MED': CrawlerMED,
+    # 'MEUD': CrawlerMEUD,
+    'DE': CrawlerDE
 }
 BUDGET = 1000000
 SEED_COUNT = 8
 TOP_PERCENTILE = 10
 
 GRAPH_NAMES = [
-    'importing',
     'wikivote',
     'hamsterster',
     'DCAM',
-    'gnutella',
+    'slashdot',
+    'facebook',
     'dblp2010',
     'github'
-]  # 'slashdot',
+    # 'importing',
+    # 'gnutella',
+]
 
 
 def main():

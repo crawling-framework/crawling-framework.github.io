@@ -9,7 +9,7 @@ from utils import get_percentile, import_graph
 
 METRICS_LIST = ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality']
 graph_names = ['wikivote', 'hamsterster', 'DCAM', 'gnutella', 'github', 'dblp2010']
-method_names = ['RC','RW','BFS','DFS','MOD','DE']
+method_names = ['RC', 'RW', 'BFS', 'DFS', 'MOD', 'DE']
 METHOD_COLOR = {
     'AFD': 'pink',
     'RC': 'grey',
@@ -94,7 +94,7 @@ def draw_nodes_history(history, crawler_avg, print_methods, graph_name, seed_cou
         data = np.array(avg_data['nodes'][:budget])
         if normalize:
             data /= budget
-        xs = np.arange(0, 1, 1/len(data))
+        xs = np.arange(0, 1, 1 / len(data))
         ax.plot(xs, data, linewidth=2, color=METHOD_COLOR[method], label=method)
 
     # ax.xscale('log')
@@ -103,7 +103,8 @@ def draw_nodes_history(history, crawler_avg, print_methods, graph_name, seed_cou
     # ax.set_ylim((0, 1 if normalize else budget))
     # plt.setp(ax.get_xticklabels(), visible=False)
     ax.set_xlabel('Fraction of nodes crawled')
-    ax.set_ylabel(r"Fraction of nodes sampled, $|V'|/|V|$" if normalize else r"Nodes sampled, $|V'|$")
+    ax.set_ylabel(
+        r"Fraction of nodes sampled, $|V'|/|V|$" if normalize else r"Nodes sampled, $|V'|$")
     ax.legend(loc=4)
     ax.grid(linestyle=':')
     # ax.savefig('../results/history/' + graph_name + '_history_' +
@@ -155,7 +156,7 @@ def draw_property_history(percentile_set, crawler_avg, print_methods, graph_name
     for method in print_methods:
         data = np.array(crawler_avg[method][prop][:budget]) / len(percentile_set[prop])
 
-        xs = np.arange(0, 1, 1/len(data))
+        xs = np.arange(0, 1, 1 / len(data))
         ax.plot(xs, data, label=method, color=METHOD_COLOR[method])
     ax.legend()
 
@@ -194,10 +195,10 @@ def draw_auc(percentile_set, crawler_avg, print_methods, graph_name, SEED_COUNT,
         auc_res[method]['nodes'] = auc(x=np.arange(len(data)), y=data)
 
     # plt.figure("AUC res")
-    for prop in ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality','nodes']:
-        ax.plot([auc_res[i][prop]/big_graph_nodes_count for i in print_methods],
-                 PROPERTIES_COLOR[prop], label=property_name[prop], linewidth=1, marker='.',
-                 linestyle='-')
+    for prop in ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality', 'nodes']:
+        ax.plot([auc_res[i][prop] / big_graph_nodes_count for i in print_methods],
+                PROPERTIES_COLOR[prop], label=property_name[prop], linewidth=1, marker='.',
+                linestyle='-')
     # ax.set_xticklabels(range(len(print_methods)), print_methods)
     # plt.xticks(range(len(print_methods)), print_methods)
     locs = ax.set_xticks(range(len(print_methods)))
