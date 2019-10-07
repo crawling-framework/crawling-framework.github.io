@@ -159,11 +159,11 @@ class CrawlerMOD(Crawler):
                                         else 0)
 
     def _change_current(self):
-        self.current = self.v_observed[0]
+        self.current = self.v_observed[-1]
 
     def _observing(self):
         # пробегаемся по всем друзьям и добавляем их в наш граф и в v_observed
-        self.v_closed.add(self.v_observed.pop(0))
+        self.v_closed.add(self.v_observed.pop())
 
         for friend in self.big_graph.adj[self.current]:
             if friend not in self.v_closed:
