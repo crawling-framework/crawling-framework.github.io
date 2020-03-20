@@ -1,3 +1,4 @@
+from matplotlib.collections import LineCollection
 from mpl_toolkits.axes_grid1 import ImageGrid
 import matplotlib.pyplot as plt
 import numpy as np
@@ -5,10 +6,10 @@ import re
 import json
 import os
 from sklearn.metrics import auc
-from utils import get_percentile, import_graph
+from old.utils import get_percentile, import_graph
 
 METRICS_LIST = ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality']
-graph_names = ['wikivote', 'hamsterster', 'DCAM', 'gnutella', 'github', 'dblp2010']
+graph_names = ['hamsterster', 'DCAM', 'facebook', 'slashdot', 'github', 'dblp2010']
 method_names = ['RC', 'RW', 'BFS', 'DFS', 'MOD', 'DE']
 METHOD_COLOR = {
     'AFD': 'pink',
@@ -34,7 +35,8 @@ property_name = {
     'betweenness_centrality': 'betweenness centrality'
 }
 
-DUMPS_DIR = '../results/dumps_shared'
+# DUMPS_DIR = '../results/dumps_shared'
+DUMPS_DIR = '../results/dumps_closed'
 # DUMPS_DIR = '../results/dumps'
 SEED_COUNT = 8
 TOP_PERCENTILE = 10
@@ -61,7 +63,7 @@ def load_results(base_dir, graph):
 # draw plot
 
 def draw_nodes_history(history, crawler_avg, print_methods, graph_name, seed_count, budget,
-                       ax=None, draw_title=False, **plt_kw):
+                       ax=None, draw_title=False, legend=False, **plt_kw):
     """
     Drawing history for every method(average are bold) and every seed(thin)
     """
@@ -73,39 +75,62 @@ def draw_nodes_history(history, crawler_avg, print_methods, graph_name, seed_cou
         ax.set_title(graph_name)
 
     normalize = True
+    show_gap = False
+    show_seeds = True
 
-    # for method, method_data in history.items():
-    #     if method in print_methods:
-    #         for seed_num, seed_data in list(method_data.items())[:seed_count]:
-    #             data = np.array(seed_data['nodes'][:budget])
-    #             plt.plot(data,
-    #                      linewidth=0.5, linestyle=':',
-    #                      color=METHOD_COLOR[method])
-
-    maxmethod = np.zeros(budget)
-    for i in range(budget):
-        for method in print_methods:
-            if crawler_avg[method]['nodes'][i] > maxmethod[i]:
-                maxmethod[i] = crawler_avg[method]['nodes'][i]
+    if show_seeds:
+        for method, method_data in history.items():
+            if method in print_methods:
+                for seed_num, seed_data in list(method_data.items())[:seed_count]:
+                    data = np.array(seed_data['nodes'][:budget])
+                    if normalize:
+                        data = data / budget
+                    # xs = np.arange(0, 1, 1 / len(data))
+                    xs = np.array([i / len(data) for i in range(len(data))])
+                    ax.plot(xs, data, linewidth=0.5, linestyle=':', color=METHOD_COLOR[method])
+    if show_gap:
+        maxmethod = np.zeros(budget)
+        for i in range(budget):
+            for method in print_methods:
+                val = crawler_avg[method]['nodes'][i]
+                if val > maxmethod[i]:
+                    maxmethod[i] = val
 
     for method, avg_data in crawler_avg.items():
         if method not in print_methods:
             continue
         data = np.array(avg_data['nodes'][:budget])
+
+        if show_gap:
+            data = data - maxmethod
+            linewidth = 3
+        else:
+            linewidth = 3
         if normalize:
             data /= budget
-        xs = np.arange(0, 1, 1 / len(data))
-        ax.plot(xs, data, linewidth=2, color=METHOD_COLOR[method], label=method)
+        # xs = np.arange(0, 1, 1/len(data))
+        xs = np.array([i/len(data) for i in range(len(data))])
+        ax.plot(xs, data, linewidth=linewidth, color=METHOD_COLOR[method], label=method)
+
 
     # ax.xscale('log')
     # ax.yscale('log')
-    # ax.set_xlim((0, 1 if normalize else budget))
-    # ax.set_ylim((0, 1 if normalize else budget))
-    # plt.setp(ax.get_xticklabels(), visible=False)
+    ax.set_xlim((-0.01, 1.01))
     ax.set_xlabel('Fraction of nodes crawled')
-    ax.set_ylabel(
-        r"Fraction of nodes sampled, $|V'|/|V|$" if normalize else r"Nodes sampled, $|V'|$")
-    ax.legend(loc=4)
+
+    if show_gap:
+        ax.set_ylim((-0.1, 0.003))
+        ax.set_ylabel("Gap between the leader")
+    else:
+        ax.set_ylim((0.2, 1.01))
+    ax.set_ylabel(r"Fraction of nodes sampled, $|V'|/|V|$" if normalize else r"Nodes sampled, $|V'|$")
+
+    ax.set_xlim((0.17, 1.01))
+    ax.set_ylim((0.87, 1.01))
+
+    # plt.setp(ax.get_xticklabels(), visible=False)
+    if legend:
+        ax.legend(loc=4)
     ax.grid(linestyle=':')
     # ax.savefig('../results/history/' + graph_name + '_history_' +
     #             str(seed_count) + '_seeds_' +
@@ -147,18 +172,45 @@ def draw_properties_history(percentile_set, crawler_avg, print_methods, graph_na
 
 
 def draw_property_history(percentile_set, crawler_avg, print_methods, graph_name, seed_count,
-                          budget, prop, hide_ylabels=False, ax=None, draw_title=False, **plt_kw):
+                          budget, prop, hide_ylabels=False, ax=None, draw_title=False,
+                          legend=False, **plt_kw):
     if not ax:
         ax = plt.gca()
 
     if draw_title:
         ax.set_title(graph_name)
+
+    # maxmethod_index = np.zeros(budget, dtype=np.int)
+    # for i in range(budget):
+    #     max = 0
+    #     for index, method in enumerate(print_methods):
+    #         val = crawler_avg[method][prop][i] / len(percentile_set[prop])
+    #         if val > max:
+    #             maxmethod_index[i] = index
+    #             max = val
+    # xs = np.arange(0, 1, 1 / len(maxmethod_index))
+    # segs = [[(x, 0), (x, 1)] for x in xs]
+    # colors = [METHOD_COLOR[print_methods[i]] for i in maxmethod_index]
+    #
+    # line_segments = LineCollection(segs, colors=colors, linestyle='solid')
+    # ax.add_collection(line_segments)
+
+    maxmethod = np.zeros(budget)
+    for i in range(budget):
+        for method in print_methods:
+            val = crawler_avg[method][prop][i] / len(percentile_set[prop])
+            if val > maxmethod[i]:
+                maxmethod[i] = val
+
     for method in print_methods:
         data = np.array(crawler_avg[method][prop][:budget]) / len(percentile_set[prop])
 
-        xs = np.arange(0, 1, 1 / len(data))
-        ax.plot(xs, data, label=method, color=METHOD_COLOR[method])
-    ax.legend()
+        data = data - maxmethod
+
+        xs = np.arange(0, 1, 1/len(data))
+        ax.plot(xs, data, linewidth=3, label=method, color=METHOD_COLOR[method])
+    if legend:
+        ax.legend()
 
     ax.grid(linestyle=':')
     if hide_ylabels:
@@ -171,6 +223,8 @@ def draw_property_history(percentile_set, crawler_avg, print_methods, graph_name
 
     # ax.set_xscale('log')
     # ax.set_yscale('log')
+    ax.set_ylim((-0.1, 0))
+
     plt.tight_layout()
     plt.savefig('../results/history/' + graph_name + '_scores_' +
                 str(seed_count) + '_seeds_' +
@@ -195,10 +249,10 @@ def draw_auc(percentile_set, crawler_avg, print_methods, graph_name, SEED_COUNT,
         auc_res[method]['nodes'] = auc(x=np.arange(len(data)), y=data)
 
     # plt.figure("AUC res")
-    for prop in ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality', 'nodes']:
-        ax.plot([auc_res[i][prop] / big_graph_nodes_count for i in print_methods],
-                PROPERTIES_COLOR[prop], label=property_name[prop], linewidth=1, marker='.',
-                linestyle='-')
+    for prop in ['degrees', 'k_cores', 'eccentricity', 'betweenness_centrality','nodes']:
+        ax.plot([auc_res[i][prop]/big_graph_nodes_count for i in print_methods],
+                 PROPERTIES_COLOR[prop], label=property_name[prop], linewidth=1, marker='.',
+                 linestyle='-')
     # ax.set_xticklabels(range(len(print_methods)), print_methods)
     # plt.xticks(range(len(print_methods)), print_methods)
     locs = ax.set_xticks(range(len(print_methods)))
@@ -245,7 +299,11 @@ def plot_graph(graph_name, print_methods, budget_slices, prop=None, **plt_kw):
                  graph_name, SEED_COUNT, budget_slice, big_graph.number_of_nodes(), **plt_kw)
 
 
-# plot_graph(graph_names[2], ['RC','RW','BFS','DFS','MOD'], [])
+# plt.figure(1, (4, 4))
+SEED_COUNT = 56
+plt.title(graph_names[5])
+plot_graph(graph_names[5], ['RC','RW','BFS','DFS','MOD', 'DE'], [], legend=True, prop='nodes')
+# plt.subplots_adjust(top=0.942, bottom=0.106, left=0.161, right=0.979, hspace=0.2, wspace=0.2)
 
 ### Several plots united in a common subplot
 
@@ -264,19 +322,20 @@ def plot_graph(graph_name, print_methods, budget_slices, prop=None, **plt_kw):
 
 ### Grid 4x6 of property X graph
 
-fig = plt.figure(1, (4., 4.))
-grid = ImageGrid(fig, 111,  # similar to subplot(111)
-                 nrows_ncols=(1, 6),  # creates 2x2 grid of axes
-                 axes_pad=0.1,  # pad between axes in inch.
-                 share_all=False,
-                 aspect=False)
-index = 0
-for i in [0, 1, 2, 3, 4, 5]:
-    ax = grid[index]
-    plot_graph(graph_names[i], ['RC', 'RW', 'BFS', 'DFS', 'MOD', 'DE'], [],
-               ax=ax, draw_title=True, legend=index == 4)
-    index += 1
+# fig = plt.figure(1, (16., 4.))
+# grid = ImageGrid(fig, 111,  # similar to subplot(111)
+#                  nrows_ncols=(1, 6),  # creates 2x2 grid of axes
+#                  axes_pad=0.1,  # pad between axes in inch.
+#                  share_all=False,
+#                  aspect=False)
+# index = 0
+# for i in [0, 1, 2, 3, 4, 5]:
+#     ax = grid[index]
+#     plot_graph(graph_names[i], ['RC', 'RW', 'BFS', 'DFS', 'MOD', 'DE'], [],
+#                ax=ax, draw_title=True, prop='degrees', legend=index==0)
+#     index += 1
 
+# plt.subplots_adjust(top=0.899, bottom=0.195, left=0.047, right=0.996, hspace=0.2, wspace=0.2)
 # for prop in METRICS_LIST:
 #     for i in [0, 1, 2, 3, 4, 5]:
 #         ax = grid[index]
@@ -288,3 +347,4 @@ for i in [0, 1, 2, 3, 4, 5]:
 
 
 plt.show()
+

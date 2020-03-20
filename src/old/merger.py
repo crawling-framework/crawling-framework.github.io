@@ -6,8 +6,8 @@ import sys
 from collections import defaultdict
 
 import numpy as np
-from utils import dump_results
-from launcher import GRAPH_NAMES
+from old.utils import dump_results
+from old.launcher import GRAPH_NAMES
 
 
 def find_dump_files(base_dir, graph_name):

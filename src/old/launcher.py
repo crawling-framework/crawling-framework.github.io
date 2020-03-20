@@ -5,10 +5,10 @@ import os
 import random
 import time
 
-from crawling_algorithms import CrawlerMOD, CrawlerRW, CrawlerRC, CrawlerDFS, CrawlerBFS, \
+from old.crawling_algorithms import CrawlerMOD, CrawlerRW, CrawlerRC, CrawlerDFS, CrawlerBFS, \
     CrawlerDE
 from tqdm import tqdm
-from utils import import_graph, get_percentile
+from old.utils import import_graph, get_percentile
 
 
 def get_dump_name(crawler, node_seed, counter, budget):
