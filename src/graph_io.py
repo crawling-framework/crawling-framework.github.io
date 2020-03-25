@@ -11,18 +11,18 @@ COLLECTIONS = ['konect', 'networkrepository']
 
 
 class MyGraph(object):
-    def __init__(self, path, name, directed=False, weighted=False,
-                 collection='KONECT', category='', format='ij'):
+    def __init__(self, path, name, directed=False, weighted=False, format='ij'):
         self.snap_graph = None
         self.igraph_graph = None
         self.networkit_graph = None
         self.path = path
         self.name = name
-        self.format = format
         self.directed = directed
         self.weighted = weighted
+        self.format = format
         # self.collection = collection
         # self.category = category
+        # TODO add properties maps
 
     @property
     def snap(self):
@@ -94,39 +94,40 @@ class GraphCollections(object):
     networkrepository_url_pattern = 'http://nrvis.com/download/data/%s/%s.zip'
 
     @staticmethod
-    def get(name, collection='konect', directed=False, format='ij'):
+    def get(name, collection='konect', directed=False, format='ij') -> MyGraph:
         """
-        Read graph from storage or download it from Konect database
+        Read graph from storage or download it from the specified collection.
         :param name:
         :param collection: 'konect', 'networkrepository'
         :param directed: undirected by default
-        :param format: 'ij' by default
+        :param format: output will be in this format, 'ij' by default
         :return: MyGraph with snap graph
         """
         assert collection in COLLECTIONS
         path = os.path.join(GRAPHS_DIR, collection, "%s.%s" % (name, format))
         # category = ''
 
+        # TODO let collection be not specified, try Konect then Netrepo, etc
+
         if not os.path.exists(path):
             temp_path = os.path.join(GRAPHS_DIR, collection, '%s.tmp' % name)
 
             if collection == 'konect':
-                GraphCollections.download_konect(
+                GraphCollections._download_konect(
                     temp_path, GraphCollections.konect_url_pattern % name)
 
             elif collection == 'networkrepository':
                 raise NotImplementedError()
                 category = name.split('-')[0]
-                GraphCollections.download_networkrepository(
+                GraphCollections._download_networkrepository(
                     temp_path, GraphCollections.networkrepository_url_pattern % (category, name))
 
             reformat_graph_file(temp_path, path, out_format=format, remove_original=True)
 
-        return MyGraph(path, name, directed, format=format,
-                       collection=collection)
+        return MyGraph(path, name, directed, format=format)
 
     @staticmethod
-    def download_konect(graph_path, url_konect):
+    def _download_konect(graph_path, url_konect):
         """
         Downloads graph data from Konect http://konect.uni-koblenz.de
 
@@ -162,7 +163,7 @@ class GraphCollections(object):
         shutil.rmtree(os.path.join(graph_dir, archive_dir_name))
 
     @staticmethod
-    def download_networkrepository(graph_path, url):
+    def _download_networkrepository(graph_path, url):
         """
         Downloads graph data from http://networkrepository.com/networks.php
 
@@ -200,21 +201,18 @@ class GraphCollections(object):
 
 
 def test():
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-    logging.getLogger().setLevel(logging.DEBUG)
-
     # name = 'soc-pokec-relationships'
     # name = 'petster-friendships-cat'
-    name = 'petster-hamster'
+    # name = 'petster-hamster'
     # name = 'twitter'
     # name = 'libimseti'
-    # g = GraphCollections.get('advogato').snap
+    g = GraphCollections.get('advogato').snap
     # g = GraphCollections.get('eco-florida', collection='networkrepository').snap
-    # all = set(range(6542))
-    # for n in g.Nodes():
-    #     all.remove(n.GetId())
-    # print(all)
+    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
 
 
 if __name__ == '__main__':
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
+
     test()

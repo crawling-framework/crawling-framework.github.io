@@ -50,8 +50,9 @@ def compute_reachability(graph):
         seeds = random_seeds[:k]
         print("seeds %d: %s" % (len(seeds), 'seeds'))
 
-        crawler.crawl(seeds)
-        neighs = crawler.get_all_nodes()
+        for seed in seeds:
+            crawler.crawl(seed)
+        neighs = crawler.nodes_set
         print("neighs %d: %s" % (len(neighs), 'neighs'))
 
         if mode == 'all':
@@ -69,8 +70,9 @@ def compute_reachability(graph):
     #     top_k = get_top_hubs(g, count=k)
     #     print("top_k %d: %s" % (len(top_k), 'top_k'))
     #
-    #     crawler.crawl(top_k)
-    #     neighs = crawler.get_all_nodes()
+    #     for seed in top_k:
+    #         crawler.crawl(seed)
+    #     neighs = crawler.nodes_set
     #     print("neighs %d: %s" % (len(neighs), 'neighs'))
     #
     #     if mode == 'all':
