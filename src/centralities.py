@@ -7,12 +7,12 @@ from graph_io import MyGraph
 from utils import CENTRALITIES
 
 
-def get_top_centrality_nodes(graph: MyGraph, centrality, count):
+def get_top_centrality_nodes(graph: MyGraph, centrality, count=None):
     """
     Get top-count node ids of the graph sorted by centrality.
     :param graph: graph
     :param centrality: centrality name, one of utils.CENTRALITIES
-    :param count: number of nodes with max centrality return
+    :param count: number of nodes with top centrality to return. If None, return all nodes
     :return:
     """
     node_cent = list(graph.get_node_property_dict(property=centrality).items())
@@ -20,10 +20,12 @@ def get_top_centrality_nodes(graph: MyGraph, centrality, count):
     sorted_node_cent = sorted(node_cent, key=itemgetter(1), reverse=True)
 
     # TODO how to choose nodes at the border centrality value?
+    if not count:
+        count = graph.snap.GetNodes()
     return [n for (n, d) in sorted_node_cent[:count]]
 
 
-def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approximate=None, only_giant=False):
+def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approximate=10000, only_giant=False):
     """
     Compute centrality value for each node of the graph.
     :param graph: snap graph
@@ -48,8 +50,8 @@ def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approxim
     elif centrality == 'betweenness':
         Nodes = snap.TIntFltH()
         Edges = snap.TIntPrFltH()
-        if nodes_fraction_approximate is None:
-            nodes_fraction_approximate = 1.0
+        if nodes_fraction_approximate is None and s.GetNodes() > 10000:
+            nodes_fraction_approximate = 10000 / s.GetNodes()
         snap.GetBetweennessCentr(s, Nodes, Edges, nodes_fraction_approximate, graph.directed)
         node_cent = [(node, Nodes[node]) for node in Nodes]
 
@@ -70,6 +72,7 @@ def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approxim
     else:
         raise NotImplementedError("")
 
+    logging.info(" done.")
     return node_cent
     # sorted_node_cent = sorted(node_cent, key=itemgetter(1), reverse=True)
 
@@ -102,8 +105,26 @@ def test():
     print(node_prop)
 
 
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Compute centralities for graph nodes.')
+    parser.add_argument('-p', '--path', required=True, help='path to input graph as edgelist')
+    parser.add_argument('-d', action='store_true', help='specify if graph is directed')
+    parser.add_argument('-c', '--centralities', required=True, nargs='+', choices=CENTRALITIES,
+                        help='node centralities to compute')
+
+    args = parser.parse_args()
+    # print(args)
+    graph = MyGraph(path=args.path, name='', directed=args.d)
+    for c in args.centralities:
+        assert c in CENTRALITIES, "Unknown centrality %s, available are: %s" % (c, CENTRALITIES)
+        # print("Computing %s centrality for %s..." % (c, args.path))
+        graph.get_node_property_dict(property=c)
+
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    test()
+    # test()
+    main()
