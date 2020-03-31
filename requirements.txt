@@ -1,3 +1,5 @@
+snap-stanford==5.0.0
+patoolib
 networkx==2.3
 numpy
 matplotlib

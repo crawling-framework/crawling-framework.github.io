@@ -5,7 +5,8 @@ import snap
 import numpy as np
 import matplotlib.pyplot as plt
 
-from crawlers import Crawler, AvrachenkovCrawler, get_top_hubs
+from crawlers import Crawler, AvrachenkovCrawler
+from centralities import get_top_centrality_nodes
 from graph_io import MyGraph, GraphCollections
 
 
@@ -30,9 +31,9 @@ def compute_reachability(graph):
     p = 0.1
     k = 100
     if mode == 'top-k':
-        top_hubs = get_top_hubs(g, count=k)
+        top_hubs = get_top_centrality_nodes(graph, 'degree', count=k)
     if mode in ['all', 'top-hubs']:
-        top_hubs = get_top_hubs(g, count=int(p * g.GetNodes()))
+        top_hubs = get_top_centrality_nodes(graph, 'degree', count=int(p * g.GetNodes()))
     print("top_hubs %d: %s" % (len(top_hubs), top_hubs))
 
     if mode == 'top-hubs':
@@ -85,6 +86,7 @@ def compute_reachability(graph):
     #         reachable_from_top[k] = covered / len(top_hubs)
 
     plt.figure(figsize=(6.45, 4.5))
+    g = graph.snap
     plt.title("Graph N=%d E=%d max_deg=%d" % (g.GetNodes(), g.GetEdges(),
                                               g.GetNI(snap.GetMxDegNId(g)).GetDeg()))
     plt.xlabel("seeds")
@@ -104,7 +106,6 @@ def compute_reachability(graph):
 
 
 def test_avrachenkov(graph: MyGraph):
-    g = graph.snap
     plt.figure(figsize=(6.45, 4.5))
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
     # lines = []
@@ -114,7 +115,7 @@ def test_avrachenkov(graph: MyGraph):
     k = 100
     n = 1000
     for i, k in enumerate([50, 100, 250]):
-        top_hubs = get_top_hubs(g, count=k)
+        top_hubs = get_top_centrality_nodes(graph, 'degree', count=k)
         print("top_hubs %d: %s" % (len(top_hubs), top_hubs))
         recall_mean, recall_var = {}, {}
         n1_values = list(range(k, n-k+1, 50))
@@ -134,6 +135,7 @@ def test_avrachenkov(graph: MyGraph):
 
             print("recall: %s +- %s" % (recall_mean[n1], recall_var[n1]))
 
+        g = graph.snap
         plt.title("Graph N=%d E=%d max_deg=%d\n n=%d" % (
             g.GetNodes(), g.GetEdges(), g.GetNI(snap.GetMxDegNId(g)).GetDeg(), n))
         plt.xlabel("n1")

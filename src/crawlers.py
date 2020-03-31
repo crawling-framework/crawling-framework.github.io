@@ -5,6 +5,7 @@ import numpy as np
 import snap
 from numpy import random
 
+from centralities import get_top_centrality_nodes
 from graph_io import MyGraph
 
 
@@ -13,8 +14,9 @@ class Crawler(object):
     def __init__(self, graph: MyGraph):
         # original graph
         self.orig_graph = graph
+        # observed graph
+        self.observed_graph = MyGraph.new_snap(directed=graph.directed, weighted=graph.weighted)
         # observed snap graph
-        self.observed_g = snap.TNGraph.New() if graph.directed else snap.TUNGraph.New()
         # crawled ids set
         self.crawled_set = set()
         # observed ids set excluding crawled ones
@@ -23,7 +25,7 @@ class Crawler(object):
     @property
     def nodes_set(self) -> set:
         """ Get nodes' ids of observed graph (crawled and observed). """
-        return set([n.GetId() for n in self.observed_g.Nodes()])
+        return set([n.GetId() for n in self.observed_graph.snap.Nodes()])
 
     def crawl(self, seed: int):
         """
@@ -36,7 +38,7 @@ class Crawler(object):
             return False
 
         self.crawled_set.add(seed)
-        g = self.observed_g
+        g = self.observed_graph.snap
         if g.IsNode(seed):  # remove from observed set
             self.observed_set.remove(seed)
         else:  # add to observed graph
@@ -71,22 +73,8 @@ class RandomCrawler(Crawler):
 
     def crawl_budget(self, budget: int, initial_seed=1):
         self.observed_set.add(initial_seed)
-        self.observed_g.AddNode(initial_seed)
+        self.observed_graph.snap.AddNode(initial_seed)
         super().crawl_budget(budget)
-
-
-def get_top_hubs(graph, count):
-    """
-    Get top-count hubs of the graph sorted by degree
-    :param graph: snap graph
-    :param count:
-    :return:
-    """
-    # TODO how to choose nodes at the border degree?
-    node_deg = [(n.GetId(), n.GetDeg()) for n in graph.Nodes()]
-    sorted_node_deg = sorted(node_deg, key=itemgetter(1), reverse=True)
-    # print(sorted_node_deg)
-    return [n for (n, d) in sorted_node_deg[:count]]
 
 
 class AvrachenkovCrawler(Crawler):
@@ -121,8 +109,9 @@ class AvrachenkovCrawler(Crawler):
 
         # Get n2 max degree observed nodes
         obs_deg = []
+        g = self.observed_graph.snap
         for o_id in observed_only:
-            deg = self.observed_g.GetNI(o_id).GetDeg()
+            deg = g.GetNI(o_id).GetDeg()
             obs_deg.append((o_id, deg))
 
         max_degs = sorted(obs_deg, key=itemgetter(1), reverse=True)[:self.n-self.n1]
@@ -132,7 +121,7 @@ class AvrachenkovCrawler(Crawler):
 
         # assert len(self.crawled) == self.n
         # Take top-k of degrees
-        hubs_detected = get_top_hubs(self.observed_g, self.k)
+        hubs_detected = get_top_centrality_nodes(self.observed_graph.snap, 'degree', self.k)
         return hubs_detected
 
 
@@ -149,7 +138,7 @@ def test():
     g.AddEdge(4, 3)
     g.AddEdge(5, 4)
     print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-    graph = MyGraph('', 'test', directed=False)
+    graph = MyGraph.new_snap(name='test', directed=False)
     graph.snap_graph = g
 
     # crawler = Crawler(graph)

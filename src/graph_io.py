@@ -1,20 +1,17 @@
-import os
+import os.path
 import shutil
-import urllib
-import igraph
+import urllib.request
 import logging
 import patoolib
 
-from utils import GRAPHS_DIR
-
-COLLECTIONS = ['konect', 'networkrepository']
+from utils import GRAPHS_DIR, COLLECTIONS, CENTRALITIES, TMP_GRAPHS_DIR
 
 
 class MyGraph(object):
     def __init__(self, path, name, directed=False, weighted=False, format='ij'):
-        self.snap_graph = None
-        self.igraph_graph = None
-        self.networkit_graph = None
+        self._snap_graph = None
+        # self.igraph_graph = None
+        # self.networkit_graph = None
         self.path = path
         self.name = name
         self.directed = directed
@@ -23,34 +20,106 @@ class MyGraph(object):
         # self.collection = collection
         # self.category = category
         # TODO add properties maps
+        self.available_properties = CENTRALITIES
+        self._node_property_dicts = dict([(c, {}) for c in self.available_properties])
 
     @property
     def snap(self):
-        if not self.snap_graph:
+        if not self._snap_graph:
             import snap
-            self.snap_graph = snap.LoadEdgeList(
+            self._snap_graph = snap.LoadEdgeList(
                 snap.PNGraph if self.directed else snap.PUNGraph, self.path, 0, 1)
-        return self.snap_graph
+        return self._snap_graph
 
-    @property
-    def igraph(self):
-        if not self.igraph_graph:
-            from igraph import summary
-            g = igraph.Graph()
-            g = g.Read_Edgelist(self.path, directed=self.directed)
-            logging.info("Read igraph %s" % summary(g))
-            self.igraph_graph = g
-        return self.igraph_graph
+    # @property
+    # def igraph(self):
+    #     if not self.igraph_graph:
+    #         import igraph
+    #         from igraph import summary
+    #         g = igraph.Graph()
+    #         g = g.Read_Edgelist(self.path, directed=self.directed)
+    #         logging.info("Read igraph %s" % summary(g))
+    #         self.igraph_graph = g
+    #     return self.igraph_graph
+    # 
+    # @property
+    # def networkit(self):
+    #     if not self.networkit_graph:
+    #         import networkit as nk
+    #         # XXX suppose numbering from 1
+    #         self.networkit_graph = nk.readGraph(
+    #             self.path, nk.Format.EdgeListSpaceOne, directed=self.directed)
+    # 
+    #     return self.networkit_graph
 
-    @property
-    def networkit(self):
-        if not self.networkit_graph:
-            import networkit as nk
-            # XXX suppose numbering from 1
-            self.networkit_graph = nk.readGraph(
-                self.path, nk.Format.EdgeListSpaceOne, directed=self.directed)
+    def get_node_property_dict(self, property) -> dict:
+        """
+        Get a dictionary of nodes property. Read from file or compute and save if absent.
+        :param property: property name
+        :return: dict of {node id -> property value}
+        """
+        assert property in self.available_properties
+        prop_dict = self._node_property_dicts[property]
 
-        return self.networkit_graph
+        # Try to load from file or compute
+        if len(prop_dict) == 0:
+            prop_path = os.path.join(os.path.dirname(self.path),
+                                     os.path.basename(self.path) + '_properties', property)
+            if not os.path.exists(prop_path):
+                # Compute and save property
+                logging.info("Could not find property '%s' at '%s'. Will be computed." %
+                             (property, prop_path))
+                from centralities import compute_nodes_centrality
+                node_cent = compute_nodes_centrality(self, centrality=property)
+                prop_dict.update(node_cent)
+                # Save property to file
+                if not os.path.exists(os.path.dirname(prop_path)):
+                    os.makedirs(os.path.dirname(prop_path))
+                with open(prop_path, 'w') as f:
+                    f.writelines([("%s %s\n" % (n, c)) for n, c in node_cent])
+            else:
+                # Read property from file
+                with open(prop_path, 'r') as f:
+                    for line in f.readlines():
+                        n, c = line.split()
+                        prop_dict[n] = float(c)
+
+        return prop_dict
+
+    def save_snap_edge_list(self):
+        """ Write current edge list of snap graph into file. """
+        assert self._snap_graph
+        if os.path.exists(self.path):
+            logging.warning("Graph file '%s' will be overwritten." % self.path)
+        with open(self.path, 'w') as f:
+            import snap
+            snap.SaveEdgeList(self._snap_graph, self.path)
+
+    @classmethod
+    def new_snap(cls, name='tmp', directed=False, weighted=False, format='ij'):
+        """
+        Create a new instance of MyGraph with an empty snap graph.
+        :param name: name will be appended with current timestamp
+        :param directed:
+        :param weighted:
+        :param format:
+        :return: MyGraph
+        """
+        import snap
+        from datetime import datetime
+        path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
+        
+        # if snap_graph:
+        #     if isinstance(snap_graph, snap.TNGraph):
+        #         directed = True
+        #     elif isinstance(snap_graph, snap.TUNGraph):
+        #         directed = False
+        # else:
+        #     snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
+
+        graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
+        graph._snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
+        return graph
 
 
 def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_with='#%',
