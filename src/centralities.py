@@ -65,6 +65,10 @@ def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approxim
         node_cent = [(n.GetId(), snap.GetClosenessCentr(s, n.GetId(), graph.directed)) for n in s.Nodes()]
 
     elif centrality == 'eccentricity':
+        # node_cent = []
+        # for n in s.Nodes():
+        #     print(n)
+        #     node_cent.append((n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)))
         node_cent = [(n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)) for n in s.Nodes()]
 
     elif centrality == 'k-cores':

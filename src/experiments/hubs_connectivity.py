@@ -25,15 +25,16 @@ def get_avg_deg_hubs(graph, count):
 
 def compute_reachability(graph):
     g = graph.snap
-    # mode = 'top-hubs'
+    centrality = 'betweenness'
+    mode = 'top-hubs'
     # mode = 'all'
-    mode = 'top-k'
+    # mode = 'top-k'
     p = 0.1
     k = 100
     if mode == 'top-k':
-        top_hubs = get_top_centrality_nodes(graph, 'degree', count=k)
+        top_hubs = get_top_centrality_nodes(graph, centrality, count=k)
     if mode in ['all', 'top-hubs']:
-        top_hubs = get_top_centrality_nodes(graph, 'degree', count=int(p * g.GetNodes()))
+        top_hubs = get_top_centrality_nodes(graph, centrality, count=int(p * g.GetNodes()))
     print("top_hubs %d: %s" % (len(top_hubs), top_hubs))
 
     if mode == 'top-hubs':
@@ -66,24 +67,24 @@ def compute_reachability(graph):
             reachable_from_random[k] = covered / len(top_hubs)
 
     reachable_from_top = {0: 0}
-    # crawler = Crawler(graph)
-    # for k in range(1, max_k+1, step):
-    #     top_k = get_top_hubs(g, count=k)
-    #     print("top_k %d: %s" % (len(top_k), 'top_k'))
-    #
-    #     for seed in top_k:
-    #         crawler.crawl(seed)
-    #     neighs = crawler.nodes_set
-    #     print("neighs %d: %s" % (len(neighs), 'neighs'))
-    #
-    #     if mode == 'all':
-    #         reachable_from_top[k] = len(neighs) / g.GetNodes()
-    #     if mode in ['top-hubs', 'top-k']:
-    #         covered = 0
-    #         for hub in top_hubs:
-    #             if hub in neighs:
-    #                 covered += 1
-    #         reachable_from_top[k] = covered / len(top_hubs)
+    crawler = Crawler(graph)
+    for k in range(1, max_k+1, step):
+        top_k = get_top_centrality_nodes(graph, centrality, count=k)
+        print("top_k %d: %s" % (len(top_k), 'top_k'))
+
+        for seed in top_k:
+            crawler.crawl(seed)
+        neighs = crawler.nodes_set
+        print("neighs %d: %s" % (len(neighs), 'neighs'))
+
+        if mode == 'all':
+            reachable_from_top[k] = len(neighs) / g.GetNodes()
+        if mode in ['top-hubs', 'top-k']:
+            covered = 0
+            for hub in top_hubs:
+                if hub in neighs:
+                    covered += 1
+            reachable_from_top[k] = covered / len(top_hubs)
 
     plt.figure(figsize=(6.45, 4.5))
     g = graph.snap
@@ -102,6 +103,7 @@ def compute_reachability(graph):
     plt.plot(x, y, '.', color='g', label='random k')
     plt.legend(loc=0)
     plt.tight_layout()
+    plt.grid()
     # plt.savefig(PICS_DIR + '/%s_%s.png' % (graph.name, mode))
 
 
@@ -155,24 +157,16 @@ if __name__ == '__main__':
     # name = 'petster-friendships-cat'
     # name = 'soc-pokec-relationships'
     # name = 'digg-friends'
+    name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
-    name = 'petster-hamster'
+    # name = 'petster-hamster'
     # for name in ['libimseti', 'soc-pokec-relationships', 'digg-friends',
     #              'ego-gplus', 'petster-hamster']:
     #     g = read_snap(get_graph_path(name))
     #     print(name, get_avg_deg_hubs(g, 100)/g.GetNodes())
     g = GraphCollections.get(name)
-    # compute_reachability(g)
-    test_avrachenkov(g)
-
-    # snap.PrintInfo(g, "Python type PNGraph", "info-pngraph.txt", False)
-
-    # top_hubs = get_top_hubs(g, count=100)
-    # # top_hubs = get_top_hubs(graph, count=int(p * graph.GetNodes()))
-    # degs = [g.GetNI(hub).GetDeg() for hub in top_hubs]
-    # for hub in top_hubs:
-    #     print("max-100 degrees: ", g.GetNI(hub).GetDeg())
-    # # print("top_hubs %d: %s" % (len(top_hubs), top_hubs))
-
+    
+    compute_reachability(g)
+    # test_avrachenkov(g)
 
     plt.show()

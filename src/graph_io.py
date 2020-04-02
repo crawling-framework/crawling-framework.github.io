@@ -82,7 +82,7 @@ class MyGraph(object):
                 with open(prop_path, 'r') as f:
                     for line in f.readlines():
                         n, c = line.split()
-                        prop_dict[n] = float(c)
+                        prop_dict[int(n)] = float(c)
 
         return prop_dict
 
@@ -223,10 +223,17 @@ class GraphCollections(object):
 
         # Rename extracted graph file
         archive_dir_name = archive_name.split('.', 1)[0]
-        konect_file_name = os.path.join(graph_dir, archive_dir_name,
-                                        "out." + archive_dir_name)
         out_file_name = os.path.join(graph_dir, os.path.basename(graph_path))
-        os.rename(konect_file_name, out_file_name)
+
+        # multigraphs' filenames end with '-uniq'
+        # signed networks' filenames are '.matrix todo what else?
+        for ending in [archive_dir_name, archive_dir_name + '-uniq', 'matrix']:
+            try:
+                konect_file_name = os.path.join(graph_dir, archive_dir_name, "out." + ending)
+                os.rename(konect_file_name, out_file_name)
+                break
+            except IOError:
+                pass
 
         os.remove(os.path.join(graph_dir, archive_name))
         shutil.rmtree(os.path.join(graph_dir, archive_dir_name))
@@ -272,10 +279,16 @@ class GraphCollections(object):
 def test():
     # name = 'soc-pokec-relationships'
     # name = 'petster-friendships-cat'
-    # name = 'petster-hamster'
+    name = 'petster-hamster'
     # name = 'twitter'
     # name = 'libimseti'
-    g = GraphCollections.get('advogato').snap
+    # name = 'advogato'
+    # name = 'facebook-wosn-links'
+    # name = 'soc-Epinions1'
+    # name = 'douban'
+    # name = 'slashdot-zoo'
+    # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
+    g = GraphCollections.get(name).snap
     # g = GraphCollections.get('eco-florida', collection='networkrepository').snap
     print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
 
