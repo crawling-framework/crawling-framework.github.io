@@ -1,12 +1,12 @@
 import logging
 from operator import itemgetter
 
-import snap
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import snap
 
-from crawlers import Crawler, AvrachenkovCrawler
 from centralities import get_top_centrality_nodes
+from crawlers import Crawler, AvrachenkovCrawler
 from graph_io import MyGraph, GraphCollections
 
 
@@ -124,7 +124,7 @@ def test_avrachenkov(graph: MyGraph):
         for n1 in n1_values:
             recalls = []
             for it in range(n_iterations):
-                crawler = AvrachenkovCrawler(graph, n=n, n1=n1, k=k)
+                crawler = AvrachenkovCrawler(graph, b=n, n1=n1, k=k)
                 print("AvrachenkovCrawler n=%d, n1=%d, k=%d" % (n, n1, k))
 
                 crawler.first_step()
@@ -157,16 +157,16 @@ if __name__ == '__main__':
     # name = 'petster-friendships-cat'
     # name = 'soc-pokec-relationships'
     # name = 'digg-friends'
-    name = 'loc-brightkite_edges'
+    # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
-    # name = 'petster-hamster'
+    name = 'petster-hamster'
     # for name in ['libimseti', 'soc-pokec-relationships', 'digg-friends',
     #              'ego-gplus', 'petster-hamster']:
     #     g = read_snap(get_graph_path(name))
     #     print(name, get_avg_deg_hubs(g, 100)/g.GetNodes())
     g = GraphCollections.get(name)
-    
-    compute_reachability(g)
-    # test_avrachenkov(g)
+
+    # compute_reachability(g)
+    test_avrachenkov(g)
 
     plt.show()

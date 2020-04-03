@@ -1,4 +1,5 @@
 import logging
+# from abc import ABC
 from operator import itemgetter
 
 import numpy as np
@@ -14,6 +15,7 @@ class Crawler(object):
     def __init__(self, graph: MyGraph):
         # original graph
         self.orig_graph = graph
+        print("origgraph nodes", self.orig_graph.snap.GetNodes())
         # observed graph
         self.observed_graph = MyGraph.new_snap(directed=graph.directed, weighted=graph.weighted)
         # observed snap graph
@@ -35,6 +37,7 @@ class Crawler(object):
         """
         seed = int(seed)  # convert possible int64 to int, since snap functions would get error
         if seed in self.crawled_set:
+            print("{} already in crawl set {}".format(seed, self.crawled_set))
             return False
 
         self.crawled_set.add(seed)
@@ -42,6 +45,7 @@ class Crawler(object):
         if g.IsNode(seed):  # remove from observed set
             self.observed_set.remove(seed)
         else:  # add to observed graph
+            # self.observed_set.add(seed)
             g.AddNode(seed)
 
         # iterate over neighbours
@@ -50,7 +54,8 @@ class Crawler(object):
                 g.AddNode(n)
                 self.observed_set.add(n)
             g.AddEdge(seed, n)
-
+        print("-- sd {}, crawled #{}: {},".format(seed, len(self.crawled_set), self.crawled_set),
+              " observed #{}: {}".format(len(self.observed_set), self.observed_set))
         return True
 
     def next_seed(self):
@@ -59,9 +64,77 @@ class Crawler(object):
     def crawl_budget(self, budget: int, *args):
         for _ in range(budget):
             seed = self.next_seed()
+            print(_, seed)
             self.crawl(seed)
             # logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
             #               (seed, self.crawled_set, self.observed_set, self.nodes_set))
+
+
+class MultiSeedCrawler(Crawler):
+    """
+    great class to Avrachenkov and other crawlers starting with n1 seeds
+    """
+
+    def __init__(self, graph: MyGraph, b, n1):
+        super().__init__(graph)
+        print(n1, b, self.orig_graph.snap.GetNodes())
+        assert n1 <= b <= self.orig_graph.snap.GetNodes()
+        # assert k <= b - n1
+        self.n1 = n1  # n1 seeds crawled on first steps, then comes crawler
+        self.b = b  # total budget
+        self.prev_seed = 1  # previous node, that was already crawled
+
+    def crawl_multi_seed(self, n1):
+        graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
+        # n = len(graph_nodes)
+
+        first_stage_seeds = np.random.choice(graph_nodes, n1)
+
+        for seed in first_stage_seeds:
+            self.crawl(seed)
+        print(list(self.observed_set))
+        self.prev_seed = int(random.choice(list(self.observed_set), 1)[0])
+        print("normal stage will start from seed", self.prev_seed)
+
+        #
+        # counter = 0
+        # while True:
+        #     seed = graph_nodes[np.random.randint(n)]
+        #     if seed in self.crawled_set:
+        #         continue
+        #     self.crawl(seed)
+        #     counter += 1
+        #     if counter == self.n1:
+        #         break
+        # print(self.observed_set)
+
+
+class RandomWalkMS(MultiSeedCrawler):
+    def __init__(self, graph: MyGraph, b, n1):
+        super().__init__(graph, b=b, n1=n1)
+
+    def crawl(self, seed: int):
+        super(RandomWalkMS, self).crawl(seed)
+        self.prev_seed = int(seed)
+
+    def next_seed(self):
+        # self.orig_graph.snap.GetNI(seed).GetOutEdges()
+        node_neighbours = tuple(self.observed_graph.snap.GetNI(self.prev_seed).GetOutEdges())
+        if len(node_neighbours) == 0:
+            node_neighbours = tuple(self.observed_set)
+        return random.choice(node_neighbours, 1)[0]
+
+    def crawl_multi_seed(self, n1):
+        super(RandomWalkMS, self).crawl_multi_seed(n1)
+        self.prev_seed = int(random.choice(tuple(self.observed_set), 1)[0])
+
+    def crawl_budget(self, budget: int, initial_seed=1):
+        # print("-- adding seed {} to observed {}".format(initial_seed, self.observed_set))
+        # if not (initial_seed in self.observed_set):
+        self.crawl(initial_seed)
+        # self.observed_set.add(initial_seed)
+        # self.observed_graph.snap.AddNode(initial_seed)
+        super().crawl_budget(budget - 1)
 
 
 class RandomCrawler(Crawler):
@@ -71,38 +144,28 @@ class RandomCrawler(Crawler):
     def next_seed(self):
         return random.choice(tuple(self.observed_set))
 
-    def crawl_budget(self, budget: int, initial_seed=1):
+    def crawl_budget(self, budget: int, initial_seed=3):
         self.observed_set.add(initial_seed)
         self.observed_graph.snap.AddNode(initial_seed)
         super().crawl_budget(budget)
 
 
-class AvrachenkovCrawler(Crawler):
+class AvrachenkovCrawler(MultiSeedCrawler):
     """
     Algorithm from paper "Quick Detection of High-degree Entities in Large Directed Networks" (2014)
     https://arxiv.org/pdf/1410.0571.pdf
     """
-    def __init__(self, graph, n=1000, n1=500, k=100):
-        super().__init__(graph)
-        assert n1 <= n <= self.orig_graph.snap.GetNodes()
-        assert k <= n-n1
+
+    def __init__(self, graph, b=1000, n1=500, k=100):
+        super().__init__(graph, b=b, n1=n1)
+        assert n1 <= b <= self.orig_graph.snap.GetNodes()
+        # assert k <= b-n1
         self.n1 = n1
-        self.n = n
+        self.b = b
         self.k = k
 
     def first_step(self):
-        graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
-        N = len(graph_nodes)
-
-        i = 0
-        while True:
-            seed = graph_nodes[np.random.randint(N)]
-            if seed in self.crawled_set:
-                continue
-            self.crawl(seed)
-            i += 1
-            if i == self.n1:
-                break
+        super().crawl_multi_seed()
 
     def second_step(self):
         observed_only = self.observed_set
@@ -114,45 +177,79 @@ class AvrachenkovCrawler(Crawler):
             deg = g.GetNI(o_id).GetDeg()
             obs_deg.append((o_id, deg))
 
-        max_degs = sorted(obs_deg, key=itemgetter(1), reverse=True)[:self.n-self.n1]
+        max_degs = sorted(obs_deg, key=itemgetter(1), reverse=True)[:self.b - self.n1]
 
         # Crawl chosen nodes
-        [self.crawl(n) for n, _ in max_degs]
+        [self.crawl(node) for node, _ in max_degs]
 
         # assert len(self.crawled) == self.n
         # Take top-k of degrees
-        hubs_detected = get_top_centrality_nodes(self.observed_graph.snap, 'degree', self.k)
+        hubs_detected = get_top_centrality_nodes(self.observed_graph, 'degree', self.k)
         return hubs_detected
 
 
-def test():
+def testgraph():
     g = snap.TUNGraph.New()
     g.AddNode(1)
     g.AddNode(2)
     g.AddNode(3)
     g.AddNode(4)
     g.AddNode(5)
+    g.AddNode(6)
+    g.AddNode(7)
+
     g.AddEdge(1, 2)
     g.AddEdge(2, 3)
     g.AddEdge(4, 2)
     g.AddEdge(4, 3)
     g.AddEdge(5, 4)
-    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-    graph = MyGraph.new_snap(name='test', directed=False)
-    graph.snap_graph = g
+    g.AddEdge(1, 6)
+    g.AddEdge(6, 7)
 
-    # crawler = Crawler(graph)
-    # for i in range(1, 6):
-    #     crawler.crawl(i)
-    #     print("crawled:%s, observed:%s, all:%s" %
-    #           (crawler.crawled_set, crawler.observed_set, crawler.nodes_set))
+    g.AddNode(11)
+    g.AddNode(12)
+    g.AddNode(13)
+    g.AddNode(14)
+    g.AddNode(15)
+    g.AddNode(16)
 
-    crawler = RandomCrawler(graph)
-    crawler.crawl_budget(15)
+    g.AddEdge(11, 12)
+    g.AddEdge(12, 13)
+    g.AddEdge(14, 12)
+    g.AddEdge(14, 13)
+    g.AddEdge(15, 13)
+    g.AddEdge(15, 5)
+    g.AddEdge(11, 16)
+    return g
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    test()
+    # test()
+    g = testgraph()
+    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
+    graph = MyGraph.new_snap(name='test', directed=False)
+    graph._snap_graph = g
+    print(graph.snap.GetNodes())
+    # crawler = Crawler(graph)
+    # for i in range(1, 6):
+    #     crawler.crawl(i)
+    #     print("crawled:%s, observed:%s, all:%s" %
+    #           (crawler.crawled_set, crawler.observed_set, crawler.nodes_set))
+
+    # crawler = RandomCrawler(graph)
+    budget = 10
+
+    crawler = RandomWalkMS(graph, b=budget, n1=3)  # , k=3)
+    crawler.crawl_multi_seed(n1=3)
+    print("after first: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
+          " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
+    print("normal crawling")
+
+    initial_seed = crawler.prev_seed
+    crawler.crawl_budget(budget, initial_seed)
+
+    print("after second: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
+          " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
