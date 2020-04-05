@@ -1,4 +1,7 @@
+import glob
+import json
 import logging
+import os
 # from abc import ABC
 from abc import ABC
 from operator import itemgetter
@@ -82,13 +85,14 @@ class MultiSeedCrawler(Crawler, ABC):
         # print("n1={}, budget={}, nodes={}".format(self.n1, self.budget_left, self.orig_graph.snap.GetNodes()))
 
     def crawl_multi_seed(self, n1):
-        if n1 <= 1:  # if there is no parallel seeds, method do nothing
+        if n1 <= 0:  # if there is no parallel seeds, method do nothing
             return False
         graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
         multi_seeds = [int(node) for node in np.random.choice(graph_nodes, n1)]
         print("seeds for multi crawl:", multi_seeds)
         for seed in multi_seeds:
             self.crawl(seed)
+            self.sequence_append(seed)
 
         print("observed set", list(self.observed_set))
 
@@ -97,36 +101,49 @@ class MultiSeedCrawler(Crawler, ABC):
         Crawls given seed
         Decrease self.budget_left only if crawl is successful
         """
-        self.seed_sequence_.append(seed)
         if super().crawl(seed):
             self.budget_left -= 1
+            logging.debug("{}.-- seed {}, crawled #{}: {}, observed #{},".format(len(self.seed_sequence_), seed,
+                                                                                 len(self.crawled_set),
+                                                                                 self.crawled_set,
+                                                                                 len(self.observed_set),
+                                                                                 self.observed_set))
         else:
-            logging.debug("budget ={}, seed = {}, in crawled set={}".format(self.budget_left, seed, self.crawled_set))
+            logging.debug("{}. budget ={}, seed = {}, in crawled set={}, observed ={}".format(len(self.seed_sequence_),
+                                                                                              self.budget_left, seed,
+                                                                                              self.crawled_set,
+                                                                                              self.observed_set))
             return False
 
-        logging.debug("-- seed {}, crawled #{}: {}, observed #{},".format(seed,
-                                                                          len(self.crawled_set), self.crawled_set,
-                                                                          len(self.observed_set), self.observed_set))
-
     def crawl_budget(self, budget, p=0):
+
         """
         Crawl until done budget
         :param p: probability to jump into one of self.initial_seed nodes
         :param budget: how many iterations left
         :return:
         """
-        self.budget_left = budget
+        self.budget_left = min(budget, self.orig_graph.snap.GetNodes() - 1)
         if random.randint(0, 100, 1) < p * 100:
             print("variety play")
             self.crawl(int(np.random.choice(self.initial_seeds, 1)[0]))
             self.budget_left -= 1
 
-        while self.budget_left > 0:
-            seed = int(self.next_seed())
-            if not (self.crawl(seed)):
-                seed = self.next_seed()
+        while (self.budget_left > 0) and (len(self.observed_set) > 0) \
+                and (self.observed_graph.snap.GetNodes() <= self.orig_graph.snap.GetNodes()):
+            seed = self.next_seed()
+            self.crawl(seed)
             # logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
             #               (seed, self.crawled_set, self.observed_set, self.nodes_set))
+
+    def sequence_append(self, seed):
+        self.seed_sequence_.append(seed)
+        with open("./data/crawler_history/crawled{}.json".format(str(len(self.seed_sequence_)).zfill(3)),
+                  'w') as cr_file:
+            json.dump(list(self.crawled_set), cr_file)
+        with open("./data/crawler_history/observed{}.json".format(str(len(self.seed_sequence_)).zfill(3)),
+                  'w') as ob_file:
+            json.dump(list(self.observed_set), ob_file)
 
 
 class RandomWalk(MultiSeedCrawler):
@@ -136,10 +153,11 @@ class RandomWalk(MultiSeedCrawler):
 
     def next_seed(self):
         node_neighbours = self.observed_graph.neighbors(self.prev_seed)
+        self.sequence_append(self.prev_seed)
         # for walking we need to step on already crawled nodes too
         if len(node_neighbours) == 0:
             node_neighbours = tuple(self.observed_set)
-        return random.choice(node_neighbours, 1)[0]
+        return int(random.choice(node_neighbours, 1)[0])
 
     def crawl(self, seed):
         super().crawl(seed)
@@ -205,13 +223,9 @@ class AvrachenkovCrawler(Crawler, ABC):
 
 def test_graph():
     g = snap.TUNGraph.New()
-    g.AddNode(1)
-    g.AddNode(2)
-    g.AddNode(3)
-    g.AddNode(4)
-    g.AddNode(5)
-    g.AddNode(6)
-    g.AddNode(7)
+
+    for i in range(17):
+        g.AddNode(i)
 
     g.AddEdge(1, 2)
     g.AddEdge(2, 3)
@@ -220,13 +234,13 @@ def test_graph():
     g.AddEdge(5, 4)
     g.AddEdge(1, 6)
     g.AddEdge(6, 7)
-
-    g.AddNode(11)
-    g.AddNode(12)
-    g.AddNode(13)
-    g.AddNode(14)
-    g.AddNode(15)
-    g.AddNode(16)
+    g.AddEdge(8, 7)
+    g.AddEdge(8, 16)
+    g.AddEdge(8, 9)
+    g.AddEdge(8, 10)
+    g.AddEdge(8, 7)
+    g.AddEdge(0, 10)
+    g.AddEdge(0, 9)
 
     g.AddEdge(11, 12)
     g.AddEdge(12, 13)
@@ -239,6 +253,13 @@ def test_graph():
 
 
 if __name__ == '__main__':
+    file_path = "./data/crawler_history/"
+    if os.path.exists(file_path):
+        for file in glob.glob("./data/crawler_history/*.json"):
+            os.remove(file)
+    else:
+        os.makedirs(file_path)
+
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
@@ -255,10 +276,10 @@ if __name__ == '__main__':
     #           (crawler.crawled_set, crawler.observed_set, crawler.nodes_set))
 
     # crawler = RandomCrawler(graph)
-    total_budget = 10
+    total_budget = 20
 
     crawler = RandomWalk(Graph)
-    crawler.crawl_multi_seed(n1=3)
+    crawler.crawl_multi_seed(n1=1)
     print("after first: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
           " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
     print("normal crawling")
@@ -271,3 +292,6 @@ if __name__ == '__main__':
 
     print("Total iterations:", len(crawler.seed_sequence_))
     print("sequence of seeds:", crawler.seed_sequence_)
+
+    with open("./data/crawler_history/sequence.json", 'w') as f:
+        json.dump(crawler.seed_sequence_, f)
