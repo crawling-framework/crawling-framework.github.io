@@ -1,7 +1,8 @@
+import logging
 import os.path
 import shutil
 import urllib.request
-import logging
+
 import patoolib
 
 from utils import GRAPHS_DIR, COLLECTIONS, CENTRALITIES, TMP_GRAPHS_DIR
@@ -51,6 +52,10 @@ class MyGraph(object):
     #             self.path, nk.Format.EdgeListSpaceOne, directed=self.directed)
     # 
     #     return self.networkit_graph
+
+    def neighbors(self, node: int):  # Denis's realisation
+        """ returns set on neighbors of given node in this graph """
+        return tuple(self.snap.GetNI(int(node)).GetOutEdges())
 
     def get_node_property_dict(self, property) -> dict:
         """
