@@ -16,7 +16,6 @@ class Crawler(object):
     def __init__(self, graph: MyGraph):
         # original graph
         self.orig_graph = graph
-        print("original graph nodes", self.orig_graph.snap.GetNodes())
         # observed graph
         self.observed_graph = MyGraph.new_snap(directed=graph.directed, weighted=graph.weighted)
         # observed snap graph
@@ -24,8 +23,6 @@ class Crawler(object):
         self.crawled_set = set()
         # observed ids set excluding crawled ones
         self.observed_set = set()
-        self.budget_left = 1  # how many iterations left. stops when 0
-        self.prev_seed = 1  # previous seed, where we'v been (or standing now)
 
     @property
     def nodes_set(self) -> set:
@@ -35,19 +32,11 @@ class Crawler(object):
     def crawl(self, seed: int):
         """
         Crawl specified nodes. The observed graph is updated, also crawled and observed set.
-        Decrease self.budget_left only if crawl is successful
         :param seed: node id to crawl
         :return: whether the node was crawled
         """
-
         seed = int(seed)  # convert possible int64 to int, since snap functions would get error
-        # if seed in self.crawled_set:
-        #     print("seed {} already in crawl set {}, observed={}".format(seed,
-        #                                                                 self.crawled_set, self.observed_set))
-        #     self.next_seed()
-        #     return False
         if seed in self.crawled_set:
-            print("seed = {}, in crawled set={}".format(seed, self.crawled_set))
             return False
 
         self.crawled_set.add(seed)
@@ -63,21 +52,16 @@ class Crawler(object):
                 g.AddNode(n)
                 self.observed_set.add(n)
             g.AddEdge(seed, n)
-        print("-- seed {}, crawled #{}: {},".format(seed, len(self.crawled_set), self.crawled_set),
-              " observed #{}: {}".format(len(self.observed_set), self.observed_set))
-        self.budget_left -= 1
         return True
 
     def next_seed(self):
         raise NotImplementedError()
 
-    def crawl_budget(self):
-        while self.budget_left > 0:
-            seed = int(self.next_seed())
-            print("budget left:", self.budget_left, "seed:", seed)
-            if not (self.crawl(seed)):
-                seed = self.next_seed()
-            self.prev_seed = seed
+    def crawl_budget(self, budget: int, *args):
+        for _ in range(budget):
+            seed = self.next_seed()
+            while not self.crawl(seed):
+                continue
             # logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
             #               (seed, self.crawled_set, self.observed_set, self.nodes_set))
 
@@ -92,10 +76,11 @@ class MultiSeedCrawler(Crawler, ABC):
         # assert n1 <= self.budget_left <= self.orig_graph.snap.GetNodes()
         # assert k <= self.budget_left - n1
         self.n1 = n1  # n1 seeds crawled on first steps, then comes crawler
-        print("n1={}, budget={}, nodes={}".format(self.n1, self.budget_left, self.orig_graph.snap.GetNodes()))
-        # self.prev_seed = 1  # previous node, that was already crawled
-        self.seed_sequence = []  # sequence of tries to add nodes
+        self._seed_sequence = []  # sequence of tries to add nodes
         self.initial_seeds = []  # list of initial seeds to iter or jump into
+        self.prev_seed = 1  # previous node, that was already crawled
+        self.budget_left = 1  # how many iterations left. stops when 0
+        print("n1={}, budget={}, nodes={}".format(self.n1, self.budget_left, self.orig_graph.snap.GetNodes()))
 
     def crawl_multi_seed(self):
         if self.n1 <= 1:  # if there is no parallel seeds, method do nothing
@@ -111,8 +96,19 @@ class MultiSeedCrawler(Crawler, ABC):
         # print("normal stage will start from seed", self.prev_seed)
 
     def crawl(self, seed):
-        self.seed_sequence.append(seed)
-        super().crawl(seed)
+        """
+        Crawls given seed
+        Decrease self.budget_left only if crawl is successful
+        """
+        self._seed_sequence.append(seed)
+        if super().crawl(seed):
+            self.budget_left -= 1
+        else:
+            print("seed = {}, in crawled set={}".format(seed, self.crawled_set))
+            return False
+
+        print("-- seed {}, crawled #{}: {},".format(seed, len(self.crawled_set), self.crawled_set),
+              " observed #{}: {}".format(len(self.observed_set), self.observed_set))
 
     def crawl_budget(self, p=0):
         """
@@ -120,12 +116,20 @@ class MultiSeedCrawler(Crawler, ABC):
         :param p: probability to jump into one of self.initial_seed nodes
         :return:
         """
+        self.budget_left = budget
         if random.randint(0, 100, 1) < p * 100:
             print("variety play")
             self.crawl(int(np.random.choice(self.initial_seeds, 1)[0]))
             self.budget_left -= 1
 
-        super().crawl_budget()
+        while self.budget_left > 0:
+            seed = int(self.next_seed())
+            print("budget left:", self.budget_left, "seed:", seed)
+            if not (self.crawl(seed)):
+                seed = self.next_seed()
+            # self.prev_seed = seed
+            # logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
+            #               (seed, self.crawled_set, self.observed_set, self.nodes_set))
 
 
 class RandomWalk(MultiSeedCrawler):
@@ -139,6 +143,10 @@ class RandomWalk(MultiSeedCrawler):
         if len(node_neighbours) == 0:
             node_neighbours = tuple(self.observed_set)
         return random.choice(node_neighbours, 1)[0]
+
+    def crawl(self, seed):
+        super().crawl(seed)
+        self.prev_seed = seed
 
 
 class RandomCrawler(Crawler):  # TODO
@@ -252,5 +260,5 @@ if __name__ == '__main__':
     print("after second: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
           " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
 
-    print("Total iterations:", len(crawler.seed_sequence))
-    print("sequence of seeds:", crawler.seed_sequence)
+    print("Total iterations:", len(crawler._seed_sequence))
+    print("sequence of seeds:", crawler._seed_sequence)
