@@ -45,10 +45,10 @@ if __name__ == '__main__':
 
     # name = 'libimseti'
     # name = 'loc-brightkite_edges'
-    name = 'facebook-wosn-links'
+    # name = 'facebook-wosn-links'
     # name = 'petster-friendships-cat'
     # name = 'soc-pokec-relationships'
-    # name = 'digg-friends'
+    name = 'digg-friends'
     # name = 'ego-gplus'
     # name = 'petster-hamster'
     graph = GraphCollections.get(name)
