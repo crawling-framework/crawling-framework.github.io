@@ -2,7 +2,8 @@ import logging
 from operator import itemgetter
 
 import numpy as np
-import snap
+#import snap
+#import snap
 from numpy import random
 
 from centralities import get_top_centrality_nodes
@@ -122,6 +123,60 @@ class AvrachenkovCrawler(Crawler):
         # assert len(self.crawled) == self.n
         # Take top-k of degrees
         hubs_detected = get_top_centrality_nodes(self.observed_graph.snap, 'degree', self.k)
+        return hubs_detected
+
+
+class TwoStageCrawler(Crawler):
+    """
+    """
+    def __init__(self, graph, n=1000, n1=500, k=100):
+        super().__init__(graph)
+        assert n1 <= n <= self.orig_graph.snap.GetNodes()
+        assert k <= n-n1
+        self.n1 = n1
+        self.n = n
+        self.k = k
+
+    def first_step(self):
+        graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
+        N = len(graph_nodes)
+
+        i = 0
+        while True:
+            seed = graph_nodes[np.random.randint(N)]
+            if seed in self.crawled_set:
+                continue
+            self.crawl(seed)
+            i += 1
+            if i == self.n1:
+                break
+
+    def second_step(self):
+        observed_only = self.observed_set
+
+        # Get n2 max degree observed nodes
+        obs_deg = []
+        g = self.observed_graph.snap
+        for o_id in observed_only:
+            deg = g.GetNI(o_id).GetDeg()
+            obs_deg.append((o_id, deg))
+
+        max_degs_first_neighbours = sorted(obs_deg, key=itemgetter(1), reverse=True)[:self.n-self.n1]
+
+        # Crawl chosen nodes
+        [self.crawl(n) for n, _ in max_degs_first_neighbours]
+
+        g = self.observed_graph.snap
+        obs_deg = max_degs_first_neighbours
+        for seed, _ in max_degs_first_neighbours:
+            for neighbour in self.observed_graph.neighbors(seed):
+                if neighbour not in self.crawled_set:
+                    deg = g.GetNI(neighbour).GetDeg()
+                    obs_deg.append((neighbour, deg))
+                else:
+                    continue
+
+        hubs_detected = sorted(obs_deg, key=itemgetter(1), reverse=True)[:self.k]
         return hubs_detected
 
 
