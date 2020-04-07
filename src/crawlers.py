@@ -2,12 +2,11 @@ import logging
 from operator import itemgetter
 
 import numpy as np
-#import snap
-#import snap
+import snap
 from numpy import random
 
 from centralities import get_top_centrality_nodes
-from graph_io import MyGraph
+from graph_io import MyGraph, GraphCollections
 
 
 class Crawler(object):
@@ -127,15 +126,14 @@ class AvrachenkovCrawler(Crawler):
 
 
 class TwoStageCrawler(Crawler):
-    """
-    """
-    def __init__(self, graph, n=1000, n1=500, k=100):
+
+    def __init__(self, graph, n=1000, s=500, p=0.9):
         super().__init__(graph)
-        assert n1 <= n <= self.orig_graph.snap.GetNodes()
-        assert k <= n-n1
-        self.n1 = n1
+        assert s <= n <= p*self.orig_graph.snap.GetNodes()
+        assert n <= n-s
+        self.s = s
         self.n = n
-        self.k = k
+        self.pN = p*self.orig_graph.snap.GetNodes()
 
     def first_step(self):
         graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
@@ -148,62 +146,70 @@ class TwoStageCrawler(Crawler):
                 continue
             self.crawl(seed)
             i += 1
-            if i == self.n1:
+            if i == self.s:
                 break
 
     def second_step(self):
         observed_only = self.observed_set
 
         # Get n2 max degree observed nodes
-        obs_deg = []
+        e1 = []
         g = self.observed_graph.snap
         for o_id in observed_only:
             deg = g.GetNI(o_id).GetDeg()
-            obs_deg.append((o_id, deg))
+            e1.append((o_id, deg))
 
-        max_degs_first_neighbours = sorted(obs_deg, key=itemgetter(1), reverse=True)[:self.n-self.n1]
+        e1s = sorted(e1, key=itemgetter(1), reverse=True)[:self.n-self.s]
 
         # Crawl chosen nodes
-        [self.crawl(n) for n, _ in max_degs_first_neighbours]
+        [self.crawl(n) for n, _ in e1s]
 
-        g = self.observed_graph.snap
-        obs_deg = max_degs_first_neighbours
-        for seed, _ in max_degs_first_neighbours:
-            for neighbour in self.observed_graph.neighbors(seed):
-                if neighbour not in self.crawled_set:
-                    deg = g.GetNI(neighbour).GetDeg()
-                    obs_deg.append((neighbour, deg))
-                else:
-                    continue
+        top_from_observed = sorted(self.observed_set)[:self.pN - self.n + self.s]
 
-        hubs_detected = sorted(obs_deg, key=itemgetter(1), reverse=True)[:self.k]
+        hubs_detected = top_from_observed.append(n for n, _ in e1s)
+        #assert len(hubs_detected) == self.pN
+
         return hubs_detected
 
 
 def test():
-    g = snap.TUNGraph.New()
-    g.AddNode(1)
-    g.AddNode(2)
-    g.AddNode(3)
-    g.AddNode(4)
-    g.AddNode(5)
-    g.AddEdge(1, 2)
-    g.AddEdge(2, 3)
-    g.AddEdge(4, 2)
-    g.AddEdge(4, 3)
-    g.AddEdge(5, 4)
-    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-    graph = MyGraph.new_snap(name='test', directed=False)
-    graph.snap_graph = g
+    # name = 'soc-pokec-relationships'
+    # name = 'petster-friendships-cat'
+    # name = 'petster-hamster'
+    name = 'twitter'
+    # name = 'libimseti'
+    # name = 'advogato'
+    # name = 'facebook-wosn-links'
+    # name = 'soc-Epinions1'
+    # name = 'douban'
+    # name = 'slashdot-zoo'
+    # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
+    graph = GraphCollections.get(name).snap
+    # g = snap.TUNGraph.New()
+    # g.AddNode(1)
+    # g.AddNode(2)
+    # g.AddNode(3)
+    # g.AddNode(4)
+    # g.AddNode(5)
+    # g.AddEdge(1, 2)
+    # g.AddEdge(2, 3)
+    # g.AddEdge(4, 2)
+    # g.AddEdge(4, 3)
+    # g.AddEdge(5, 4)
+    print("N=%s E=%s" % (graph.GetNodes(), graph.GetEdges()))
 
     # crawler = Crawler(graph)
     # for i in range(1, 6):
     #     crawler.crawl(i)
     #     print("crawled:%s, observed:%s, all:%s" %
     #           (crawler.crawled_set, crawler.observed_set, crawler.nodes_set))
-
-    crawler = RandomCrawler(graph)
-    crawler.crawl_budget(15)
+    for p in (0.9, 0.85, 0.8, 0.75,0.7, 0.99):
+        for n in (1000, 1500, 2000, 2500, 3000, 10000):
+            for s in (500, 700, 900):
+                crawler = TwoStageCrawler(graph, 1000, 500, 0.9)
+                crawler.first_step()
+                hubs_detected = crawler.second_step()
+                print(hubs_detected)
 
 
 if __name__ == '__main__':
