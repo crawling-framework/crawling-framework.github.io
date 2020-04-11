@@ -100,6 +100,11 @@ class MyGraph(object):
             import snap
             snap.SaveEdgeList(self._snap_graph, self.path)
 
+    def load_snap_edge_list(self):
+        with open(self.path, 'r') as f:
+            import snap
+            snap.LoadEdgeList(self._snap_graph, self.path)
+
     @classmethod
     def new_snap(cls, name='tmp', directed=False, weighted=False, format='ij'):
         """
