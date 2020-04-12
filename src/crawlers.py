@@ -138,8 +138,7 @@ def test():
     g.AddEdge(4, 3)
     g.AddEdge(5, 4)
     print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-    graph = MyGraph.new_snap(name='test', directed=False)
-    graph.snap_graph = g
+    graph = MyGraph.new_snap(g, name='test', directed=False)
 
     # crawler = Crawler(graph)
     # for i in range(1, 6):

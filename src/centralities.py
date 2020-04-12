@@ -75,6 +75,11 @@ def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approxim
             node_cent.append((n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)))
         # node_cent = [(n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)) for n in s.Nodes()]
 
+    elif centrality == 'clustering':
+        NIdCCfH = snap.TIntFltH()
+        snap.GetNodeClustCf(s, NIdCCfH)
+        node_cent = [(item, NIdCCfH[item]) for item in NIdCCfH]
+
     elif centrality == 'k-cores':
         raise NotImplementedError("GetKCore, or do it manually in snap?")
     else:

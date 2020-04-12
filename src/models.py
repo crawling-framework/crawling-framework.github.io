@@ -1,27 +1,12 @@
+from itertools import combinations
+
 import numpy as np
 from numpy import random
 import scipy.stats as stats
+import snap
 
-
-# def power_law_generator(count, gamma, b, a=0):
-#     """
-#     Generator of power law values, y ~ x^{gamma-1} for a<=x<=b
-#     :param gamma: power
-#     :param b: max value
-#     :param a: min value
-#     :return:
-#     """
-#     from scipy.stats import powerlaw
-#     # powerlaw.rvs()
-#     r = powerlaw.rvs(a=a, size=1000)
-#     for x in r:
-#         yield x
-#     # ag, bg = a ** gamma, b ** gamma
-#     # print("iter")
-#     # for _ in range(count):
-#     #     r = random.random()
-#     #     r = random.random()
-#     #     yield (ag + (bg - ag) * r) ** (1. / gamma)
+from graph_io import MyGraph
+from metrics import Stat
 
 
 def truncated_power_law(count, gamma, maximal):
@@ -59,9 +44,7 @@ def truncated_normal(count, mean, variance, min, max):
     return d.rvs(size=count)
 
 
-def configuration_model(deg_seq, random_seed=None):
-    import snap
-
+def configuration_model(deg_seq, random_seed=None) -> MyGraph:
     DegSeqV = snap.TIntV()
     for deg in deg_seq:
         DegSeqV.Add(deg)
@@ -71,19 +54,66 @@ def configuration_model(deg_seq, random_seed=None):
     print("N=%d, E=%d" % (g.GetNodes(), g.GetEdges()))
     # for EI in g.Edges():
     #     print("edge: (%d, %d)" % (EI.GetSrcNId(), EI.GetDstNId()))
-    return g
+    return MyGraph.new_snap(g, name='Config_model')
+
+
+def ba_model(n, avg_deg, directed=False, random_seed=None) -> MyGraph:
+    assert directed is False
+
+    # g = snap.TNGraph.New() if directed else snap.TUNGraph.New()
+    #
+    # degs = np.zeros(n, dtype=int)
+    #
+    # # Initial component
+    # for i in range(avg_deg):
+    #     g.AddNode(i)
+    #     degs[i] = avg_deg-1
+    # print(list(combinations(range(avg_deg), 2)))
+    # for i, j in combinations(range(avg_deg), 2):
+    #     g.AddEdge(i, j)
+    #
+    # for i in range(avg_deg, n):
+    #     if i%1000 == 0:
+    #         print("BA: nodes", i)
+    #     g.AddNode(i)
+    #     s = sum(degs)
+    #     for j in range(0, i):
+    #         p = avg_deg * degs[j] / s
+    #         if np.random.random() < p:
+    #             g.AddEdge(i, j)
+    #             degs[i] += 1
+    #             degs[j] += 1
+    #
+    # print(degs)
+
+    Rnd = snap.TRnd(random_seed if random_seed else random.randint(1e9))
+    g = snap.GenPrefAttach(n, avg_deg, Rnd)
+    # for EI in g.Edges():
+    #     print("edge: (%d, %d)" % (EI.GetSrcNId(), EI.GetDstNId()))
+    print("N=%d, E=%d" % (g.GetNodes(), g.GetEdges()))
+    return MyGraph.new_snap(g, name='BA_model')
 
 
 def test():
     import matplotlib.pyplot as plt
 
     # deg_seq = truncated_power_law(100000, gamma=1.6, maximal=100)
-    deg_seq = truncated_normal(100, mean=10, variance=1000, min=1, max=100)
-    print(deg_seq)
+    # deg_seq = truncated_normal(100, mean=10, variance=1000, min=1, max=100)
+    # print(deg_seq)
 
     # plt.hist(sample, bins=np.arange(100) + 0.5)
     # plt.show()
     # g = configuration_model(deg_seq)
+    # g = ba_model(100, 10)
+
+    from graph_io import GraphCollections, MyGraph
+    graph = GraphCollections.get('petster-hamster')
+    for name, obj in vars(Stat).items():
+        if type(obj) == Stat:
+
+            # print(stat)
+            # print(stat.short, stat.description)
+            print(name, graph[obj])
 
 
 if __name__ == '__main__':

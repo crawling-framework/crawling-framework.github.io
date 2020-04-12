@@ -52,6 +52,13 @@ class MyGraph(object):
     # 
     #     return self.networkit_graph
 
+    def __getitem__(self, item):
+        from metrics import Stat
+        if isinstance(item, Stat):
+            return item.computer(self)
+        else:
+            raise KeyError("Unknown item type: %s" % type(item))
+
     def get_node_property_dict(self, property) -> dict:
         """
         Get a dictionary of nodes property. Read from file or compute and save if absent.
@@ -96,11 +103,12 @@ class MyGraph(object):
             snap.SaveEdgeList(self._snap_graph, self.path)
 
     @classmethod
-    def new_snap(cls, name='tmp', directed=False, weighted=False, format='ij'):
+    def new_snap(cls, snap_graph=None, name='tmp', directed=False, weighted=False, format='ij'):
         """
-        Create a new instance of MyGraph with an empty snap graph.
+        Create a new instance of MyGraph with a given snap graph.
+        :param snap_graph: initial snap graph, or empty if None
         :param name: name will be appended with current timestamp
-        :param directed:
+        :param directed: will be ignored if snap_graph is specified
         :param weighted:
         :param format:
         :return: MyGraph
@@ -109,16 +117,18 @@ class MyGraph(object):
         from datetime import datetime
         path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
         
-        # if snap_graph:
-        #     if isinstance(snap_graph, snap.TNGraph):
-        #         directed = True
-        #     elif isinstance(snap_graph, snap.TUNGraph):
-        #         directed = False
-        # else:
-        #     snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
+        if snap_graph:
+            if isinstance(snap_graph, snap.PNGraph):
+                directed = True
+            elif isinstance(snap_graph, snap.PUNGraph):
+                directed = False
+            else:
+                raise TypeError("Unknown snap graph type: %s" % type(snap_graph))
+        else:
+            snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
 
         graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
-        graph._snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
+        graph._snap_graph = snap_graph
         return graph
 
 

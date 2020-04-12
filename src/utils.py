@@ -8,4 +8,4 @@ PICS_DIR = os.path.join(rel_dir, 'pics')  # directory to store pictures
 
 COLLECTIONS = ['konect', 'networkrepository']
 
-CENTRALITIES = ['degree', 'betweenness', 'eccentricity', 'closeness', 'pagerank', 'k-coreness']
+CENTRALITIES = ['degree', 'betweenness', 'eccentricity', 'closeness', 'pagerank', 'clustering', 'k-coreness']
