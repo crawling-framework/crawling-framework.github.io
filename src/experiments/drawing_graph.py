@@ -8,10 +8,6 @@ import networkx as nx
 from tqdm import tqdm
 
 
-# import snap
-# from graph_io import GraphCollections
-
-
 def snap_to_nx_graph(snap_graph):
     nx_graph = nx.Graph()
     for NI in snap_graph.Nodes():
@@ -89,6 +85,4 @@ def make_png_history(snap_graph, pngs_path, crawler_history_path, method_name=''
 # gif_export_path = './data/graph_traversal.gif'
 
 
-# def draw_all(graph_path, pngs_path, crawler_history_path, gif_export_path,method_name='', labels=False, pos=None):
-
-# make_gif_from_png(gif_export_path)
+# def draw_crawling_curve(crawler_history_path, )

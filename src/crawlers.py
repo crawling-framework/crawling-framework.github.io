@@ -9,6 +9,7 @@ from operator import itemgetter
 import numpy as np
 import snap
 from numpy import random
+from scipy import stats
 
 from centralities import get_top_centrality_nodes
 from experiments import drawing_graph
@@ -220,10 +221,10 @@ class RandomCrawler(MultiSeedCrawler):
 
 
 class MaximumObservedDegreeCrawler(MultiSeedCrawler):
-    def __init__(self, orig_graph: MyGraph, top_k_mod=1):
+    def __init__(self, orig_graph: MyGraph, top_k=1):
         super().__init__(orig_graph)
         self.mod_queue = []
-        self.top_k_mod = top_k_mod
+        self.top_k = top_k  # crawling by batches if > 1 # TODO make another MOD crawler with batches
         self.method_name = 'MOD'
 
     def next_seed(self):
@@ -232,9 +233,31 @@ class MaximumObservedDegreeCrawler(MultiSeedCrawler):
                         if node.GetId() not in self.crawled_set}
 
             heap = [(-value, key) for key, value in deg_dict.items()]
-            min_iter = min(self.top_k_mod, len(deg_dict))
-            self.mod_queue = [heapq.nsmallest(self.top_k_mod, heap)[i][1] for i in range(min_iter)]
+            min_iter = min(self.top_k, len(deg_dict))
+            self.mod_queue = [heapq.nsmallest(self.top_k, heap)[i][1] for i in range(min_iter)]
         return self.mod_queue.pop(0)
+
+
+class PreferentialObservedDegreeCrawler(MultiSeedCrawler):
+    def __init__(self, orig_graph: MyGraph, top_k=1):
+        super().__init__(orig_graph)
+        self.discrete_distribution = None
+        self.pod_queue = []  # queue of nodes to proceed in batch
+        self.top_k = top_k  # crawling by batches if > 1 #
+        self.method_name = 'POD'
+
+    def next_seed(self):
+        if len(self.pod_queue) == 0:  # when batch ends, we create another one
+            prob_func = {node.GetId(): node.GetDeg() for node in self.observed_graph.snap.Nodes()
+                         if node.GetId() not in self.crawled_set}
+            keys, values = zip(*prob_func.items())
+            values = np.array(values) / sum(values)
+
+            self.discrete_distribution = stats.rv_discrete(values=(keys, values))
+            self.pod_queue = [self.discrete_distribution.rvs(size=self.top_k)]
+
+        # print("node degrees (probabilities)", prob_func)
+        return self.pod_queue.pop(0)
 
 
 class AvrachenkovCrawler(Crawler, ABC):
@@ -340,11 +363,14 @@ if os.path.exists(file_path):
 else:
     os.makedirs(file_path)
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-logging.getLogger().setLevel(logging.DEBUG)
-
+# import logging
+# mpl_logger = logging.getLogger('matplotlib')
+# print('logger is ', mpl_logger)
+# mpl_logger.setLevel(logging.INFO)
+# print('logger is ', mpl_logger)
 #
-
+logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.CRITICAL)
+logging.getLogger().setLevel(logging.CRITICAL)
 
 Graph = MyGraph.new_snap(name='test', directed=False)
 Graph._snap_graph = test_graph()  # GraphCollections.get('dolphins').snap  #
@@ -352,14 +378,15 @@ print("N=%s E=%s" % (Graph.snap.GetNodes(), Graph.snap.GetEdges()))
 
 total_budget = 100  # min(100,Graph.snap.GetNodes())
 n1 = 1
-top_k_mod = 5
+top_k = 5
 k = 4
 pos = None
-crawlers_dictionary = {'MOD': MaximumObservedDegreeCrawler,
-                       'DFS': DepthFirstSearchCrawler,
-                       'RW_': RandomWalk,
-                       'BFS': BreadthFirstSearchCrawler,
-                       'RC_': RandomCrawler,
+crawlers_dictionary = {'POD': PreferentialObservedDegreeCrawler,
+                       # MOD': MaximumObservedDegreeCrawler,
+                       # 'DFS': DepthFirstSearchCrawler,
+                       # 'RW_': RandomWalk,
+                       # 'BFS': BreadthFirstSearchCrawler,
+                       # 'RC_': RandomCrawler,
                        }
 
 crawlers = [(name, crawlers_dictionary[name]) for name in crawlers_dictionary]
@@ -367,7 +394,7 @@ crawlers = [(name, crawlers_dictionary[name]) for name in crawlers_dictionary]
 for method_name, Crawler_class in crawlers:
     print("Running {} with budget={}".format(method_name, total_budget))
     if method_name == 'MOD':
-        crawler = Crawler_class(Graph, top_k_mod=top_k_mod)
+        crawler = Crawler_class(Graph, top_k=top_k)
         crawler.crawl_multi_seed(n1=n1)
     else:
         crawler = Crawler_class(Graph)
@@ -404,3 +431,4 @@ for method_name, Crawler_class in crawlers:
 
 
 # 'AVR':AvrachenkovCrawler,
+
