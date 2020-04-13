@@ -305,7 +305,8 @@ class AvrachenkovCrawler(Crawler, ABC):
 
 def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
                    top_set=False, jsons=False, gif=False, ending_sets=False):
-    """
+    """   # TODO other arguments like top_k=False,
+
     The core function that takes crawler and does everything with it (crawling budget, export results....)
     :param crawler_name: example of Crawler class (preferably MultiSeedCrawler class )  
     :param total_budget:  how many crawling operations we could make
@@ -316,7 +317,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
     :param gif:   if need to make gif from traversal history
     :param ending_sets: if need to make json files of crawled and observed sets at the end of crawling
     :return:
-    """  # TODO other arguments like top_k=False,
+    """
 
     if crawler_name in ('MOD', 'POD'):
         crawler = CRAWLERS_DICTIONARY[crawler_name](Graph, top_k=top_k)
