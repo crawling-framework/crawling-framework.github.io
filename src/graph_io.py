@@ -3,6 +3,7 @@ import os.path
 import shutil
 import urllib.request
 
+import networkx as nx
 import patoolib
 
 from utils import GRAPHS_DIR, COLLECTIONS, CENTRALITIES, TMP_GRAPHS_DIR
@@ -101,7 +102,7 @@ class MyGraph(object):
             snap.SaveEdgeList(self._snap_graph, self.path)
 
     def load_snap_edge_list(self):
-        with open(self.path, 'r') as f:
+        with open(self.path, 'r') as f:  # TODO: Denis is it ok, that f is not used?
             import snap
             snap.LoadEdgeList(self._snap_graph, self.path)
 
@@ -130,6 +131,21 @@ class MyGraph(object):
         graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
         graph._snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
         return graph
+
+    @property  # Denis:  could be useful to handle nx version of graph
+    def networkx_graph(self):
+        nx_graph = nx.Graph()
+        for NI in self._snap_graph.Nodes():
+            nx_graph.add_node(NI.GetId())
+            for Id in NI.GetOutEdges():
+                nx_graph.add_edge(NI.GetId(), Id)
+
+        return nx_graph
+
+    @property
+    def graph_layout_pos(self):  # used in drawing graph
+        """position of nodes in the plot is a property of the graph to draw similar graph several times"""
+        return nx.spring_layout(self.networkx_graph, iterations=100)
 
 
 def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_with='#%',
@@ -196,10 +212,10 @@ class GraphCollections(object):
                     temp_path, GraphCollections.konect_url_pattern % name)
 
             elif collection == 'networkrepository':
-                raise NotImplementedError()
                 category = name.split('-')[0]
                 GraphCollections._download_networkrepository(
                     temp_path, GraphCollections.networkrepository_url_pattern % (category, name))
+                raise NotImplementedError()
 
             reformat_graph_file(temp_path, path, out_format=format, remove_original=True)
 

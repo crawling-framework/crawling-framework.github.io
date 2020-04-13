@@ -10,9 +10,11 @@ import numpy as np
 import snap
 from numpy import random
 from scipy import stats
+from tqdm import tqdm
 
 from centralities import get_top_centrality_nodes
 from experiments import drawing_graph
+from graph_io import GraphCollections
 from graph_io import MyGraph
 
 
@@ -85,19 +87,20 @@ class MultiSeedCrawler(Crawler, ABC):
         self.initial_seeds = []  # list of initial seeds to iter or jump into
         self.budget_left = 1  # how many iterations left. stops when 0
         # print("n1={}, budget={}, nodes={}".format(self.n1, self.budget_left, self.orig_graph.snap.GetNodes()))
-        self.method_name = ""  # will be used in names of files
+        self.crawler_name = ""  # will be used in names of files
 
     def crawl_multi_seed(self, n1):
         if n1 <= 0:  # if there is no parallel seeds, method do nothing
             return False
         graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
         multi_seeds = [int(node) for node in np.random.choice(graph_nodes, n1)]
-        print("seeds for multi crawl:", multi_seeds)
+        # print("seeds for multi crawl:", multi_seeds)
         for seed in multi_seeds:
             self.crawl(seed)
-            self.sequence_append(seed)
+            # self.sequence_append(seed)  # TODO export from here to Crawler_Runner
 
         print("observed set", list(self.observed_set))
+        return multi_seeds
 
     def crawl(self, seed):
         """
@@ -122,12 +125,12 @@ class MultiSeedCrawler(Crawler, ABC):
     def crawl_budget(self, budget, p=0, file=False):
         """
         Crawl until done budget
-        :param p: probability to jump into one of self.initial_seed nodes
+        :param p: probability to jump into one of self.initial_seed nodes  # TODO do something with it. Mb delete?
         :param budget: how many iterations left
         :param file: - if you need to
         :return:
         """
-        self.budget_left = min(budget, self.orig_graph.snap.GetNodes() - 1)
+        self.budget_left = min(budget, self.orig_graph.snap.GetNodes() - 1)  # TODO what is that MIN??
         if random.randint(0, 100, 1) < p * 100:
             print("variety play")
             self.crawl(int(np.random.choice(self.initial_seeds, 1)[0]))
@@ -138,28 +141,17 @@ class MultiSeedCrawler(Crawler, ABC):
             seed = self.next_seed()
             self.crawl(seed)
 
-            if file:
-                self.sequence_append(seed)
-            # logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
-            #               (seed, self.crawled_set, self.observed_set, self.nodes_set))
-
-    def sequence_append(self, seed):
-        self.seed_sequence_.append(int(seed))  # TODO: need to be optimized in outer scope
-        with open("./data/crawler_history/crawled{}{}.json".format(self.method_name,
-                                                                   str(len(self.seed_sequence_)).zfill(6)),
-                  'w') as cr_file:
-            json.dump(list(self.crawled_set), cr_file)
-        with open("./data/crawler_history/observed{}{}.json".format(self.method_name,
-                                                                    str(len(self.seed_sequence_)).zfill(6)),
-                  'w') as ob_file:
-            json.dump(list(self.observed_set), ob_file)
+            # if file:
+            self.seed_sequence_.append(int(seed))
+            logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
+                          (seed, self.crawled_set, self.observed_set, self.nodes_set))
 
 
 class RandomWalk(MultiSeedCrawler):
     def __init__(self, orig_graph: MyGraph):
         super().__init__(orig_graph)
         self.prev_seed = 1  # previous node, that was already crawled
-        self.method_name = 'RW_'
+        self.crawler_name = 'RW_'
 
     def next_seed(self):
         node_neighbours = self.observed_graph.neighbors(self.prev_seed)
@@ -177,7 +169,7 @@ class BreadthFirstSearchCrawler(MultiSeedCrawler):  # в ширину
     def __init__(self, orig_graph: MyGraph):
         super().__init__(orig_graph)
         self.bfs_queue = []
-        self.method_name = 'BFS'
+        self.crawler_name = 'BFS'
 
     def next_seed(self):
         while self.bfs_queue[0] not in self.observed_set:
@@ -195,7 +187,7 @@ class DepthFirstSearchCrawler(MultiSeedCrawler):  # TODO
         super().__init__(orig_graph)
         self.dfs_queue = []
         self.dfs_counter = 0
-        self.method_name = 'DFS'
+        self.crawler_name = 'DFS'
         # int(random.choice(tuple(self.observed_set)))
 
     def next_seed(self):
@@ -214,7 +206,7 @@ class DepthFirstSearchCrawler(MultiSeedCrawler):  # TODO
 class RandomCrawler(MultiSeedCrawler):
     def __init__(self, orig_graph: MyGraph):
         super().__init__(orig_graph)
-        self.method_name = 'RC_'
+        self.crawler_name = 'RC_'
 
     def next_seed(self):
         return random.choice(tuple(self.observed_set))
@@ -225,7 +217,7 @@ class MaximumObservedDegreeCrawler(MultiSeedCrawler):
         super().__init__(orig_graph)
         self.mod_queue = []
         self.top_k = top_k  # crawling by batches if > 1 # TODO make another MOD crawler with batches
-        self.method_name = 'MOD'
+        self.crawler_name = 'MOD'
 
     def next_seed(self):
         if len(self.mod_queue) == 0:  # making array of topk degrees
@@ -244,7 +236,7 @@ class PreferentialObservedDegreeCrawler(MultiSeedCrawler):
         self.discrete_distribution = None
         self.pod_queue = []  # queue of nodes to proceed in batch
         self.top_k = top_k  # crawling by batches if > 1 #
-        self.method_name = 'POD'
+        self.crawler_name = 'POD'
 
     def next_seed(self):
         if len(self.pod_queue) == 0:  # when batch ends, we create another one
@@ -254,7 +246,7 @@ class PreferentialObservedDegreeCrawler(MultiSeedCrawler):
             values = np.array(values) / sum(values)
 
             self.discrete_distribution = stats.rv_discrete(values=(keys, values))
-            self.pod_queue = [self.discrete_distribution.rvs(size=self.top_k)]
+            self.pod_queue = [node for node in self.discrete_distribution.rvs(size=self.top_k)]
 
         # print("node degrees (probabilities)", prob_func)
         return self.pod_queue.pop(0)
@@ -274,7 +266,7 @@ class AvrachenkovCrawler(Crawler, ABC):
         self.n1 = n1
         self.n = n
         self.k = k
-        self.method_name = 'AVR'
+        self.crawler_name = 'AVR'
 
     def first_step(self):
         graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
@@ -309,6 +301,143 @@ class AvrachenkovCrawler(Crawler, ABC):
         # Take top-k of degrees
         hubs_detected = get_top_centrality_nodes(self.observed_graph, 'degree', self.k)
         return hubs_detected
+
+
+def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
+                   top_set=False, jsons=False, gif=False, ending_sets=False):
+    """
+    The core function that takes crawler and does everything with it (crawling budget, export results....)
+    :param crawler_name: example of Crawler class (preferably MultiSeedCrawler class )  
+    :param total_budget:  how many crawling operations we could make
+    :param n1:    number of random crawled nodes at the beggining. n1<2 if dont need to.
+    :param top_set: dictionary of needed sets of nodes to intersect in history ( {degree: {1,2,3,},kcore: {1,3,6,}}...)
+    :param jsons: if need to export final dumps of crawled and observed sets after ending
+    :param pngs:  if need to export pngs  in
+    :param gif:   if need to make gif from traversal history
+    :param ending_sets: if need to make json files of crawled and observed sets at the end of crawling
+    :return:
+    """  # TODO other arguments like top_k=False,
+
+    if crawler_name in ('MOD', 'POD'):
+        crawler = CRAWLERS_DICTIONARY[crawler_name](Graph, top_k=top_k)
+    else:
+        crawler = CRAWLERS_DICTIONARY[crawler_name](Graph)
+
+    if gif:  # TODO need to replace directories in utils.py after all and make normal directions
+        graph_path = './data/crawler_history/'
+        crawler_history_path = "./data/crawler_history/"
+        pngs_path = "./data/gif_files/"
+        gif_export_path = './data/graph_traversal.gif'
+
+        # for drawing
+        from matplotlib import pyplot as plt
+
+        # print(layout_pos)
+        # print([i for i in layout_pos])
+        # fig, ax = plt.subplots()
+        # print("lp",[layout_pos[v][0] for v in layout_pos])
+        # axis_x_coords = [layout_pos[v][0] for v in layout_pos]
+        # axis_y_coords = [layout_pos[v][1] for v in layout_pos]
+
+        # file preparing
+        if os.path.exists(pngs_path):
+            for file in glob.glob(pngs_path + crawler_name + "*.png"):
+                os.remove(file)
+        else:
+            os.makedirs(pngs_path)
+
+        # with open(crawler_history_path + 'sequence.json', 'r') as f:
+        #    sequence = json.load(f)
+
+    if top_set:  # TODO need to make plots for every centrality (utils.py CENTRALITIES)
+        top_set = dict()
+        centralities = top_set.keys()
+        history_plots = {centr: [] for centr in centralities}  # list of numbers of intersections for every step
+        # plot of crawled history will be just plotting this graph plt.plot( history_plots.)
+        # TODO + all node set. it was 'nodes' in our paper
+
+    if n1:  # crawl first n1 seeds
+        print('RUNNER: crawl_multi_seed{}'.format(n1))
+        crawler.crawl_multi_seed(n1=n1)
+
+    for iterator in tqdm(range(total_budget)):  # TODO when it must count? mb For?
+        # print('RUNNER: iteration:{}/{}'.format(iterator,total_budget))
+        crawler.crawl_budget(1)  # file=True)  # TODO return crawling export in files
+
+        if gif:
+
+            from networkx import draw
+            # TODO some strange things coulf happen, because need to give @pos back
+            last_seed = crawler.seed_sequence_[-1]
+            networkx_graph = crawler.orig_graph.networkx_graph
+
+            # coloring nodes
+            s = [n.GetId() for n in crawler.orig_graph.snap.Nodes()]
+            s.sort()
+            gen_node_color = ['gray'] * (max(s) + 1)
+            for node in crawler.observed_set:
+                #    print(node, gen_node_color)
+                gen_node_color[node] = 'y'
+            for node in crawler.crawled_set:
+                gen_node_color[node] = 'cyan'
+            gen_node_color[last_seed] = 'red'
+
+            plt.title(str(iterator) + '/' + "cur:" + str(last_seed) + " craw:" + str(crawler.crawled_set))
+            draw(networkx_graph, pos=layout_pos, with_labels=True, node_size=80,
+                 node_color=[gen_node_color[node] for node in networkx_graph.nodes]
+                 # if node in networkx_graph.nodes()]
+                 )
+            # plt.xlim(min(axis_x_coords) - 1, max(axis_x_coords) + 1)
+            # plt.ylim(min(axis_y_coords) - 1, max(axis_y_coords) + 1)
+
+            plt.savefig(pngs_path + '/gif{}{}.png'.format(crawler_name, str(iterator).zfill(3)))
+            plt.clf()
+
+    #   TODO: condition to finish:  if all nodes are observed or crawled
+
+    # drawing_graph.draw_new_png(crawler.observed_graph, crawler.observed_set, crawler.crawled_set,
+    #                          iterator, last_seed=crawler.seed_sequence_[-1], pngs_path=pngs_path,
+    #                           crawler_name = crawler_name, labels = False)
+    # if top_set: # TODO every (successful) crawling iteration need to calculate intersection and write in history_plots
+
+    # TODO uncomment this or do something with empty nodes
+    # nx_graph = crawler.observed_graph.networkx_graph  # snap_to_nx_graph(snap_graph)
+    # # node_list = list(nx_graph.nodes())
+    # print("----", crawler.observed_set, crawler.crawled_set)
+    # for node in range(max(nx_graph.nodes())):  # filling empty indexes in graph
+    #     if node not in nx_graph.nodes():
+    #         nx_graph.add_node(1)
+    #         print('i added node', node)
+
+    if gif:
+        drawing_graph.make_gif(crawler_name=crawler_name, pngs_path=pngs_path)
+
+    print(crawler_name + ": after first: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
+          " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
+
+    if ending_sets:  # TODO need a debug and to imagine a usage (why we need it?)
+        # crawler.seed_sequence_.append(int(seed))  # TODO: need to be optimized in outer scope
+        with open("./data/crawler_history/crawled{}{}.json".format(crawler.crawler_name,
+                                                                   str(len(crawler.seed_sequence_)).zfill(6)),
+                  'a') as cr_file:
+            json.dump(list(crawler.crawled_set), cr_file)
+        with open("./data/crawler_history/observed{}{}.json".format(crawler.crawler_name,
+                                                                    str(len(crawler.seed_sequence_)).zfill(6)),
+                  'a') as ob_file:
+            json.dump(list(crawler.observed_set), ob_file)
+
+    return crawler
+
+
+# using simple dictionary to work with crawlers. aAlso .keys of it are names of crawlers for files
+CRAWLERS_DICTIONARY = {'POD': PreferentialObservedDegreeCrawler,
+                       'MOD': MaximumObservedDegreeCrawler,
+                       'DFS': DepthFirstSearchCrawler,
+                       'BFS': BreadthFirstSearchCrawler,
+                       'RW_': RandomWalk,
+                       'RC_': RandomCrawler,
+                       'AVR': AvrachenkovCrawler,  # dont use, it iscompletely different
+                       }
 
 
 def test_graph():
@@ -348,87 +477,46 @@ def test_graph():
     return g
 
 
-# if __name__ == '__main__':
-file_path = "./data/crawler_history/"
-if os.path.exists(file_path):
-    for file in glob.glob("./data/crawler_history/*.json"):
-        os.remove(file)
-else:
-    os.makedirs(file_path)
-
-file_path = "./data/gif_files/"
-if os.path.exists(file_path):
-    for file in glob.glob("./data/gif_files/*.png"):
-        os.remove(file)
-else:
-    os.makedirs(file_path)
-
-# import logging
-# mpl_logger = logging.getLogger('matplotlib')
-# print('logger is ', mpl_logger)
-# mpl_logger.setLevel(logging.INFO)
-# print('logger is ', mpl_logger)
-#
-logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.CRITICAL)
-logging.getLogger().setLevel(logging.CRITICAL)
-
-Graph = MyGraph.new_snap(name='test', directed=False)
-Graph._snap_graph = test_graph()  # GraphCollections.get('dolphins').snap  #
-print("N=%s E=%s" % (Graph.snap.GetNodes(), Graph.snap.GetEdges()))
-
-total_budget = 100  # min(100,Graph.snap.GetNodes())
-n1 = 1
-top_k = 5
-k = 4
-pos = None
-crawlers_dictionary = {'POD': PreferentialObservedDegreeCrawler,
-                       # MOD': MaximumObservedDegreeCrawler,
-                       # 'DFS': DepthFirstSearchCrawler,
-                       # 'RW_': RandomWalk,
-                       # 'BFS': BreadthFirstSearchCrawler,
-                       # 'RC_': RandomCrawler,
-                       }
-
-crawlers = [(name, crawlers_dictionary[name]) for name in crawlers_dictionary]
-
-for method_name, Crawler_class in crawlers:
-    print("Running {} with budget={}".format(method_name, total_budget))
-    if method_name == 'MOD':
-        crawler = Crawler_class(Graph, top_k=top_k)
-        crawler.crawl_multi_seed(n1=n1)
+if __name__ == '__main__':
+    file_path = "./data/crawler_history/"
+    if os.path.exists(file_path):
+        for file in glob.glob("./data/crawler_history/*.json"):
+            os.remove(file)
     else:
-        crawler = Crawler_class(Graph)
-        crawler.crawl_multi_seed(n1=n1)
+        os.makedirs(file_path)
 
-    crawler.crawl_budget(total_budget, file=True)
-    # print("after first: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
-    #       " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
-    # print("after second: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
-    #       " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
-    # print("Total iterations:", len(crawler.seed_sequence_))
-    # print("sequence of seeds:", crawler.seed_sequence_)
+    file_path = "./data/gif_files/"
+    if os.path.exists(file_path):
+        for file in glob.glob("./data/gif_files/*.png"):
+            os.remove(file)
+    else:
+        os.makedirs(file_path)
 
-    with open("./data/crawler_history/sequence.json", 'w') as f:
-        json.dump(crawler.seed_sequence_, f)
+    logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.CRITICAL)
+    logging.getLogger().setLevel(logging.CRITICAL)
 
-    crawler.orig_graph.path = './data/crawler_history/orig_graph.txt'
-    crawler.orig_graph.save_snap_edge_list()
-    print('saved')
+    Graph = MyGraph.new_snap(name='test', directed=False)
+    Graph._snap_graph = GraphCollections.get('dolphins').snap  # test_graph()  #
+    Graph.snap.AddNode(0)
+    Graph.snap.AddEdge(0, 1)
+    layout_pos = Graph.graph_layout_pos
 
-    print("drawing")
-    graph_path = './data/crawler_history/'
-    crawler_history_path = "./data/crawler_history/"
-    pngs_path = "./data/gif_files/"
-    gif_export_path = './data/graph_traversal.gif'
+    print("N=%s E=%s" % (Graph.snap.GetNodes(), Graph.snap.GetEdges()))
 
-    pos = drawing_graph.make_png_history(crawler.orig_graph.snap, pngs_path, crawler_history_path,
-                                         method_name, pos=pos, labels=True)
+    # min(100,Graph.snap.GetNodes())
+    n1 = 1
+    total_budget = min(100 - n1, Graph.snap.GetNodes())
+    top_k = 5
+    k = 4
+    # pos = None  # position layout for drawing similar graphs (with nodes on same positions). updates at the end
 
-# if method_name == 'AVR':
-#     crawler = Crawler_class(Graph, n1=n1, k=k, n=total_budget)
-#     crawler.first_step()
-#     crawler.second_step()
+    # crawlers = [(name, crawlers_dictionary[name]) for name in crawlers_dictionary]
+    crawlers = ['MOD', 'POD', 'DFS', 'BFS', 'RW_', 'RC_']
 
-
-# 'AVR':AvrachenkovCrawler,
-
+    for crawler_name in crawlers:
+        print("Running {} with budget={}, n1=n1".format(crawler_name, total_budget, n1))
+        crawler = Crawler_Runner(Graph, crawler_name, total_budget=total_budget, n1=n1,
+                                 gif=True)
+        # TODO export seed sequence somewhere
+        # with open("./data/crawler_history/sequence.json", 'w') as f:
+        #    json.dump(crawler.seed_sequence_, f)
