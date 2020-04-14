@@ -355,7 +355,7 @@ def test_ba_model():
     print('assortativity', assortativity(graph))
 
 
-def test_edge_switching(graph):
+def test_edge_switching(graph, r=None):
     import matplotlib.pyplot as plt
     plt.ion()
 
@@ -389,13 +389,16 @@ def test_edge_switching(graph):
     r1 = (mul - sum2 ** 2) / (sum_sq2 - sum2 ** 2)
     print("Initial r=", r1)
 
+    plt.xlabel('iterations')
+    plt.ylabel('assortativity')
     # edge switches
-    for iteration in range(100000):
+    for iteration in range(1000000):
         if iteration % 10000 == 0:
             print("r1", r1)  # fixme recompute r1 due to error cumulation
             print("graph N=%d E=%d" % (g.GetNodes(), g.GetEdges()))
             print('iteration %d, assort %s' % (iteration, assortativity(graph)))
-            plt.plo
+            plt.plot(iteration, r1, color='r', linestyle='-', marker='o')
+            plt.pause(0.005)
 
         # Pick 2 random edges: j1-j2, k1-k2 such that j1-k2 and k1-j2 don't exist
         j1 = src_deg_list[np.random.randint(m)]
@@ -422,11 +425,14 @@ def test_edge_switching(graph):
         dk2 = node_deg[k2] - 1
 
         # switch probability
-        new_mul = mul - (dj1*dj2 + dk1*dk2)/m + (dj1*dk2 + dk1*dj2)/m
-        r2 = (new_mul - sum2 ** 2) / (sum_sq2 - sum2 ** 2)
-        # prob = np.exp((r1-r2)*(r1+r2-2*r)/0.000001)
-        # print("prob", prob)
-        prob = 1
+        if r:
+            new_mul = mul - (dj1*dj2 + dk1*dk2)/m + (dj1*dk2 + dk1*dj2)/m
+            r2 = (new_mul - sum2 ** 2) / (sum_sq2 - sum2 ** 2)
+
+            prob = np.exp((r1-r2)*(r1+r2-2*r)/0.000001)
+            # print("prob", prob)
+        else:
+            prob = 1
 
         if np.random.random() < prob:  # make a switch
             g.DelEdge(j1, j2)
@@ -460,4 +466,7 @@ if __name__ == '__main__':
     # test_assort_config_model()
     # test_conf_model()
     # test_ba_model()
-    test_edge_switching(graph)
+    test_edge_switching(graph, r=-0.8)
+
+    plt.grid()
+    plt.show()
