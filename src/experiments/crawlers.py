@@ -125,34 +125,130 @@ class AvrachenkovCrawler(Crawler):
         return hubs_detected
 
 
+class TwoStageCrawler(Crawler):
+    def __init__(self, graph, n=1000, s=500, p=0.1):
+        super().__init__(graph)
+        assert s <= n <= int(p*self.orig_graph.snap.GetNodes())
+        self.s = s
+        self.n = n
+        self.pN = int(p*self.orig_graph.snap.GetNodes())
+
+    def first_step(self):
+        graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
+        N = len(graph_nodes)
+
+        i = 0
+        while True:
+            seed = graph_nodes[np.random.randint(N)]
+            if seed in self.crawled_set:
+                continue
+            self.crawl(seed)
+            i += 1
+            if i == self.s:
+                break
+
+    def second_step(self):
+        # Get n-s max degree observed nodes
+        e1 = []
+        g = self.observed_graph.snap
+        for o_id in self.observed_set:
+            deg = g.GetNI(o_id).GetDeg()
+            e1.append((o_id, deg))
+
+        e1s = sorted(e1, key=itemgetter(1), reverse=True)[:self.n-self.s]
+
+        # Crawl chosen nodes
+        [self.crawl(n) for n, _ in e1s]
+
+        e2e1 = []
+        for o_id in self.observed_set:
+            deg = g.GetNI(o_id).GetDeg()
+            e2e1.append((o_id, deg))
+
+        top_from_observed = list(self.observed_set)
+        #top_from_observed = sorted(e2e1, key=itemgetter(1), reverse=True)[:self.pN - self.n + self.s]
+        [top_from_observed.append(n) for n, _ in e1s]
+
+        return set(top_from_observed)
+
+
+def test_initial_graph(i: str):
+    from graph_io import GraphCollections
+    if i == "reall":
+        # name = 'soc-pokec-relationships'
+        # name = 'petster-friendships-cat'
+        name = 'petster-hamster'
+        # name = 'twitter'
+        # name = 'libimseti'
+        # name = 'advogato'
+        # name = 'facebook-wosn-links'
+        # name = 'soc-Epinions1'
+        # name = 'douban'
+        # name = 'slashdot-zoo'
+        # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
+        graph = GraphCollections.get(name)
+        print("N=%s E=%s" % (graph.snap.GetNodes(), graph.snap.GetEdges()))
+    else:
+        g = snap.TUNGraph.New()
+        g.AddNode(1)
+        g.AddNode(2)
+        g.AddNode(3)
+        g.AddNode(4)
+        g.AddNode(5)
+        g.AddEdge(1, 2)
+        g.AddEdge(2, 3)
+        g.AddEdge(4, 2)
+        g.AddEdge(4, 3)
+        g.AddEdge(5, 4)
+        print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
+        graph = MyGraph.new_snap(name='test', directed=False)
+        graph.snap_graph = g
+    return graph
+
+
 def test():
-    g = snap.TUNGraph.New()
-    g.AddNode(1)
-    g.AddNode(2)
-    g.AddNode(3)
-    g.AddNode(4)
-    g.AddNode(5)
-    g.AddEdge(1, 2)
-    g.AddEdge(2, 3)
-    g.AddEdge(4, 2)
-    g.AddEdge(4, 3)
-    g.AddEdge(5, 4)
-    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-    graph = MyGraph.new_snap(name='test', directed=False)
-    graph.snap_graph = g
 
-    # crawler = Crawler(graph)
-    # for i in range(1, 6):
-    #     crawler.crawl(i)
-    #     print("crawled:%s, observed:%s, all:%s" %
-    #           (crawler.crawled_set, crawler.observed_set, crawler.nodes_set))
+    # GRAPH
+    graph = test_initial_graph("reall")
 
-    crawler = RandomCrawler(graph)
-    crawler.crawl_budget(15)
+    # Directory for save
+    import os
+    import glob
+    from utils import PICS_DIR
+    file_path = PICS_DIR + "/TwoStageCrawler" + "/" + graph.name + "/"
+    if os.path.exists(file_path):
+        for file in glob.glob(file_path + "*.png"):
+            os.remove(file)
+    else:
+        os.makedirs(file_path)
+
+    # Target array
+    p = 0.1
+    from centralities import get_top_centrality_nodes
+    vs = set(get_top_centrality_nodes(graph, 'degree', int(p*len(graph.snap.Nodes()))))
+    assert abs(len(vs) - len(graph.snap.Nodes())) <= 0.5
+
+    # Crawling and drawing
+    from matplotlib import pyplot as plt
+    for s in range(50, 100, 10):
+        print("-----------------%s------------------------" % s)
+        history = dict()
+        for n in range(s, 242, 50):
+            crawler = TwoStageCrawler(graph, n, s, p)
+            crawler.first_step()
+            hubs_detected = crawler.second_step()
+            mu = len(vs.intersection(hubs_detected)) #/ len(vs)
+            #mu = len(hubs_detected)
+            history[n] = mu
+        x, y = zip(*list(history.items()))
+        plt.plot(x, y, label="s=%s" % s, marker='o')
+        plt.savefig(file_path + str(s) + '_figure.png', dpi=300)
+    plt.legend()
+    plt.show()
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
 
     test()
