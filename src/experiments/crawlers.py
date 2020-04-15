@@ -225,8 +225,8 @@ def test():
     # Target array
     p = 0.1
     from centralities import get_top_centrality_nodes
-    vs = set(get_top_centrality_nodes(graph, 'degree', int(p*len(graph.snap.Nodes()))))
-    assert abs(len(vs) - len(graph.snap.Nodes())) <= 0.5
+    vs = set(get_top_centrality_nodes(graph, 'degree', int(p*graph.snap.GetNodes())))
+    assert abs(len(vs) - p*graph.snap.GetNodes()) <= 1
 
     # Crawling and drawing
     from matplotlib import pyplot as plt
