@@ -125,6 +125,92 @@ class AvrachenkovCrawler(Crawler):
         return hubs_detected
 
 
+class TwoStageCrawler(Crawler):
+    """
+    todo
+
+    """
+    def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1):
+        """
+        :param graph: original graph
+        :param s: number of initial random seed
+        :param n: number of nodes to be crawled, must be >= seeds
+        :param p: fraction of graph nodes to be returned
+        """
+        super().__init__(graph)
+        assert s <= n <= int(p*self.orig_graph.snap.GetNodes())
+        self.s = s
+        self.n = n
+        self.pN = int(p*self.orig_graph.snap.GetNodes())
+
+    def first_step(self, random_init=None):
+        """ 1) Crawl s random seeds (same as Avrachenkov), obtain E1 - first neighbourhood.
+        """
+        if random_init is not None:
+            np.random.seed(random_init)
+        graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
+        N = len(graph_nodes)
+
+        i = 0
+        while True:
+            seed = graph_nodes[np.random.randint(N)]
+            if seed in self.crawled_set:
+                continue
+            self.crawl(seed)
+            i += 1
+            if i == self.s:
+                break
+
+    def second_step(self):
+        """
+        2) Detect (n-s) nodes by MOD from E1 -> E1*. Crawl E1* and obtain E2 - second neighbourhood.
+        3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
+        """
+        # Get E1 - first neighbourhood with, their degrees.
+        e1 = []
+        o = self.observed_graph.snap
+        for o_id in self.observed_set:
+            deg = o.GetNI(o_id).GetDeg()
+            e1.append((o_id, deg))
+
+        # Check that e1 size is more than (n-s)
+        if self.n-self.s > len(e1):
+            logging.warning("%s: (n-s) must not be > |E1|, n-s=%s, |E1|=%s" %
+                            (type(self), self.n-self.s, len(e1)))
+
+        # Get n-s max degree observed nodes
+        self.e1s = [n for n, _ in sorted(e1, key=itemgetter(1), reverse=True)[:self.n-self.s]]
+
+        # Crawl chosen nodes
+        [self.crawl(n) for n in self.e1s]
+
+        # Get E2 - second neighbourhood, with their degrees.
+        e2 = []
+        for o_id in self.observed_set:
+            deg = o.GetNI(o_id).GetDeg()
+            e2.append((o_id, deg))
+
+        # Get v=(pN-n+s) max degree observed nodes
+        self.e2s = [n for n, _ in sorted(e2, key=itemgetter(1), reverse=True)[:self.pN - self.n + self.s]]
+
+        # Final answer - E* = E1* + E2*
+        self.es = set(self.e1s + self.e2s)
+        print("s=%s, n=%s" % (self.s, self.n))
+        print("len e1", len(e1))
+        print("len e1s", len(self.e1s))
+        print("len e2", len(e2))
+        print("len e2s", len(self.e2s))
+        print("len es", len(self.es))
+        print("pN", self.pN)
+        # assert len(es) == self.pN
+        return self.es
+        # top_from_observed = list(self.observed_set)
+        #top_from_observed = sorted(e2e1, key=itemgetter(1), reverse=True)[:self.pN - self.n + self.s]
+        # [top_from_observed.append(n) for n, _ in e1s]
+
+        # return set(top_from_observed)
+
+
 def test():
     g = snap.TUNGraph.New()
     g.AddNode(1)

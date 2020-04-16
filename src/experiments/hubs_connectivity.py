@@ -4,6 +4,7 @@ from operator import itemgetter
 import snap
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib_venn import venn3_circles, venn3
 
 from crawlers import Crawler, AvrachenkovCrawler
 from centralities import get_top_centrality_nodes
@@ -149,6 +150,62 @@ def test_avrachenkov(graph: MyGraph):
     plt.tight_layout()
 
 
+def test_hubs_search_by_mod(graph: MyGraph):
+    """ top-10% hubs detection from top-100 hubs by MOD in their neighbourhood
+    """
+    g = graph.snap
+    N = g.GetNodes()
+
+    hubs = get_top_centrality_nodes(graph, 'degree')
+
+    # top-10%
+    v = int(0.1*N)
+    V_target = set(get_top_centrality_nodes(graph, 'degree', count=v))
+
+    ks = range(10, v, int(v/20))
+    e2_in_vs = []
+    e2s_in_vs = []
+    h_in_vs = []
+    for k in ks:
+        top_hubs = hubs[:k]
+
+        # neighs
+        crawler = Crawler(graph)
+        [crawler.crawl(s) for s in top_hubs]
+        E2 = crawler.observed_set
+
+        o = crawler.observed_graph.snap
+        # o = g
+        E2_deg = [(n, o.GetNI(n).GetDeg()) for n in E2]
+
+        E2s = set([n for (n, _) in sorted(E2_deg, key=itemgetter(1), reverse=True)[:v-k]])
+        Es = E2s.union(top_hubs)
+
+        h = len(top_hubs)/len(V_target)
+        e2 = len(V_target.intersection(E2))/len(V_target)
+        e = len(V_target.intersection(Es))/len(V_target)
+        e2_in_vs.append(e2+h)
+        e2s_in_vs.append(e)
+        h_in_vs.append(h)
+        # print("size of E2", len(E2))
+        # print("size of Es", len(Es))
+        # print("size of V_target", len(V_target))
+        # print("recall", 1-len(V_target-Es)/len(V_target))
+
+        plt.clf()
+        plt.plot(ks[:len(e2_in_vs)], e2_in_vs, marker='o', color='g', label=r'seed hubs and $\epsilon_2$')
+        plt.plot(ks[:len(e2_in_vs)], e2s_in_vs, marker='o', color='b', label=r'$\epsilon^*$')
+        plt.plot(ks[:len(e2_in_vs)], h_in_vs, marker='o', color='r', label=r'seed hubs')
+        # venn3([E2, Es, V_target], set_labels=["E2", "E*", "V*"])
+        plt.legend()
+        plt.xlabel('# of hubs as seeds')
+        plt.ylabel(r'$V^*$ coverage')
+        plt.title(r"Graph %s:  $N=%d, E=%d, d_{max}=%d$" % (
+            graph.name, g.GetNodes(), g.GetEdges(), g.GetNI(snap.GetMxDegNId(g)).GetDeg()))
+        plt.grid()
+        plt.pause(0.005)
+
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.INFO)
@@ -166,7 +223,8 @@ if __name__ == '__main__':
     #     print(name, get_avg_deg_hubs(g, 100)/g.GetNodes())
     g = GraphCollections.get(name)
     
-    compute_reachability(g)
+    # compute_reachability(g)
     # test_avrachenkov(g)
+    test_hubs_search_by_mod(g)
 
     plt.show()
