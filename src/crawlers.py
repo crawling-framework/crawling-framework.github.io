@@ -3,12 +3,12 @@ import heapq
 import json
 import logging
 import os
+import random
 from abc import ABC
 from operator import itemgetter
 
 import numpy as np
 import snap
-from numpy import random
 from scipy import stats
 from tqdm import tqdm
 
@@ -98,7 +98,7 @@ class MultiSeedCrawler(Crawler, ABC):
         self.initial_seeds = [int(node) for node in np.random.choice(graph_nodes, n1)]
         for seed in self.initial_seeds:
             self.crawl(seed)
-        print("observed set", list(self.observed_set))
+        print("observed set after multiseed", list(self.observed_set))
 
     def crawl(self, seed):
         """
@@ -133,7 +133,7 @@ class MultiSeedCrawler(Crawler, ABC):
         :return:
         """
         self.budget_left = min(budget, self.observed_graph.snap.GetNodes() - 1)
-        if random.randint(0, 100, 1) < p * 100:
+        if np.random.randint(0, 100, 1) < p * 100:  # TODO to play with this dead staff
             print("variety play")
             self.crawl(int(np.random.choice(self.initial_seeds, 1)[0]))
             self.budget_left -= 1
@@ -148,7 +148,7 @@ class MultiSeedCrawler(Crawler, ABC):
                           (seed, self.crawled_set, self.observed_set, self.nodes_set))
 
 
-class RandomWalk(MultiSeedCrawler):
+class RandomWalkCrawler(MultiSeedCrawler):
     """
     Normal random work if n1=1. Otherwise it is Frontier Crawling, that chooses from self.initial_seeds ~ degree
     """
@@ -172,7 +172,7 @@ class RandomWalk(MultiSeedCrawler):
         # for walking we need to step on already crawled nodes too
         if len(node_neighbours) == 0:
             node_neighbours = tuple(self.observed_set)
-        next_seed = int(random.choice(node_neighbours, 1)[0])
+        next_seed = int(np.random.choice(node_neighbours, 1)[0])
         self.initial_seeds[self.initial_seeds.index(self.prev_seed)] = next_seed
         return next_seed
 
@@ -204,7 +204,6 @@ class DepthFirstSearchCrawler(MultiSeedCrawler):  # TODO
         self.dfs_queue = []
         self.dfs_counter = 0
         self.crawler_name = 'DFS'
-        # int(random.choice(tuple(self.observed_set)))
 
     def next_seed(self):
         while self.dfs_queue[0] not in self.observed_set:
@@ -225,7 +224,7 @@ class RandomCrawler(MultiSeedCrawler):
         self.crawler_name = 'RC_'
 
     def next_seed(self):
-        return random.choice(tuple(self.observed_set))
+        return int(np.random.choice(tuple(self.observed_set)))
 
 
 class MaximumObservedDegreeCrawler(MultiSeedCrawler):
@@ -268,6 +267,42 @@ class PreferentialObservedDegreeCrawler(MultiSeedCrawler):
         return self.pod_queue.pop(0)
 
 
+class ForestFireCrawler(BreadthFirstSearchCrawler):
+    """Algorythm from https://dl.acm.org/doi/abs/10.1145/1081870.1081893
+    with my little modification - stuck_ends, it is like illegitimate son of BFS and RC
+    :param p - forward burning probability of algorythm
+    :param stuck_ends - if true, finishes when queue is empty, otherwise crawl random from observed
+    """
+
+    def __init__(self, orig_graph: MyGraph, p=0.35, stuck_ends=False):
+        super().__init__(orig_graph)
+        self.crawler_name = 'FFC'
+        self.p = p
+
+    # next_seed is the same with BFS, just choosing ambassador node w=seed, except empty queue
+    def next_seed(self):
+        while self.bfs_queue[0] not in self.observed_set:
+            self.bfs_queue.pop(0)
+            if len(self.bfs_queue) == 0:  # if we get stucked, choosing random from observed
+                return int(np.random.choice(tuple(self.observed_set)))
+        return self.bfs_queue[0]
+
+    def crawl(self, seed):
+        degree = self.orig_graph.snap.GetNI(seed).GetDeg()
+        # computing x - number of friends to add
+        # print("seed", seed, self.p, degree, (1 - self.p) ** (-1) / degree )
+        # in paper (1-p)**(-1) == E == degree * bin_prob
+        x = np.random.binomial(degree, self.p)  # (1 - self.p) ** (-1) / degree)
+        x = max(1, min(x, len(self.orig_graph.neighbors(seed))))
+        intersection = [n for n in self.orig_graph.neighbors(seed)]
+        burning = [int(n) for n in random.sample(intersection, x)]
+        # print("FF: queue:{},obs:{},crawl:{},x1={},burn={}".format(self.bfs_queue, self.observed_set,self.crawled_set,x, burning))
+        for node in burning:
+            self.bfs_queue.append(node)
+
+        return super(BreadthFirstSearchCrawler, self).crawl(seed)
+
+
 class AvrachenkovCrawler(Crawler, ABC):
     """
     Algorithm from paper "Quick Detection of High-degree Entities in Large Directed Networks" (2014)
@@ -290,7 +325,7 @@ class AvrachenkovCrawler(Crawler, ABC):
 
         i = 0
         while True:
-            seed = graph_nodes[np.random.randint(size)]
+            seed = graph_nodes[int(np.random.randint(size))]
             if seed in self.crawled_set:
                 continue
             self.crawl(seed)
@@ -348,7 +383,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
         gif_counter = 0
         # for drawing
         from matplotlib import pyplot as plt
-        plt.figure(figsize=(16, 8))
+        plt.figure(figsize=(14, 6))
         # print(layout_pos)
         # print([i for i in layout_pos])
         # fig, ax = plt.subplots()
@@ -398,7 +433,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
                 gen_node_color[node] = 'cyan'
             gen_node_color[last_seed] = 'red'
 
-            plt.title(str(iterator) + '/' + "cur:" + str(last_seed) + " craw:" + str(crawler.crawled_set))
+            plt.title(crawler_name + " " + str(iterator) + '  ' + "current node:" + str(last_seed))
             draw(networkx_graph, pos=layout_pos, with_labels=True, node_size=100,
                  node_color=[gen_node_color[node] for node in networkx_graph.nodes]
                  # if node in networkx_graph.nodes()]
@@ -453,8 +488,9 @@ CRAWLERS_DICTIONARY = {'POD': PreferentialObservedDegreeCrawler,
                        'MOD': MaximumObservedDegreeCrawler,
                        'DFS': DepthFirstSearchCrawler,
                        'BFS': BreadthFirstSearchCrawler,
-                       'RW_': RandomWalk,
+                       'RWC': RandomWalkCrawler,
                        'RC_': RandomCrawler,
+                       'FFC': ForestFireCrawler,
                        'AVR': AvrachenkovCrawler,  # dont use, it iscompletely different
                        }
 
@@ -535,12 +571,12 @@ if __name__ == '__main__':
     # pos = None  # position layout for drawing similar graphs (with nodes on same positions). updates at the end
 
     # crawlers = [(name, crawlers_dictionary[name]) for name in crawlers_dictionary]
-    crawlers = ['RW_']  #'MOD', 'POD', 'DFS', 'BFS', 'RW_', 'RC_']
+    crawlers = ['DFS', 'BFS', 'RWC', 'RC_']  # 'FFC','MOD', 'POD',
 
     for crawler_name in crawlers:
-        print("Running {} with budget={}, n1=n1".format(crawler_name, total_budget, n1))
+        print("Running {} with budget={}, n1={}".format(crawler_name, total_budget, n1))
         crawler = Crawler_Runner(Graph, crawler_name, total_budget=total_budget, n1=n1,
                                  gif=1)
         print("Seed sequence due crawling:", crawler.seed_sequence_)
-        with open("./data/crawler_history/sequence.json", 'w') as f:
-            json.dump(crawler.seed_sequence_, f)
+    # with open("./data/crawler_history/sequence.json", 'w') as f:
+    #     json.dump(crawler.seed_sequence_, f)
