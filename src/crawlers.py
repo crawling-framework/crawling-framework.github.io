@@ -537,7 +537,7 @@ def test_graph():
     return g
 
 
-if __name__ == '__main__':
+def test_crawlers():
     file_path = "./data/crawler_history/"
     if os.path.exists(file_path):
         for file in glob.glob("./data/crawler_history/*.json"):
@@ -580,3 +580,8 @@ if __name__ == '__main__':
         print("Seed sequence due crawling:", crawler.seed_sequence_)
     # with open("./data/crawler_history/sequence.json", 'w') as f:
     #     json.dump(crawler.seed_sequence_, f)
+
+
+if __name__ == '__main__':
+    # test_graph()
+    test_crawlers()
