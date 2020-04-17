@@ -52,6 +52,10 @@ class MyGraph(object):
     # 
     #     return self.networkit_graph
 
+    def neighbors(self, node: int):  # Denis's realisation
+        """ returns set on neighbors of given node in this graph """
+        return tuple(self.snap.GetNI(int(node)).GetOutEdges())
+
     def get_node_property_dict(self, property) -> dict:
         """
         Get a dictionary of nodes property. Read from file or compute and save if absent.
