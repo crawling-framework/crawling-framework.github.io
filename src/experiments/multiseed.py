@@ -172,8 +172,8 @@ def test_crawlers():
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.CRITICAL)
     logging.getLogger().setLevel(logging.CRITICAL)
 
-    Graph = MyGraph.new_snap(name='test', directed=False)
-    Graph._snap_graph = GraphCollections.get('dolphins').snap  # test_graph()  #
+    g = GraphCollections.get('dolphins').snap  # test_graph()  #
+    Graph = MyGraph.new_snap(g, name='test', directed=False)
     # Graph.snap.AddNode(0)
     # Graph.snap.AddEdge(0, 1)
     layout_pos = Graph.graph_layout_pos

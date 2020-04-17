@@ -25,13 +25,34 @@ class MyGraph(object):
         self.available_properties = CENTRALITIES
         self._node_property_dicts = dict([(c, {}) for c in self.available_properties])
 
-    @property
-    def snap(self):
-        if not self._snap_graph:
-            import snap
-            self._snap_graph = snap.LoadEdgeList(
-                snap.PNGraph if self.directed else snap.PUNGraph, self.path, 0, 1)
-        return self._snap_graph
+    @classmethod
+    def new_snap(cls, snap_graph=None, name='tmp', directed=False, weighted=False, format='ij'):
+        """
+        Create a new instance of MyGraph with a given snap graph.
+        :param snap_graph: initial snap graph, or empty if None
+        :param name: name will be appended with current timestamp
+        :param directed: will be ignored if snap_graph is specified
+        :param weighted:
+        :param format:
+        :return: MyGraph
+        """
+        import snap
+        from datetime import datetime
+        path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
+
+        if snap_graph:
+            if isinstance(snap_graph, snap.PNGraph):
+                directed = True
+            elif isinstance(snap_graph, snap.PUNGraph):
+                directed = False
+            else:
+                raise TypeError("Unknown snap graph type: %s" % type(snap_graph))
+        else:
+            snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
+
+        graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
+        graph._snap_graph = snap_graph
+        return graph
 
     # @property
     # def igraph(self):
@@ -53,6 +74,14 @@ class MyGraph(object):
     #             self.path, nk.Format.EdgeListSpaceOne, directed=self.directed)
     # 
     #     return self.networkit_graph
+
+    @property
+    def snap(self):
+        if not self._snap_graph:
+            import snap
+            self._snap_graph = snap.LoadEdgeList(
+                snap.PNGraph if self.directed else snap.PUNGraph, self.path, 0, 1)
+        return self._snap_graph
 
     def neighbors(self, node: int):
         """
@@ -99,6 +128,13 @@ class MyGraph(object):
 
         return prop_dict
 
+    def __getitem__(self, item):
+        from metrics import Stat
+        if isinstance(item, Stat):
+            return item.computer(self)
+        else:
+            raise KeyError("Unknown item type: %s" % type(item))
+
     def save_snap_edge_list(self):
         """ Write current edge list of snap graph into file. """
         assert self._snap_graph
@@ -107,37 +143,6 @@ class MyGraph(object):
         with open(self.path, 'w') as f:
             import snap
             snap.SaveEdgeList(self._snap_graph, self.path)
-
-    def load_snap_edge_list(self):
-        with open(self.path, 'r') as f:  # TODO: Denis is it ok, that f is not used?
-            import snap
-            snap.LoadEdgeList(self._snap_graph, self.path)
-
-    @classmethod
-    def new_snap(cls, name='tmp', directed=False, weighted=False, format='ij'):
-        """
-        Create a new instance of MyGraph with an empty snap graph.
-        :param name: name will be appended with current timestamp
-        :param directed:
-        :param weighted:
-        :param format:
-        :return: MyGraph
-        """
-        import snap
-        from datetime import datetime
-        path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
-        
-        # if snap_graph:
-        #     if isinstance(snap_graph, snap.TNGraph):
-        #         directed = True
-        #     elif isinstance(snap_graph, snap.TUNGraph):
-        #         directed = False
-        # else:
-        #     snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
-
-        graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
-        graph._snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
-        return graph
 
     @property  # Denis:  could be useful to handle nx version of graph
     def snap_to_networkx(self):
@@ -219,10 +224,10 @@ class GraphCollections(object):
                     temp_path, GraphCollections.konect_url_pattern % name)
 
             elif collection == 'networkrepository':
+                raise NotImplementedError()
                 category = name.split('-')[0]
                 GraphCollections._download_networkrepository(
                     temp_path, GraphCollections.networkrepository_url_pattern % (category, name))
-                raise NotImplementedError()
 
             reformat_graph_file(temp_path, path, out_format=format, remove_original=True)
 
@@ -321,9 +326,12 @@ def test():
     # name = 'douban'
     # name = 'slashdot-zoo'
     # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
-    g = GraphCollections.get(name).snap
+    graph = GraphCollections.get(name)
+    g = graph.snap
     # g = GraphCollections.get('eco-florida', collection='networkrepository').snap
     print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
+
+    print("neigbours of %d: %s" % (2, graph.neighbors(2)))
 
 
 if __name__ == '__main__':

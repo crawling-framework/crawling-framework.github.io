@@ -62,14 +62,23 @@ def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approxim
 
     elif centrality == 'closeness':
         # FIXME seems to not distinguish edge directions
-        node_cent = [(n.GetId(), snap.GetClosenessCentr(s, n.GetId(), graph.directed)) for n in s.Nodes()]
+        node_cent = []
+        for i, n in enumerate(s.Nodes()):
+            print(i, n)
+            node_cent.append((n.GetId(), snap.GetClosenessCentr(s, n.GetId(), graph.directed)))
+        # node_cent = [(n.GetId(), snap.GetClosenessCentr(s, n.GetId(), graph.directed)) for n in s.Nodes()]
 
     elif centrality == 'eccentricity':
-        # node_cent = []
-        # for n in s.Nodes():
-        #     print(n)
-        #     node_cent.append((n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)))
-        node_cent = [(n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)) for n in s.Nodes()]
+        node_cent = []
+        for i, n in enumerate(s.Nodes()):
+            print(i, n)
+            node_cent.append((n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)))
+        # node_cent = [(n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)) for n in s.Nodes()]
+
+    elif centrality == 'clustering':
+        NIdCCfH = snap.TIntFltH()
+        snap.GetNodeClustCf(s, NIdCCfH)
+        node_cent = [(item, NIdCCfH[item]) for item in NIdCCfH]
 
     elif centrality == 'k-cores':
         raise NotImplementedError("GetKCore, or do it manually in snap?")
@@ -97,15 +106,15 @@ def test():
     g.AddEdge(5, 4)
     print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
 
-    for cent in CENTRALITIES[:-1]:
-        print(cent)
-        print(compute_nodes_centrality(graph, cent))
-        # print(graph.get_node_property_dict(cent))
+    # for cent in CENTRALITIES[:-1]:
+    #     print(cent)
+    #     print(compute_nodes_centrality(graph, cent))
+    #     # print(graph.get_node_property_dict(cent))
 
     # 2.
     from graph_io import GraphCollections
-    graph = GraphCollections.get('petster-hamster')
-    node_prop = graph.get_node_property_dict('closeness')
+    graph = GraphCollections.get('digg-friends')
+    node_prop = graph.get_node_property_dict('betweenness')
     print(node_prop)
 
 
@@ -130,5 +139,5 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    # test()
-    main()
+    test()
+    # main()

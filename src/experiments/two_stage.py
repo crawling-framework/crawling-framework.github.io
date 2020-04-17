@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from centralities import get_top_centrality_nodes
-from crawlers import TwoStageCrawler, AvrachenkovCrawler, Crawler
+from crawlers.advanced import TwoStageCrawler, AvrachenkovCrawler, Crawler
 from graph_io import MyGraph, GraphCollections
 from utils import PICS_DIR
 
@@ -41,8 +41,7 @@ def test_initial_graph(i: str):
         g.AddEdge(4, 3)
         g.AddEdge(5, 4)
         print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-        graph = MyGraph.new_snap(name='test', directed=False)
-        graph.snap_graph = g
+        graph = MyGraph.new_snap(g, name='test', directed=False)
     return graph
 
 
