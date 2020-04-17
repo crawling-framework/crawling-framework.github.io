@@ -1,7 +1,9 @@
+import logging
 import os.path
 import shutil
 import urllib.request
-import logging
+
+import networkx as nx
 import patoolib
 
 from utils import GRAPHS_DIR, COLLECTIONS, CENTRALITIES, TMP_GRAPHS_DIR
@@ -52,9 +54,16 @@ class MyGraph(object):
     # 
     #     return self.networkit_graph
 
-    def neighbors(self, node: int):  # Denis's realisation
-        """ returns set on neighbors of given node in this graph """
-        return tuple(self.snap.GetNI(int(node)).GetOutEdges())
+    def neighbors(self, node: int):
+        """
+        List of neighbors of the given node in this graph. (snap wrapper for simplicity)
+
+        :param node: node id
+        :return: list of ids
+        """
+        if self.directed:
+            raise NotImplementedError("For directed graph and all neighbors, take GetIntEdges + GetOutEdges")
+        return list(self._snap_graph.GetNI(int(node)).GetOutEdges())
 
     def get_node_property_dict(self, property) -> dict:
         """
@@ -99,6 +108,11 @@ class MyGraph(object):
             import snap
             snap.SaveEdgeList(self._snap_graph, self.path)
 
+    def load_snap_edge_list(self):
+        with open(self.path, 'r') as f:  # TODO: Denis is it ok, that f is not used?
+            import snap
+            snap.LoadEdgeList(self._snap_graph, self.path)
+
     @classmethod
     def new_snap(cls, name='tmp', directed=False, weighted=False, format='ij'):
         """
@@ -124,6 +138,21 @@ class MyGraph(object):
         graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
         graph._snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
         return graph
+
+    @property  # Denis:  could be useful to handle nx version of graph
+    def snap_to_networkx(self):
+        nx_graph = nx.Graph()
+        for NI in self._snap_graph.Nodes():
+            nx_graph.add_node(NI.GetId())
+            for Id in NI.GetOutEdges():
+                nx_graph.add_edge(NI.GetId(), Id)
+
+        return nx_graph
+
+    @property
+    def graph_layout_pos(self):  # used in drawing graph
+        """position of nodes in the plot is a property of the graph to draw similar graph several times"""
+        return nx.spring_layout(self.snap_to_networkx, iterations=100)
 
 
 def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_with='#%',
@@ -190,10 +219,10 @@ class GraphCollections(object):
                     temp_path, GraphCollections.konect_url_pattern % name)
 
             elif collection == 'networkrepository':
-                raise NotImplementedError()
                 category = name.split('-')[0]
                 GraphCollections._download_networkrepository(
                     temp_path, GraphCollections.networkrepository_url_pattern % (category, name))
+                raise NotImplementedError()
 
             reformat_graph_file(temp_path, path, out_format=format, remove_original=True)
 

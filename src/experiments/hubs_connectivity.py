@@ -4,7 +4,6 @@ from operator import itemgetter
 import snap
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib_venn import venn3_circles, venn3
 
 from crawlers import Crawler, AvrachenkovCrawler
 from centralities import get_top_centrality_nodes
@@ -153,6 +152,7 @@ def test_avrachenkov(graph: MyGraph):
 def test_hubs_search_by_mod(graph: MyGraph):
     """ top-10% hubs detection from top-100 hubs by MOD in their neighbourhood
     """
+    from matplotlib_venn import venn3_circles, venn3
     g = graph.snap
     N = g.GetNodes()
 
@@ -214,9 +214,9 @@ if __name__ == '__main__':
     # name = 'petster-friendships-cat'
     # name = 'soc-pokec-relationships'
     # name = 'digg-friends'
-    name = 'loc-brightkite_edges'
+    # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
-    # name = 'petster-hamster'
+    name = 'petster-hamster'
     # for name in ['libimseti', 'soc-pokec-relationships', 'digg-friends',
     #              'ego-gplus', 'petster-hamster']:
     #     g = read_snap(get_graph_path(name))
