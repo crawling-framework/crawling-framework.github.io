@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from centralities import get_top_centrality_nodes
-from crawlers import TwoStageCrawler
+from crawlers import TwoStageCrawler, AvrachenkovCrawler, Crawler
 from graph_io import MyGraph, GraphCollections
 from utils import PICS_DIR
 
@@ -87,99 +87,216 @@ def test():
     plt.show()
 
 
-def if_seeds_were_hubs(graph: MyGraph):
-
-    class TwoStageCrawlerSeedsAreHubs(TwoStageCrawler):
-        def first_step(self, random_init=None):
+class TwoStageCrawlerSeedsAreHubs(TwoStageCrawler):
+    """
+    Artificial version of TwoStageCrawler, where instead of initial random seeds we take hubs
+    """
+    def next_seed(self) -> int:
+        ctr = self.counter
+        if ctr == 0:
+            # pick hubs
             self.hubs = get_top_centrality_nodes(self.orig_graph, 'degree', count=self.s)
-            [self.crawl(n) for n in self.hubs]
+        if ctr < self.s:  # 1st phase: crawl hubs
+            self.counter += 1
+            return self.hubs[ctr]
+        else:
+            return super().next_seed()
 
-        def second_step(self):
-            super().second_step()
-            # Get E2 - second neighbourhood, with their degrees.
-            e2 = []
-            o = self.observed_graph.snap
-            for o_id in self.observed_set:
-                deg = o.GetNI(o_id).GetDeg()
-                e2.append((o_id, deg))
+    def _get_candidates(self):  # E* = S + E1* + E2*
+        # memorize E2
+        self.e2 = set(self.observed_set)
 
-            # Get v=(pN-n) max degree observed nodes
-            self.e2s = [n for n, _ in
-                        sorted(e2, key=itemgetter(1), reverse=True)[:self.pN - self.n]]
+        # Get v=(pN-n) max degree observed nodes
+        candidates_deg = [(n, self.observed_graph.snap.GetNI(n).GetDeg()) for n in self.e2]
+        top_candidates_deg = sorted(candidates_deg, key=itemgetter(1), reverse=True)[
+                             :self.pN - self.n]
+        self.hubs_detected = set([n for n, _ in top_candidates_deg])
 
-            # Final answer - E* = hubs + E1* + E2*
-            self.es = set(self.hubs + self.e1s + self.e2s)
-            return self.es
+        # Final answer - E* = S + E1* + E2*
+        self.es = set(self.hubs).union(self.e1s.union(self.hubs_detected))
+        return self.es
 
-    g = graph.snap
-    N = g.GetNodes()
+
+class TargetSetCoverageTester:
+    """
+    Runs batch crawling and measures target set coverage during crawling.
+    """
+
+    def __init__(self, graph: MyGraph, crawler_class, target=None):
+        self.graph = graph
+        assert isinstance(crawler_class, type(Crawler))
+        self.crawler_class = crawler_class
+
+        self.target_set = set(get_top_centrality_nodes(graph, 'degree', target))
+
+    def run(self, crawler_kwargs_list):
+
+        g = self.graph.snap
+
+        nrows = 1
+        if len(crawler_kwargs_list) > 1:
+            nrows = 2
+        from math import ceil
+        ncols = ceil(len(crawler_kwargs_list) / nrows)
+        fig = plt.figure("Graph %s:  N=%d, E=%d, d_max=%d" % (
+            self.graph.name, g.GetNodes(), g.GetEdges(), g.GetNI(snap.GetMxDegNId(g)).GetDeg()),
+                         figsize=(1 + 5*ncols, 5*nrows))
+
+        for i, crawler_kwargs in enumerate(crawler_kwargs_list):
+            ax = plt.subplot(nrows, ncols, 1 + i)
+
+            crawler = self.crawler_class(self.graph, **crawler_kwargs)
+            crawler_sh = TwoStageCrawlerSeedsAreHubs(self.graph, **crawler_kwargs)
+
+            iterations = []
+            os = []
+            hs = []
+            os_sh = []
+            hs_sh = []
+
+            try:
+                max_budget = crawler_kwargs['n']
+            except:
+                max_budget = 1000
+            batch = 1
+            s0 = 4990
+            crawler.crawl_budget(budget=s0)
+            crawler_sh.crawl_budget(budget=s0)
+            for i in range(s0, max_budget+1, batch):
+            # batch = max(1, int(max_budget / 30))
+            # for i in range(batch, max_budget+1, batch):
+                iterations.append(i)
+
+                crawler.crawl_budget(budget=batch)
+                crawler_sh.crawl_budget(budget=batch)
+
+                o = len(self.target_set.intersection(crawler.nodes_set)) / len(self.target_set)
+                h = len(self.target_set.intersection(crawler._get_candidates())) / len(self.target_set)
+                os.append(o)
+                hs.append(h)
+
+                o_sh = len(self.target_set.intersection(crawler_sh.nodes_set)) / len(self.target_set)
+                h_sh = len(self.target_set.intersection(crawler_sh._get_candidates())) / len(self.target_set)
+                os_sh.append(o_sh)
+                hs_sh.append(h_sh)
+
+                plt.cla()
+                plt.axvline(crawler_kwargs['s'], linewidth=2, color='r')
+                plt.plot(iterations, os, marker='o', color='g', label=r'all nodes')
+                plt.plot(iterations, hs, marker='o', color='b', label=r'candidates')
+                plt.plot(iterations, os_sh, marker='.', linestyle='--', color='g', label=r'HUBS, all nodes')
+                plt.plot(iterations, hs_sh, marker='.', linestyle='--', color='b', label=r'HUBS, candidates')
+
+                plt.legend()
+                plt.ylim((0, 1))
+                plt.xlabel('crawled, n')
+                plt.ylabel(r'$V^*$ coverage')
+                g = self.graph.snap
+                # plt.title(r"Graph %s:  $N=%d, E=%d, d_{max}=%d$" % (
+                #     self.graph.name, g.GetNodes(), g.GetEdges(), g.GetNI(snap.GetMxDegNId(g)).GetDeg())
+                #           + "\n%s %s" % (self.crawler_class.__name__, crawler_kwargs))
+                plt.title("\n%s %s" % (self.crawler_class.__name__, crawler_kwargs))
+                plt.grid()
+                plt.tight_layout()
+                plt.pause(0.005)
+
+        plt.show()
+
+
+def test_target_set_coverage():
+    # name = 'libimseti'
+    # name = 'petster-friendships-cat'
+    name = 'soc-pokec-relationships'
+    # name = 'digg-friends'
+    # name = 'loc-brightkite_edges'
+    # name = 'ego-gplus'
+    # name = 'petster-hamster'
+    graph = GraphCollections.get(name)
+
     p = 0.1
-    pN = int(p*N)
-    target = set(get_top_centrality_nodes(graph, 'degree', pN))
+    tester = TargetSetCoverageTester(graph, TwoStageCrawler, target=int(p*graph.snap.GetNodes()))
+    tester.run([
+        # {'s': 10, 'n': 20, 'p': p},
+        # {'s': 50, 'n': 250, 'p': p},
+        # {'s': 100, 'n': 500, 'p': p},
+        # {'s': 500, 'n': 2500, 'p': p},
+        # {'s': 1000, 'n': 5000, 'p': p},
+        # {'s': 2000, 'n': 10000, 'p': p},
+        {'s': 5000, 'n': 5010, 'p': p},
+    ])
 
-    seeds = [50, 100, 500, 1000]
-    nrows, ncols = 2, 2
-    fig = plt.figure("Graph %s:  N=%d, E=%d, d_max=%d" % (
-                graph.name, g.GetNodes(), g.GetEdges(), g.GetNI(snap.GetMxDegNId(g)).GetDeg()),
-                     figsize=(12, 10))
-    for i, s in enumerate(seeds):
-        ax = plt.subplot(nrows, ncols, 1+i)
 
-        k_max = min(50*s, 15000)
-        ks = range(0, k_max, int(k_max/20))  # nodes to crawl at 2nd step
-        o_in_vs = []
-        e2s_in_vs = []
-        o_in_vs_sh = []
-        e2s_in_vs_sh = []
-        for k in ks:
-            # top_hubs = target[:k]
-
-            try:
-                crawler = TwoStageCrawler(graph, s=s, n=k+s, p=p)
-                crawler.first_step(random_init=4)
-                Es = crawler.second_step()
-            except Exception:
-                continue
-
-            try:
-                crawler_sh = TwoStageCrawlerSeedsAreHubs(graph, s=s, n=k+s, p=p)
-                crawler_sh.first_step()
-                Es_sh = crawler_sh.second_step()
-            except Exception:
-                continue
-
-            o = len(target.intersection(crawler.nodes_set))/len(target)
-            e = len(target.intersection(Es))/len(target)
-            o_in_vs.append(o)
-            e2s_in_vs.append(e)
-
-            o_sh = len(target.intersection(crawler_sh.nodes_set))/len(target)
-            e_sh = len(target.intersection(Es_sh))/len(target)
-            o_in_vs_sh.append(o_sh)
-            e2s_in_vs_sh.append(e_sh)
-
-            plt.cla()
-            plt.plot(np.array(ks[:len(o_in_vs)])+s, o_in_vs, marker='o', color='g', label=r'by $\epsilon_2^*$')
-            plt.plot(np.array(ks[:len(o_in_vs)])+s, e2s_in_vs, marker='o', color='b', label=r'by $\epsilon^*$')
-
-            plt.plot(np.array(ks[:len(o_in_vs)])+s, o_in_vs_sh, linestyle='--', color='g', label=r'by $\epsilon_2^*$, ideal')
-            plt.plot(np.array(ks[:len(o_in_vs)])+s, e2s_in_vs_sh, linestyle='--', color='b', label=r'by $\epsilon^*$, ideal')
-
-            plt.legend()
-            plt.xlabel('crawled, n')
-            plt.ylabel(r'$V^*$ coverage')
-            plt.title("s=%s" % s)
-            # plt.suptitle(r"Graph %s:  $N=%d, E=%d, d_{max}=%d$" % (
-            #     graph.name, g.GetNodes(), g.GetEdges(), g.GetNI(snap.GetMxDegNId(g)).GetDeg()))
-            plt.grid()
-            plt.tight_layout()
-            plt.pause(0.005)
-
-    subdir = os.path.join(PICS_DIR, 'if_seeds_were_hubs')
-    if not os.path.exists(subdir):
-        os.mkdir(subdir)
-    plt.savefig(subdir + '/%s.png' % (graph.name))
-    plt.show()
+# def if_seeds_were_hubs(graph: MyGraph):
+#
+#     g = graph.snap
+#     N = g.GetNodes()
+#     p = 0.1
+#     pN = int(p*N)
+#     target = set(get_top_centrality_nodes(graph, 'degree', pN))
+#
+#     seeds = [50, 100, 500, 1000]
+#     nrows, ncols = 2, 2
+#     fig = plt.figure("Graph %s:  N=%d, E=%d, d_max=%d" % (
+#                 graph.name, g.GetNodes(), g.GetEdges(), g.GetNI(snap.GetMxDegNId(g)).GetDeg()),
+#                      figsize=(12, 10))
+#     for i, s in enumerate(seeds):
+#         ax = plt.subplot(nrows, ncols, 1+i)
+#
+#         k_max = min(50*s, 15000)
+#         ks = range(0, k_max, int(k_max/20))  # nodes to crawl at 2nd step
+#         o_in_vs = []
+#         e2s_in_vs = []
+#         o_in_vs_sh = []
+#         e2s_in_vs_sh = []
+#         for k in ks:
+#             # top_hubs = target[:k]
+#
+#             try:
+#                 crawler = TwoStageCrawler(graph, s=s, n=k+s, p=p)
+#                 crawler.first_step(random_init=4)
+#                 Es = crawler.second_step()
+#             except Exception:
+#                 continue
+#
+#             try:
+#                 crawler_sh = TwoStageCrawlerSeedsAreHubs(graph, s=s, n=k+s, p=p)
+#                 crawler_sh.first_step()
+#                 Es_sh = crawler_sh.second_step()
+#             except Exception:
+#                 continue
+#
+#             o = len(target.intersection(crawler.nodes_set))/len(target)
+#             e = len(target.intersection(Es))/len(target)
+#             o_in_vs.append(o)
+#             e2s_in_vs.append(e)
+#
+#             o_sh = len(target.intersection(crawler_sh.nodes_set))/len(target)
+#             e_sh = len(target.intersection(Es_sh))/len(target)
+#             o_in_vs_sh.append(o_sh)
+#             e2s_in_vs_sh.append(e_sh)
+#
+#             plt.cla()
+#             plt.plot(np.array(ks[:len(o_in_vs)])+s, o_in_vs, marker='o', color='g', label=r'by $\epsilon_2^*$')
+#             plt.plot(np.array(ks[:len(o_in_vs)])+s, e2s_in_vs, marker='o', color='b', label=r'by $\epsilon^*$')
+#
+#             plt.plot(np.array(ks[:len(o_in_vs)])+s, o_in_vs_sh, linestyle='--', color='g', label=r'by $\epsilon_2^*$, ideal')
+#             plt.plot(np.array(ks[:len(o_in_vs)])+s, e2s_in_vs_sh, linestyle='--', color='b', label=r'by $\epsilon^*$, ideal')
+#
+#             plt.legend()
+#             plt.xlabel('crawled, n')
+#             plt.ylabel(r'$V^*$ coverage')
+#             plt.title("s=%s" % s)
+#             # plt.suptitle(r"Graph %s:  $N=%d, E=%d, d_{max}=%d$" % (
+#             #     graph.name, g.GetNodes(), g.GetEdges(), g.GetNI(snap.GetMxDegNId(g)).GetDeg()))
+#             plt.grid()
+#             plt.tight_layout()
+#             plt.pause(0.005)
+#
+#     subdir = os.path.join(PICS_DIR, 'if_seeds_were_hubs')
+#     if not os.path.exists(subdir):
+#         os.mkdir(subdir)
+#     plt.savefig(subdir + '/%s.png' % (graph.name))
+#     plt.show()
 
 
 if __name__ == '__main__':
@@ -190,11 +307,12 @@ if __name__ == '__main__':
 
     # name = 'libimseti'
     # name = 'petster-friendships-cat'
-    name = 'soc-pokec-relationships'
+    # name = 'soc-pokec-relationships'
     # name = 'digg-friends'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
     # name = 'petster-hamster'
-    g = GraphCollections.get(name)
+    # g = GraphCollections.get(name)
+    # if_seeds_were_hubs(g)
 
-    if_seeds_were_hubs(g)
+    test_target_set_coverage()

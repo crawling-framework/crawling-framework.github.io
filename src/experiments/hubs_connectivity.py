@@ -26,7 +26,7 @@ def get_avg_deg_hubs(graph, count):
 
 def compute_reachability(graph):
     g = graph.snap
-    centrality = 'betweenness'
+    centrality = 'degree'
     mode = 'top-hubs'
     # mode = 'all'
     # mode = 'top-k'
