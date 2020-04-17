@@ -16,7 +16,6 @@ class Crawler(object):
         self.orig_graph = graph
         # observed graph
         self.observed_graph = MyGraph.new_snap(directed=graph.directed, weighted=graph.weighted)
-        # observed snap graph
         # crawled ids set
         self.crawled_set = set()
         # observed ids set excluding crawled ones
@@ -60,7 +59,7 @@ class Crawler(object):
 
         :return: node id as int
         """
-        raise NotImplementedError()
+        raise CrawlerError("Not implemented")
 
     def crawl_budget(self, budget: int, *args):
         """
@@ -149,40 +148,6 @@ class AvrachenkovCrawler(Crawler):
         if self.counter >= self.n:
             self._get_candidates()
 
-    # def first_step(self):
-    #     graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
-    #     N = len(graph_nodes)
-    #
-    #     i = 0
-    #     while True:
-    #         seed = graph_nodes[np.random.randint(N)]
-    #         if seed in self.crawled_set:
-    #             continue
-    #         self.crawl(seed)
-    #         i += 1
-    #         if i == self.n1:
-    #             break
-    #
-    # def second_step(self):
-    #     observed_only = self.observed_set
-    #
-    #     # Get n2 max degree observed nodes
-    #     obs_deg = []
-    #     g = self.observed_graph.snap
-    #     for o_id in observed_only:
-    #         deg = g.GetNI(o_id).GetDeg()
-    #         obs_deg.append((o_id, deg))
-    #
-    #     max_degs = sorted(obs_deg, key=itemgetter(1), reverse=True)[:self.n-self.n1]
-    #
-    #     # Crawl chosen nodes
-    #     [self.crawl(n) for n, _ in max_degs]
-    #
-    #     # assert len(self.crawled) == self.n
-    #     # Take top-k of degrees
-    #     hubs_detected = get_top_centrality_nodes(self.observed_graph.snap, 'degree', self.k)
-    #     return hubs_detected
-
 
 class TwoStageCrawler(Crawler):
     """
@@ -226,7 +191,7 @@ class TwoStageCrawler(Crawler):
         if ctr == self.s:
             # memorize E1
             self.e1 = set(self.observed_set)
-            # print("|E1|=", len(self.e1))
+            logging.debug("|E1|=", len(self.e1))
 
             # Check that e1 size is more than (n-s)
             if self.n - self.s > len(self.e1):
@@ -238,7 +203,7 @@ class TwoStageCrawler(Crawler):
             top_obs_deg = sorted(obs_deg, key=itemgetter(1), reverse=True)[:self.n - self.s]
             self.top_observed_seeds = [n for n, _ in top_obs_deg]
             self.e1s = set(self.top_observed_seeds)
-            # print("|E1*|=", len(self.e1s))
+            logging.debug("|E1*|=", len(self.e1s))
 
         if ctr < self.n:  # 2nd phase: crawl MOD batch
             self.counter += 1
@@ -251,17 +216,17 @@ class TwoStageCrawler(Crawler):
 
         # memorize E2
         self.e2 = set(self.observed_set)
-        # print("|E2|=", len(self.e2))
+        logging.debug("|E2|=", len(self.e2))
 
         # Get v=(pN-n+s) max degree observed nodes
         candidates_deg = [(n, self.observed_graph.snap.GetNI(n).GetDeg()) for n in self.e2]
         top_candidates_deg = sorted(candidates_deg, key=itemgetter(1), reverse=True)[:self.pN - self.n + self.s]
         self.hubs_detected = set([n for n, _ in top_candidates_deg])
-        # print("|E2*|=", len(self.hubs_detected))
+        logging.debug("|E2*|=", len(self.hubs_detected))
 
         # Final answer - E* = E1* + E2*
         self.es = self.e1s.union(self.hubs_detected)
-        # print("|E*|=", len(self.es))
+        logging.debug("|E*|=", len(self.es))
         return self.es
 
     def crawl_budget(self, budget: int, *args):
@@ -273,73 +238,6 @@ class TwoStageCrawler(Crawler):
         # Finalize
         if self.counter >= self.n:
             self._get_candidates()
-
-    # def first_step(self, random_init=None):
-    #     """ 1) Crawl s random seeds (same as Avrachenkov), obtain E1 - first neighbourhood.
-    #     """
-    #     if random_init is not None:
-    #         np.random.seed(random_init)
-    #     graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
-    #     N = len(graph_nodes)
-    #
-    #     i = 0
-    #     while True:
-    #         seed = graph_nodes[np.random.randint(N)]
-    #         if seed in self.crawled_set:
-    #             continue
-    #         self.crawl(seed)
-    #         i += 1
-    #         if i == self.s:
-    #             break
-    #
-    # def second_step(self):
-    #     """
-    #     2) Detect (n-s) nodes by MOD from E1 -> E1*. Crawl E1* and obtain E2 - second neighbourhood.
-    #     3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
-    #     """
-    #     # Get E1 - first neighbourhood with, their degrees.
-    #     e1 = []
-    #     o = self.observed_graph.snap
-    #     for o_id in self.observed_set:
-    #         deg = o.GetNI(o_id).GetDeg()
-    #         e1.append((o_id, deg))
-    #
-    #     # Check that e1 size is more than (n-s)
-    #     if self.n-self.s > len(e1):
-    #         logging.warning("%s: (n-s) must not be > |E1|, n-s=%s, |E1|=%s" %
-    #                         (type(self), self.n-self.s, len(e1)))
-    #
-    #     # Get n-s max degree observed nodes
-    #     self.e1s = [n for n, _ in sorted(e1, key=itemgetter(1), reverse=True)[:self.n-self.s]]
-    #
-    #     # Crawl chosen nodes
-    #     [self.crawl(n) for n in self.e1s]
-    #
-    #     # Get E2 - second neighbourhood, with their degrees.
-    #     e2 = []
-    #     for o_id in self.observed_set:
-    #         deg = o.GetNI(o_id).GetDeg()
-    #         e2.append((o_id, deg))
-    #
-    #     # Get v=(pN-n+s) max degree observed nodes
-    #     self.e2s = [n for n, _ in sorted(e2, key=itemgetter(1), reverse=True)[:self.pN - self.n + self.s]]
-    #
-    #     # Final answer - E* = E1* + E2*
-    #     self.es = set(self.e1s + self.e2s)
-    #     print("s=%s, n=%s" % (self.s, self.n))
-    #     print("len e1", len(e1))
-    #     print("len e1s", len(self.e1s))
-    #     print("len e2", len(e2))
-    #     print("len e2s", len(self.e2s))
-    #     print("len es", len(self.es))
-    #     print("pN", self.pN)
-    #     # assert len(es) == self.pN
-    #     return self.es
-    #     # top_from_observed = list(self.observed_set)
-    #     #top_from_observed = sorted(e2e1, key=itemgetter(1), reverse=True)[:self.pN - self.n + self.s]
-    #     # [top_from_observed.append(n) for n, _ in e1s]
-    #
-    #     # return set(top_from_observed)
 
 
 def test():
