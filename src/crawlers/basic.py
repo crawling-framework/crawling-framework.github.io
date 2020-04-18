@@ -59,8 +59,9 @@ class Crawler(object):
     def crawl_budget(self, budget: int, *args):
         """
         Perform `budget` number of crawls according to the algorithm.
+        Note that `next_seed()` may be called more times - some returned seeds may not be crawled.
 
-        :param budget: so many nodes will be crawled. If can't crawl any more, raise Exception
+        :param budget: so many nodes will be crawled. If can't crawl any more, raise CrawlerError
         :param args: customizable additional args for subclasses
         :return:
         """
