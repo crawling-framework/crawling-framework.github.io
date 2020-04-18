@@ -5,15 +5,17 @@ import os
 
 from tqdm import tqdm
 
-from crawlers import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
+from crawlers.advanced import AvrachenkovCrawler
+# from crawlers.basic import  # TODO need to finish crawlers and replace into crawlers.basic
+from crawlers.multiseed import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
     DepthFirstSearchCrawler, BreadthFirstSearchCrawler, RandomWalkCrawler, RandomCrawler, \
-    ForestFireCrawler, AvrachenkovCrawler
+    ForestFireCrawler, test_carpet_graph
 from experiments import drawing_graph
-from graph_io import MyGraph, GraphCollections
+from graph_io import MyGraph
 
 
 def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
-                   top_set=False, jsons=False, gif=False, ending_sets=False):
+                   top_set=False, jsons=False, gif=0, layout_pos=None, ending_sets=False, **kwargs):
     """   # TODO other arguments like top_k=False,
 
     The core function that takes crawler and does everything with it (crawling budget, export results....)
@@ -28,20 +30,25 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
     :return:
     """
 
+    if layout_pos is None:
+        layout_pos = dict()
     if crawler_name in ('MOD', 'POD'):
-        crawler = CRAWLERS_DICTIONARY[crawler_name](Graph, top_k=top_k)
+        crawler = CRAWLERS_DICTIONARY[crawler_name](Graph, top_k=kwargs['top_k'])
     else:
         crawler = CRAWLERS_DICTIONARY[crawler_name](Graph)
 
+    from matplotlib import pyplot as plt
+    plt.figure(figsize=(14, 6))
+    pngs_path = "../data/gif_files/"
+
     if gif:  # TODO need to replace directories in utils.py after all and make normal directions
-        graph_path = './data/crawler_history/'
-        crawler_history_path = "./data/crawler_history/"
-        pngs_path = "./data/gif_files/"
-        gif_export_path = './data/graph_traversal.gif'
+        graph_path = '../data/crawler_history/'
+        crawler_history_path = "../data/crawler_history/"
+
+        gif_export_path = '../data/graph_traversal.gif'
         gif_counter = 0
         # for drawing
-        from matplotlib import pyplot as plt
-        plt.figure(figsize=(14, 6))
+
         # print(layout_pos)
         # print([i for i in layout_pos])
         # fig, ax = plt.subplots()
@@ -74,7 +81,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
         # print('RUNNER: iteration:{}/{}'.format(iterator,total_budget))
         crawler.crawl_budget(1)  # file=True)  # TODO return crawling export in files
 
-        if (gif) and (iterator % gif == 0):
+        if gif and (iterator % gif == 0):
             from networkx import draw
             # TODO some strange things coulf happen, because need to give @pos back
             last_seed = crawler.seed_sequence_[-1]
@@ -92,7 +99,9 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
             gen_node_color[last_seed] = 'red'
 
             plt.title(crawler_name + " " + str(iterator) + '  ' + "current node:" + str(last_seed))
-            draw(networkx_graph, pos=layout_pos, with_labels=True, node_size=100,
+            if layout_pos is None:
+                layout_pos = Graph.snap.snap_to_networkx.spring_layout(Graph.snap_to_networkx, iterations=100)
+            draw(networkx_graph, pos=layout_pos, with_labels=True, node_size=150,
                  node_color=[gen_node_color[node] for node in networkx_graph.nodes]
                  # if node in networkx_graph.nodes()]
                  )
@@ -129,12 +138,12 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
 
     # dumps final versions of crawled_set and observed_set after finishing crawling all budget.
     if ending_sets:
-        with open("./data/crawler_history/crawled{}{}.json".format(crawler.crawler_name,
-                                                                   str(len(crawler.seed_sequence_)).zfill(6)),
+        with open("../data/crawler_history/crawled{}{}.json".format(crawler.crawler_name,
+                                                                    str(len(crawler.seed_sequence_)).zfill(6)),
                   'a') as cr_file:
             json.dump(list(crawler.crawled_set), cr_file)
-        with open("./data/crawler_history/observed{}{}.json".format(crawler.crawler_name,
-                                                                    str(len(crawler.seed_sequence_)).zfill(6)),
+        with open("../data/crawler_history/observed{}{}.json".format(crawler.crawler_name,
+                                                                     str(len(crawler.seed_sequence_)).zfill(6)),
                   'a') as ob_file:
             json.dump(list(crawler.observed_set), ob_file)
 
@@ -154,17 +163,16 @@ CRAWLERS_DICTIONARY = {'POD': PreferentialObservedDegreeCrawler,
 
 
 def test_crawlers():
-    import matplotlib.pyplot as plt
-    file_path = "./data/crawler_history/"
+    file_path = "../data/crawler_history/"
     if os.path.exists(file_path):
-        for file in glob.glob("./data/crawler_history/*.json"):
+        for file in glob.glob("../data/crawler_history/*.json"):
             os.remove(file)
     else:
         os.makedirs(file_path)
 
-    file_path = "./data/gif_files/"
+    file_path = "../data/gif_files/"
     if os.path.exists(file_path):
-        for file in glob.glob("./data/gif_files/*.png"):
+        for file in glob.glob("../data/gif_files/*.png"):
             os.remove(file)
     else:
         os.makedirs(file_path)
@@ -172,28 +180,35 @@ def test_crawlers():
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.CRITICAL)
     logging.getLogger().setLevel(logging.CRITICAL)
 
-    g = GraphCollections.get('dolphins').snap  # test_graph()  #
-    Graph = MyGraph.new_snap(g, name='test', directed=False)
+    #### g = GraphCollections.get('dolphins').snap  # test_graph()  #
+    #### layout_pos = nx.spring_layout(Graph.snap_to_networkx, iterations=100)
+    ####Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
+    g, layout_pos = test_carpet_graph(9, 7)
+    Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
+
     # Graph.snap.AddNode(0)
     # Graph.snap.AddEdge(0, 1)
-    layout_pos = Graph.graph_layout_pos
 
     print("N=%s E=%s" % (Graph.snap.GetNodes(), Graph.snap.GetEdges()))
 
     # min(100,Graph.snap.GetNodes())
-    n1 = 2
+    n1 = 1
     total_budget = min(100 - n1, Graph.snap.GetNodes())
     top_k = 5
     k = 4
     # pos = None  # position layout for drawing similar graphs (with nodes on same positions). updates at the end
 
     # crawlers = [(name, crawlers_dictionary[name]) for name in crawlers_dictionary]
-    crawlers = ['DFS', 'BFS', 'RWC', 'RC_']  # 'FFC','MOD', 'POD',
+    crawlers = ['DFS', 'BFS', 'RWC', 'RC_', 'FFC', ]  # 'MOD', 'POD',
 
     for crawler_name in crawlers:
         print("Running {} with budget={}, n1={}".format(crawler_name, total_budget, n1))
         crawler = Crawler_Runner(Graph, crawler_name, total_budget=total_budget, n1=n1,
-                                 gif=1)
+                                 gif=1, layout_pos=layout_pos)
         print("Seed sequence due crawling:", crawler.seed_sequence_)
     # with open("./data/crawler_history/sequence.json", 'w') as f:
     #     json.dump(crawler.seed_sequence_, f)
+
+
+if __name__ == '__main__':
+    test_crawlers()

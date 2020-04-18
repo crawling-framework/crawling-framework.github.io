@@ -33,16 +33,14 @@ from tqdm import tqdm
 
 def make_gif(crawler_name, pngs_path):
     images = []
-    duration = 5
     filenames = glob.glob(pngs_path + "gif{}*.png".format(crawler_name))
     filenames.sort()
     print("adding")
     print(filenames)
     for filename in tqdm(filenames):
-        for i in range(duration):
-            images.append(imageio.imread(filename))
+        images.append(imageio.imread(filename))
     print("compiling")
-    imageio.mimsave(pngs_path + "result_{}.gif".format(crawler_name), images)
+    imageio.mimsave(pngs_path + "result_{}.gif".format(crawler_name), images, duration=0.33, loop=2)
     print("done")
 
     # return pos

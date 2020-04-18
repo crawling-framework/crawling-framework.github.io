@@ -284,5 +284,27 @@ def test():
     return g
 
 
+def test_carpet_graph(n, m):
+    # special n*m graph for visual testing
+    import snap
+    g = snap.TNGraph.New()
+    pos = dict()
+    for i in range(0, n * m):
+        g.AddNodeUnchecked(i)
+    for k in range(0, n):
+        for i in range(0, m):
+            node = i * n + k
+            if (node > 0) and (node % n != 0):
+                g.AddEdgeUnchecked(node, node - 1)
+                g.AddEdgeUnchecked(node - 1, node)
+            if node > n - 1:
+                g.AddEdgeUnchecked(node, node - n)
+                g.AddEdgeUnchecked(node - n, node)
+
+            pos[node] = [float(k / n), float(i / m)]
+    graph = MyGraph.new_snap(g, name='test', directed=False)
+    return [graph, pos]
+
+
 if __name__ == '__main__':
     test()

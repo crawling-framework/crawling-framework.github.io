@@ -90,8 +90,8 @@ class MyGraph(object):
         :param node: node id
         :return: list of ids
         """
-        if self.directed:
-            raise NotImplementedError("For directed graph and all neighbors, take GetIntEdges + GetOutEdges")
+        # if self.directed:
+        #     raise NotImplementedError("For directed graph and all neighbors, take GetIntEdges + GetOutEdges")
         return list(self._snap_graph.GetNI(int(node)).GetOutEdges())
 
     def get_node_property_dict(self, property) -> dict:
@@ -153,11 +153,6 @@ class MyGraph(object):
                 nx_graph.add_edge(NI.GetId(), Id)
 
         return nx_graph
-
-    @property
-    def graph_layout_pos(self):  # used in drawing graph
-        """position of nodes in the plot is a property of the graph to draw similar graph several times"""
-        return nx.spring_layout(self.snap_to_networkx, iterations=100)
 
 
 def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_with='#%',
