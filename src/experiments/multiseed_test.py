@@ -199,7 +199,7 @@ def test_crawlers():
     # pos = None  # position layout for drawing similar graphs (with nodes on same positions). updates at the end
 
     # crawlers = [(name, crawlers_dictionary[name]) for name in crawlers_dictionary]
-    crawlers = ['DFS', 'BFS', 'RWC', 'RC_', 'FFC', ]  # 'MOD', 'POD',
+    crawlers = ['DFS']  # , 'BFS', 'RWC', 'RC_', 'FFC', ]  # 'MOD', 'POD',
 
     for crawler_name in crawlers:
         print("Running {} with budget={}, n1={}".format(crawler_name, total_budget, n1))

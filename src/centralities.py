@@ -2,18 +2,20 @@ import logging
 from operator import itemgetter
 
 import snap
+from tqdm import tqdm
 
 from graph_io import MyGraph
 from utils import CENTRALITIES
 
 
-def get_top_centrality_nodes(graph: MyGraph, centrality, count=None):
+def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=False):
     """
     Get top-count node ids of the graph sorted by centrality.
     :param graph: graph
     :param centrality: centrality name, one of utils.CENTRALITIES
     :param count: number of nodes with top centrality to return. If None, return all nodes
-    :return:
+    :param threshold # TODO make threshold cut
+    :return: sorted list with top centrality
     """
     node_cent = list(graph.get_node_property_dict(property=centrality).items())
     # node_cent = compute_nodes_centrality(graph, centrality)
@@ -62,25 +64,25 @@ def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approxim
 
     elif centrality == 'closeness':
         # FIXME seems to not distinguish edge directions
-        node_cent = []
-        for i, n in enumerate(s.Nodes()):
-            print(i, n)
-            node_cent.append((n.GetId(), snap.GetClosenessCentr(s, n.GetId(), graph.directed)))
-        # node_cent = [(n.GetId(), snap.GetClosenessCentr(s, n.GetId(), graph.directed)) for n in s.Nodes()]
+        node_cent = []  # TODO :made it to see progrees, mb need to be optimized
+        nodes = [node.GetId() for node in s.Nodes()]
+        for i in tqdm(range(s.GetNodes())):  # fixed to see progress bars
+            n = nodes[i]
+            node_cent.append((n, snap.GetClosenessCentr(s, n, graph.directed)))
 
     elif centrality == 'eccentricity':
         node_cent = []
-        for i, n in enumerate(s.Nodes()):
-            print(i, n)
-            node_cent.append((n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)))
-        # node_cent = [(n.GetId(), snap.GetNodeEcc(s, n.GetId(), graph.directed)) for n in s.Nodes()]
+        nodes = [node.GetId() for node in s.Nodes()]
+        for i in tqdm(range(s.GetNodes())):  # fixed to see progress bars
+            n = nodes[i]
+            node_cent.append((n, snap.GetNodeEcc(s, n, graph.directed)))
 
     elif centrality == 'clustering':
         NIdCCfH = snap.TIntFltH()
         snap.GetNodeClustCf(s, NIdCCfH)
         node_cent = [(item, NIdCCfH[item]) for item in NIdCCfH]
 
-    elif centrality == 'k-cores':
+    elif centrality == 'k-cores':  # TODO could be computed in networkx
         raise NotImplementedError("GetKCore, or do it manually in snap?")
     else:
         raise NotImplementedError("")
