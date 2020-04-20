@@ -1,4 +1,5 @@
 import glob
+import os
 
 import imageio
 from tqdm import tqdm
@@ -31,7 +32,7 @@ from tqdm import tqdm
 #     plt.clf()
 
 
-def make_gif(crawler_name, pngs_path):
+def make_gif(crawler_name, pngs_path, duration=1):
     images = []
     filenames = glob.glob(pngs_path + "gif{}*.png".format(crawler_name))
     filenames.sort()
@@ -40,7 +41,10 @@ def make_gif(crawler_name, pngs_path):
     for filename in tqdm(filenames):
         images.append(imageio.imread(filename))
     print("compiling")
-    imageio.mimsave(pngs_path + "result_{}.gif".format(crawler_name), images, duration=0.33, loop=2)
+    file_path = pngs_path + "/result/"
+    if not os.path.exists(file_path):
+        os.makedirs(file_path)
+    imageio.mimsave(file_path + "{}.gif".format(crawler_name), images, duration=0.2 * duration, loop=2)
     print("done")
 
     # return pos

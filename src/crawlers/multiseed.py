@@ -287,7 +287,7 @@ def test():
 def test_carpet_graph(n, m):
     # special n*m graph for visual testing
     import snap
-    g = snap.TNGraph.New()
+    g = snap.TUNGraph.New()
     pos = dict()
     for i in range(0, n * m):
         g.AddNodeUnchecked(i)

@@ -3,19 +3,23 @@ import json
 import logging
 import os
 
+import networkx as nx
+from matplotlib import pyplot as plt
 from tqdm import tqdm
 
+from centralities import get_top_centrality_nodes
 from crawlers.advanced import AvrachenkovCrawler
 # from crawlers.basic import  # TODO need to finish crawlers and replace into crawlers.basic
 from crawlers.multiseed import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
     DepthFirstSearchCrawler, BreadthFirstSearchCrawler, RandomWalkCrawler, RandomCrawler, \
-    ForestFireCrawler, test_carpet_graph
+    ForestFireCrawler
 from experiments import drawing_graph
-from graph_io import MyGraph
+from graph_io import MyGraph, GraphCollections
+from utils import CENTRALITIES
 
 
-def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
-                   top_set=False, jsons=False, gif=0, layout_pos=None, ending_sets=False, **kwargs):
+def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1, step=1,
+                   top_set=True, jsons=False, gif=False, layout_pos=None, ending_sets=False, **kwargs):
     """   # TODO other arguments like top_k=False,
 
     The core function that takes crawler and does everything with it (crawling budget, export results....)
@@ -33,11 +37,12 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
     if layout_pos is None:
         layout_pos = dict()
     if crawler_name in ('MOD', 'POD'):
-        crawler = CRAWLERS_DICTIONARY[crawler_name](Graph, top_k=kwargs['top_k'])
+        top_k = 5  # TODO do something with it, need to recount every top_k iterations
+        crawler = CRAWLERS_DICTIONARY[crawler_name](Graph, top_k)  # top_k=kwargs['top_k'])
     else:
         crawler = CRAWLERS_DICTIONARY[crawler_name](Graph)
 
-    from matplotlib import pyplot as plt
+
     plt.figure(figsize=(14, 6))
     pngs_path = "../data/gif_files/"
 
@@ -48,14 +53,6 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
         gif_export_path = '../data/graph_traversal.gif'
         gif_counter = 0
         # for drawing
-
-        # print(layout_pos)
-        # print([i for i in layout_pos])
-        # fig, ax = plt.subplots()
-        # print("lp",[layout_pos[v][0] for v in layout_pos])
-        # axis_x_coords = [layout_pos[v][0] for v in layout_pos]
-        # axis_y_coords = [layout_pos[v][1] for v in layout_pos]
-
         # file preparing
         if os.path.exists(pngs_path):
             for file in glob.glob(pngs_path + crawler_name + "*.png"):
@@ -66,23 +63,39 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
         # with open(crawler_history_path + 'sequence.json', 'r') as f:
         #    sequence = json.load(f)
 
+    # centrality_dict = dict()
+    o_count, c_count = {centrality_name: [] for centrality_name in CENTRALITIES}, \
+                       {centrality_name: [] for centrality_name in CENTRALITIES}  # history of crawling
+    top_dict = dict()
+    top_centrality_set_count = int(0.1 * Graph.snap.GetNodes())
     if top_set:  # TODO need to make plots for every centrality (utils.py CENTRALITIES)
-        top_set = dict()
-        centralities = top_set.keys()
-        history_plots = {centr: [] for centr in centralities}  # list of numbers of intersections for every step
-        # plot of crawled history will be just plotting this graph plt.plot( history_plots.)
-        # TODO + all node set. it was 'nodes' in our paper
+        for centrality_name in CENTRALITIES:
+            Graph.get_node_property_dict(centrality_name)
+            # centrality_dict[centrality_name] = Graph.get_node_property_dict(centrality_name)
+            top_dict[centrality_name] = set(get_top_centrality_nodes(Graph, centrality_name,
+                                                                     top_centrality_set_count))
+
+    #  history_plots = {centr: [] for centr in centralities}  # list of numbers of intersections for every step
+    # plot of crawled history will be just plotting this graph plt.plot( history_plots.)
+    # TODO + all node set. it was 'nodes' in our paper
 
     if n1:  # crawl first n1 seeds
         print('RUNNER: crawl_multi_seed{}'.format(n1))
         crawler.crawl_multi_seed(n1=n1)
 
-    for iterator in tqdm(range(total_budget)):
+    for iterator in tqdm(range(0, total_budget, step)):
         # print('RUNNER: iteration:{}/{}'.format(iterator,total_budget))
-        crawler.crawl_budget(1)  # file=True)  # TODO return crawling export in files
+        crawler.crawl_budget(step)  # file=True)  # TODO return crawling export in files
 
-        if gif and (iterator % gif == 0):
-            from networkx import draw
+        if top_set:
+            for centrality_name in CENTRALITIES:
+                c_count[centrality_name].extend([(iterator, len(
+                    top_dict[centrality_name].intersection(crawler.crawled_set)))])  # *step) # if need to add several
+                o_count[centrality_name].extend(
+                    [(iterator, len(top_dict[centrality_name].intersection(crawler.observed_set)) +
+                      c_count[centrality_name][-1][1])])  # *step)
+
+        if gif:  # and (iterator % gif == 0):
             # TODO some strange things coulf happen, because need to give @pos back
             last_seed = crawler.seed_sequence_[-1]
             networkx_graph = crawler.orig_graph.snap_to_networkx
@@ -101,10 +114,11 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
             plt.title(crawler_name + " " + str(iterator) + '  ' + "current node:" + str(last_seed))
             if layout_pos is None:
                 layout_pos = Graph.snap.snap_to_networkx.spring_layout(Graph.snap_to_networkx, iterations=100)
-            draw(networkx_graph, pos=layout_pos, with_labels=True, node_size=150,
-                 node_color=[gen_node_color[node] for node in networkx_graph.nodes]
-                 # if node in networkx_graph.nodes()]
-                 )
+                print(layout_pos)
+            nx.draw(networkx_graph, pos=layout_pos, with_labels=True, node_size=150,
+                    node_color=[gen_node_color[node] for node in networkx_graph.nodes]
+                    # if node in networkx_graph.nodes()]
+                    )
             # plt.xlim(min(axis_x_coords) - 1, max(axis_x_coords) + 1)
             # plt.ylim(min(axis_y_coords) - 1, max(axis_y_coords) + 1)
 
@@ -121,7 +135,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
     #                           crawler_name = crawler_name, labels = False)
     # if top_set: # TODO every (successful) crawling iteration need to calculate intersection and write in history_plots
 
-    # TODO uncomment this or do something with empty node numbers (ex. nodes starts from 1, or does not exist)
+    # # TODO uncomment this or do something with empty node numbers (ex. nodes starts from 1, or does not exist)
     # nx_graph = crawler.observed_graph.networkx_graph  # snap_to_nx_graph(snap_graph)
     # # node_list = list(nx_graph.nodes())
     # print("----", crawler.observed_set, crawler.crawled_set)
@@ -129,9 +143,27 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1,
     #     if node not in nx_graph.nodes():
     #         nx_graph.add_node(1)
     #         print('i added node', node)
+    if top_set:
+        file_path = "../data/crawler_history/"  # TODO do something with export
+        if os.path.exists(file_path):
+            for file in glob.glob("../data/crawler_history/*{}*.json".format(crawler_name)):
+                os.remove(file)
+        else:
+            os.makedirs(file_path)
+
+        for centrality_name in CENTRALITIES:
+            with open(
+                    "../data/crawler_history/crawled_history_{}_{}.json".format(crawler.crawler_name, centrality_name),
+                    'w') as top_set_file:
+                json.dump([(x, y / top_centrality_set_count) for x, y in c_count[centrality_name]], top_set_file)
+        for centrality_name in CENTRALITIES:
+            with open(
+                    "../data/crawler_history/observed_history_{}_{}.json".format(crawler.crawler_name, centrality_name),
+                    'w') as top_set_file:
+                json.dump([(x, y / top_centrality_set_count) for x, y in c_count[centrality_name]], top_set_file)
 
     if gif:
-        drawing_graph.make_gif(crawler_name=crawler_name, pngs_path=pngs_path)
+        drawing_graph.make_gif(crawler_name=crawler_name, pngs_path=pngs_path)  # , duration=step)
 
     print(crawler_name + ": after first: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
           " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
@@ -162,15 +194,14 @@ CRAWLERS_DICTIONARY = {'POD': PreferentialObservedDegreeCrawler,
                        }
 
 
-def test_crawlers():
+def test_crawlers(Graph: MyGraph, total_budget=100, crawlers=None, layout_pos=None, gif=False, step=1):
+    if crawlers is None:
+        crawlers = ['DFS']
     file_path = "../data/crawler_history/"
-    if os.path.exists(file_path):
-        for file in glob.glob("../data/crawler_history/*.json"):
-            os.remove(file)
-    else:
+    if not os.path.exists(file_path):
         os.makedirs(file_path)
 
-    file_path = "../data/gif_files/"
+    file_path = "../data/gif_files/"  # TODO do something with export
     if os.path.exists(file_path):
         for file in glob.glob("../data/gif_files/*.png"):
             os.remove(file)
@@ -180,35 +211,36 @@ def test_crawlers():
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.CRITICAL)
     logging.getLogger().setLevel(logging.CRITICAL)
 
-    #### g = GraphCollections.get('dolphins').snap  # test_graph()  #
-    #### layout_pos = nx.spring_layout(Graph.snap_to_networkx, iterations=100)
-    ####Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
-    g, layout_pos = test_carpet_graph(9, 7)
-    Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
-
-    # Graph.snap.AddNode(0)
-    # Graph.snap.AddEdge(0, 1)
-
     print("N=%s E=%s" % (Graph.snap.GetNodes(), Graph.snap.GetEdges()))
 
     # min(100,Graph.snap.GetNodes())
     n1 = 1
-    total_budget = min(100 - n1, Graph.snap.GetNodes())
+    total_budget = min(total_budget - n1, Graph.snap.GetNodes())
     top_k = 5
     k = 4
     # pos = None  # position layout for drawing similar graphs (with nodes on same positions). updates at the end
 
     # crawlers = [(name, crawlers_dictionary[name]) for name in crawlers_dictionary]
-    crawlers = ['DFS']  # , 'BFS', 'RWC', 'RC_', 'FFC', ]  # 'MOD', 'POD',
-
+    result_crawlers = []
     for crawler_name in crawlers:
         print("Running {} with budget={}, n1={}".format(crawler_name, total_budget, n1))
-        crawler = Crawler_Runner(Graph, crawler_name, total_budget=total_budget, n1=n1,
-                                 gif=1, layout_pos=layout_pos)
-        print("Seed sequence due crawling:", crawler.seed_sequence_)
+        result_crawlers.append(Crawler_Runner(Graph, crawler_name, total_budget=total_budget,
+                                              n1=n1, gif=gif, step=step,
+                                              # layout_pos=layout_pos
+                                              ))
+        print("Seed sequence due crawling:", result_crawlers[-1].seed_sequence_)
     # with open("./data/crawler_history/sequence.json", 'w') as f:
     #     json.dump(crawler.seed_sequence_, f)
+    return result_crawlers
 
 
 if __name__ == '__main__':
-    test_crawlers()
+    Graph = GraphCollections.get('petster-hamster')  # petster-hamster')  # test_graph()  #
+    # layout_pos = nx.spring_layout(Graph.snap_to_networkx, iterations=100)
+    ####Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
+    # g, layout_pos = test_carpet_graph(10, 8)
+    # Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
+    print(Graph.snap.GetNodes())
+    test_crawlers(Graph, 11000, ['DFS', 'MOD', 'RC_', 'DFS', 'FFC', 'BFS'],  # 'RWC',
+                  gif=False, step=10, )  # layout_pos=layout_pos, )
+# crawlers = ['DFS']  # , 'BFS', 'RWC', 'RC_', 'FFC', ]  # 'MOD', 'POD',

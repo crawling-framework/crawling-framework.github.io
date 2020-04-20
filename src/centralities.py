@@ -19,7 +19,11 @@ def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=F
     """
     node_cent = list(graph.get_node_property_dict(property=centrality).items())
     # node_cent = compute_nodes_centrality(graph, centrality)
-    sorted_node_cent = sorted(node_cent, key=itemgetter(1), reverse=True)
+    if centrality in ['eccentricity', 'closeness']:
+        reverse = False
+    else:
+        reverse = True
+    sorted_node_cent = sorted(node_cent, key=itemgetter(1), reverse=reverse)
 
     # TODO how to choose nodes at the border centrality value?
     if not count:

@@ -147,7 +147,7 @@ class MyGraph(object):
     @property  # Denis:  could be useful to handle nx version of graph
     def snap_to_networkx(self):
         nx_graph = nx.Graph()
-        for NI in self._snap_graph.Nodes():
+        for NI in self.snap.Nodes():
             nx_graph.add_node(NI.GetId())
             for Id in NI.GetOutEdges():
                 nx_graph.add_edge(NI.GetId(), Id)
