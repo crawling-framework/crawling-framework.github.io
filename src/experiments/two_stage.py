@@ -120,7 +120,7 @@ class TwoStageCrawlerSeedsAreHubs(TwoStageCrawler):
         # Get v=(pN-n) max degree observed nodes
         self.e2s = set(self._get_mod_nodes(self.e2, self.pN - self.n))
 
-        # Final answer - E* = E1* + E2*
+        # Final answer - E* = S + E1* + E2*
         self.answer = set(self.hubs).union(self.e1s.union(self.e2s))
 
 
@@ -142,7 +142,7 @@ class TargetSetCoverageTester:
 
         nrows = 1
         if len(crawler_kwargs_list) > 1:
-            nrows = 2
+            nrows = int(len(crawler_kwargs_list) ** 0.5)
         from math import ceil
         ncols = ceil(len(crawler_kwargs_list) / nrows)
         fig = plt.figure("Graph %s:  N=%d, E=%d, d_max=%d" % (
@@ -238,10 +238,10 @@ def test_target_set_coverage():
 
     tester = TargetSetCoverageTester(graph, TwoStageCrawlerBatches, target=int(p*graph.snap.GetNodes()))
     tester.run([
-        {'s': 1, 'n': 10000, 'p': p, 'b': 10},
+        # {'s': 1, 'n': 50000, 'p': p, 'b': 10},
         # {'s': 10, 'n': 2000, 'p': p, 'b': 10},
         # {'s': 50, 'n': 2000, 'p': p, 'b': 10},
-        {'s': 1000, 'n': 10000, 'p': p, 'b': 10},
+        {'s': 1000, 'n': 20000, 'p': p, 'b': 19000},
     ])
 
 

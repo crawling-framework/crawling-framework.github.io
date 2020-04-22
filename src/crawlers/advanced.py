@@ -41,6 +41,19 @@ class CrawlerWithAnswer(Crawler):
         """
         raise NotImplementedError()
 
+    # fixme where should it be? it is used by all subclasses
+    def _get_mod_nodes(self, nodes_set, count) -> list:
+        """
+        Get list of nodes with maximal observed degree from the specified set.
+
+        :param nodes_set: subset of the observed graph nodes
+        :param count: top-list size
+        :return: list of nodes by decreasing of their observed degree
+        """
+        candidates_deg = [(n, self.observed_graph.snap.GetNI(n).GetDeg()) for n in nodes_set]
+        top_candidates_deg = sorted(candidates_deg, key=itemgetter(1), reverse=True)[:count]
+        return [n for n, _ in top_candidates_deg]
+
 
 class AvrachenkovCrawler(CrawlerWithAnswer):
     """
@@ -56,18 +69,6 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
         self.k = k
 
         self.top_observed_seeds = []  # nodes for 2nd step
-
-    def _get_mod_nodes(self, nodes_set, count) -> list:
-        """
-        Get list of nodes with maximal observed degree from the specified set.
-
-        :param nodes_set: subset of the observed graph nodes
-        :param count: top-list size
-        :return: list of nodes by decreasing of their observed degree
-        """
-        candidates_deg = [(n, self.observed_graph.snap.GetNI(n).GetDeg()) for n in nodes_set]
-        top_candidates_deg = sorted(candidates_deg, key=itemgetter(1), reverse=True)[:count]
-        return [n for n, _ in top_candidates_deg]
 
     def _seeds_generator(self):
         # 1) random seeds
@@ -107,19 +108,6 @@ class TwoStageCrawler(CrawlerWithAnswer):
         self.e2s = set()  # E2*
         self.e1 = set()  # E1
         self.e2 = set()  # E2
-
-    def _get_mod_nodes(self, nodes_set, count) -> list:
-        """
-        fixme duplicate code
-        Get list of nodes with maximal observed degree from the specified set.
-
-        :param nodes_set: subset of the observed graph nodes
-        :param count: top-list size
-        :return: list of nodes by decreasing of their observed degree
-        """
-        candidates_deg = [(n, self.observed_graph.snap.GetNI(n).GetDeg()) for n in nodes_set]
-        top_candidates_deg = sorted(candidates_deg, key=itemgetter(1), reverse=True)[:count]
-        return [n for n, _ in top_candidates_deg]
 
     def _seeds_generator(self):
         # 1) random seeds
@@ -197,10 +185,7 @@ class TwoStageCrawlerBatches(TwoStageCrawler):
             self.e1_batches[batch] = set(self.observed_set)
             logging.debug("|E1[%d]|=%d" % (batch, len(self.e1_batches[batch])))
 
-            obs_deg = [(n, self.observed_graph.snap.GetNI(n).GetDeg()) for n in self.observed_set]
-            top_obs_deg = sorted(obs_deg, key=itemgetter(1), reverse=True)[:batch_sizes[batch]]
-
-            self.e1s_batches[batch] = set([n for n, _ in top_obs_deg])
+            self.e1s_batches[batch] = set(self._get_mod_nodes(self.observed_set, batch_sizes[batch]))
             logging.debug("|E1*[%d]|=%d" % (batch, len(self.e1s_batches[batch])))
 
             for seed in self.e1s_batches[batch]:
