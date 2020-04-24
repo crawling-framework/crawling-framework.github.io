@@ -1,8 +1,6 @@
 from enum import Enum
 import snap
 
-from graph_io import MyGraph
-
 
 class Stat(Enum):
     def __init__(self, short, description, computer):
@@ -42,7 +40,7 @@ class Stat(Enum):
     # DIAMETER_90_DIR = 'diam90-dir', "90%eff. dir. diam. of largest SCC"
 
 
-def assortativity(graph: MyGraph):
+def assortativity(graph):
     """ Degree assortativity -1<=r<=1"""
     g = graph.snap
     mul, sum2, sum_sq2 = 0, 0, 0

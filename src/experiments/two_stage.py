@@ -1,16 +1,12 @@
 import logging
-import os
-from operator import itemgetter
 
 import snap
-import numpy as np
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
 from centralities import get_top_centrality_nodes
-from crawlers.advanced import TwoStageCrawler, AvrachenkovCrawler, Crawler, TwoStageCrawlerBatches
-from crawlers.basic import CrawlerError
+from crawlers.advanced import TwoStageCrawler, TwoStageCrawlerBatches
+from crawlers.basic import CrawlerError, Crawler
 from graph_io import MyGraph, GraphCollections
-from utils import PICS_DIR
 
 
 def test_initial_graph(i: str):
@@ -236,7 +232,7 @@ def test_target_set_coverage():
         # {'s': 5000, 'n': 50000, 'p': p},
     # ])
 
-    tester = TargetSetCoverageTester(graph, TwoStageCrawlerBatches, target=int(p*graph.snap.GetNodes()))
+    tester = TargetSetCoverageTester(graph, TwoStageCrawlerBatches, target=int(p * graph.snap.GetNodes()))
     tester.run([
         {'s': 1, 'n': 10000, 'p': p, 'b': 10},
         # {'s': 10, 'n': 2000, 'p': p, 'b': 10},

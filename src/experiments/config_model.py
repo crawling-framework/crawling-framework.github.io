@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
 from graph_io import MyGraph, GraphCollections
-from metrics import assortativity
+from statistics import assortativity
 from models import truncated_power_law, configuration_model, ba_model
 
 

@@ -6,7 +6,7 @@ import scipy.stats as stats
 import snap
 
 from graph_io import MyGraph
-from metrics import Stat
+from statistics import Stat
 
 
 def truncated_power_law(count, gamma, maximal):
