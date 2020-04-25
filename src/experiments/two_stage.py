@@ -4,9 +4,11 @@ import snap
 from matplotlib import pyplot as plt
 
 from centralities import get_top_centrality_nodes
-from crawlers.advanced import TwoStageCrawler, TwoStageCrawlerBatches
+from crawlers.advanced import TwoStageCrawler, TwoStageCrawlerBatches, TwoStageCrawlerBatchesMOD
 from crawlers.basic import CrawlerError, Crawler
+from experiments.runners import Metric, AnimatedCrawlerRunner
 from graph_io import MyGraph, GraphCollections
+from statistics import Stat
 
 
 def test_initial_graph(i: str):
@@ -221,24 +223,38 @@ def test_target_set_coverage():
     graph = GraphCollections.get(name)
 
     p = 0.1
-    # tester = TargetSetCoverageTester(graph, TwoStageCrawler, target=int(p*graph.snap.GetNodes()))
+    # # tester = TargetSetCoverageTester(graph, TwoStageCrawler, target=int(p*graph.snap.GetNodes()))
+    # # tester.run([
+    #     # {'s': 10, 'n': 20, 'p': p},
+    #     # {'s': 50, 'n': 200, 'p': p},
+    #     # {'s': 100, 'n': 500, 'p': p},
+    #     # {'s': 500, 'n': 2500, 'p': p},
+    #     # {'s': 1000, 'n': 5000, 'p': p},
+    #     # {'s': 2000, 'n': 10000, 'p': p},
+    #     # {'s': 5000, 'n': 50000, 'p': p},
+    # # ])
+    #
+    # tester = TargetSetCoverageTester(graph, TwoStageCrawlerBatches, target=int(p * graph.snap.GetNodes()))
     # tester.run([
-        # {'s': 10, 'n': 20, 'p': p},
-        # {'s': 50, 'n': 200, 'p': p},
-        # {'s': 100, 'n': 500, 'p': p},
-        # {'s': 500, 'n': 2500, 'p': p},
-        # {'s': 1000, 'n': 5000, 'p': p},
-        # {'s': 2000, 'n': 10000, 'p': p},
-        # {'s': 5000, 'n': 50000, 'p': p},
+    #     # {'s': 1, 'n': 50000, 'p': p, 'b': 10},
+    #     # {'s': 10, 'n': 2000, 'p': p, 'b': 10},
+    #     # {'s': 50, 'n': 2000, 'p': p, 'b': 10},
+    #     {'s': 1000, 'n': 20000, 'p': p, 'b': 10},
     # ])
 
-    tester = TargetSetCoverageTester(graph, TwoStageCrawlerBatches, target=int(p * graph.snap.GetNodes()))
-    tester.run([
-        # {'s': 1, 'n': 50000, 'p': p, 'b': 10},
-        # {'s': 10, 'n': 2000, 'p': p, 'b': 10},
-        # {'s': 50, 'n': 2000, 'p': p, 'b': 10},
-        {'s': 1000, 'n': 20000, 'p': p, 'b': 19000},
-    ])
+    crawlers = [
+        # TwoStageCrawlerBatches(graph, s=1000, n=50000, p=p, b=1),
+        TwoStageCrawlerBatchesMOD(graph, s=1000, n=50000, p=p, b=1),
+    ]
+
+    target_set = set(get_top_centrality_nodes(graph, 'degree', count=int(p * graph[Stat.NODES])))
+    metrics = [
+        # Metric(r'$|V_o|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
+        Metric(r'$|V_o \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
+    ]
+
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=50000, step=100)
+    ci.run()
 
 
 if __name__ == '__main__':

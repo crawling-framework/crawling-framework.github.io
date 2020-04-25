@@ -10,15 +10,28 @@ from graph_io import MyGraph
 
 class Crawler(object):
 
-    def __init__(self, graph: MyGraph, name=None):
+    def __init__(self, graph: MyGraph, name=None, **kwargs):
         # original graph
         self.orig_graph = graph
+
         # observed graph
-        self.observed_graph = MyGraph.new_snap(directed=graph.directed, weighted=graph.weighted)
+        if 'observed_graph' in kwargs:
+            self.observed_graph = kwargs['observed_graph']
+        else:
+            self.observed_graph = MyGraph.new_snap(directed=graph.directed, weighted=graph.weighted)
+
         # crawled ids set
-        self.crawled_set = set()
+        if 'crawled_set' in kwargs:
+            self.crawled_set = kwargs['crawled_set']
+        else:
+            self.crawled_set = set()
+
         # observed ids set excluding crawled ones
-        self.observed_set = set()
+        if 'observed_set' in kwargs:
+            self.observed_set = kwargs['observed_set']
+        else:
+            self.observed_set = set()
+
         self.name = name if name is not None else type(self).__name__
 
     @property
@@ -81,15 +94,15 @@ class CrawlerError(Exception):
 
 
 class RandomCrawler(Crawler):
-    def __init__(self, graph: MyGraph, initial_seed=None):
+    def __init__(self, graph: MyGraph, initial_seed=None, **kwargs):
         """
         :param initial_seed: the node to start crawling from, by default a random graph node will be used
         """
-        super().__init__(graph, name='RC_')
-        if initial_seed is None:
-            initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
-        self.observed_set.add(initial_seed)
-        self.observed_graph.snap.AddNode(initial_seed)
+        super().__init__(graph, name='RC_', **kwargs)
+        if initial_seed is not None:  # fixme duplicate code in all basic crawlers?
+            # initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+            self.observed_set.add(initial_seed)
+            self.observed_graph.snap.AddNode(initial_seed)
 
     def next_seed(self):
         if len(self.observed_set) == 0:
@@ -98,16 +111,16 @@ class RandomCrawler(Crawler):
 
 
 class MaximumObservedDegreeCrawler(Crawler):
-    def __init__(self, orig_graph: MyGraph, batch=1, initial_seed=None):
+    def __init__(self, orig_graph: MyGraph, batch=1, initial_seed=None, **kwargs):
         """
         :param batch: batch size
         :param initial_seed: the node to start crawling from, by default a random graph node will be used
         """
-        super().__init__(orig_graph, name='MOD%s' % (batch if batch > 1 else ''))
-        if initial_seed is None:  # fixme duplicate code in all basic crawlers?
-            initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
-        self.observed_set.add(initial_seed)
-        self.observed_graph.snap.AddNode(initial_seed)
+        super().__init__(orig_graph, name='MOD%s' % (batch if batch > 1 else ''), **kwargs)
+        if initial_seed is not None:  # fixme duplicate code in all basic crawlers?
+            # initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+            self.observed_set.add(initial_seed)
+            self.observed_graph.snap.AddNode(initial_seed)
 
         self.batch = batch
         self.mod_queue = deque()

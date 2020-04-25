@@ -4,7 +4,7 @@ from operator import itemgetter
 
 import numpy as np
 
-from crawlers.basic import Crawler, CrawlerError
+from crawlers.basic import Crawler, CrawlerError, MaximumObservedDegreeCrawler
 from graph_io import MyGraph
 
 
@@ -12,10 +12,10 @@ class CrawlerWithAnswer(Crawler):
     """
     Crawler which makes a limited number of iterations and generates an answer as its result.
     """
-    def __init__(self, graph: MyGraph, limit: int):
-        super().__init__(graph)
+    def __init__(self, graph: MyGraph, limit: int, name: str):
+        super().__init__(graph, name=name)
         self.limit = limit
-        self.answer = set()
+        self.answer = None
         self.seeds_generator = self._seeds_generator()
 
     def next_seed(self) -> int:
@@ -29,7 +29,8 @@ class CrawlerWithAnswer(Crawler):
             super().crawl_budget(budget, *args)
         except CrawlerError:
             # Reached maximum number of iterations or any other Crawler exception
-            self._compute_answer()
+            if self.answer is None:
+                self._compute_answer()
 
     def _seeds_generator(self):
         """ Creates generator of seeds according to the algorithm.
@@ -61,7 +62,7 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
     https://arxiv.org/pdf/1410.0571.pdf
     """
     def __init__(self, graph, n=1000, n1=500, k=100):
-        super().__init__(graph, limit=n)
+        super().__init__(graph, limit=n, name='Avrach_n=%s_n1=%s_k=%s' % (n, n1, k))
         assert n1 <= n <= self.orig_graph.snap.GetNodes()
         assert k <= n-n1
         self.n1 = n1
@@ -96,7 +97,7 @@ class TwoStageCrawler(CrawlerWithAnswer):
         :param n: number of nodes to be crawled, must be >= seeds
         :param p: fraction of graph nodes to be returned
         """
-        super().__init__(graph, limit=n)
+        super().__init__(graph, limit=n, name='TwoStage_s=%s_n=%s_p=%s' % (s, n, p))
         self.s = s
         self.n = n
         self.pN = int(p*self.orig_graph.snap.GetNodes())
@@ -149,7 +150,7 @@ class TwoStageCrawler(CrawlerWithAnswer):
         logging.debug("|E*|=", len(self.answer))
 
 
-class TwoStageCrawlerBatches(TwoStageCrawler):
+class TwoStageCrawlerBatches(CrawlerWithAnswer):
     """
     """
     def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, b=10):
@@ -161,7 +162,11 @@ class TwoStageCrawlerBatches(TwoStageCrawler):
         :param b: batch size
         """
         assert 1 <= b <= n-s
-        super().__init__(graph=graph, s=s, n=n, p=p)
+        super().__init__(graph=graph, limit=n, name='TwoStageBatch_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
+        self.s = s
+        self.n = n
+        self.pN = int(p*self.orig_graph.snap.GetNodes())
+        assert s <= n <= self.pN
         self.b = b
 
         self.batches_count = ceil((self.n-self.s) / self.b)
@@ -173,7 +178,8 @@ class TwoStageCrawlerBatches(TwoStageCrawler):
         """
         # 1) random seeds
         graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
-        random_seeds = [int(n) for n in np.random.choice(graph_nodes, self.s, replace=False)]
+        # random_seeds = [int(n) for n in np.random.choice(graph_nodes, self.s, replace=False)]
+        random_seeds = graph_nodes[:self.s]
         for i in range(self.s):
             yield random_seeds[i]
 
@@ -194,16 +200,84 @@ class TwoStageCrawlerBatches(TwoStageCrawler):
     def _compute_answer(self):
         # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(all E1*[i] + E2*) of size pN
 
-        # memorize E2
-        self.e2 = set(self.observed_set)
-        logging.debug("|E2|=", len(self.e2))
+        # E2
+        e2 = set(self.observed_set)
+        logging.debug("|E2|=", len(e2))
 
         # Get v=(pN-n+s) max degree observed nodes
-        self.e2s = set(self._get_mod_nodes(self.e2, self.pN - self.n + self.s))
-        logging.debug("|E2*|=", len(self.e2s))
+        e2s = set(self._get_mod_nodes(e2, self.pN - self.n + self.s))
+        logging.debug("|E2*|=", len(e2s))
 
         # Final answer - E* = all E1*[i] + E2*
-        self.answer = self.e2s
+        self.answer = e2s
+        for e1_batch in self.e1_batches:
+            self.answer = self.answer.union(e1_batch)
+        logging.debug("|E*|=", len(self.answer))
+
+
+class TwoStageCrawlerBatchesMOD(CrawlerWithAnswer):
+    """
+    """
+    def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, b=10):
+        """
+        :param graph: original graph
+        :param s: number of initial random seed
+        :param n: number of nodes to be crawled, must be >= seeds
+        :param p: fraction of graph nodes to be returned
+        :param b: batch size
+        """
+        assert 1 <= b <= n-s
+        super().__init__(graph=graph, limit=n, name='TwoStageBatchMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
+        self.s = s
+        self.n = n
+        self.pN = int(p*self.orig_graph.snap.GetNodes())
+        assert s <= n <= self.pN
+        self.b = b
+
+        self.batches_count = ceil((self.n-self.s) / self.b)
+        self.e1_batches = [set()] * self.batches_count
+        self.e1s_batches = [set()] * self.batches_count
+
+        self.mod = None
+
+    def crawl(self, seed: int) -> bool:
+        """ Apply MOD when time comes
+        """
+        if self.mod is None:
+            return super().crawl(seed)
+        return self.mod.crawl(seed)
+
+    def _seeds_generator(self):
+        """ Creates generator of seeds according to algorithm
+        """
+        # 1) random seeds
+        graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
+        # random_seeds = [int(n) for n in np.random.choice(graph_nodes, self.s, replace=False)]
+        random_seeds = graph_nodes[:self.s]
+        for i in range(self.s):
+            yield random_seeds[i]
+
+        # 2) run MOD
+        self.mod = MaximumObservedDegreeCrawler(
+            self.orig_graph, batch=self.b, observed_graph=self.observed_graph,
+            observed_set=self.observed_set, crawled_set=self.crawled_set)
+
+        for i in range(self.n-self.s):
+            yield self.mod.next_seed()
+
+    def _compute_answer(self):
+        # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(all E1*[i] + E2*) of size pN
+
+        # E2
+        e2 = set(self.observed_set)
+        logging.debug("|E2|=", len(e2))
+
+        # Get v=(pN-n+s) max degree observed nodes
+        e2s = set(self._get_mod_nodes(e2, self.pN - self.n + self.s))
+        logging.debug("|E2*|=", len(e2s))
+
+        # Final answer - E* = all E1*[i] + E2*
+        self.answer = e2s
         for e1_batch in self.e1_batches:
             self.answer = self.answer.union(e1_batch)
         logging.debug("|E*|=", len(self.answer))
