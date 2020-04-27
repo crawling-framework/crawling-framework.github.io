@@ -10,6 +10,29 @@ from crawlers.basic import Crawler
 from graph_io import MyGraph
 
 
+class MultiCrawler(Crawler):
+    def __init__(self, graph: MyGraph, crawlers, **kwargs):
+        """
+        :param crawlers: crawler instances to run iteratively
+        """
+        super().__init__(graph, **kwargs)
+
+        assert len(crawlers) > 1
+        self.crawlers = crawlers
+        master = crawlers[0]
+        for c in crawlers[1:]:
+            assert c.orig_graph == master.orig_graph
+            c.observed_graph = master.observed_graph
+            c.crawled_set = master.crawled_set
+
+        self.next_crawler = 0  # next crawler to
+
+    def crawl(self, seed: int) -> bool:
+        """ Iteratively run crawlers
+        """
+        pass  # TODO
+
+
 class MultiSeedCrawler(Crawler, ABC):
     """
     great class to Avrachenkov and other crawlers starting with n1 seeds
@@ -131,7 +154,7 @@ class BreadthFirstSearchCrawler(MultiSeedCrawler):  # в ширину
         return self.bfs_queue[0]
 
     def crawl(self, seed):
-        for n in self.orig_graph.neighbors(seed):
+        for n in self.orig_graph.neighbors(seed):  # Fixme if seed will not be crawled, it is redundant
             self.bfs_queue.append(n)
         return super(BreadthFirstSearchCrawler, self).crawl(seed)
 

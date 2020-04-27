@@ -41,7 +41,7 @@ class Crawler(object):
 
     def crawl(self, seed: int) -> bool:
         """
-        Crawl specified nodes. The observed graph is updated, also crawled and observed set.
+        Crawl specified node. The observed graph is updated, also crawled and observed set.
         :param seed: node id to crawl
         :return: whether the node was crawled
         """
@@ -85,8 +85,6 @@ class Crawler(object):
         for _ in range(budget):
             while not self.crawl(self.next_seed()):
                 continue
-            # logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
-            #               (seed, self.crawled_set, self.observed_set, self.nodes_set))
 
 
 class CrawlerError(Exception):
@@ -96,11 +94,14 @@ class CrawlerError(Exception):
 class RandomCrawler(Crawler):
     def __init__(self, graph: MyGraph, initial_seed=None, **kwargs):
         """
-        :param initial_seed: the node to start crawling from, by default a random graph node will be used
+        :param initial_seed: if observed set is empty, the crawler will start from the given initial
+         node. If None is given, a random node of original graph will be used.
         """
         super().__init__(graph, name='RC_', **kwargs)
-        if initial_seed is not None:  # fixme duplicate code in all basic crawlers?
-            # initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+
+        if len(self.observed_set) == 0:
+            if initial_seed is None:  # FIXME duplicate code in all basic crawlers?
+                initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
             self.observed_set.add(initial_seed)
             self.observed_graph.snap.AddNode(initial_seed)
 
@@ -110,15 +111,50 @@ class RandomCrawler(Crawler):
         return random.choice(tuple(self.observed_set))
 
 
+class BreadthFirstSearchCrawler(Crawler):
+    def __init__(self, graph: MyGraph, initial_seed=None, **kwargs):
+        """
+        :param initial_seed: if observed set is empty, the crawler will start from the given initial
+         node. If None is given, a random node of original graph will be used.
+        """
+        super().__init__(graph, name='BFS', **kwargs)
+
+        if len(self.observed_set) == 0:
+            if initial_seed is None:  # FIXME duplicate code in all basic crawlers?
+                initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+            self.observed_set.add(initial_seed)
+            self.observed_graph.snap.AddNode(initial_seed)
+
+        self.bfs_queue = deque(self.observed_set)  # FIXME what if its size > 1 ?
+
+    def next_seed(self):
+        if len(self.bfs_queue) == 0:
+            assert len(self.observed_set) == 0
+            raise CrawlerError("Can't get next seed: no more observed nodes.")
+
+        return self.bfs_queue.popleft()
+
+    def crawl(self, seed):
+        res = super().crawl(seed)
+        if res:
+            [self.bfs_queue.append(n) for n in self.orig_graph.neighbors(seed)
+             if n not in self.crawled_set]
+
+        return res
+
+
 class MaximumObservedDegreeCrawler(Crawler):
     def __init__(self, orig_graph: MyGraph, batch=1, initial_seed=None, **kwargs):
         """
         :param batch: batch size
-        :param initial_seed: the node to start crawling from, by default a random graph node will be used
+        :param initial_seed: if observed set is empty, the crawler will start from the given initial
+         node. If None is given, a random node of original graph will be used.
         """
         super().__init__(orig_graph, name='MOD%s' % (batch if batch > 1 else ''), **kwargs)
-        if initial_seed is not None:  # fixme duplicate code in all basic crawlers?
-            # initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+
+        if len(self.observed_set) == 0:
+            if initial_seed is None:  # fixme duplicate code in all basic crawlers?
+                initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
             self.observed_set.add(initial_seed)
             self.observed_graph.snap.AddNode(initial_seed)
 
@@ -138,7 +174,6 @@ class MaximumObservedDegreeCrawler(Crawler):
         g = self.observed_graph.snap
         if g.IsNode(seed):  # remove from observed set
             self.observed_set.remove(seed)
-            self.observed_skl.discard(seed)
         else:  # add to observed graph
             g.AddNode(seed)
 
@@ -149,7 +184,7 @@ class MaximumObservedDegreeCrawler(Crawler):
                 g.AddNode(n)
                 self.observed_set.add(n)
             self.observed_skl.discard(n)
-            g.AddEdge(seed, n)
+            g.AddEdge(seed, n)  # this is why we can't make it via super().crawl
             if n not in self.crawled_set:
                 self.observed_skl.add(n)
         return True
