@@ -6,7 +6,7 @@ from abc import ABC
 import numpy as np
 from scipy import stats
 
-from crawlers.basic import Crawler
+from crawlers.basic import Crawler, NoNextSeedError
 from graph_io import MyGraph
 
 
@@ -19,18 +19,57 @@ class MultiCrawler(Crawler):
 
         assert len(crawlers) > 1
         self.crawlers = crawlers
-        master = crawlers[0]
-        for c in crawlers[1:]:
-            assert c.orig_graph == master.orig_graph
-            c.observed_graph = master.observed_graph
-            c.crawled_set = master.crawled_set
 
-        self.next_crawler = 0  # next crawler to
+        # Merge observed graph and crawled set for all crawlers
+        master = crawlers[0]
+        o = master.observed_graph.snap
+        c = master.crawled_set
+        for crawler in crawlers[1:]:
+            assert crawler.orig_graph == master.orig_graph
+
+            # merge observed graph to master
+            for n in crawler.observed_graph.snap.Nodes():
+                n = n.GetId()
+                if not o.IsNode(n):
+                    o.AddNode(n)
+            for edge in crawler.observed_graph.snap.Edges():
+                i, j = edge.GetSrcNId(), edge.GetDstNId()
+                if not o.IsEdge(i, j):
+                    o.AddEdge(i, j)
+
+            # merge crawled_set to master
+            c = c.union(crawler.crawled_set)
+
+        for crawler in crawlers[1:]:
+            crawler.observed_graph = master.observed_graph
+            crawler.crawled_set = c
+
+        self.next_crawler = 0  # next crawler to run
 
     def crawl(self, seed: int) -> bool:
         """ Iteratively run crawlers
         """
-        pass  # TODO
+        res = self.crawlers[self.next_crawler].crawl(seed)
+        logging.debug("Run crawler[%s]: %s" % (self.next_crawler, res))
+        self.next_crawler = (self.next_crawler+1) % len(self.crawlers)
+        return res
+
+    def next_seed(self) -> int:
+        """
+        """
+        for er in range(len(self.crawlers)):
+            try:
+                s = self.crawlers[self.next_crawler].next_seed()
+            except NoNextSeedError as e:
+                logging.debug("Run crawler[%s]: %s Removing it." % (self.next_crawler, e))
+                del self.crawlers[self.next_crawler]
+                self.next_crawler = self.next_crawler % len(self.crawlers)
+                continue
+
+            logging.debug("Crawler[%s] next seed=%s" % (self.next_crawler, s))
+            return s
+
+        raise NoNextSeedError("None of %s subcrawlers can get next seed." % len(self.crawlers))
 
 
 class MultiSeedCrawler(Crawler, ABC):
@@ -319,10 +358,10 @@ def test_carpet_graph(n, m):
             node = i * n + k
             if (node > 0) and (node % n != 0):
                 g.AddEdgeUnchecked(node, node - 1)
-                g.AddEdgeUnchecked(node - 1, node)
+                # g.AddEdgeUnchecked(node - 1, node)
             if node > n - 1:
                 g.AddEdgeUnchecked(node, node - n)
-                g.AddEdgeUnchecked(node - n, node)
+                # g.AddEdgeUnchecked(node - n, node)
 
             pos[node] = [float(k / n), float(i / m)]
     graph = MyGraph.new_snap(g, name='test', directed=False)

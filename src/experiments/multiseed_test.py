@@ -10,9 +10,9 @@ from tqdm import tqdm
 from centralities import get_top_centrality_nodes
 from crawlers.advanced import AvrachenkovCrawler
 # from crawlers.basic import  # TODO need to finish crawlers and replace into crawlers.basic
-from crawlers.multiseed import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
-    DepthFirstSearchCrawler, BreadthFirstSearchCrawler, RandomWalkCrawler, RandomCrawler, \
-    ForestFireCrawler
+from crawlers.basic import BreadthFirstSearchCrawler, RandomCrawler, MaximumObservedDegreeCrawler
+from crawlers.multiseed import PreferentialObservedDegreeCrawler, \
+    DepthFirstSearchCrawler, ForestFireCrawler, MultiCrawler, RandomWalkCrawler, test_carpet_graph
 from experiments import drawing_graph
 from graph_io import MyGraph, GraphCollections
 from utils import CENTRALITIES
@@ -234,13 +234,35 @@ def test_crawlers(Graph: MyGraph, total_budget=100, crawlers=None, layout_pos=No
     return result_crawlers
 
 
+def test_multiseed(graph: MyGraph):
+    crawlers = [
+        # RandomCrawler(graph, initial_seed=1),
+        RandomCrawler(graph, initial_seed=2),
+        BreadthFirstSearchCrawler(graph, initial_seed=10),
+        BreadthFirstSearchCrawler(graph, initial_seed=11),
+        MaximumObservedDegreeCrawler(graph, initial_seed=1),
+        # MaximumObservedDegreeCrawler(graph, initial_seed=99),
+    ]
+    mc = MultiCrawler(graph, crawlers)
+    mc.crawl_budget(2000)
+
+
 if __name__ == '__main__':
-    Graph = GraphCollections.get('petster-hamster')  # petster-hamster')  # test_graph()  #
+    import logging
+
+    logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
+
+    g = GraphCollections.get('petster-hamster')  # petster-hamster')  # test_graph()  #
     # layout_pos = nx.spring_layout(Graph.snap_to_networkx, iterations=100)
     ####Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
     # g, layout_pos = test_carpet_graph(10, 8)
     # Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
-    print(Graph.snap.GetNodes())
-    test_crawlers(Graph, 11000, ['DFS', 'MOD', 'RC_', 'DFS', 'FFC', 'BFS'],  # 'RWC',
-                  gif=False, step=10, )  # layout_pos=layout_pos, )
+    print(g.snap.GetNodes())
+    # test_crawlers(g, 11000, ['DFS', 'MOD', 'RC_', 'DFS', 'FFC', 'BFS'],  # 'RWC',
+    #               gif=False, step=10, )  # layout_pos=layout_pos, )
 # crawlers = ['DFS']  # , 'BFS', 'RWC', 'RC_', 'FFC', ]  # 'MOD', 'POD',
+
+    # g = test_carpet_graph(10, 10)[0]
+    test_multiseed(g)
+

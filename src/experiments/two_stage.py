@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 
 from centralities import get_top_centrality_nodes
 from crawlers.advanced import TwoStageCrawler, TwoStageCrawlerBatches, TwoStageCrawlerBatchesMOD
-from crawlers.basic import CrawlerError, Crawler
+from crawlers.basic import CrawlerException, Crawler
 from experiments.runners import Metric, AnimatedCrawlerRunner
 from graph_io import MyGraph, GraphCollections
 from statistics import Stat
@@ -101,8 +101,8 @@ class TwoStageCrawlerSeedsAreHubs(TwoStageCrawler):
 
         # Check that e1 size is more than (n-s)
         if self.n - self.s > len(self.e1):
-            raise CrawlerError("E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." %
-                               (len(self.e1), self.n - self.s))
+            raise CrawlerException("E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." %
+                                   (len(self.e1), self.n - self.s))
 
         # 2) detect MOD batch
         self.top_observed_seeds = self._get_mod_nodes(self.observed_set, self.n - self.s)

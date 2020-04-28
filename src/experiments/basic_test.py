@@ -2,21 +2,21 @@ import logging
 
 import matplotlib.pyplot as plt
 
-from crawlers.basic import MaximumObservedDegreeCrawler
+from crawlers.basic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler
 from graph_io import GraphCollections
 
 
 def test_mod(graph):
-    crawler = MaximumObservedDegreeCrawler(graph, batch=10)
-    # crawler = BreadthFirstSearchCrawler(graph)
+    # crawler = MaximumObservedDegreeCrawler(graph, batch=10)
+    crawler = BreadthFirstSearchCrawler(graph, initial_seed=10)
     # crawler = RandomCrawler(graph)
 
     iterations = []
     os = []
     ns = []
 
-    step = 1
-    for i in range(1, 100, step):
+    step = 10
+    for i in range(1, 2000, step):
         iterations.append(i)
         crawler.crawl_budget(step)
         os.append(len(crawler.observed_set))
@@ -46,4 +46,4 @@ if __name__ == '__main__':
     name = 'petster-hamster'
     g = GraphCollections.get(name)
 
-    # test_mod(g)
+    test_mod(g)

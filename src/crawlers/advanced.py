@@ -4,7 +4,7 @@ from operator import itemgetter
 
 import numpy as np
 
-from crawlers.basic import Crawler, CrawlerError, MaximumObservedDegreeCrawler
+from crawlers.basic import Crawler, CrawlerException, MaximumObservedDegreeCrawler, NoNextSeedError
 from graph_io import MyGraph
 
 
@@ -22,12 +22,12 @@ class CrawlerWithAnswer(Crawler):
         try:
             return next(self.seeds_generator)
         except StopIteration:
-            raise CrawlerError("Reached maximum number of iterations %d" % self.limit)
+            raise NoNextSeedError("Reached maximum number of iterations %d" % self.limit)
 
     def crawl_budget(self, budget: int, *args):
         try:
             super().crawl_budget(budget, *args)
-        except CrawlerError:
+        except CrawlerException:
             # Reached maximum number of iterations or any other Crawler exception
             if self.answer is None:
                 self._compute_answer()
@@ -123,8 +123,8 @@ class TwoStageCrawler(CrawlerWithAnswer):
 
         # Check that e1 size is more than (n-s)
         if self.n - self.s > len(self.e1):
-            raise CrawlerError("E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." %
-                               (len(self.e1), self.n - self.s))
+            raise CrawlerException("E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." %
+                                   (len(self.e1), self.n - self.s))
 
         # 2) detect MOD batch
         self.top_observed_seeds = self._get_mod_nodes(self.observed_set, self.n - self.s)

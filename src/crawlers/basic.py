@@ -1,3 +1,4 @@
+import heapq
 import logging
 import random
 from queue import Queue, deque
@@ -47,6 +48,7 @@ class Crawler(object):
         """
         seed = int(seed)  # convert possible int64 to int, since snap functions would get error
         if seed in self.crawled_set:
+            logging.debug("Already crawled: %s" % seed)
             return False  # if already crawled - do nothing
 
         self.crawled_set.add(seed)
@@ -71,7 +73,7 @@ class Crawler(object):
 
         :return: node id as int
         """
-        raise CrawlerError("Not implemented")
+        raise CrawlerException("Not implemented")
 
     def crawl_budget(self, budget: int, *args):
         """
@@ -87,8 +89,18 @@ class Crawler(object):
                 continue
 
 
-class CrawlerError(Exception):
+class CrawlerException(Exception):
     pass
+
+
+class NoNextSeedError(CrawlerException):
+    """ Can't get next seed: no more observed nodes."""
+    def __init__(self, error_msg=None):
+        super().__init__(self)
+        self.error_msg = error_msg if error_msg else "Can't get next seed: no more observed nodes."
+
+    def __str__(self):
+        return self.error_msg
 
 
 class RandomCrawler(Crawler):
@@ -107,7 +119,7 @@ class RandomCrawler(Crawler):
 
     def next_seed(self):
         if len(self.observed_set) == 0:
-            raise CrawlerError("Can't get next seed: no more observed nodes.")
+            raise NoNextSeedError()
         return random.choice(tuple(self.observed_set))
 
 
@@ -128,27 +140,32 @@ class BreadthFirstSearchCrawler(Crawler):
         self.bfs_queue = deque(self.observed_set)  # FIXME what if its size > 1 ?
 
     def next_seed(self):
-        if len(self.bfs_queue) == 0:
-            assert len(self.observed_set) == 0
-            raise CrawlerError("Can't get next seed: no more observed nodes.")
+        while len(self.bfs_queue) > 0:
+            seed = self.bfs_queue.popleft()
+            if seed not in self.crawled_set:
+                return seed
 
-        return self.bfs_queue.popleft()
+        assert len(self.observed_set) == 0
+        raise NoNextSeedError()
 
     def crawl(self, seed):
         res = super().crawl(seed)
         if res:
             [self.bfs_queue.append(n) for n in self.orig_graph.neighbors(seed)
-             if n not in self.crawled_set]
+             if n in self.observed_set]
+             # if n not in self.crawled_set]  # not work in multiseed
 
         return res
 
 
 class MaximumObservedDegreeCrawler(Crawler):
-    def __init__(self, orig_graph: MyGraph, batch=1, initial_seed=None, **kwargs):
+    def __init__(self, orig_graph: MyGraph, batch=1, initial_seed=None, skl_mode=False, **kwargs):
         """
         :param batch: batch size
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node. If None is given, a random node of original graph will be used.
+        :param skl_mode: if True, SortedKeyList is updated at each step. Use it if batch is small
+         (<10). Do not use it in miltiseed mode!
         """
         super().__init__(orig_graph, name='MOD%s' % (batch if batch > 1 else ''), **kwargs)
 
@@ -160,10 +177,14 @@ class MaximumObservedDegreeCrawler(Crawler):
 
         self.batch = batch
         self.mod_queue = deque()
-        self.observed_skl = SortedKeyList(
-            self.observed_set, key=lambda node: self.observed_graph.snap.GetNI(node).GetDeg())
 
-    def crawl(self, seed: int) -> bool:
+        if skl_mode:
+            self.observed_skl = SortedKeyList(
+                self.observed_set, key=lambda node: self.observed_graph.snap.GetNI(node).GetDeg())
+            self.crawl = self.skl_crawl
+            self.next_seed = self.skl_next_seed
+
+    def skl_crawl(self, seed: int) -> bool:
         """ Crawl specified node and update observed SortedKeyList
         """
         seed = int(seed)  # convert possible int64 to int, since snap functions would get error
@@ -174,6 +195,7 @@ class MaximumObservedDegreeCrawler(Crawler):
         g = self.observed_graph.snap
         if g.IsNode(seed):  # remove from observed set
             self.observed_set.remove(seed)
+            self.observed_skl.discard(seed)
         else:  # add to observed graph
             g.AddNode(seed)
 
@@ -189,14 +211,31 @@ class MaximumObservedDegreeCrawler(Crawler):
                 self.observed_skl.add(n)
         return True
 
-    def next_seed(self):
+    def skl_next_seed(self):
+        """ Next node is taken as SortedKeyList top
+        """
         if len(self.mod_queue) == 0:  # making array of top-k degrees
             if len(self.observed_skl) == 0:
                 assert len(self.observed_set) == 0
-                raise CrawlerError("Can't get next seed: no more observed nodes.")
+                raise NoNextSeedError()
             self.mod_queue = deque(self.observed_skl[-self.batch:])
             logging.debug("MOD queue: %s" % self.mod_queue)
         return self.mod_queue.pop()
+
+    def next_seed(self):
+        """ Next node is taken by sorting degrees for the observed set
+        """
+        if len(self.mod_queue) == 0:  # making array of topk degrees
+            if len(self.observed_set) == 0:
+                raise NoNextSeedError()
+            deg_dict = {node: self.observed_graph.snap.GetNI(node).GetDeg()
+                        for node in self.observed_set}
+
+            heap = [(-value, key) for key, value in deg_dict.items()]
+            min_iter = min(self.batch, len(deg_dict))
+            self.mod_queue = [heapq.nsmallest(self.batch, heap)[i][1] for i in range(min_iter)]  # FIXME check!
+            logging.debug("MOD queue: %s" % self.mod_queue)
+        return self.mod_queue.pop(0)
 
 
 def test_crawlers():
