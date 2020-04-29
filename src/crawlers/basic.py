@@ -5,6 +5,7 @@ import random
 from queue import Queue, deque
 
 import snap
+from scipy import stats
 from sortedcontainers import SortedKeyList
 
 from graph_io import MyGraph
@@ -34,6 +35,7 @@ class Crawler(object):
         else:
             self.observed_set = set()
 
+        self.seed_sequence_ = []  # D: sequence of tries to add nodes to draw history and debug
         self.name = name if name is not None else type(self).__name__
 
     @property
@@ -52,6 +54,7 @@ class Crawler(object):
             logging.debug("Already crawled: %s" % seed)
             return False  # if already crawled - do nothing
 
+        self.seed_sequence_.append(seed)
         self.crawled_set.add(seed)
         g = self.observed_graph.snap
         if g.IsNode(seed):  # remove from observed set
@@ -256,7 +259,7 @@ class MaximumObservedDegreeCrawler(Crawler):
         seed = int(seed)  # convert possible int64 to int, since snap functions would get error
         if seed in self.crawled_set:
             return False  # if already crawled - do nothing
-
+        self.seed_sequence_.append(seed)
         self.crawled_set.add(seed)
         g = self.observed_graph.snap
         if g.IsNode(seed):  # remove from observed set
@@ -302,6 +305,78 @@ class MaximumObservedDegreeCrawler(Crawler):
             self.mod_queue = [heapq.nsmallest(self.batch, heap)[i][1] for i in range(min_iter)]  # FIXME check!
             logging.debug("MOD queue: %s" % self.mod_queue)
         return self.mod_queue.pop(0)
+
+
+class PreferentialObservedDegreeCrawler(Crawler):  # TODO need to check and fix
+    def __init__(self, orig_graph: MyGraph, batch=10, initial_seed=None, **kwargs):
+        super().__init__(orig_graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
+
+        if len(self.observed_set) == 0:
+            if initial_seed is None:  # fixme duplicate code in all basic crawlers?
+                initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+            self.observed_set.add(initial_seed)
+            self.observed_graph.snap.AddNode(initial_seed)
+
+        self.discrete_distribution = None
+        self.pod_queue = [initial_seed]  # queue of nodes to proceed in batch
+        self.batch = batch  # crawling by batches if > 1 #
+
+    def next_seed(self):
+        if len(self.pod_queue) == 0:  # when batch ends, we create another one
+            prob_func = {node.GetId(): node.GetDeg() for node in self.observed_graph.snap.Nodes()
+                         if node.GetId() not in self.crawled_set}
+            if len(prob_func) == 0:
+                return None
+            keys, values = zip(*prob_func.items())
+            values = np.array(values) / sum(values)
+            # print(keys, values)
+            self.discrete_distribution = stats.rv_discrete(values=(keys, values))
+            self.pod_queue = [node for node in self.discrete_distribution.rvs(size=self.batch)]
+
+        # print("node degrees (probabilities)", prob_func)
+        return self.pod_queue.pop(0)
+
+
+class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and debug
+    """Algorythm from https://dl.acm.org/doi/abs/10.1145/1081870.1081893
+    with my little modification - stuck_ends, it is like illegitimate son of BFS and RC
+    :param p - forward burning probability of algorythm
+    :param stuck_ends - if true, finishes when queue is empty, otherwise crawl random from observed
+    """
+
+    def __init__(self, orig_graph: MyGraph, p=0.35, initial_seed=None, **kwargs):
+        super().__init__(orig_graph, name='FFC_p=%s' % p, **kwargs)
+        if len(self.observed_set) == 0:
+            if initial_seed is None:  # fixme duplicate code in all basic crawlers?
+                initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+            self.observed_set.add(initial_seed)
+            self.observed_graph.snap.AddNode(initial_seed)
+
+        self.bfs_queue = [initial_seed]
+        self.p = p
+
+    # next_seed is the same with BFS, just choosing ambassador node w=seed, except empty queue
+    def next_seed(self):
+        while self.bfs_queue[0] not in self.observed_set:
+            self.bfs_queue.pop(0)
+            if len(self.bfs_queue) == 0:  # if we get stucked, choosing random from observed
+                return int(np.random.choice(tuple(self.observed_set)))
+        return self.bfs_queue[0]
+
+    def crawl(self, seed):
+        degree = self.orig_graph.snap.GetNI(seed).GetDeg()
+        # computing x - number of friends to add
+        # print("seed", seed, self.p, degree, (1 - self.p) ** (-1) / degree )
+        # in paper (1-p)**(-1) == E == degree * bin_prob
+        x = np.random.binomial(degree, self.p)  # (1 - self.p) ** (-1) / degree)
+        x = max(1, min(x, len(self.orig_graph.neighbors(seed))))
+        intersection = [n for n in self.orig_graph.neighbors(seed)]
+        burning = [int(n) for n in random.sample(intersection, x)]
+        # print("FF: queue:{},obs:{},crawl:{},x1={},burn={}".format(self.bfs_queue, self.observed_set,self.crawled_set,x, burning))
+        for node in burning:
+            self.bfs_queue.append(node)
+
+        return super(BreadthFirstSearchCrawler, self).crawl(seed)
 
 
 def test_crawlers():
