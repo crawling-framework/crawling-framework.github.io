@@ -1,9 +1,9 @@
 import heapq
 import logging
-import numpy as np
 import random
-from queue import Queue, deque
+from queue import deque
 
+import numpy as np
 import snap
 from scipy import stats
 from sortedcontainers import SortedKeyList
@@ -345,7 +345,8 @@ class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and deb
     """
 
     def __init__(self, orig_graph: MyGraph, p=0.35, initial_seed=None, **kwargs):
-        super().__init__(orig_graph, name='FFC_p=%s' % p, **kwargs)
+        super().__init__(orig_graph, **kwargs)
+        self.name = 'FFC_p=%s' % p
         if len(self.observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
