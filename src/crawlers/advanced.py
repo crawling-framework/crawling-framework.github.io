@@ -150,7 +150,72 @@ class TwoStageCrawler(CrawlerWithAnswer):
         logging.debug("|E*|=", len(self.answer))
 
 
-class TwoStageCrawlerBatches(CrawlerWithAnswer):
+# class TwoStageCrawlerBatches(CrawlerWithAnswer):
+#     """
+#     """
+#     def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, b=10):
+#         """
+#         :param graph: original graph
+#         :param s: number of initial random seed
+#         :param n: number of nodes to be crawled, must be >= seeds
+#         :param p: fraction of graph nodes to be returned
+#         :param b: batch size
+#         """
+#         assert 1 <= b <= n-s
+#         super().__init__(graph=graph, limit=n, name='TwoStageBatch_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
+#         self.s = s
+#         self.n = n
+#         self.pN = int(p*self.orig_graph.snap.GetNodes())
+#         assert s <= n <= self.pN
+#         self.b = b
+#
+#         self.batches_count = ceil((self.n-self.s) / self.b)
+#         self.e1_batches = [set()] * self.batches_count
+#         self.e1s_batches = [set()] * self.batches_count
+#
+#     def _seeds_generator(self):
+#         """ Creates generator of seeds according to algorithm
+#         """
+#         # 1) random seeds
+#         graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
+#         # random_seeds = [int(n) for n in np.random.choice(graph_nodes, self.s, replace=False)]
+#         random_seeds = graph_nodes[:self.s]
+#         for i in range(self.s):
+#             yield random_seeds[i]
+#
+#         # 2) batches of MOD. Batches of equal size except, probably, the last one
+#         batch_sizes = [self.b] * (self.batches_count-1) + \
+#                       [self.n-self.s - self.b*(self.batches_count-1)]
+#         for batch in range(self.batches_count):
+#             # Prepare batch
+#             self.e1_batches[batch] = set(self.observed_set)
+#             logging.debug("|E1[%d]|=%d" % (batch, len(self.e1_batches[batch])))
+#
+#             self.e1s_batches[batch] = set(self._get_mod_nodes(self.observed_set, batch_sizes[batch]))
+#             logging.debug("|E1*[%d]|=%d" % (batch, len(self.e1s_batches[batch])))
+#
+#             for seed in self.e1s_batches[batch]:
+#                 yield seed
+#
+#     def _compute_answer(self):
+#         # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(all E1*[i] + E2*) of size pN
+#
+#         # E2
+#         e2 = set(self.observed_set)
+#         logging.debug("|E2|=", len(e2))
+#
+#         # Get v=(pN-n+s) max degree observed nodes
+#         e2s = set(self._get_mod_nodes(e2, self.pN - self.n + self.s))
+#         logging.debug("|E2*|=", len(e2s))
+#
+#         # Final answer - E* = all E1*[i] + E2*
+#         self.answer = e2s
+#         for e1_batch in self.e1_batches:
+#             self.answer = self.answer.union(e1_batch)
+#         logging.debug("|E*|=", len(self.answer))
+
+
+class TwoStageMODCrawler(CrawlerWithAnswer):
     """
     """
     def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, b=10):
@@ -162,72 +227,7 @@ class TwoStageCrawlerBatches(CrawlerWithAnswer):
         :param b: batch size
         """
         assert 1 <= b <= n-s
-        super().__init__(graph=graph, limit=n, name='TwoStageBatch_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
-        self.s = s
-        self.n = n
-        self.pN = int(p*self.orig_graph.snap.GetNodes())
-        assert s <= n <= self.pN
-        self.b = b
-
-        self.batches_count = ceil((self.n-self.s) / self.b)
-        self.e1_batches = [set()] * self.batches_count
-        self.e1s_batches = [set()] * self.batches_count
-
-    def _seeds_generator(self):
-        """ Creates generator of seeds according to algorithm
-        """
-        # 1) random seeds
-        graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
-        # random_seeds = [int(n) for n in np.random.choice(graph_nodes, self.s, replace=False)]
-        random_seeds = graph_nodes[:self.s]
-        for i in range(self.s):
-            yield random_seeds[i]
-
-        # 2) batches of MOD. Batches of equal size except, probably, the last one
-        batch_sizes = [self.b] * (self.batches_count-1) + \
-                      [self.n-self.s - self.b*(self.batches_count-1)]
-        for batch in range(self.batches_count):
-            # Prepare batch
-            self.e1_batches[batch] = set(self.observed_set)
-            logging.debug("|E1[%d]|=%d" % (batch, len(self.e1_batches[batch])))
-
-            self.e1s_batches[batch] = set(self._get_mod_nodes(self.observed_set, batch_sizes[batch]))
-            logging.debug("|E1*[%d]|=%d" % (batch, len(self.e1s_batches[batch])))
-
-            for seed in self.e1s_batches[batch]:
-                yield seed
-
-    def _compute_answer(self):
-        # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(all E1*[i] + E2*) of size pN
-
-        # E2
-        e2 = set(self.observed_set)
-        logging.debug("|E2|=", len(e2))
-
-        # Get v=(pN-n+s) max degree observed nodes
-        e2s = set(self._get_mod_nodes(e2, self.pN - self.n + self.s))
-        logging.debug("|E2*|=", len(e2s))
-
-        # Final answer - E* = all E1*[i] + E2*
-        self.answer = e2s
-        for e1_batch in self.e1_batches:
-            self.answer = self.answer.union(e1_batch)
-        logging.debug("|E*|=", len(self.answer))
-
-
-class TwoStageCrawlerBatchesMOD(CrawlerWithAnswer):
-    """
-    """
-    def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, b=10):
-        """
-        :param graph: original graph
-        :param s: number of initial random seed
-        :param n: number of nodes to be crawled, must be >= seeds
-        :param p: fraction of graph nodes to be returned
-        :param b: batch size
-        """
-        assert 1 <= b <= n-s
-        super().__init__(graph=graph, limit=n, name='TwoStageBatchMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
+        super().__init__(graph=graph, limit=n, name='TwoStageMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
         self.s = s
         self.n = n
         self.pN = int(p*self.orig_graph.snap.GetNodes())
@@ -258,8 +258,9 @@ class TwoStageCrawlerBatchesMOD(CrawlerWithAnswer):
             yield random_seeds[i]
 
         # 2) run MOD
+        use_skl = False  # use True if batch < 2-5
         self.mod = MaximumObservedDegreeCrawler(
-            self.orig_graph, batch=self.b, observed_graph=self.observed_graph,
+            self.orig_graph, batch=self.b, skl_mode=use_skl, observed_graph=self.observed_graph,
             observed_set=self.observed_set, crawled_set=self.crawled_set)
 
         for i in range(self.n-self.s):

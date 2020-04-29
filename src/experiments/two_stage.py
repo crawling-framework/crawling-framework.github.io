@@ -4,8 +4,9 @@ import snap
 from matplotlib import pyplot as plt
 
 from centralities import get_top_centrality_nodes
-from crawlers.advanced import TwoStageCrawler, TwoStageCrawlerBatches, TwoStageCrawlerBatchesMOD
-from crawlers.basic import CrawlerException, Crawler
+from crawlers.advanced import TwoStageCrawler, TwoStageMODCrawler
+from crawlers.basic import CrawlerException, Crawler, MaximumObservedDegreeCrawler
+from crawlers.multiseed import MultiCrawler
 from experiments.runners import Metric, AnimatedCrawlerRunner
 from graph_io import MyGraph, GraphCollections
 from statistics import Stat
@@ -215,8 +216,8 @@ class TargetSetCoverageTester:
 def test_target_set_coverage():
     # name = 'libimseti'
     # name = 'petster-friendships-cat'
-    name = 'soc-pokec-relationships'
-    # name = 'digg-friends'
+    # name = 'soc-pokec-relationships'
+    name = 'digg-friends'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
     # name = 'petster-hamster'
@@ -243,8 +244,10 @@ def test_target_set_coverage():
     # ])
 
     crawlers = [
-        # TwoStageCrawlerBatches(graph, s=1000, n=50000, p=p, b=1),
-        TwoStageCrawlerBatchesMOD(graph, s=1000, n=50000, p=p, b=1),
+        # MaximumObservedDegreeCrawler(graph, batch=10, skl_mode=False),
+        # TwoStageCrawlerBatches(graph, s=1000, n=50000, p=p, b=10),
+        TwoStageMODCrawler(graph, s=1000, n=10000, p=p, b=10),
+        MultiCrawler(graph, crawlers=[MaximumObservedDegreeCrawler(graph, batch=10) for _ in range(10)])
     ]
 
     target_set = set(get_top_centrality_nodes(graph, 'degree', count=int(p * graph[Stat.NODES])))
@@ -253,7 +256,7 @@ def test_target_set_coverage():
         Metric(r'$|V_o \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
     ]
 
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=50000, step=100)
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=10000, step=100)
     ci.run()
 
 
