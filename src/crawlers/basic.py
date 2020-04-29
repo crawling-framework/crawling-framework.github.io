@@ -1,5 +1,6 @@
 import heapq
 import logging
+import numpy as np
 import random
 from queue import Queue, deque
 
@@ -123,6 +124,38 @@ class RandomCrawler(Crawler):
         return random.choice(tuple(self.observed_set))
 
 
+class RandomWalkCrawler(Crawler):
+    def __init__(self, graph: MyGraph, initial_seed=None, **kwargs):
+        """
+        :param initial_seed: if observed set is empty, the crawler will start from the given initial
+         node. If None is given, a random node of original graph will be used.
+        """
+        super().__init__(graph, name='RW_', **kwargs)
+
+        if len(self.observed_set) == 0:
+            if initial_seed is None:  # is not a duplicate code
+                initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+            self.initial_seed = initial_seed
+
+        self.prev_seed = None
+
+    def next_seed(self):
+        if not self.prev_seed:  # first step
+            self.prev_seed = self.initial_seed
+            return self.initial_seed
+
+        node_neighbours = self.observed_graph.neighbors(self.prev_seed)
+        # for walking we need to step on already crawled nodes too
+        if len(node_neighbours) == 0:
+            raise NoNextSeedError("No neighbours to go next.")
+            # node_neighbours = tuple(self.observed_set)
+
+        # Since we do not check if seed is in crawled_set, many re-crawls will occur
+        seed = (random.choice(node_neighbours))
+        self.prev_seed = seed
+        return seed
+
+
 class BreadthFirstSearchCrawler(Crawler):
     def __init__(self, graph: MyGraph, initial_seed=None, **kwargs):
         """
@@ -154,7 +187,40 @@ class BreadthFirstSearchCrawler(Crawler):
             [self.bfs_queue.append(n) for n in self.orig_graph.neighbors(seed)
              if n in self.observed_set]
              # if n not in self.crawled_set]  # not work in multiseed
+        return res
 
+
+class DepthFirstSearchCrawler(Crawler):
+    def __init__(self, graph: MyGraph, initial_seed=None, **kwargs):
+        """
+        :param initial_seed: if observed set is empty, the crawler will start from the given initial
+         node. If None is given, a random node of original graph will be used.
+        """
+        super().__init__(graph, name='DFS', **kwargs)
+
+        if len(self.observed_set) == 0:
+            if initial_seed is None:  # FIXME duplicate code in all basic crawlers?
+                initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+            self.observed_set.add(initial_seed)
+            self.observed_graph.snap.AddNode(initial_seed)
+
+        self.dfs_queue = deque(self.observed_set)  # FIXME what if its size > 1 ?
+
+    def next_seed(self):
+        while len(self.dfs_queue) > 0:
+            seed = self.dfs_queue.pop()
+            if seed not in self.crawled_set:
+                return seed
+
+        assert len(self.observed_set) == 0
+        raise NoNextSeedError()
+
+    def crawl(self, seed):
+        res = super().crawl(seed)
+        if res:
+            [self.dfs_queue.append(n) for n in self.orig_graph.neighbors(seed)
+             if n in self.observed_set]
+             # if n not in self.crawled_set]  # not work in multiseed
         return res
 
 
@@ -164,8 +230,8 @@ class MaximumObservedDegreeCrawler(Crawler):
         :param batch: batch size
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node. If None is given, a random node of original graph will be used.
-        :param skl_mode: if True, SortedKeyList is updated at each step. Use it if batch is small
-         (<10). Do not use it in miltiseed mode!
+        :param skl_mode: if True, SortedKeyList is used and updated at each step. Use it if batch is
+         small (<10). Do not use it in multiseed mode!
         """
         super().__init__(orig_graph, name='MOD%s' % (batch if batch > 1 else ''), **kwargs)
 

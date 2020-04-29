@@ -11,23 +11,25 @@ from graph_io import MyGraph
 
 
 class MultiCrawler(Crawler):
+    """
+    Runs several crawlers in parallel. Each crawler makes a step iteratively in a cycle.
+    When the crawler can't get next seed it is discarded from the cycle.
+    """
     def __init__(self, graph: MyGraph, crawlers, **kwargs):
         """
-        :param crawlers: crawler instances to run iteratively
+        :param crawlers: crawler instances to run in parallel
         """
-        super().__init__(graph, **kwargs)
-
-        assert len(crawlers) > 1
+        super().__init__(graph, name='Multi[%s]' % len(crawlers), **kwargs)
+        # assert len(crawlers) > 1
         self.crawlers = crawlers
 
         # Merge observed graph and crawled set for all crawlers
-        master = crawlers[0]
-        o = master.observed_graph.snap
-        c = master.crawled_set
-        for crawler in crawlers[1:]:
-            assert crawler.orig_graph == master.orig_graph
+        o = self.observed_graph.snap
+        c = self.crawled_set
+        for crawler in crawlers:
+            assert crawler.orig_graph == self.orig_graph
 
-            # merge observed graph to master
+            # merge observed graph
             for n in crawler.observed_graph.snap.Nodes():
                 n = n.GetId()
                 if not o.IsNode(n):
@@ -37,17 +39,17 @@ class MultiCrawler(Crawler):
                 if not o.IsEdge(i, j):
                     o.AddEdge(i, j)
 
-            # merge crawled_set to master
+            # merge crawled_set
             c = c.union(crawler.crawled_set)
 
-        for crawler in crawlers[1:]:
-            crawler.observed_graph = master.observed_graph
+        for crawler in crawlers:
+            crawler.observed_graph = self.observed_graph
             crawler.crawled_set = c
 
-        self.next_crawler = 0  # next crawler to run
+        self.next_crawler = 0  # next crawler index to run
 
     def crawl(self, seed: int) -> bool:
-        """ Iteratively run crawlers
+        """ Run the next crawler.
         """
         res = self.crawlers[self.next_crawler].crawl(seed)
         logging.debug("Run crawler[%s]: %s" % (self.next_crawler, res))
@@ -55,9 +57,9 @@ class MultiCrawler(Crawler):
         return res
 
     def next_seed(self) -> int:
+        """ The next crawler makes a step. If impossible, it is discarded.
         """
-        """
-        for er in range(len(self.crawlers)):
+        for _ in range(len(self.crawlers)):
             try:
                 s = self.crawlers[self.next_crawler].next_seed()
             except NoNextSeedError as e:

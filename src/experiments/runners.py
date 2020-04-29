@@ -2,7 +2,8 @@ from matplotlib import pyplot as plt
 
 from centralities import get_top_centrality_nodes
 from crawlers.basic import MaximumObservedDegreeCrawler, RandomCrawler, Crawler, \
-    BreadthFirstSearchCrawler
+    BreadthFirstSearchCrawler, RandomWalkCrawler
+from crawlers.multiseed import MultiCrawler
 
 from graph_io import MyGraph, GraphCollections
 from statistics import Stat
@@ -88,8 +89,16 @@ class AnimatedCrawlerRunner:
 def test_runner(graph):
     crawlers = [
         # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=1),
-        BreadthFirstSearchCrawler(graph),
-        RandomCrawler(graph),
+        # BreadthFirstSearchCrawler(graph, initial_seed=1),
+        RandomWalkCrawler(graph, initial_seed=1),
+        RandomCrawler(graph, initial_seed=1),
+        # MultiCrawler(graph, [
+        #     # RandomCrawler(graph, initial_seed=1),
+        #     BreadthFirstSearchCrawler(graph),
+        #     BreadthFirstSearchCrawler(graph),
+        #     BreadthFirstSearchCrawler(graph),
+        #     BreadthFirstSearchCrawler(graph),
+        # ])
     ]
 
     target_set = set(get_top_centrality_nodes(graph, 'degree', count=int(0.1 * graph[Stat.NODES])))
@@ -98,7 +107,7 @@ def test_runner(graph):
         Metric(r'$|V_o \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
     ]
 
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=1200, step=5)
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=500, step=10)
     ci.run()
 
 
