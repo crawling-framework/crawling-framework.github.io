@@ -1,10 +1,7 @@
-import heapq
 import logging
-import random
 from abc import ABC
 
 import numpy as np
-from scipy import stats
 
 from crawlers.basic import Crawler, NoNextSeedError
 from graph_io import MyGraph
@@ -19,7 +16,7 @@ class MultiCrawler(Crawler):
         """
         :param crawlers: crawler instances to run in parallel
         """
-        super().__init__(graph, name='Multi[%s]' % len(crawlers), **kwargs)
+        super().__init__(graph, name='Multi_%s' % ";".join([c.name for c in crawlers]), **kwargs)
         # assert len(crawlers) > 1
         self.crawlers = crawlers
 
@@ -42,9 +39,10 @@ class MultiCrawler(Crawler):
             # merge crawled_set
             c = c.union(crawler.crawled_set)
 
+        self.crawled_set = c
         for crawler in crawlers:
             crawler.observed_graph = self.observed_graph
-            crawler.crawled_set = c
+            crawler.crawled_set = self.crawled_set
 
         self.next_crawler = 0  # next crawler index to run
 
@@ -54,6 +52,7 @@ class MultiCrawler(Crawler):
         res = self.crawlers[self.next_crawler].crawl(seed)
         logging.debug("Run crawler[%s]: %s" % (self.next_crawler, res))
         self.next_crawler = (self.next_crawler+1) % len(self.crawlers)
+        self.seed_sequence_.append(seed)
         return res
 
     def next_seed(self) -> int:
@@ -65,6 +64,7 @@ class MultiCrawler(Crawler):
             except NoNextSeedError as e:
                 logging.debug("Run crawler[%s]: %s Removing it." % (self.next_crawler, e))
                 del self.crawlers[self.next_crawler]
+                # idea - create a new instance
                 self.next_crawler = self.next_crawler % len(self.crawlers)
                 continue
 
@@ -147,25 +147,6 @@ class MultiSeedCrawler(Crawler, ABC):
             # if file:
             logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
                           (seed, self.crawled_set, self.observed_set, self.nodes_set))
-
-
-#
-# class MaximumObservedDegreeCrawler(MultiSeedCrawler): # TODO we have Misha's realization of it in basic.py
-#     def __init__(self, orig_graph: MyGraph, top_k=1):
-#         super().__init__(orig_graph)
-#         self.mod_queue = []
-#         self.top_k = top_k  # crawling by batches if > 1 # TODO make another MOD crawler with batches
-#         self.crawler_name = 'MOD'
-#
-#     def next_seed(self):
-#         if len(self.mod_queue) == 0:  # making array of topk degrees
-#             deg_dict = {node.GetId(): node.GetDeg() for node in self.observed_graph.snap.Nodes()
-#                         if node.GetId() not in self.crawled_set} # TODO just take from observed_set
-#
-#             heap = [(-value, key) for key, value in deg_dict.items()]
-#             min_iter = min(self.top_k, len(deg_dict))
-#             self.mod_queue = [heapq.nsmallest(self.top_k, heap)[i][1] for i in range(min_iter)]
-#         return self.mod_queue.pop(0)
 
 
 def test():

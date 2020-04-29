@@ -17,7 +17,8 @@ pngs_path = "../data/gif_files/"  # export directories
 
 def make_gif(crawler_name, pngs_path, duration=1):
     images = []
-    filenames = glob.glob(pngs_path + "gif{}_*.png".format(crawler_name))
+    # crawler_name = crawler_name.replace('[', '\\[').replace(']', '\\]')
+    filenames = glob.glob(pngs_path + "gif{}*_*.png".format(crawler_name[:3]))
     filenames.sort()
     print("adding")
     print(filenames)
@@ -123,7 +124,8 @@ class AnimatedCrawlerRunner:
                         s = [n.GetId() for n in crawler.orig_graph.snap.Nodes()]
                         s.sort()
                         gen_node_color = ['gray'] * (max(s) + 1)
-                        for node in crawler.observed_set:
+                        # for node in crawler.observed_set:
+                        for node in crawler.nodes_set:
                             gen_node_color[node] = 'y'
                         for node in crawler.crawled_set:
                             gen_node_color[node] = 'cyan'
@@ -132,7 +134,7 @@ class AnimatedCrawlerRunner:
 
                         plt.title(crawler.name + " " + str(len(crawler.crawled_set)))
                         nx.draw(networkx_graph, pos=self.layout_pos,
-                                with_labels=(len(gen_node_color) > 1000),  # if little, we draw
+                                with_labels=(len(gen_node_color) < 1000),  # if little, we draw
                                 node_size=75, node_list=networkx_graph.nodes,
                                 node_color=[gen_node_color[node] for node in networkx_graph.nodes])
                         plt.savefig(pngs_path + 'gif{}_{}.png'.format(crawler.name, str(i).zfill(3)))
@@ -152,20 +154,25 @@ class AnimatedCrawlerRunner:
             plt.show()
         else:  # if traversal
             for crawler in self.crawlers:
-                make_gif(crawler_name=crawler.name, pngs_path=pngs_path)
+                make_gif(crawler_name=crawler.name, pngs_path=pngs_path, duration=4)
                 print('compiled +')
 
 
 def test_runner(graph, layout_pos=None):
     crawlers = [
-        DepthFirstSearchCrawler(graph, initial_seed=1),
-        ForestFireCrawler(graph, initial_seed=1),
-        # RandomWalkCrawler(graph, initial_seed=1),
-        MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=1),
-        PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=1),
-        BreadthFirstSearchCrawler(graph, initial_seed=1),
-        RandomCrawler(graph, initial_seed=1),
+        MultiCrawler(graph, crawlers=[
+            DepthFirstSearchCrawler(graph, batch=1, initial_seed=0),
+            DepthFirstSearchCrawler(graph, batch=1, initial_seed=10),
+        ]),
+        # DepthFirstSearchCrawler(graph, initial_seed=45),
+        # ForestFireCrawler(graph, initial_seed=1),
+        # # RandomWalkCrawler(graph, initial_seed=1),
+        # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=1),
+        # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=1),
+        # BreadthFirstSearchCrawler(graph, initial_seed=1),
+        # RandomCrawler(graph, initial_seed=1),
     ]
+    print(crawlers[0].name)
     # change target set to calculate another metric
     target_set = set(get_top_centrality_nodes(graph, 'degree', count=int(0.1 * graph[Stat.NODES])))
     metrics = [  # creating metrics and giving callable function to it (here - total fraction of nodes)
@@ -174,7 +181,7 @@ def test_runner(graph, layout_pos=None):
                lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
     ]
 
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=20, step=10,
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=100, step=1,
                                draw_mod='traversal', layout_pos=layout_pos
                                )  # if you want gifs, draw_mod='traversal'. else: 'metrics'
     ci.run()
@@ -183,8 +190,8 @@ def test_runner(graph, layout_pos=None):
 if __name__ == '__main__':
     import logging
 
-    logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.CRITICAL)
-    logging.getLogger().setLevel(logging.CRITICAL)
+    logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
 
     # name = 'libimseti'
     # name = 'petster-friendships-cat'
@@ -195,9 +202,9 @@ if __name__ == '__main__':
     # name = 'petster-hamster'
     name = 'dolphins'
 
-    from crawlers.multiseed import test_carpet_graph
+    from crawlers.multiseed import test_carpet_graph, MultiCrawler
 
-    g, layout_pos = test_carpet_graph(15, 15)  # GraphCollections.get(name)
+    g, layout_pos = test_carpet_graph(10, 10)  # GraphCollections.get(name)
     logging.critical("running graph ".format(name))
     test_runner(g,
                 layout_pos
