@@ -1,10 +1,7 @@
-import heapq
 import logging
-import random
 from abc import ABC
 
 import numpy as np
-from scipy import stats
 
 from crawlers.basic import Crawler
 from graph_io import MyGraph
@@ -85,160 +82,23 @@ class MultiSeedCrawler(Crawler, ABC):
                           (seed, self.crawled_set, self.observed_set, self.nodes_set))
 
 
-# TODO inherit all following crawlers from Crawler, NOT MultiSeedCrawler, and turn back to basic.py
-class RandomWalkCrawler(MultiSeedCrawler):
-    """
-    Normal random work if n1=1. Otherwise it is Frontier Crawling, that chooses from self.initial_seeds ~ degree
-    """
-
-    def __init__(self, orig_graph: MyGraph):
-        super().__init__(orig_graph)
-        self.prev_seed = 1  # previous node, that was already crawled
-        self.crawler_name = 'RW_'
-
-    def next_seed(self):
-        # step 4 from paper about Frontier Sampling.  taken from POD.next_seed
-        prob_func = {node: self.observed_graph.snap.GetNI(node).GetDeg() for node in self.initial_seeds}
-        keys, values = zip(*prob_func.items())
-        values = np.array(values) / sum(values)
-        self.discrete_distribution = stats.rv_discrete(values=(keys, values))
-        self.prev_seed = [node for node in self.discrete_distribution.rvs(size=1)].pop(0)
-        # print("node degrees (probabilities)", prob_func)
-
-        # original Random Walk
-        node_neighbours = self.observed_graph.neighbors(self.prev_seed)
-        # for walking we need to step on already crawled nodes too
-        if len(node_neighbours) == 0:
-            node_neighbours = tuple(self.observed_set)
-        next_seed = int(np.random.choice(node_neighbours, 1)[0])
-        self.initial_seeds[self.initial_seeds.index(self.prev_seed)] = next_seed
-        return next_seed
-
-    def crawl(self, seed):
-        super().crawl(seed)
-        self.prev_seed = seed
-
-
-class BreadthFirstSearchCrawler(MultiSeedCrawler):  # в ширину
-    def __init__(self, orig_graph: MyGraph):
-        super().__init__(orig_graph)
-        self.bfs_queue = []
-        self.crawler_name = 'BFS'
-
-    def next_seed(self):
-        while self.bfs_queue[0] not in self.observed_set:
-            self.bfs_queue.pop(0)
-        return self.bfs_queue[0]
-
-    def crawl(self, seed):
-        for n in self.orig_graph.neighbors(seed):
-            self.bfs_queue.append(n)
-        return super(BreadthFirstSearchCrawler, self).crawl(seed)
-
-
-class DepthFirstSearchCrawler(MultiSeedCrawler):  # TODO
-    def __init__(self, orig_graph: MyGraph):
-        super().__init__(orig_graph)
-        self.dfs_queue = []
-        self.dfs_counter = 0
-        self.crawler_name = 'DFS'
-
-    def next_seed(self):
-        while self.dfs_queue[0] not in self.observed_set:
-            self.dfs_queue.pop(0)
-        return self.dfs_queue[0]
-
-    def crawl(self, seed):
-        self.dfs_counter = 0
-        for n in self.orig_graph.neighbors(seed):
-            self.dfs_counter += 1
-            self.dfs_queue.insert(self.dfs_counter, n)
-        return super(DepthFirstSearchCrawler, self).crawl(seed)
-
-
-class RandomCrawler(MultiSeedCrawler):
-    def __init__(self, orig_graph: MyGraph):
-        super().__init__(orig_graph)
-        self.crawler_name = 'RC_'
-
-    def next_seed(self):
-        return int(np.random.choice(tuple(self.observed_set)))
-
-
-class MaximumObservedDegreeCrawler(MultiSeedCrawler):
-    def __init__(self, orig_graph: MyGraph, top_k=1):
-        super().__init__(orig_graph)
-        self.mod_queue = []
-        self.top_k = top_k  # crawling by batches if > 1 # TODO make another MOD crawler with batches
-        self.crawler_name = 'MOD'
-
-    def next_seed(self):
-        if len(self.mod_queue) == 0:  # making array of topk degrees
-            deg_dict = {node.GetId(): node.GetDeg() for node in self.observed_graph.snap.Nodes()
-                        if node.GetId() not in self.crawled_set}
-
-            heap = [(-value, key) for key, value in deg_dict.items()]
-            min_iter = min(self.top_k, len(deg_dict))
-            self.mod_queue = [heapq.nsmallest(self.top_k, heap)[i][1] for i in range(min_iter)]
-        return self.mod_queue.pop(0)
-
-
-class PreferentialObservedDegreeCrawler(MultiSeedCrawler):
-    def __init__(self, orig_graph: MyGraph, top_k=1):
-        super().__init__(orig_graph)
-        self.discrete_distribution = None
-        self.pod_queue = []  # queue of nodes to proceed in batch
-        self.top_k = top_k  # crawling by batches if > 1 #
-        self.crawler_name = 'POD'
-
-    def next_seed(self):
-        if len(self.pod_queue) == 0:  # when batch ends, we create another one
-            prob_func = {node.GetId(): node.GetDeg() for node in self.observed_graph.snap.Nodes()
-                         if node.GetId() not in self.crawled_set}
-            keys, values = zip(*prob_func.items())
-            values = np.array(values) / sum(values)
-
-            self.discrete_distribution = stats.rv_discrete(values=(keys, values))
-            self.pod_queue = [node for node in self.discrete_distribution.rvs(size=self.top_k)]
-
-        # print("node degrees (probabilities)", prob_func)
-        return self.pod_queue.pop(0)
-
-
-class ForestFireCrawler(BreadthFirstSearchCrawler):
-    """Algorythm from https://dl.acm.org/doi/abs/10.1145/1081870.1081893
-    with my little modification - stuck_ends, it is like illegitimate son of BFS and RC
-    :param p - forward burning probability of algorythm
-    :param stuck_ends - if true, finishes when queue is empty, otherwise crawl random from observed
-    """
-
-    def __init__(self, orig_graph: MyGraph, p=0.35, stuck_ends=False):
-        super().__init__(orig_graph)
-        self.crawler_name = 'FFC'
-        self.p = p
-
-    # next_seed is the same with BFS, just choosing ambassador node w=seed, except empty queue
-    def next_seed(self):
-        while self.bfs_queue[0] not in self.observed_set:
-            self.bfs_queue.pop(0)
-            if len(self.bfs_queue) == 0:  # if we get stucked, choosing random from observed
-                return int(np.random.choice(tuple(self.observed_set)))
-        return self.bfs_queue[0]
-
-    def crawl(self, seed):
-        degree = self.orig_graph.snap.GetNI(seed).GetDeg()
-        # computing x - number of friends to add
-        # print("seed", seed, self.p, degree, (1 - self.p) ** (-1) / degree )
-        # in paper (1-p)**(-1) == E == degree * bin_prob
-        x = np.random.binomial(degree, self.p)  # (1 - self.p) ** (-1) / degree)
-        x = max(1, min(x, len(self.orig_graph.neighbors(seed))))
-        intersection = [n for n in self.orig_graph.neighbors(seed)]
-        burning = [int(n) for n in random.sample(intersection, x)]
-        # print("FF: queue:{},obs:{},crawl:{},x1={},burn={}".format(self.bfs_queue, self.observed_set,self.crawled_set,x, burning))
-        for node in burning:
-            self.bfs_queue.append(node)
-
-        return super(BreadthFirstSearchCrawler, self).crawl(seed)
+#
+# class MaximumObservedDegreeCrawler(MultiSeedCrawler): # TODO we have Misha's realization of it in basic.py
+#     def __init__(self, orig_graph: MyGraph, top_k=1):
+#         super().__init__(orig_graph)
+#         self.mod_queue = []
+#         self.top_k = top_k  # crawling by batches if > 1 # TODO make another MOD crawler with batches
+#         self.crawler_name = 'MOD'
+#
+#     def next_seed(self):
+#         if len(self.mod_queue) == 0:  # making array of topk degrees
+#             deg_dict = {node.GetId(): node.GetDeg() for node in self.observed_graph.snap.Nodes()
+#                         if node.GetId() not in self.crawled_set} # TODO just take from observed_set
+#
+#             heap = [(-value, key) for key, value in deg_dict.items()]
+#             min_iter = min(self.top_k, len(deg_dict))
+#             self.mod_queue = [heapq.nsmallest(self.top_k, heap)[i][1] for i in range(min_iter)]
+#         return self.mod_queue.pop(0)
 
 
 def test():

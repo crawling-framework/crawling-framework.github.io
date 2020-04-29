@@ -9,16 +9,15 @@ from tqdm import tqdm
 
 from centralities import get_top_centrality_nodes
 from crawlers.advanced import AvrachenkovCrawler
-# from crawlers.basic import  # TODO need to finish crawlers and replace into crawlers.basic
-from crawlers.multiseed import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
-    DepthFirstSearchCrawler, BreadthFirstSearchCrawler, RandomWalkCrawler, RandomCrawler, \
-    ForestFireCrawler
-from experiments import drawing_graph
+# TODO need to finish crawlers and replace into crawlers.basic
+from crawlers.basic import PreferentialObservedDegreeCrawler, DepthFirstSearchCrawler, RandomWalkCrawler, \
+    RandomCrawler, BreadthFirstSearchCrawler, ForestFireCrawler, MaximumObservedDegreeCrawler
+from experiments.runners import make_gif
 from graph_io import MyGraph, GraphCollections
 from utils import CENTRALITIES
 
 
-def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1, step=1,
+def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, step=1,  # n1=1,
                    top_set=True, jsons=False, gif=False, layout_pos=None, ending_sets=False, **kwargs):
     """   # TODO other arguments like top_k=False,
 
@@ -54,6 +53,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1, step
         gif_counter = 0
         # for drawing
         # file preparing
+
         if os.path.exists(pngs_path):
             for file in glob.glob(pngs_path + crawler_name + "*.png"):
                 os.remove(file)
@@ -79,9 +79,9 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1, step
     # plot of crawled history will be just plotting this graph plt.plot( history_plots.)
     # TODO + all node set. it was 'nodes' in our paper
 
-    if n1:  # crawl first n1 seeds
-        print('RUNNER: crawl_multi_seed{}'.format(n1))
-        crawler.crawl_multi_seed(n1=n1)
+    # if n1:  # crawl first n1 seeds
+    #     print('RUNNER: crawl_multi_seed{}'.format(n1))
+    #     crawler.crawl_multi_seed(n1=n1)
 
     for iterator in tqdm(range(0, total_budget, step)):
         # print('RUNNER: iteration:{}/{}'.format(iterator,total_budget))
@@ -105,17 +105,17 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1, step
             s.sort()
             gen_node_color = ['gray'] * (max(s) + 1)
             for node in crawler.observed_set:
-                #    print(node, gen_node_color)
                 gen_node_color[node] = 'y'
             for node in crawler.crawled_set:
                 gen_node_color[node] = 'cyan'
             gen_node_color[last_seed] = 'red'
+            with_labels = True
+            if len(gen_node_color) > 1000:
+                with_labels = False
 
             plt.title(crawler_name + " " + str(iterator) + '  ' + "current node:" + str(last_seed))
-            if layout_pos is None:
-                layout_pos = Graph.snap.snap_to_networkx.spring_layout(Graph.snap_to_networkx, iterations=100)
-                print(layout_pos)
-            nx.draw(networkx_graph, pos=layout_pos, with_labels=True, node_size=150,
+            nx.draw(networkx_graph, pos=layout_pos, with_labels=with_labels,
+                    node_size=75, node_list=networkx_graph.nodes,
                     node_color=[gen_node_color[node] for node in networkx_graph.nodes]
                     # if node in networkx_graph.nodes()]
                     )
@@ -123,7 +123,8 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1, step
             # plt.ylim(min(axis_y_coords) - 1, max(axis_y_coords) + 1)
 
             plt.savefig(pngs_path + '/gif{}{}.png'.format(crawler_name, str(iterator).zfill(3)))
-            plt.clf()
+            plt.pause(0.001)
+            plt.cla()
 
         # finishes when see all nodes. it means even if they are only obsered, we know most part of degrees
         if len(crawler.observed_set) + len(crawler.crawled_set) == crawler.orig_graph.snap.GetNodes():
@@ -163,7 +164,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, n1=1, step
                 json.dump([(x, y / top_centrality_set_count) for x, y in c_count[centrality_name]], top_set_file)
 
     if gif:
-        drawing_graph.make_gif(crawler_name=crawler_name, pngs_path=pngs_path)  # , duration=step)
+        make_gif(crawler_name=crawler_name, pngs_path=pngs_path)  # , duration=step)
 
     print(crawler_name + ": after first: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
           " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
@@ -213,11 +214,9 @@ def test_crawlers(Graph: MyGraph, total_budget=100, crawlers=None, layout_pos=No
 
     print("N=%s E=%s" % (Graph.snap.GetNodes(), Graph.snap.GetEdges()))
 
-    # min(100,Graph.snap.GetNodes())
     n1 = 1
     total_budget = min(total_budget - n1, Graph.snap.GetNodes())
-    top_k = 5
-    k = 4
+
     # pos = None  # position layout for drawing similar graphs (with nodes on same positions). updates at the end
 
     # crawlers = [(name, crawlers_dictionary[name]) for name in crawlers_dictionary]
@@ -225,8 +224,8 @@ def test_crawlers(Graph: MyGraph, total_budget=100, crawlers=None, layout_pos=No
     for crawler_name in crawlers:
         print("Running {} with budget={}, n1={}".format(crawler_name, total_budget, n1))
         result_crawlers.append(Crawler_Runner(Graph, crawler_name, total_budget=total_budget,
-                                              n1=n1, gif=gif, step=step,
-                                              # layout_pos=layout_pos
+                                              gif=gif, step=step,  # n1=n1,
+                                              layout_pos=layout_pos
                                               ))
         print("Seed sequence due crawling:", result_crawlers[-1].seed_sequence_)
     # with open("./data/crawler_history/sequence.json", 'w') as f:
@@ -234,13 +233,28 @@ def test_crawlers(Graph: MyGraph, total_budget=100, crawlers=None, layout_pos=No
     return result_crawlers
 
 
+def add_nodes_for_networkx(Graph: MyGraph):
+    graph_nodes = [n.GetId() for n in Graph.snap.Nodes()]
+    for node in range(max(graph_nodes) + 1):
+        if node not in graph_nodes:
+            Graph.snap.AddNode(node)
+            Graph.snap.AddEdge(node, 0)
+    print('nodes', [n.GetId() for n in Graph.snap.Nodes()])
+
+
 if __name__ == '__main__':
-    Graph = GraphCollections.get('petster-hamster')  # petster-hamster')  # test_graph()  #
+    layout_pos = None
+    Graph = GraphCollections.get('petster-hamster')  # petster-hamster')  #   #
+    add_nodes_for_networkx(Graph)  # TODO little костыль for normal graph drawing
     # layout_pos = nx.spring_layout(Graph.snap_to_networkx, iterations=100)
     ####Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
     # g, layout_pos = test_carpet_graph(10, 8)
     # Graph = MyGraph.new_snap(g.snap, name='test', directed=False)
     print(Graph.snap.GetNodes())
-    test_crawlers(Graph, 11000, ['DFS', 'MOD', 'RC_', 'DFS', 'FFC', 'BFS'],  # 'RWC',
-                  gif=False, step=10, )  # layout_pos=layout_pos, )
+    if layout_pos is None:
+        print('need to draw layout pos', layout_pos)
+        layout_pos = nx.spring_layout(Graph.snap_to_networkx, iterations=40)
+
+    test_crawlers(Graph, 11000, ['RWC'],
+                  gif=True, step=400, layout_pos=layout_pos, )
 # crawlers = ['DFS']  # , 'BFS', 'RWC', 'RC_', 'FFC', ]  # 'MOD', 'POD',

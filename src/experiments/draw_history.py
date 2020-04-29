@@ -1,15 +1,15 @@
 import json
-import os
 
 from matplotlib import pyplot as plt
 
 from utils import CENTRALITIES
 
-print(os.getcwd())
+# print(os.getcwd())
 
 graph_name = 'petster-hamster'
 crawlers_names = ['DFS', 'MOD', 'RC_', 'DFS', 'BFS', 'FFC']
 total_budget = 2000
+
 
 centrality_history = {centrality_name: {crawler_name: {}
                                         for crawler_name in crawlers_names}
@@ -17,9 +17,11 @@ centrality_history = {centrality_name: {crawler_name: {}
 color = ['blue', 'black', 'green', 'red', 'orange', 'cyan', 'pink', 'yellow']
 fig, axs = plt.subplots(3, 2, figsize=(15, 10), sharex=True,
                         sharey=True)  # TODO need to be changed if CENTRALITIES changes
+# for evey centrality plotting history of crawling
 for centrality_name in CENTRALITIES:
     color_iter = 0
     plot_x, plot_y = CENTRALITIES.index(centrality_name) % 3, int(CENTRALITIES.index(centrality_name) / 3)
+    print(color_iter, centrality_name, plot_x, plot_y)
     for crawler_name in crawlers_names:
         path = "../data/crawler_history/observed_history_{}_{}.json".format(crawler_name, centrality_name)
         with open(path) as top_set_file:
