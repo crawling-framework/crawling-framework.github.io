@@ -4,7 +4,7 @@ import snap
 from matplotlib import pyplot as plt
 
 from centralities import get_top_centrality_nodes
-from crawlers.advanced import TwoStageCrawler, TwoStageMODCrawler
+from crawlers.advanced import ThreeStageCrawler, TwoStageMODCrawler
 from crawlers.basic import CrawlerException, Crawler, MaximumObservedDegreeCrawler
 from crawlers.multiseed import MultiCrawler
 from experiments.runners import Metric, AnimatedCrawlerRunner
@@ -54,7 +54,7 @@ def test_initial_graph(i: str):
 #     import os
 #     import glob
 #     from utils import PICS_DIR
-#     file_path = PICS_DIR + "/TwoStageCrawler" + "/" + graph.name + "/"
+#     file_path = PICS_DIR + "/ThreeStageCrawler" + "/" + graph.name + "/"
 #     if os.path.exists(file_path):
 #         for file in glob.glob(file_path + "*.png"):
 #             os.remove(file)
@@ -73,7 +73,7 @@ def test_initial_graph(i: str):
 #         print("-----------------%s------------------------" % s)
 #         history = dict()
 #         for n in range(s, 242, 50):
-#             crawler = TwoStageCrawler(graph, n=n, s=s, p=p)
+#             crawler = ThreeStageCrawler(graph, n=n, s=s, p=p)
 #             crawler.first_step()
 #             hubs_detected = crawler.second_step()
 #             mu = len(vs.intersection(hubs_detected)) #/ len(vs)
@@ -86,9 +86,9 @@ def test_initial_graph(i: str):
 #     plt.show()
 
 
-class TwoStageCrawlerSeedsAreHubs(TwoStageCrawler):
+class TwoStageCrawlerSeedsAreHubs(ThreeStageCrawler):
     """
-    Artificial version of TwoStageCrawler, where instead of initial random seeds we take hubs
+    Artificial version of ThreeStageCrawler, where instead of initial random seeds we take hubs
     """
     def _seeds_generator(self):
         # 1) hubs as seeds
@@ -224,7 +224,7 @@ def test_target_set_coverage():
     graph = GraphCollections.get(name)
 
     p = 0.1
-    # # tester = TargetSetCoverageTester(graph, TwoStageCrawler, target=int(p*graph.snap.GetNodes()))
+    # # tester = TargetSetCoverageTester(graph, ThreeStageCrawler, target=int(p*graph.snap.GetNodes()))
     # # tester.run([
     #     # {'s': 10, 'n': 20, 'p': p},
     #     # {'s': 50, 'n': 200, 'p': p},
@@ -244,10 +244,11 @@ def test_target_set_coverage():
     # ])
 
     crawlers = [
+        ThreeStageCrawler(graph, s=1000, n=10000, p=p)
         # MaximumObservedDegreeCrawler(graph, batch=10, skl_mode=False),
         # TwoStageCrawlerBatches(graph, s=1000, n=50000, p=p, b=10),
-        TwoStageMODCrawler(graph, s=1000, n=10000, p=p, b=10),
-        MultiCrawler(graph, crawlers=[MaximumObservedDegreeCrawler(graph, batch=10) for _ in range(10)])
+        # TwoStageMODCrawler(graph, s=1000, n=10000, p=p, b=10),
+        # MultiCrawler(graph, crawlers=[MaximumObservedDegreeCrawler(graph, batch=10) for _ in range(10)])
     ]
 
     target_set = set(get_top_centrality_nodes(graph, 'degree', count=int(p * graph[Stat.NODES])))

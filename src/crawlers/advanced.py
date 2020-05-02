@@ -87,7 +87,7 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
         self.answer = self._get_mod_nodes(self.top_observed_seeds, self.k)
 
 
-class TwoStageCrawler(CrawlerWithAnswer):
+class ThreeStageCrawler(CrawlerWithAnswer):
     """
     """
     def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1):
@@ -97,7 +97,7 @@ class TwoStageCrawler(CrawlerWithAnswer):
         :param n: number of nodes to be crawled, must be >= seeds
         :param p: fraction of graph nodes to be returned
         """
-        super().__init__(graph, limit=n, name='TwoStage_s=%s_n=%s_p=%s' % (s, n, p))
+        super().__init__(graph, limit=n, name='ThreeStage_s=%s_n=%s_p=%s' % (s, n, p))
         self.s = s
         self.n = n
         self.pN = int(p*self.orig_graph.snap.GetNodes())
