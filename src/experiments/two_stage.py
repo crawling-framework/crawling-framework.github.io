@@ -4,8 +4,10 @@ import snap
 from matplotlib import pyplot as plt
 
 from centralities import get_top_centrality_nodes
-from crawlers.advanced import ThreeStageCrawler, TwoStageMODCrawler
-from crawlers.basic import CrawlerException, Crawler, MaximumObservedDegreeCrawler
+from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, CrawlerWithAnswer, \
+    AvrachenkovCrawler
+from crawlers.basic import CrawlerException, Crawler, MaximumObservedDegreeCrawler, \
+    DepthFirstSearchCrawler, BreadthFirstSearchCrawler
 from crawlers.multiseed import MultiCrawler
 from experiments.runners import Metric, AnimatedCrawlerRunner
 from graph_io import MyGraph, GraphCollections
@@ -243,21 +245,50 @@ def test_target_set_coverage():
     #     {'s': 1000, 'n': 20000, 'p': p, 'b': 10},
     # ])
 
+    budget = 5000
+    start_seeds = 1000
+
     crawlers = [
-        ThreeStageCrawler(graph, s=1000, n=10000, p=p)
-        # MaximumObservedDegreeCrawler(graph, batch=10, skl_mode=False),
-        # TwoStageCrawlerBatches(graph, s=1000, n=50000, p=p, b=10),
-        # TwoStageMODCrawler(graph, s=1000, n=10000, p=p, b=10),
+        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=None),
+        ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
+        BreadthFirstSearchCrawler(graph, initial_seed=None),
+        DepthFirstSearchCrawler(graph, initial_seed=None),
+        # RandomCrawler(graph, initial_seed=1),
+        # RandomWalkCrawler(graph, initial_seed=1),
+        AvrachenkovCrawler(graph, n=budget, n1=start_seeds, k=int(p * graph.snap.GetNodes())),
+        ThreeStageMODCrawler(graph, s=1000, n=10000, p=p, b=10),
         # MultiCrawler(graph, crawlers=[MaximumObservedDegreeCrawler(graph, batch=10) for _ in range(10)])
     ]
 
     target_set = set(get_top_centrality_nodes(graph, 'degree', count=int(p * graph[Stat.NODES])))
+
+    def precision(crawler):
+        if isinstance(crawler, CrawlerWithAnswer):
+            crawler._compute_answer()
+            result = crawler.answer
+        else:
+            result = crawler.crawled_set
+        return 0 if len(result) == 0 else  len(target_set.intersection(result)) / (len(result))
+
+    def recall(crawler):
+        if isinstance(crawler, CrawlerWithAnswer):
+            crawler._compute_answer()
+            result = crawler.answer
+        else:
+            result = crawler.crawled_set
+        return 0 if len(target_set) == 0 else len(target_set.intersection(result)) / (len(target_set))
+
+    def f1_measure(crawler):
+        p, r = precision(crawler), recall(crawler)
+        return 0 if p == 0 and r == 0 else 2 * p * r / (p + r)
+
     metrics = [
         # Metric(r'$|V_o|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
-        Metric(r'$|V_o \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
+        # Metric(r'$|V_o \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
+        Metric(r'$F_1$', f1_measure),
     ]
 
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=10000, step=100)
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=int(budget/30))
     ci.run()
 
 
