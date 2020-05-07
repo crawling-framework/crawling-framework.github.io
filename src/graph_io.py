@@ -5,9 +5,19 @@ import urllib.request
 
 import networkx as nx
 import patoolib
+import snap
 
-from statistics import Stat
-from utils import GRAPHS_DIR, COLLECTIONS, CENTRALITIES, TMP_GRAPHS_DIR
+from utils import GRAPHS_DIR, COLLECTIONS, TMP_GRAPHS_DIR
+
+
+def fingerprint(snap_graph):
+    """
+    Graph fingerprint to make sure briefly if it has changed.
+
+    :param snap_graph:
+    :return: (|V|, |E|)
+    """
+    return snap_graph.GetNodes(), snap_graph.GetEdges()
 
 
 class MyGraph(object):
@@ -22,9 +32,10 @@ class MyGraph(object):
         self.format = format
         # self.collection = collection
         # self.category = category
-        # TODO add properties maps
-        self.available_properties = CENTRALITIES
-        self._node_property_dicts = dict([(c, {}) for c in self.available_properties])
+
+        self._fingerprint = None
+        # self._giant = None  # TODO
+        self._stats_dicts = {}
 
     @classmethod
     def new_snap(cls, snap_graph=None, name='tmp', directed=False, weighted=False, format='ij'):
@@ -37,7 +48,6 @@ class MyGraph(object):
         :param format:
         :return: MyGraph
         """
-        import snap
         from datetime import datetime
         path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
 
@@ -53,6 +63,7 @@ class MyGraph(object):
 
         graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
         graph._snap_graph = snap_graph
+        graph._fingerprint = fingerprint(snap_graph)
         return graph
 
     # @property
@@ -76,10 +87,16 @@ class MyGraph(object):
     # 
     #     return self.networkit_graph
 
+    def _check_consistency(self):
+        """ Check if graph has changed. If so, we need a new filename, to recompute all metrics, giant, etc
+        """
+        if fingerprint(self.snap) != self._fingerprint:
+            self._stats_dicts.clear()
+            # TODO filename?
+
     @property
     def snap(self):
-        if not self._snap_graph:
-            import snap
+        if self._snap_graph is None:
             self._snap_graph = snap.LoadEdgeList(
                 snap.PNGraph if self.directed else snap.PUNGraph, self.path, 0, 1)
         return self._snap_graph
@@ -92,48 +109,75 @@ class MyGraph(object):
         :return: list of ids
         """
         if self.directed:
-            raise NotImplementedError("For directed graph and all neighbors, take GetIntEdges + GetOutEdges")
+            raise NotImplementedError("For directed graph and all neighbors, take GetInEdges + GetOutEdges")
         return list(self.snap.GetNI(int(node)).GetOutEdges())
 
-    def get_node_property_dict(self, property) -> dict:
-        """
-        Get a dictionary of nodes property. Read from file or compute and save if absent.
-        :param property: property name
-        :return: dict of {node id -> property value}
-        """
-        assert property in self.available_properties
-        prop_dict = self._node_property_dicts[property]
+    # def get_node_property_dict(self, property) -> dict:
+    #     """
+    #     Get a dictionary of nodes property. Read from file or compute and save if absent.
+    #     :param property: property name
+    #     :return: dict of {node id -> property value}
+    #     """
+    #     assert property in self.available_properties
+    #     self._check_consistency()
+    #
+    #     prop_dict = self._stats_dicts[property]
+    #
+    #     # Try to load from file or compute
+    #     if len(prop_dict) == 0:
+    #         prop_path = os.path.join(os.path.dirname(self.path),
+    #                                  os.path.basename(self.path) + '_properties', property)
+    #         if not os.path.exists(prop_path):
+    #             # Compute and save property
+    #             logging.info("Could not find property '%s' at '%s'. Will be computed." %
+    #                          (property, prop_path))
+    #             from centralities import compute_nodes_centrality
+    #             prop_dict = compute_nodes_centrality(self, centrality=property)
+    #             # prop_dict.update(node_cent)
+    #             # Save property to file
+    #             if not os.path.exists(os.path.dirname(prop_path)):
+    #                 os.makedirs(os.path.dirname(prop_path))
+    #             with open(prop_path, 'w') as f:
+    #                 f.writelines([("%s %s\n" % (n, c)) for n, c in prop_dict.items()])
+    #         else:
+    #             # Read property from file
+    #             with open(prop_path, 'r') as f:
+    #                 for line in f.readlines():
+    #                     n, c = line.split()
+    #                     prop_dict[int(n)] = float(c)
+    #
+    #     return prop_dict
 
-        # Try to load from file or compute
-        if len(prop_dict) == 0:
-            prop_path = os.path.join(os.path.dirname(self.path),
-                                     os.path.basename(self.path) + '_properties', property)
-            if not os.path.exists(prop_path):
-                # Compute and save property
-                logging.info("Could not find property '%s' at '%s'. Will be computed." %
-                             (property, prop_path))
-                from centralities import compute_nodes_centrality
-                node_cent = compute_nodes_centrality(self, centrality=property)
-                prop_dict.update(node_cent)
-                # Save property to file
-                if not os.path.exists(os.path.dirname(prop_path)):
-                    os.makedirs(os.path.dirname(prop_path))
-                with open(prop_path, 'w') as f:
-                    f.writelines([("%s %s\n" % (n, c)) for n, c in node_cent])
-            else:
-                # Read property from file
-                with open(prop_path, 'r') as f:
-                    for line in f.readlines():
-                        n, c = line.split()
-                        prop_dict[int(n)] = float(c)
+    def __getitem__(self, stat):
+        self._check_consistency()
+        if isinstance(stat, str):
+            from statistics import Stat
+            stat = Stat[stat]
 
-        return prop_dict
-
-    def __getitem__(self, item):
-        if isinstance(item, Stat):
-            return item.computer(self)
+        if stat in self._stats_dicts:
+            value = self._stats_dicts[stat]
         else:
-            raise KeyError("Unknown item type: %s" % type(item))
+            # Try to load from file or compute
+            stat_path = os.path.join(
+                os.path.dirname(self.path), os.path.basename(self.path) + '_stats', stat.short)
+            if not os.path.exists(stat_path):
+                # Compute and save stats
+                logging.info("Could not find stats '%s' at '%s'. Will be computed." %
+                             (stat, stat_path))
+                value = stat.computer(self)
+
+                # Save stats to file
+                if not os.path.exists(os.path.dirname(stat_path)):
+                    os.makedirs(os.path.dirname(stat_path))
+                with open(stat_path, 'w') as f:
+                    f.write(str(value))
+                    # f.writelines([("%s %s\n" % (n, c)) for n, c in prop_dict.items()])
+            else:
+                # Read stats from file
+                value = eval(open(stat_path, 'r').read())
+
+            # raise KeyError("Unknown item type: %s" % type(item))
+        return value
 
     def save_snap_edge_list(self):
         """ Write current edge list of snap graph into file. """
@@ -141,7 +185,6 @@ class MyGraph(object):
         if os.path.exists(self.path):
             logging.warning("Graph file '%s' will be overwritten." % self.path)
         with open(self.path, 'w') as f:
-            import snap
             snap.SaveEdgeList(self._snap_graph, self.path)
 
     @property  # Denis:  could be useful to handle nx version of graph

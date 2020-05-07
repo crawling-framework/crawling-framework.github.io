@@ -5,9 +5,10 @@ import snap
 import numpy as np
 import matplotlib.pyplot as plt
 
-from crawlers import Crawler, AvrachenkovCrawler
-from centralities import get_top_centrality_nodes
+from crawlers.advanced import AvrachenkovCrawler
+from crawlers.basic import Crawler
 from graph_io import MyGraph, GraphCollections
+from statistics import get_top_centrality_nodes
 
 
 def get_avg_deg_hubs(graph, count):

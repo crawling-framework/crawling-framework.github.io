@@ -1,18 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from centralities import get_top_centrality_nodes
 from graph_io import GraphCollections, MyGraph
+from statistics import Stat, get_top_centrality_nodes
 
 
 def intersection(graph: MyGraph):
     import snap
     g = graph.snap
     n = g.GetNodes()
-    deg = get_top_centrality_nodes(graph, 'degree')
-    btw = get_top_centrality_nodes(graph, 'betweenness')
-    pgr = get_top_centrality_nodes(graph, 'pagerank')
-    ecc = get_top_centrality_nodes(graph, 'eccentricity')
+    deg = graph[Stat.DEGREE_DISTR]
+    btw = graph[Stat.BETWEENNESS_DISTR]
+    pgr = graph[Stat.PAGERANK_DISTR]
+    ecc = graph[Stat.ECCENTRICITY_DISTR]
 
     x = []
     b = []

@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 
 import imageio
@@ -6,12 +7,12 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-from centralities import get_top_centrality_nodes
+from crawlers.advanced import CrawlerWithAnswer
 from crawlers.basic import MaximumObservedDegreeCrawler, \
     PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler
 from graph_io import GraphCollections
 from graph_io import MyGraph
-from statistics import Stat
+from statistics import Stat, get_top_centrality_nodes
 from utils import PICS_DIR  # PICS_DIR = '/home/jzargo/PycharmProjects/crawling/crawling/pics/'
 
 
@@ -92,7 +93,7 @@ class AnimatedCrawlerRunner:
                 print('using current layout')
 
     def run(self):
-        linestyles = ['-', '--', ':']
+        linestyles = ['-', '--', ':', '-.']
         colors = ['b', 'g', 'r', 'c', 'm', 'y']  # for different methods
 
         step_seq = []
@@ -109,6 +110,8 @@ class AnimatedCrawlerRunner:
             plt.cla()
             for c, crawler in enumerate(self.crawlers):
                 crawler.crawl_budget(budget=batch)
+                if isinstance(crawler, CrawlerWithAnswer):
+                    crawler._compute_answer()
 
                 for m, metric in enumerate(self.metrics):
                     metric_seq = crawler_metric_seq[crawler][metric]
