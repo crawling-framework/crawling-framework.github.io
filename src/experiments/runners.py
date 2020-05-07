@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 from centralities import get_top_centrality_nodes
+from crawlers.advanced import CrawlerWithAnswer
 from crawlers.basic import MaximumObservedDegreeCrawler, \
     PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler
 from graph_io import GraphCollections
@@ -93,7 +94,7 @@ class AnimatedCrawlerRunner:
                 print('using current layout')
 
     def run(self):
-        linestyles = ['-', '--', ':']
+        linestyles = ['-', '--', ':', '-.']
         colors = ['b', 'g', 'r', 'c', 'm', 'y']  # for different methods
 
         step_seq = []
@@ -110,6 +111,8 @@ class AnimatedCrawlerRunner:
             plt.cla()
             for c, crawler in enumerate(self.crawlers):
                 crawler.crawl_budget(budget=batch)
+                if isinstance(crawler, CrawlerWithAnswer):
+                    crawler._compute_answer()
 
                 for m, metric in enumerate(self.metrics):
                     metric_seq = crawler_metric_seq[crawler][metric]

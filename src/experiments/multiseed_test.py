@@ -93,7 +93,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, step=1,  #
                 c_count[centrality_name].extend([(iterator, len(
                     top_dict[centrality_name].intersection(crawler.crawled_set)))])  # *step) # if need to add several
                 o_count[centrality_name].extend(
-                    [(iterator, len(top_dict[centrality_name].intersection(crawler.observed_set)) +
+                    [(iterator, len(top_dict[centrality_name].intersection(crawler._observed_set)) +
                       c_count[centrality_name][-1][1])])  # *step)
 
         if gif:  # and (iterator % gif == 0):
@@ -105,7 +105,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, step=1,  #
             s = [n.GetId() for n in crawler.orig_graph.snap.Nodes()]
             s.sort()
             gen_node_color = ['gray'] * (max(s) + 1)
-            for node in crawler.observed_set:
+            for node in crawler._observed_set:
                 gen_node_color[node] = 'y'
             for node in crawler.crawled_set:
                 gen_node_color[node] = 'cyan'
@@ -128,7 +128,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, step=1,  #
             plt.cla()
 
         # finishes when see all nodes. it means even if they are only obsered, we know most part of degrees
-        if len(crawler.observed_set) + len(crawler.crawled_set) == crawler.orig_graph.snap.GetNodes():
+        if len(crawler._observed_set) + len(crawler.crawled_set) == crawler.orig_graph.snap.GetNodes():
             print("Finished coz crawled+observed all")
             break
 
@@ -168,7 +168,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, step=1,  #
         make_gif(crawler_name=crawler_name, pngs_path=pngs_path)  # , duration=step)
 
     print(crawler_name + ": after first: crawled {}: {},".format(len(crawler.crawled_set), crawler.crawled_set),
-          " observed {}: {}".format(len(crawler.observed_set), crawler.observed_set))
+          " observed {}: {}".format(len(crawler._observed_set), crawler._observed_set))
 
     # dumps final versions of crawled_set and observed_set after finishing crawling all budget.
     if ending_sets:
@@ -179,7 +179,7 @@ def Crawler_Runner(Graph: MyGraph, crawler_name: str, total_budget=1, step=1,  #
         with open("../data/crawler_history/observed{}{}.json".format(crawler.crawler_name,
                                                                      str(len(crawler.seed_sequence_)).zfill(6)),
                   'a') as ob_file:
-            json.dump(list(crawler.observed_set), ob_file)
+            json.dump(list(crawler._observed_set), ob_file)
 
     return crawler
 
