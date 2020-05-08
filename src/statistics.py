@@ -50,7 +50,7 @@ class Stat(Enum):
     ECCENTRICITY_DISTR = 'EccDistr', 'eccentricity centrality', lambda graph: compute_nodes_centrality(graph, 'eccentricity')
     CLOSENESS_DISTR = 'ClsnDistr', 'closeness centrality', lambda graph: compute_nodes_centrality(graph, 'closeness')
     PAGERANK_DISTR = 'PgrDistr', 'pagerank centrality', lambda graph: compute_nodes_centrality(graph, 'pagerank')
-    CLUSTERING_DISTR = 'ClustDistr', 'clustering centrality', lambda graph: compute_nodes_centrality(graph, 'clustering')
+    # CLUSTERING_DISTR = 'ClustDistr', 'clustering centrality', lambda graph: compute_nodes_centrality(graph, 'clustering')
     K_CORENESS_DISTR = 'KCorDistr', 'k-coreness centrality', lambda graph: compute_nodes_centrality(graph, 'k-coreness')
 
 
@@ -119,8 +119,18 @@ def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approxim
         snap.GetNodeClustCf(s, NIdCCfH)
         node_cent = {item: NIdCCfH[item] for item in NIdCCfH}
 
-    elif centrality == 'k-cores':  # TODO could be computed in networkx
-        raise NotImplementedError("GetKCore, or do it manually in snap?")
+    elif centrality == 'k-coreness':  # TODO could be computed in networkx
+        node_cent_dict = {}
+        k = 0
+        while True:
+            k += 1
+            KCore = snap.GetKCore(s, k)
+            if KCore.Empty():
+                break
+            for node in KCore.Nodes():
+                node_cent_dict[node.GetId()] = k
+        node_cent = {node: k for node, k in node_cent_dict.items()}
+
     else:
         raise NotImplementedError("")
 
@@ -138,7 +148,7 @@ def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=F
     :return: sorted list with top centrality
     """
     node_cent = list(graph[centrality].items())
-    if centrality in [Stat.ECCENTRICITY_DISTR, Stat.CLOSENESS_DISTR]:
+    if centrality in [Stat.ECCENTRICITY_DISTR]:  # , Stat.CLOSENESS_DISTR
         reverse = False
     else:
         reverse = True
@@ -179,11 +189,10 @@ def test():
 
 
 def test_stats():
-    import sys
     # # imports workaround https://stackoverflow.com/questions/26589805/python-enums-across-modules
     # sys.modules['statistics'] = sys.modules['__main__']
 
-    from graph_io import GraphCollections, MyGraph
+    from graph_io import GraphCollections
     graph = GraphCollections.get('github', giant_only=True)
 
     for stat in Stat:

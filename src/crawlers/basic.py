@@ -357,12 +357,12 @@ class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and deb
         self.p = p
 
     # next_seed is the same with BFS, just choosing ambassador node w=seed, except empty queue
-    def next_seed(self):
-        while self.bfs_queue[0] not in self.observed_set:
-            self.bfs_queue.pop(0)
-            if len(self.bfs_queue) == 0:  # if we get stucked, choosing random from observed
-                return int(np.random.choice(tuple(self.observed_set)))
-        return self.bfs_queue[0]
+    # def next_seed(self):
+    #     while self.bfs_queue[0] not in self.observed_set:
+    #         self.bfs_queue.pop(0)
+    #         if len(self.bfs_queue) == 0:  # if we get stucked, choosing random from observed
+    #             return int(np.random.choice(tuple(self.observed_set)))
+    #     return self.bfs_queue[0]
 
     def crawl(self, seed):
         degree = self.orig_graph.snap.GetNI(seed).GetDeg()

@@ -5,16 +5,16 @@ import os
 
 import imageio
 import networkx as nx
-import snap
+# import snap
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-from centralities import get_top_centrality_nodes
 from crawlers.basic import MaximumObservedDegreeCrawler, DepthFirstSearchCrawler, RandomWalkCrawler, \
-    PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler, ForestFireCrawler
+    PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler  # ,  ForestFireCrawler
 from graph_io import GraphCollections
 from graph_io import MyGraph
 from statistics import Stat
+from statistics import get_top_centrality_nodes
 from utils import PICS_DIR, RESULT_DIR  # PICS_DIR = '/home/jzargo/PycharmProjects/crawling/crawling/pics/'
 
 
@@ -44,8 +44,83 @@ class Metric:
         return self._callback(crawler)
 
 
-class AnimatedCrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
-    def __init__(self, graph: MyGraph, crawlers, metrics, budget=-1, step=1, target_metric='degree',
+class AnimatedCrawlerRunner:
+    def __init__(self, graph: MyGraph, crawlers, metrics, budget=-1, step=1, target_statistics=None):
+        """
+        :param graph:
+        :param crawlers: list of crawlers to run
+        :param metrics: list of metrics to compute at each step. Metric should be callable function
+         crawler -> float, and have name
+        :param budget: maximal number of nodes to be crawled, by default the whole graph
+        :param step: compute metrics each `step` steps
+        :return:
+        """
+        self.graph = graph
+        g = self.graph.snap
+        for crawler in crawlers:
+            assert crawler.orig_graph == graph
+        self.crawlers = crawlers
+        self.metrics = metrics
+        self.budget = budget if budget > 0 else g.GetNodes()
+        assert step < self.budget
+        self.step = step
+        self.target_statistics = target_statistics
+        self.nrows = 1
+        self.ncols = 1
+        scale = 5
+        # if len(self.crawlers) > 1:
+        #     self.nrows = 2
+        # self.ncols = ceil(len(self.crawlers) / self.nrows)
+
+        fig = plt.figure("Graph %s:  N=%d, E=%d, d_max=%d" % (
+            self.graph.name, graph[Stat.NODES], graph[Stat.EDGES], graph[Stat.MAX_DEGREE]),
+                         figsize=(1 + scale * self.ncols, scale * self.nrows))
+
+    def run(self):
+        linestyles = ['-', '--', ':']
+        colors = ['b', 'g', 'r', 'c', 'm', 'y']
+
+        step_seq = []
+        crawler_metric_seq = dict([(c, dict([(m, []) for m in self.metrics])) for c in self.crawlers])
+
+        i = 0
+        while i < self.budget:
+            batch = min(self.step, self.budget - i)
+            i += batch
+            step_seq.append(i)
+
+            plt.cla()
+            for c, crawler in enumerate(self.crawlers):
+                crawler.crawl_budget(budget=batch)
+
+                for m, metric in enumerate(self.metrics):
+                    metric_seq = crawler_metric_seq[crawler][metric]
+                    metric_seq.append(metric(crawler))
+                    plt.plot(step_seq, metric_seq, marker='.',
+                             linestyle=linestyles[m % len(linestyles)],
+                             color=colors[c % len(colors)],
+                             label=r'%s, %s' % (crawler.name, metric.name))
+
+            plt.legend()
+            plt.ylim((0, 1))
+            plt.xlabel('iteration, n')
+            plt.ylabel('metric value')
+            plt.grid()
+            plt.tight_layout()
+            plt.pause(0.001)
+
+        file_path = os.path.join(RESULT_DIR, self.graph.name, 'crawling_plot')
+        if not os.path.exists(file_path):
+            os.makedirs(file_path)
+        file_name = os.path.join(file_path, self.target_statistics.name + ':' +
+                                 ','.join([crawler.name for crawler in self.crawlers]) + 'animated.png')
+        logging.info('Saved pic ' + file_name)
+        plt.savefig(file_name)
+        plt.show()
+
+
+class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
+    def __init__(self, graph: MyGraph, crawlers, metrics, budget=-1, step=1, target_statistics=None,
                  draw_mod='metric', batches_per_pic=1, layout_pos=None):
         """
         :param graph:
@@ -63,8 +138,8 @@ class AnimatedCrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
             assert crawler.orig_graph == graph
         self.crawlers = crawlers
         self.metrics = metrics
-        self.target_metric = target_metric  # for naming graph
-        self.budget = min(budget, g.GetNodes() - 1) if budget > 0 else g.GetNodes()
+        self.target_statistics = target_statistics  # for naming graph
+        self.budget = min(budget, g.GetNodes()) if budget > 0 else g.GetNodes()
         assert step < self.budget
         self.step = step
         self.batches_per_pic = batches_per_pic
@@ -83,7 +158,6 @@ class AnimatedCrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
                        figsize=(20, 10))  # (1 + scale * self.ncols, scale * self.nrows), )
 
         else:  # if it is traversal
-
             for crawler in crawlers:
                 file_path = os.path.join(PICS_DIR, graph.name)
                 if os.path.exists(file_path):
@@ -125,11 +199,11 @@ class AnimatedCrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
     def save_pics(self):
         if self.draw_mod == 'metric':
             plt.legend()
-            plt.title(self.target_metric)
+            plt.title(self.target_statistics.name)
             file_path = os.path.join(RESULT_DIR, self.graph.name, 'crawling_plot')
             if not os.path.exists(file_path):
                 os.makedirs(file_path)
-            plt.savefig(os.path.join(file_path, self.target_metric + ':' +
+            plt.savefig(os.path.join(file_path, self.target_statistics.name + ':' +
                                      ','.join([crawler.name for crawler in self.crawlers]) + '.png'))
         else:  # if traversal
             for crawler in self.crawlers:
@@ -207,7 +281,7 @@ class AnimatedCrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
         logging.info('{} : finished running'.format(datetime.datetime.now()))
 
 
-def test_runner(graph, target_metric=None, layout_pos=None):
+def test_runner(graph, animated=False, target_statistics: Stat = None, layout_pos=None):
     import random
     initial_seed = random.sample([n.GetId() for n in graph.snap.Nodes()], 1)[0]
     crawlers = [
@@ -216,26 +290,28 @@ def test_runner(graph, target_metric=None, layout_pos=None):
         #     DepthFirstSearchCrawler(graph, batch=1, initial_seed=10),
         # ]),
         DepthFirstSearchCrawler(graph, initial_seed=initial_seed),
-        ForestFireCrawler(graph, initial_seed=initial_seed),
+        # ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
         RandomWalkCrawler(graph, initial_seed=initial_seed),
         MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
         PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
         BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),
         RandomCrawler(graph, initial_seed=initial_seed),
     ]
-    logging.info(crawlers[0].name)
+    logging.info(crawlers)
     # change target set to calculate another metric
-    target_set = set(get_top_centrality_nodes(graph, target_metric, count=int(0.1 * graph[Stat.NODES])))
+    target_set = set(get_top_centrality_nodes(graph, target_statistics, count=int(0.1 * graph[Stat.NODES])))
     metrics = [  # creating metrics and giving callable function to it (here - total fraction of nodes)
         #  Metric(r'observed_degree', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
-        Metric(r'crawled_' + target_metric,
+        Metric(r'crawled_' + target_statistics.name,
                lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
     ]
-
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=100, step=10,
-                               batches_per_pic=10,
-                               draw_mod='metric', layout_pos=layout_pos, target_metric=target_metric,
-                               )  # if you want gifs, draw_mod='traversal'. else: 'metric'
+    if animated == True:
+        ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=100, step=5, target_statistics=target_statistics)
+    else:
+        ci = CrawlerRunner(graph, crawlers, metrics, budget=100, step=10,
+                           batches_per_pic=10,
+                           draw_mod='metric', layout_pos=layout_pos, target_statistics=target_statistics,
+                           )  # if you want gifs, draw_mod='traversal'. else: 'metric'
     ci.run()
 
 
@@ -254,8 +330,8 @@ if __name__ == '__main__':
     # name = 'petster-hamster'
     # name = 'slashdot-threads'  # 'dolphins' #  #''
     name = 'petster-hamster'  # 'petster-hamster' # 'advogato'
-    g = GraphCollections.get(name)
-    g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
+    g = GraphCollections.get(name, giant_only=True)
+    # g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
     # all about sexgraph
     # name = 'sexgraph'
     # snap_g = TUNGraph.New()
@@ -273,13 +349,13 @@ if __name__ == '__main__':
     # name = 'carpet_graph'
     # g, layout_pos = test_carpet_graph(10, 10)  # GraphCollections.get(name)
     logging.info("running graph ".format(name))
-    from utils import CENTRALITIES
-
-    for exp in range(4):
-        for metric in CENTRALITIES:
-            print('running', metric)
+    centralities = [s for s in Stat if 'DISTR' in s.name]
+    for exp in range(1):
+        for stat in centralities:  # Running all centralities
+            print('running', stat)
             test_runner(g,
-                        target_metric=metric
+                        animated=False,
+                        target_statistics=stat
                         # layout_pos
                         )
-# target_metric = 'degree', 'betweenness', 'eccentricity', 'k-coreness',  'pagerank', 'clustering'
+# 'degree', 'betweenness', 'eccentricity', 'k-coreness',  'pagerank', 'clustering'
