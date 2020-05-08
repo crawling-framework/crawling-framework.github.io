@@ -51,7 +51,7 @@ if __name__ == '__main__':
     name = 'digg-friends'
     # name = 'ego-gplus'
     # name = 'petster-hamster'
-    graph = GraphCollections.get(name)
+    graph = GraphCollections.get(name, giant_only=True)
     # degs = get_top_centrality_nodes(graph, 'degree', 10)
     # print(degs)
     ecc = get_top_centrality_nodes(graph, 'eccentricity', 10)

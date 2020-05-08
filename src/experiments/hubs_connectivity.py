@@ -222,7 +222,7 @@ if __name__ == '__main__':
     #              'ego-gplus', 'petster-hamster']:
     #     g = read_snap(get_graph_path(name))
     #     print(name, get_avg_deg_hubs(g, 100)/g.GetNodes())
-    g = GraphCollections.get(name)
+    g = GraphCollections.get(name, giant_only=True)
     
     # compute_reachability(g)
     # test_avrachenkov(g)

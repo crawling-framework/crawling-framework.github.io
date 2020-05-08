@@ -107,7 +107,7 @@ def test():
     # g = ba_model(100, 10)
 
     from graph_io import GraphCollections, MyGraph
-    graph = GraphCollections.get('petster-hamster')
+    graph = GraphCollections.get('petster-hamster', giant_only=True)
     for name, obj in vars(Stat).items():
         if type(obj) == Stat:
 

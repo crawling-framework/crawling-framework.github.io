@@ -208,10 +208,10 @@ if __name__ == '__main__':
     # name = 'ego-gplus'
     # name = 'petster-hamster'
     name = 'dolphins'
-    g = GraphCollections.get(name)
+    g = GraphCollections.get(name, giant_only=True)
     # from crawlers.multiseed import test_carpet_graph, MultiCrawler
     # name = 'carpet_graph'
-    # g, layout_pos = test_carpet_graph(10, 10)  # GraphCollections.get(name)
+    # g, layout_pos = test_carpet_graph(10, 10)  # GraphCollections.get(name, giant_only=True)
     logging.critical("running graph ".format(name))
     test_runner(g,
                 # layout_pos

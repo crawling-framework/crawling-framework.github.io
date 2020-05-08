@@ -456,7 +456,7 @@ if __name__ == '__main__':
     # name = 'ego-gplus'
     name = 'petster-hamster'
     # for name in ['petster-hamster', 'ego-gplus', 'facebook-wosn-links', 'loc-brightkite_edges', 'petster-friendships-cat', 'digg-friends', 'libimseti', 'soc-pokec-relationships']:
-    graph = GraphCollections.get(name)
+    graph = GraphCollections.get(name, giant_only=True)
     # measure_e_jk(graph)
 
     # print(assortativity(graph))

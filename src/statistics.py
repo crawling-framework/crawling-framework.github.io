@@ -173,7 +173,7 @@ def test():
 
     # 2.
     from graph_io import GraphCollections
-    graph = GraphCollections.get('ego-gplus')
+    graph = GraphCollections.get('ego-gplus', giant_only=True)
     node_prop = graph[Stat.BETWEENNESS_DISTR]
     print(node_prop)
 
@@ -184,11 +184,8 @@ def test_stats():
     # sys.modules['statistics'] = sys.modules['__main__']
 
     from graph_io import GraphCollections, MyGraph
-    graph = GraphCollections.get('github')
-    # graph = GraphCollections.get('ego-gplus')
+    graph = GraphCollections.get('github', giant_only=True)
 
-    # print(graph.snap.GetNodes())
-    # print(graph.snap.GetEdges())
     for stat in Stat:
         print("%s = %s" % (stat.short, graph[stat]))
 
@@ -218,6 +215,6 @@ if __name__ == '__main__':
 
     from graph_io import MyGraph, MyGraph
 
-    test_stats()
+    # test_stats()
     # test()
-    # main()
+    main()

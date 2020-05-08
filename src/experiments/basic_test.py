@@ -44,6 +44,6 @@ if __name__ == '__main__':
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
     name = 'petster-hamster'
-    g = GraphCollections.get(name)
+    g = GraphCollections.get(name, giant_only=True)
 
     test_mod(g)

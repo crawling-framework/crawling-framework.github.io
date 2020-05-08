@@ -27,7 +27,7 @@ def test_initial_graph(i: str):
         # name = 'douban'
         # name = 'slashdot-zoo'
         # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
-        graph = GraphCollections.get(name)
+        graph = GraphCollections.get(name, giant_only=True)
         print("N=%s E=%s" % (graph.snap.GetNodes(), graph.snap.GetEdges()))
     else:
         g = snap.TUNGraph.New()
@@ -226,7 +226,7 @@ def test_target_set_coverage():
     # name, budget, start_seeds = 'soc-pokec-relationships', 50000, 5000
     name, budget, start_seeds = 'digg-friends', 5000, 1000
     # name, budget, start_seeds = 'loc-brightkite_edges', 2500, 500
-    graph = GraphCollections.get(name)
+    graph = GraphCollections.get(name, giant_only=True)
 
     p = 0.1
     # # tester = TargetSetCoverageTester(graph, ThreeStageCrawler, target=int(p*graph.snap.GetNodes()))
@@ -322,7 +322,7 @@ def test_detection_quality():
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
     name = 'petster-hamster'
-    graph = GraphCollections.get(name)
+    graph = GraphCollections.get(name, giant_only=True)
 
     p = 0.1
 
