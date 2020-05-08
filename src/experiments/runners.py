@@ -157,7 +157,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
                 self.graph.name, graph[Stat.NODES], graph[Stat.EDGES], graph[Stat.MAX_DEGREE]),
                        figsize=(20, 10))  # (1 + scale * self.ncols, scale * self.nrows), )
 
-        else:  # if it is traversal
+        elif self.draw_mod == 'traversal':  # if it is traversal
             for crawler in crawlers:
                 file_path = os.path.join(PICS_DIR, graph.name)
                 if os.path.exists(file_path):
@@ -205,7 +205,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
                 os.makedirs(file_path)
             plt.savefig(os.path.join(file_path, self.target_statistics.name + ':' +
                                      ','.join([crawler.name for crawler in self.crawlers]) + '.png'))
-        else:  # if traversal
+        elif self.draw_mod == 'traversal':  # if traversal
             for crawler in self.crawlers:
                 make_gif(crawler_name=crawler.name, duration=2)
                 logging.info('compiled +')
@@ -218,7 +218,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
         crawler_metric_seq = dict([(c, dict([(m, [0]) for m in self.metrics])) for c in self.crawlers])
 
         i = 0
-        logging.info('Crawling with budget {} and step {}'.format(self.budget, self.step))
+        # logging.info('Crawling method {} with budget {} and step {}'.format(self.self.budget, self.step))
         pbar = tqdm(total=self.budget)  # drawing crawling progress bar
         while i < self.budget:
             batch = min(self.step, self.budget - i)
@@ -226,7 +226,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
             step_seq.append(i)
             pbar.update(batch)
 
-            if i % 1000 == 0:  # making backup every 10k
+            if i % 10000 == 0:  # making backup every 10k
                 self.save_history(crawler_metric_seq)
                 self.save_pics()
                 logging.info('\n{} : Iteration {} made backup of pics and history'.format(datetime.datetime.now(), i))
@@ -237,16 +237,17 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
                     metric_seq = crawler_metric_seq[crawler][metric]
                     metric_seq.append(metric(crawler))  # calculate metric for crawler
                     if (self.draw_mod == 'metric') and (i % self.batches_per_pic == 0):
-                        plt.plot(step_seq, metric_seq, marker='.',  # TODO remove extra labels
-                                 linestyle=linestyles[m % len(linestyles)],
-                                 color=colors[c % len(colors)],
-                                 label=r'%s, %s' % (crawler.name, metric.name))
-                        # else:
-                        #     plt.plot(step_seq, metric_seq, marker='.',
-                        #              linestyle=linestyles[m % len(linestyles)],
-                        #              color=colors[c % len(colors)])
-                        plt.xlabel('iteration, n')
-                        plt.ylabel('metric value')
+                        continue
+                        # plt.plot(step_seq, metric_seq, marker='.',  # TODO remove extra labels
+                        #          linestyle=linestyles[m % len(linestyles)],
+                        #          color=colors[c % len(colors)],
+                        #          label=r'%s, %s' % (crawler.name, metric.name))
+                        # # else:
+                        # #     plt.plot(step_seq, metric_seq, marker='.',
+                        # #              linestyle=linestyles[m % len(linestyles)],
+                        # #              color=colors[c % len(colors)])
+                        # plt.xlabel('iteration, n')
+                        # plt.ylabel('metric value')
 
 
                     elif (self.draw_mod == 'traversal') and (i % self.batches_per_pic == 0):
@@ -264,14 +265,14 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
                         for node in crawler.seed_sequence_[:-batch]:
                             gen_node_color[node] = 'red'
 
-                        plt.title(crawler.name + " " + str(len(crawler.crawled_set)))
-                        nx.draw(networkx_graph, pos=self.layout_pos,
-                                #  with_labels=(len(gen_node_color) < 1000),  # if little, we draw
-                                node_size=100, node_list=networkx_graph.nodes,
-                                node_color=[gen_node_color[node] for node in networkx_graph.nodes])
-                        file_path = os.path.join(PICS_DIR, self.graph.name)
-                        plt.savefig(file_path + '/{}_{}.png'.format(crawler.name, str(i).zfill(5)))
-                        plt.cla()
+                        # plt.title(crawler.name + " " + str(len(crawler.crawled_set)))
+                        # nx.draw(networkx_graph, pos=self.layout_pos,
+                        #         #  with_labels=(len(gen_node_color) < 1000),  # if little, we draw
+                        #         node_size=100, node_list=networkx_graph.nodes,
+                        #         node_color=[gen_node_color[node] for node in networkx_graph.nodes])
+                        # file_path = os.path.join(PICS_DIR, self.graph.name)
+                        # plt.savefig(file_path + '/{}_{}.png'.format(crawler.name, str(i).zfill(5)))
+                        # plt.cla()
                         # plt.show()
 
         pbar.close()  # closing progress bar
@@ -297,7 +298,7 @@ def test_runner(graph, animated=False, target_statistics: Stat = None, layout_po
         BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),
         RandomCrawler(graph, initial_seed=initial_seed),
     ]
-    logging.info(crawlers)
+    logging.info([c.name for c in crawlers])
     # change target set to calculate another metric
     target_set = set(get_top_centrality_nodes(graph, target_statistics, count=int(0.1 * graph[Stat.NODES])))
     metrics = [  # creating metrics and giving callable function to it (here - total fraction of nodes)
@@ -306,11 +307,11 @@ def test_runner(graph, animated=False, target_statistics: Stat = None, layout_po
                lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
     ]
     if animated == True:
-        ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=100, step=5, target_statistics=target_statistics)
+        ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=100, step=10, target_statistics=target_statistics)
     else:
-        ci = CrawlerRunner(graph, crawlers, metrics, budget=100, step=10,
+        ci = CrawlerRunner(graph, crawlers, metrics, budget=10000, step=100,
                            batches_per_pic=10,
-                           draw_mod='metric', layout_pos=layout_pos, target_statistics=target_statistics,
+                           draw_mod=None, layout_pos=layout_pos, target_statistics=target_statistics,
                            )  # if you want gifs, draw_mod='traversal'. else: 'metric'
     ci.run()
 
@@ -350,9 +351,9 @@ if __name__ == '__main__':
     # g, layout_pos = test_carpet_graph(10, 10)  # GraphCollections.get(name)
     logging.info("running graph ".format(name))
     centralities = [s for s in Stat if 'DISTR' in s.name]
-    for exp in range(1):
+    for exp in range(4):
         for stat in centralities:  # Running all centralities
-            print('running', stat)
+            logging.info('running', stat)
             test_runner(g,
                         animated=False,
                         target_statistics=stat
