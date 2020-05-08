@@ -11,3 +11,14 @@ RESULT_DIR = os.path.join(rel_dir, 'results')  # storing results
 COLLECTIONS = ['konect', 'networkrepository']
 
 CENTRALITIES = ['degree', 'betweenness', 'eccentricity', 'k-coreness', 'pagerank', 'clustering']  # 'closeness',]
+
+# # Name remap can be useful
+# CRAWLERS_DICTIONARY = {'POD': PreferentialObservedDegreeCrawler,
+#                        'MOD': MaximumObservedDegreeCrawler,
+#                        'DFS': DepthFirstSearchCrawler,
+#                        'BFS': BreadthFirstSearchCrawler,
+#                        'RWC': RandomWalkCrawler,
+#                        'RC_': RandomCrawler,
+#                        'FFC': ForestFireCrawler,
+#                        'AVR': AvrachenkovCrawler,  # dont use, it iscompletely different
+#                        }

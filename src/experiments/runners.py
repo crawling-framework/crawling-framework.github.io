@@ -44,7 +44,7 @@ class Metric:
         return self._callback(crawler)
 
 
-class AnimatedCrawlerRunner:
+class AnimatedCrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
     def __init__(self, graph: MyGraph, crawlers, metrics, budget=-1, step=1, target_metric='degree',
                  draw_mod='metric', batches_per_pic=1, layout_pos=None):
         """
@@ -102,8 +102,9 @@ class AnimatedCrawlerRunner:
             crawler_seq = crawler_metric_seq[crawler_name]
             for metric_object in crawler_seq.keys():
                 metric_list = crawler_seq[metric_object]
-                file_path = os.path.join(RESULT_DIR, self.graph.name, 'budget={}'.format(len(crawler_metric_seq)),
-                                         crawler_name.name, )
+                # like this: file_path = ../results/Graph_name/step=10,budget=10/MOD/crawled_centrality[NUM].json
+                file_path = os.path.join(RESULT_DIR, self.graph.name,
+                                         'step={},budget={}'.format(self.step, len(metric_list)), crawler_name.name)
                 if not os.path.exists(file_path):
                     os.makedirs(file_path)
                 file_name = os.path.join(file_path, metric_object.name + '.json')  # TODO test
@@ -111,7 +112,7 @@ class AnimatedCrawlerRunner:
                     expand = 1
                     while True:
                         expand += 1
-                        new_file_name = file_name.split(".json")[0] + str(expand) + ".json"
+                        new_file_name = str(file_name.split(".json")[0]) + str(expand) + ".json"
                         if os.path.isfile(new_file_name):
                             continue
                         else:
@@ -231,7 +232,7 @@ def test_runner(graph, target_metric=None, layout_pos=None):
                lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
     ]
 
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=int(graph.snap.GetNodes() / 10), step=50,
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=100, step=10,
                                batches_per_pic=10,
                                draw_mod='metric', layout_pos=layout_pos, target_metric=target_metric,
                                )  # if you want gifs, draw_mod='traversal'. else: 'metric'
@@ -252,7 +253,7 @@ if __name__ == '__main__':
     # name = 'ego-gplus'
     # name = 'petster-hamster'
     # name = 'slashdot-threads'  # 'dolphins' #  #''
-    name = 'slashdot-threads'  # 'petster-hamster' # 'advogato'
+    name = 'petster-hamster'  # 'petster-hamster' # 'advogato'
     g = GraphCollections.get(name)
     g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
     # all about sexgraph
