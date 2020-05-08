@@ -5,9 +5,10 @@ import snap
 import numpy as np
 import matplotlib.pyplot as plt
 
-from crawlers import Crawler, AvrachenkovCrawler
-from centralities import get_top_centrality_nodes
+from crawlers.advanced import AvrachenkovCrawler
+from crawlers.basic import Crawler
 from graph_io import MyGraph, GraphCollections
+from statistics import get_top_centrality_nodes
 
 
 def get_avg_deg_hubs(graph, count):
@@ -221,7 +222,7 @@ if __name__ == '__main__':
     #              'ego-gplus', 'petster-hamster']:
     #     g = read_snap(get_graph_path(name))
     #     print(name, get_avg_deg_hubs(g, 100)/g.GetNodes())
-    g = GraphCollections.get(name)
+    g = GraphCollections.get(name, giant_only=True)
     
     # compute_reachability(g)
     # test_avrachenkov(g)

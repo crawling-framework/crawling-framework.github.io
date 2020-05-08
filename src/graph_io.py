@@ -7,25 +7,29 @@ import networkx as nx
 import patoolib
 import snap
 
-from statistics import Stat
-from utils import GRAPHS_DIR, COLLECTIONS, CENTRALITIES, TMP_GRAPHS_DIR
+from utils import GRAPHS_DIR, COLLECTIONS, TMP_GRAPHS_DIR
+
+
+def fingerprint(snap_graph):
+    """ Graph fingerprint to make sure briefly if it has changed.
+
+    :param snap_graph:
+    :return: (|V|, |E|)
+    """
+    return snap_graph.GetNodes(), snap_graph.GetEdges()
 
 
 class MyGraph(object):
     def __init__(self, path, name, directed=False, weighted=False, format='ij'):
         self._snap_graph = None
-        # self.igraph_graph = None
-        # self.networkit_graph = None
         self.path = path
         self.name = name
         self.directed = directed
         self.weighted = weighted
         self.format = format
-        # self.collection = collection
-        # self.category = category
-        # TODO add properties maps
-        self.available_properties = CENTRALITIES
-        self._node_property_dicts = dict([(c, {}) for c in self.available_properties])
+
+        self._fingerprint = None
+        self._stats_dict = {}
 
     @classmethod
     def new_snap(cls, snap_graph=None, name='tmp', directed=False, weighted=False, format='ij'):
@@ -38,7 +42,6 @@ class MyGraph(object):
         :param format:
         :return: MyGraph
         """
-        import snap
         from datetime import datetime
         path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
 
@@ -54,35 +57,20 @@ class MyGraph(object):
 
         graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
         graph._snap_graph = snap_graph
+        graph._fingerprint = fingerprint(snap_graph)
         return graph
 
-    # @property
-    # def igraph(self):
-    #     if not self.igraph_graph:
-    #         import igraph
-    #         from igraph import summary
-    #         g = igraph.Graph()
-    #         g = g.Read_Edgelist(self.path, directed=self.directed)
-    #         logging.info("Read igraph %s" % summary(g))
-    #         self.igraph_graph = g
-    #     return self.igraph_graph
-    # 
-    # @property
-    # def networkit(self):
-    #     if not self.networkit_graph:
-    #         import networkit as nk
-    #         # XXX suppose numbering from 1
-    #         self.networkit_graph = nk.readGraph(
-    #             self.path, nk.Format.EdgeListSpaceOne, directed=self.directed)
-    # 
-    #     return self.networkit_graph
+    def _check_consistency(self):
+        """ Raise exception if graph has changed. """
+        if fingerprint(self.snap) != self._fingerprint:
+            raise Exception("snap graph has changed from the one saved in %s" % self.path)
 
     @property
     def snap(self):
-        if not self._snap_graph:
-            import snap
+        if self._snap_graph is None:
             self._snap_graph = snap.LoadEdgeList(
                 snap.PNGraph if self.directed else snap.PUNGraph, self.path, 0, 1)
+            self._fingerprint = fingerprint(self._snap_graph)
         return self._snap_graph
 
     def neighbors(self, node: int):
@@ -93,57 +81,48 @@ class MyGraph(object):
         :return: list of ids
         """
         if self.directed:
-            raise NotImplementedError("For directed graph and all neighbors, take GetIntEdges + GetOutEdges")
+            raise NotImplementedError("For directed graph and all neighbors, take GetInEdges + GetOutEdges")
         return list(self.snap.GetNI(int(node)).GetOutEdges())
 
-    def get_node_property_dict(self, property) -> dict:
-        """
-        Get a dictionary of nodes property. Read from file or compute and save if absent.
-        :param property: property name
-        :return: dict of {node id -> property value}
-        """
-        assert property in self.available_properties
-        prop_dict = self._node_property_dicts[property]
+    def __getitem__(self, stat):
+        """ Get graph statistics. Index by str or Stat. Works only if snap graph is immutable. """
+        self._check_consistency()
+        if isinstance(stat, str):
+            from statistics import Stat
+            stat = Stat[stat]
 
-        # Try to load from file or compute
-        if len(prop_dict) == 0:
-            prop_path = os.path.join(os.path.dirname(self.path),
-                                     os.path.basename(self.path) + '_properties', property)
-            if not os.path.exists(prop_path):
-                # Compute and save property
-                logging.info("Could not find property '%s' at '%s'. Will be computed." %
-                             (property, prop_path))
-                from centralities import compute_nodes_centrality
-                node_cent = compute_nodes_centrality(self, centrality=property)
-                prop_dict.update(node_cent)
-                # Save property to file
-                if not os.path.exists(os.path.dirname(prop_path)):
-                    os.makedirs(os.path.dirname(prop_path))
-                with open(prop_path, 'w') as f:
-                    f.writelines([("%s %s\n" % (n, c)) for n, c in node_cent])
-            else:
-                # Read property from file
-                with open(prop_path, 'r') as f:
-                    for line in f.readlines():
-                        n, c = line.split()
-                        prop_dict[int(n)] = float(c)
-
-        return prop_dict
-
-    def __getitem__(self, item):
-        if isinstance(item, Stat):
-            return item.computer(self)
+        if stat in self._stats_dict:
+            value = self._stats_dict[stat]
         else:
-            raise KeyError("Unknown item type: %s" % type(item))
+            # Try to load from file or compute
+            stat_path = os.path.join(
+                os.path.dirname(self.path), os.path.basename(self.path) + '_stats', stat.short)
+            if not os.path.exists(stat_path):
+                # Compute and save stats
+                logging.info("Could not find stats '%s' at '%s'. Will be computed." %
+                             (stat, stat_path))
+                value = stat.computer(self)
 
-    def save_snap_edge_list(self):
-        """ Write current edge list of snap graph into file. """
-        assert self._snap_graph
-        if os.path.exists(self.path):
-            logging.warning("Graph file '%s' will be overwritten." % self.path)
-        with open(self.path, 'w') as f:
-            import snap
-            snap.SaveEdgeList(self._snap_graph, self.path)
+                # Save stats to file
+                if not os.path.exists(os.path.dirname(stat_path)):
+                    os.makedirs(os.path.dirname(stat_path))
+                with open(stat_path, 'w') as f:
+                    f.write(str(value))
+            else:
+                # Read stats from file - value or dict
+                value = eval(open(stat_path, 'r').read())
+
+            # raise KeyError("Unknown item type: %s" % type(item))
+        return value
+
+    # def save_snap_edge_list(self):
+    #     """ Write current edge list of snap graph into file. """
+    #     assert self._snap_graph
+    #     if os.path.exists(self.path):
+    #         logging.warning("Graph file '%s' will be overwritten." % self.path)
+    #
+    #     # FIXME do not write commented section
+    #     snap.SaveEdgeList(self._snap_graph, self.path)
 
     @property  # Denis:  could be useful to handle nx version of graph
     def snap_to_networkx(self):
@@ -157,14 +136,15 @@ class MyGraph(object):
 
 
 def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_with='#%',
-                        remove_original=False):
+                        remove_original=False, self_loops=False):
     """
 
     :param path:
     :param out_path:
     :param out_format: 'ij', 'ijw', 'ijwt'
     :param ignore_lines_starting_with:
-    :param remove_original:
+    :param remove_original: original file is not removed by default
+    :param self_loops: self loops are removed by default.
     :return:
     """
     in_format = None
@@ -183,6 +163,8 @@ def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_w
                 logging.info("Reformatting %s->%s for '%s' ..." % (in_format, out_format, path))
 
             items = line.split()
+            if not self_loops and items[0] == items[1]:
+                continue
             # TODO format depending on each symbol of 'ijwt'
             res_line = ' '.join(items[:len(out_format)]) + '\n'
             out_file.write(res_line)
@@ -197,13 +179,19 @@ class GraphCollections(object):
     networkrepository_url_pattern = 'http://nrvis.com/download/data/%s/%s.zip'
 
     @staticmethod
-    def get(name, collection='konect', directed=False, format='ij') -> MyGraph:
+    def get(name, collection='konect', directed=False, format='ij', giant_only=False, self_loops=False) -> MyGraph:
         """
-        Read graph from storage or download it from the specified collection.
+        Read graph from storage or download it from the specified collection. In order to apply
+        giant_only and self_loops, you need to remove the file manually.
+
         :param name:
         :param collection: 'konect', 'networkrepository'
         :param directed: undirected by default
         :param format: output will be in this format, 'ij' by default
+        :param giant_only: giant component instead of full graph. Component extraction is applied
+         only once when the graph is downloaded.
+        :param self_loops: self loops are removed by default. Applied only once when the graph is
+         downloaded.
         :return: MyGraph with snap graph
         """
         assert collection in COLLECTIONS
@@ -225,7 +213,18 @@ class GraphCollections(object):
                 GraphCollections._download_networkrepository(
                     temp_path, GraphCollections.networkrepository_url_pattern % (category, name))
 
-            reformat_graph_file(temp_path, path, out_format=format, remove_original=True)
+            reformat_graph_file(temp_path, path, out_format=format, remove_original=True, self_loops=self_loops)
+
+            if giant_only:  # replace graph by its giant component
+                logging.info("Extracting giant component ...")
+                assert format == 'ij'
+                s = snap.LoadEdgeList(snap.PNGraph, path, 0, 1)  #
+                s = snap.GetMxWcc(s)
+                # snap.SaveEdgeList(s, path, "")
+                with open(path, 'w') as f:
+                    for e in s.Edges():
+                        f.write("%s %s\n" % (e.GetSrcNId(), e.GetDstNId()))
+                logging.info("done.")
 
         return MyGraph(path, name, directed, format=format)
 
@@ -310,28 +309,52 @@ class GraphCollections(object):
         shutil.rmtree(os.path.join(graph_dir, archive_dir_name))
 
 
-def test():
+def test_io():
     # name = 'soc-pokec-relationships'
-    # name = 'petster-friendships-cat'
-    name = 'petster-hamster'
+    # name = 'petster-hamster'
+    # name = 'github'
     # name = 'twitter'
+    name = 'ego-gplus'
     # name = 'libimseti'
     # name = 'advogato'
     # name = 'facebook-wosn-links'
     # name = 'soc-Epinions1'
     # name = 'douban'
-    # name = 'slashdot-zoo'
-    # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
-    graph = GraphCollections.get(name)
-    g = snap.GetMxScc(graph.snap)
+    # name = 'slashdot-threads'
+    # name = 'digg-friends'
+    # name = 'petster-friendships-cat'  # snap load is long, possibly due to unordered ids
+    graph = GraphCollections.get(name, directed=False, giant_only=True, self_loops=False)
+    g = graph.snap
     # g = GraphCollections.get('eco-florida', collection='networkrepository').snap
     print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
+    # print("neigbours of %d: %s" % (2, graph.neighbors(2)))
 
-    print("neigbours of %d: %s" % (2, graph.neighbors(2)))
+
+def test_graph():
+    g = snap.TUNGraph.New()
+    g.AddNode(1)
+    g.AddNode(2)
+    g.AddNode(3)
+    g.AddNode(4)
+    g.AddNode(5)
+    g.AddEdge(1, 1)
+    g.AddEdge(1, 1)
+    g.AddEdge(1, 2)
+    g.AddEdge(1, 2)
+    g.AddEdge(2, 1)
+    g.AddEdge(2, 3)
+    g.AddEdge(4, 2)
+    g.AddEdge(4, 3)
+    g.AddEdge(5, 4)
+    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
+    graph = MyGraph.new_snap(g)
+    g.AddEdge(4, 1)
+    print(graph['EDGES'])  # Exception
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    test()
+    test_io()
+    # test_graph()
