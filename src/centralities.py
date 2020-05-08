@@ -31,7 +31,7 @@ def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=F
     return [n for (n, d) in sorted_node_cent[:count]]
 
 
-def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approximate=10000, only_giant=False):
+def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approximate=10000, only_giant=True):
     """
     Compute centrality value for each node of the graph.
     :param graph: snap graph
@@ -86,8 +86,20 @@ def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approxim
         snap.GetNodeClustCf(s, NIdCCfH)
         node_cent = [(item, NIdCCfH[item]) for item in NIdCCfH]
 
-    elif centrality == 'k-cores':  # TODO could be computed in networkx
-        raise NotImplementedError("GetKCore, or do it manually in snap?")
+    elif centrality == 'k-coreness':  # TODO could be computed in networkx
+        set_of_top_k = [0]
+        node_cent = []
+        node_cent_dict = {}
+        k = 0
+        while len(set_of_top_k) > 0:
+            k += 1
+            KCore = snap.GetKCore(s, k)
+            if KCore.Empty():
+                break
+            for node in KCore.Nodes():
+                node_cent_dict[node.GetId()] = k
+        node_cent = [(node, k) for node, k in node_cent_dict.items()]
+
     else:
         raise NotImplementedError("")
 

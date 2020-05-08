@@ -1,7 +1,7 @@
 import heapq
 import logging
 import random
-from queue import deque
+from queue import deque  # here was a warning in pycharm
 
 import numpy as np
 import snap
@@ -194,12 +194,12 @@ class BreadthFirstSearchCrawler(Crawler):
 
 
 class DepthFirstSearchCrawler(Crawler):
-    def __init__(self, graph: MyGraph, initial_seed=None, **kwargs):
+    def __init__(self, orig_graph: MyGraph, initial_seed=None, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node. If None is given, a random node of original graph will be used.
         """
-        super().__init__(graph, name='DFS', **kwargs)
+        super().__init__(orig_graph, name='DFS', **kwargs)
 
         if len(self.observed_set) == 0:
             if initial_seed is None:  # FIXME duplicate code in all basic crawlers?
@@ -307,7 +307,7 @@ class MaximumObservedDegreeCrawler(Crawler):
         return self.mod_queue.pop(0)
 
 
-class PreferentialObservedDegreeCrawler(Crawler):  # TODO need to check and fix
+class PreferentialObservedDegreeCrawler(Crawler):
     def __init__(self, orig_graph: MyGraph, batch=10, initial_seed=None, **kwargs):
         super().__init__(orig_graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
 
@@ -337,7 +337,7 @@ class PreferentialObservedDegreeCrawler(Crawler):  # TODO need to check and fix
         return self.pod_queue.pop(0)
 
 
-class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and debug
+class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and debug different p
     """Algorythm from https://dl.acm.org/doi/abs/10.1145/1081870.1081893
     with my little modification - stuck_ends, it is like illegitimate son of BFS and RC
     :param p - forward burning probability of algorythm
@@ -346,7 +346,7 @@ class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and deb
 
     def __init__(self, orig_graph: MyGraph, p=0.35, initial_seed=None, **kwargs):
         super().__init__(orig_graph, **kwargs)
-        self.name = 'FFC_p=%s' % p
+        self.name = 'FFC_p=%s' % p  # unless doesnt work because BFS (super) has own name
         if len(self.observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])

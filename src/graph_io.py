@@ -5,6 +5,7 @@ import urllib.request
 
 import networkx as nx
 import patoolib
+import snap
 
 from statistics import Stat
 from utils import GRAPHS_DIR, COLLECTIONS, CENTRALITIES, TMP_GRAPHS_DIR
@@ -322,7 +323,7 @@ def test():
     # name = 'slashdot-zoo'
     # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
     graph = GraphCollections.get(name)
-    g = graph.snap
+    g = snap.GetMxScc(graph.snap)
     # g = GraphCollections.get('eco-florida', collection='networkrepository').snap
     print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
 

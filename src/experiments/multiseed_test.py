@@ -1,6 +1,5 @@
 import glob
 import json
-import logging
 import os
 
 import networkx as nx
@@ -10,11 +9,12 @@ from tqdm import tqdm
 from centralities import get_top_centrality_nodes
 from crawlers.advanced import AvrachenkovCrawler
 # from crawlers.basic import  # TODO need to finish crawlers and replace into crawlers.basic
-from crawlers.basic import BreadthFirstSearchCrawler, RandomCrawler, RandomWalkCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler, DepthFirstSearchCrawler, ForestFireCrawler
+from crawlers.basic import BreadthFirstSearchCrawler, RandomCrawler, RandomWalkCrawler, MaximumObservedDegreeCrawler, \
+    PreferentialObservedDegreeCrawler, DepthFirstSearchCrawler, ForestFireCrawler
 from crawlers.multiseed import MultiCrawler, test_carpet_graph
 # from experiments import drawing_graph
 from experiments.runners import make_gif
-from graph_io import MyGraph, GraphCollections
+from graph_io import MyGraph
 from utils import CENTRALITIES
 
 
@@ -210,13 +210,13 @@ def run_crawlers(Graph: MyGraph, total_budget=100, crawlers=None, layout_pos=Non
     else:
         os.makedirs(file_path)
 
-    logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.CRITICAL)
-    logging.getLogger().setLevel(logging.CRITICAL)
+    logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
 
     print("N=%s E=%s" % (Graph.snap.GetNodes(), Graph.snap.GetEdges()))
 
     n1 = 1
-    total_budget = min(total_budget - n1, Graph.snap.GetNodes()-1)
+    total_budget = min(total_budget - n1, Graph.snap.GetNodes() - 1)
 
     # pos = None  # position layout for drawing similar graphs (with nodes on same positions). updates at the end
 
