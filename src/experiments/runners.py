@@ -36,12 +36,15 @@ def make_gif(crawler_name, duration=1):
 
 
 class Metric:
-    def __init__(self, name, callback):
+    def __init__(self, name, callback, **kwargs):
         self.name = name
         self._callback = callback
+        self.kwargs = kwargs
+        # for arg, value in kwargs.items():
+        #     setattr(self, arg, value)
 
     def __call__(self, crawler: Crawler):
-        return self._callback(crawler)
+        return self._callback(crawler, **self.kwargs)
 
 # TODO need to check several statistics / metrics
 class AnimatedCrawlerRunner:
@@ -171,7 +174,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
                 logging.info('using current layout')
 
     def save_history(self, crawler_metric_seq):
-        print('crawler_metric_seq', crawler_metric_seq)
+        # print('crawler_metric_seq', crawler_metric_seq)
         for crawler_name in crawler_metric_seq.keys():
             crawler_seq = crawler_metric_seq[crawler_name]
             for metric_object in crawler_seq.keys():
@@ -197,7 +200,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
 
                 with open(file_name, 'w') as f:
                     json.dump(metric_list, f)
-                print('saving', crawler_name.name, metric_object.name, metric_list, file_name)
+                #print('saving', crawler_name.name, metric_object.name, metric_list, file_name)
 
     def save_pics(self):
         if self.draw_mod == 'metric':
@@ -224,7 +227,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
         i = 0
         # logging.info('Crawling method {} with budget {} and step {}'.format(self.self.budget, self.step))
         pbar = tqdm(total=self.budget)  # drawing crawling progress bar
-        print('self metrics', [(metric._callback, metric.name + '\n') for metric in self.metrics])
+        #print('self metrics', [(metric._callback, metric.name + '\n') for metric in self.metrics])
 
         while i < self.budget:
             batch = min(self.step, self.budget - i)
@@ -240,9 +243,8 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
             for c, crawler in enumerate(self.crawlers):
                 crawler.crawl_budget(budget=batch)
                 for m, metric in enumerate(self.metrics):
-                    metric_seq = crawler_metric_seq[crawler][metric]
-                    metric_seq.append(metric(crawler))  # calculate metric for crawler
-                    print('adding', c, crawler.name, m, metric.name, metric_seq)
+                    crawler_metric_seq[crawler][metric].append(metric(crawler))  # calculate metric for crawler
+                    # print('adding', c, crawler.name, m, metric.name, crawler_metric_seq[crawler][metric])
                     if (self.draw_mod == 'metric') and (i % self.batches_per_pic == 0):
                         continue
                         # plt.plot(step_seq, metric_seq, marker='.',  # TODO remove extra labels
@@ -294,9 +296,7 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
     initial_seed = random.sample([n.GetId() for n in graph.snap.Nodes()], 1)[0]
     crawlers = [
         # MultiCrawler(graph, crawlers=[
-        #     DepthFirstSearchCrawler(graph, batch=1, initial_seed=0),
-        #     DepthFirstSearchCrawler(graph, batch=1, initial_seed=10),
-        # ]),
+        #     DepthFirstSearchCrawler(graph, batch=1) for i in range(10) ]),
         DepthFirstSearchCrawler(graph, initial_seed=initial_seed),
         # ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
         MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
@@ -308,18 +308,19 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
     logging.info([c.name for c in crawlers])
     # change target set to calculate another metric
     metrics = []
+    target_set = {}  #{i.name: set() for i in statistics}
     for target_statistics in statistics:
         target_set = set(get_top_centrality_nodes(graph, target_statistics, count=int(0.1 * graph[Stat.NODES])))
         # creating metrics and giving callable function to it (here - total fraction of nodes)
         # metrics.append(Metric(r'observed' + target_statistics.name, lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]))
         metrics.append(Metric(r'crawled_' + target_statistics.name,
-                              lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)))
-        print(metrics[-1], target_set)
-    print('aloha', statistics, metrics)
+                              lambda crawler, t: len(t.intersection(crawler.nodes_set)) / len(t),
+                              t=target_set))
+        #print(metrics[-1], target_set)
     if animated == True:
         ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=10000, step=10)
     else:
-        ci = CrawlerRunner(graph, crawlers, metrics, budget=100, step=10,
+        ci = CrawlerRunner(graph, crawlers, metrics, budget=1000, step=100,
                            batches_per_pic=10,
                            draw_mod=None, layout_pos=layout_pos,
                            )  # if you want gifs, draw_mod='traversal'. else: 'metric'
@@ -340,7 +341,7 @@ if __name__ == '__main__':
     # name = 'ego-gplus'
     # name = 'petster-hamster'
     # name = 'slashdot-threads'  # 'dolphins' #  #''
-    graph_name = 'petster-hamster'  # 'digg-friends'  # 'petster-hamster' # 'advogato'
+    graph_name = 'digg-friends'  # 'digg-friends'  # 'petster-hamster' # 'advogato'
     g = GraphCollections.get(graph_name, giant_only=True)
     # g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
     # all about sexgraph
@@ -360,7 +361,7 @@ if __name__ == '__main__':
     # name = 'carpet_graph'
     # g, layout_pos = test_carpet_graph(10, 10)  # GraphCollections.get(name)
     logging.info("running graph ".format(graph_name))
-    for exp in range(1):
+    for exp in range(2):
         logging.info('Running iteration {}'.format(exp))
         test_runner(g,
                     animated=False,
