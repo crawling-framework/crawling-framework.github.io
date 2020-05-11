@@ -16,7 +16,8 @@ class MultiCrawler(Crawler):
         """
         :param crawlers: crawler instances to run in parallel
         """
-        super().__init__(graph, name='Multi_%s' % ";".join([c.name for c in crawlers]), **kwargs)
+        super().__init__(graph, name='Multi_%s' % ";".join([c.name for c in crawlers[:15]]),
+                         **kwargs)  # taking only first 15 into name
         # assert len(crawlers) > 1
         self.crawlers = crawlers
 

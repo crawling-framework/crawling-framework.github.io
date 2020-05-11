@@ -2,6 +2,7 @@ import datetime
 import glob
 import json
 import os
+from math import ceil
 
 import imageio
 import networkx as nx
@@ -9,8 +10,9 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-from crawlers.basic import MaximumObservedDegreeCrawler, DepthFirstSearchCrawler, RandomWalkCrawler, \
-    PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler  # ,  ForestFireCrawler
+from crawlers.basic import DepthFirstSearchCrawler, RandomWalkCrawler, \
+    PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler, SnowBallSampling
+# ForestFireCrawler
 from graph_io import GraphCollections
 from graph_io import MyGraph
 from statistics import Stat
@@ -144,8 +146,11 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
         self.budget = min(budget, g.GetNodes()) if budget > 0 else g.GetNodes()
         assert step < self.budget
         self.step = step
+
         self.batches_per_pic = batches_per_pic
-        self.draw_mod = draw_mod  # 'metric'   # 'traversal' / 'metric'
+        self.draw_mod = draw_mod  # 'metric'   # 'traversal' / 'metric' / 'None
+        print('Crawler runner with budget={},step={},iters={}. Draw {}'.format(
+            self.budget, step, ceil(self.budget / step), draw_mod))
         self.nrows = 1
         self.ncols = 1
         self.layout_pos = layout_pos
@@ -185,7 +190,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
                                          'step={},budget={}'.format(self.step, len(metric_list)), crawler_name.name)
                 if not os.path.exists(file_path):
                     os.makedirs(file_path)
-                file_name = os.path.join(file_path, metric_object.name + '.json')  # TODO test
+                file_name = os.path.join(file_path, metric_object.name + '.json')
 
                 if os.path.isfile(file_name):
                     expand = 1
@@ -274,15 +279,15 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
                         for node in crawler.seed_sequence_[:-batch]:
                             gen_node_color[node] = 'red'
 
-                        # plt.title(crawler.name + " " + str(len(crawler.crawled_set)))
-                        # nx.draw(networkx_graph, pos=self.layout_pos,
-                        #         #  with_labels=(len(gen_node_color) < 1000),  # if little, we draw
-                        #         node_size=100, node_list=networkx_graph.nodes,
-                        #         node_color=[gen_node_color[node] for node in networkx_graph.nodes])
-                        # file_path = os.path.join(PICS_DIR, self.graph.name)
-                        # plt.savefig(file_path + '/{}_{}.png'.format(crawler.name, str(i).zfill(5)))
-                        # plt.cla()
-                        # plt.show()
+                        plt.title(crawler.name + " " + str(len(crawler.crawled_set)))
+                        nx.draw(networkx_graph, pos=self.layout_pos,
+                                with_labels=(len(gen_node_color) < 1000),  # if little, we draw
+                                node_size=100, node_list=networkx_graph.nodes,
+                                node_color=[gen_node_color[node] for node in networkx_graph.nodes])
+                        file_path = os.path.join(PICS_DIR, self.graph.name)
+                        plt.savefig(file_path + '/{}_{}.png'.format(crawler.name, str(i).zfill(5)))
+        #                plt.cla()
+        #                      plt.show()
 
         pbar.close()  # closing progress bar
         self.save_history(crawler_metric_seq)  # saving ending history
@@ -295,15 +300,30 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
     import random
     initial_seed = random.sample([n.GetId() for n in graph.snap.Nodes()], 1)[0]
     crawlers = [
-        # MultiCrawler(graph, crawlers=[
-        #     DepthFirstSearchCrawler(graph, batch=1) for i in range(10) ]),
         DepthFirstSearchCrawler(graph, initial_seed=initial_seed),
         # ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
-        MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
+        SnowBallSampling(graph, p=0.25, initial_seed=initial_seed),
+        SnowBallSampling(graph, p=0.5, initial_seed=initial_seed),
+        SnowBallSampling(graph, p=0.75, initial_seed=initial_seed),
+        # SnowBallSampling(graph, initial_seed=initial_seed),
+        # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed),
+        # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed),
+        #  MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
+        #  MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
         RandomWalkCrawler(graph, initial_seed=initial_seed),
         PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
+        PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed),
+        PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
         BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),
         RandomCrawler(graph, initial_seed=initial_seed),
+        #  MultiCrawler(graph, crawlers=[
+        #      MaximumObservedDegreeCrawler(graph, batch=10) for i in range(2)]),
+        #  MultiCrawler(graph, crawlers=[
+        #      MaximumObservedDegreeCrawler(graph, batch=10) for i in range(5)]),
+        #  MultiCrawler(graph, crawlers=[
+        #      MaximumObservedDegreeCrawler(graph, batch=10) for i in range(10)]),
+        #  MultiCrawler(graph, crawlers=[
+        #      MaximumObservedDegreeCrawler(graph, batch=10) for i in range(100)]),
     ]
     logging.info([c.name for c in crawlers])
     # change target set to calculate another metric
@@ -318,11 +338,16 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
                               t=target_set))
         #print(metrics[-1], target_set)
     if animated == True:
-        ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=10000, step=10)
+        ci = AnimatedCrawlerRunner(graph,
+                                   crawlers,
+                                   metrics,
+                                   budget=10000, step=10)
     else:
-        ci = CrawlerRunner(graph, crawlers, metrics, budget=1000, step=100,
-                           batches_per_pic=10,
-                           draw_mod=None, layout_pos=layout_pos,
+        ci = CrawlerRunner(graph, crawlers, metrics, budget=0,
+                           step=ceil(10 ** (len(str(graph.snap.GetNodes())) - 3)),
+                           # if 5*10^5 then step = 10**2,if 10^7 => step=10^4
+                           # batches_per_pic=10,
+                           # draw_mod='traversal', layout_pos=layout_pos,
                            )  # if you want gifs, draw_mod='traversal'. else: 'metric'
     ci.run()
 
@@ -332,16 +357,14 @@ if __name__ == '__main__':
 
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
-
-    # name = 'libimseti'
     # name = 'petster-friendships-cat'
-    # name = 'soc-pokec-relationships'
     # name = 'digg-friends'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
     # name = 'petster-hamster'
-    # name = 'slashdot-threads'  # 'dolphins' #  #''
-    graph_name = 'digg-friends'  # 'digg-friends'  # 'petster-hamster' # 'advogato'
+    # name = 'slashdot-threads' N=51083, V=116573.  use step=100,
+    # 'dolphins' #  #''
+    graph_name = 'slashdot-threads'  # 'digg-friends'  # 'digg-friends'  # 'petster-hamster' # 'advogato'
     g = GraphCollections.get(graph_name, giant_only=True)
     # g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
     # all about sexgraph
@@ -358,15 +381,16 @@ if __name__ == '__main__':
     # plt.plot()
     print('Graph {} with {} nodes and {} edges'.format(graph_name, g.snap.GetNodes(), g.snap.GetEdges()))
     # from crawlers.multiseed import test_carpet_graph, MultiCrawler
-    # name = 'carpet_graph'
-    # g, layout_pos = test_carpet_graph(10, 10)  # GraphCollections.get(name)
-    logging.info("running graph ".format(graph_name))
-    for exp in range(2):
+    # x,y = 7,7
+    # graph_name = 'carpet_graph_'+str(x)+'_'+str(y)
+    # g, layout_pos = test_carpet_graph(x,y)  # GraphCollections.get(name)
+
+    for exp in range(1):
         logging.info('Running iteration {}'.format(exp))
         test_runner(g,
                     animated=False,
-                    statistics=[s for s in Stat if 'DISTR' in s.name]
-                    # layout_pos
+                    statistics=[s for s in Stat if 'DISTR' in s.name],
+                    # layout_pos=layout_pos
                     )
 
     from experiments.merger import merge

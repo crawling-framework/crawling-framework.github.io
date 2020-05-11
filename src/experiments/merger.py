@@ -13,8 +13,9 @@ from utils import RESULT_DIR
 
 def merge(graph_name, show=True):
     np.set_printoptions(precision=2)
-    colors = list({'MOD': 'red', 'POD': 'm', 'BFS': 'b', 'DFS': 'k',
-                   'RW_': 'green', 'RC_': 'gray', 'FFC': 'orange'}.values())
+    # colors = list({'MOD': 'red', 'POD': 'm', 'BFS': 'b', 'DFS': 'k',
+    #               'RW_': 'green', 'RC_': 'gray', 'FFC': 'orange'}.values(),)
+    colors = ['r', 'g', 'b', 'k', 'gray', 'orange', 'magenta', 'darkviolet', 'cyan', 'gold', 'brown', 'lime'] * 2
 
     # everyone of this is iterable
     if graph_name is None:
@@ -44,18 +45,23 @@ def merge(graph_name, show=True):
                 experiments_path = glob(os.path.join(files_path, crawler_name) + '/*' + stat.name + '*.json')
                 count = len(experiments_path)
                 average_plot[crawler_name] = np.zeros(budget)
+                if metr_id == 1:
+                    print(crawler_name, 'total experiments:', count)
                 for experiment in experiments_path:
                     with open(experiment, 'r') as f:
                         imported = json.load(f)
 
                         # print(len(np.array(imported)), crawler_name, experiment, np.array(imported))
                         average_plot[crawler_name] += (np.array(imported[:budget])) / count
-                        axs[subplot_x, subplot_y].plot(x_arr, imported, color=colors[i],
-                                                       linewidth=0.5, linestyle=':')
+                        if '' in crawler_name:  # TODO normal filter
+                            axs[subplot_x, subplot_y].plot(x_arr, imported, color=colors[i],
+                                                           linewidth=0.5, linestyle=':')
 
                 axs[subplot_x, subplot_y].set_title(stat.description)
-                axs[subplot_x, subplot_y].plot(x_arr, average_plot[crawler_name], label=crawler_name, color=colors[i],
-                                               linewidth=2)
+                if '' in crawler_name:  # TODO normal filter
+                    axs[subplot_x, subplot_y].plot(x_arr, average_plot[crawler_name],
+                                                   label='[' + str(count) + '] ' + crawler_name,
+                                                   color=colors[i], linewidth=2)
                 axs[subplot_x, subplot_y].legend(loc='lower right')
                 axs[subplot_x, subplot_y].grid()
                 axs[subplot_x, subplot_y].set_yscale('log')
