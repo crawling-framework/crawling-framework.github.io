@@ -14,6 +14,11 @@ def intersection(graph: MyGraph):
     pgr = graph[Stat.PAGERANK_DISTR]
     ecc = graph[Stat.ECCENTRICITY_DISTR]
 
+    deg = sorted(deg, key=lambda x: deg[x], reverse=True)
+    btw = sorted(btw, key=lambda x: btw[x], reverse=True)
+    pgr = sorted(pgr, key=lambda x: pgr[x], reverse=True)
+    ecc = sorted(ecc, key=lambda x: ecc[x], reverse=True)
+
     x = []
     b = []
     p = []
@@ -48,16 +53,16 @@ if __name__ == '__main__':
     # name = 'facebook-wosn-links'
     # name = 'petster-friendships-cat'
     # name = 'soc-pokec-relationships'
-    name = 'digg-friends'
-    # name = 'ego-gplus'
+    # name = 'digg-friends'
+    name = 'ego-gplus'
     # name = 'petster-hamster'
     graph = GraphCollections.get(name, giant_only=True)
     # degs = get_top_centrality_nodes(graph, 'degree', 10)
     # print(degs)
-    ecc = get_top_centrality_nodes(graph, 'eccentricity', 10)
+    # ecc = get_top_centrality_nodes(graph, Stat.ECCENTRICITY_DISTR, 10)
     # print(btws)
 
-    # intersection(graph)
+    intersection(graph)
 
     plt.grid()
     plt.show()
