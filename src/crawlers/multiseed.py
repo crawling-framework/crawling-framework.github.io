@@ -46,6 +46,13 @@ class MultiCrawler(Crawler):
 
         self.next_crawler = 0  # next crawler index to run
 
+    # @property
+    # def observed_set(self):  # TODO
+    #     res = set()
+    #     for c in self.crawlers:
+    #         res = res.union(c.observed_set)
+    #     return res
+
     def crawl(self, seed: int) -> bool:
         """ Run the next crawler.
         """

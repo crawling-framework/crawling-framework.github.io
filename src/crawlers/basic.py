@@ -139,6 +139,9 @@ class RandomWalkCrawler(Crawler):
             if initial_seed is None:  # is not a duplicate code
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
             self.initial_seed = initial_seed
+        else:
+            if initial_seed is None:
+                self.initial_seed = random.choice(list(self.observed_set))
 
         self.prev_seed = None
 
@@ -228,7 +231,7 @@ class DepthFirstSearchCrawler(Crawler):
 
 
 class MaximumObservedDegreeCrawler(Crawler):
-    def __init__(self, orig_graph: MyGraph, batch=1, initial_seed=None, skl_mode=False, **kwargs):
+    def __init__(self, graph: MyGraph, batch=1, initial_seed=None, skl_mode=False, **kwargs):
         """
         :param batch: batch size
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
@@ -236,7 +239,7 @@ class MaximumObservedDegreeCrawler(Crawler):
         :param skl_mode: if True, SortedKeyList is used and updated at each step. Use it if batch is
          small (<10). Do not use it in multiseed mode!
         """
-        super().__init__(orig_graph, name='MOD%s' % (batch if batch > 1 else ''), **kwargs)
+        super().__init__(graph, name='MOD%s' % (batch if batch > 1 else ''), **kwargs)
 
         if len(self.observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
@@ -308,8 +311,8 @@ class MaximumObservedDegreeCrawler(Crawler):
 
 
 class PreferentialObservedDegreeCrawler(Crawler):  # TODO need to check and fix
-    def __init__(self, orig_graph: MyGraph, batch=10, initial_seed=None, **kwargs):
-        super().__init__(orig_graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
+    def __init__(self, graph: MyGraph, batch=10, initial_seed=None, **kwargs):
+        super().__init__(graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
 
         if len(self.observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
@@ -344,8 +347,8 @@ class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and deb
     :param stuck_ends - if true, finishes when queue is empty, otherwise crawl random from observed
     """
 
-    def __init__(self, orig_graph: MyGraph, p=0.35, initial_seed=None, **kwargs):
-        super().__init__(orig_graph, **kwargs)
+    def __init__(self, graph: MyGraph, p=0.35, initial_seed=None, **kwargs):
+        super().__init__(graph, **kwargs)
         self.name = 'FFC_p=%s' % p
         if len(self.observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
