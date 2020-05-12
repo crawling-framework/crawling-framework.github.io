@@ -99,7 +99,7 @@ class TwoStageCrawlerSeedsAreHubs(ThreeStageCrawler):
             yield self.hubs[i]
 
         # memorize E1
-        self.e1 = set(self._observed_set)
+        self.e1 = set(self.observed_set)
         logging.debug("|E1|=", len(self.e1))
 
         # Check that e1 size is more than (n-s)
@@ -108,7 +108,7 @@ class TwoStageCrawlerSeedsAreHubs(ThreeStageCrawler):
                                    (len(self.e1), self.n - self.s))
 
         # 2) detect MOD batch
-        self.top_observed_seeds = self._get_mod_nodes(self._observed_set, self.n - self.s)
+        self.top_observed_seeds = self._get_mod_nodes(self.observed_set, self.n - self.s)
         self.e1s = set(self.top_observed_seeds)
         logging.debug("|E1*|=", len(self.e1s))
 
@@ -116,7 +116,7 @@ class TwoStageCrawlerSeedsAreHubs(ThreeStageCrawler):
             yield node
 
     def _compute_answer(self):  # E* = S + E1* + E2*
-        self.e2 = set(self._observed_set)
+        self.e2 = set(self.observed_set)
 
         # Get v=(pN-n) max degree observed nodes
         self.e2s = set(self._get_mod_nodes(self.e2, self.pN - self.n))

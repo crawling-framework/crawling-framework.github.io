@@ -83,7 +83,7 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
             yield random_seeds[i]
 
         # 2) detect MOD batch
-        self.top_observed_seeds = self._get_mod_nodes(self._observed_set, self.n - self.n1)
+        self.top_observed_seeds = self._get_mod_nodes(self.observed_set, self.n - self.n1)
         for node in self.top_observed_seeds:
             yield node
 
@@ -122,7 +122,7 @@ class ThreeStageCrawler(CrawlerWithAnswer):
             yield random_seeds[i]
 
         # memorize E1
-        self.e1 = set(self._observed_set)
+        self.e1 = set(self.observed_set)
         logging.debug("|E1|=%s" % len(self.e1))
 
         # Check that e1 size is more than (n-s)
@@ -131,7 +131,7 @@ class ThreeStageCrawler(CrawlerWithAnswer):
                                    (len(self.e1), self.n - self.s))
 
         # 2) detect MOD batch
-        self.top_observed_seeds = self._get_mod_nodes(self._observed_set, self.n - self.s)
+        self.top_observed_seeds = self._get_mod_nodes(self.observed_set, self.n - self.s)
         self.e1s = set(self.top_observed_seeds)
         logging.debug("|E1*|=%s" % len(self.e1s))
 
@@ -142,7 +142,7 @@ class ThreeStageCrawler(CrawlerWithAnswer):
         # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
 
         # memorize E2
-        self.e2 = self._observed_set
+        self.e2 = self.observed_set
         logging.debug("|E2|=%s" % len(self.e2))
 
         # Get v=(pN-n+s) max degree observed nodes
@@ -265,7 +265,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         use_skl = True if self.b < 5 else False  # use True if batch < 2-5
         self.mod = MaximumObservedDegreeCrawler(
             self.orig_graph, batch=self.b, skl_mode=use_skl, observed_graph=self.observed_graph,
-            observed_set=self._observed_set, crawled_set=self.crawled_set)
+            observed_set=self.observed_set, crawled_set=self.crawled_set)
 
         for i in range(self.n-self.s):
             yield self.mod.next_seed()
@@ -274,7 +274,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1*[i] + E2*) of size pN
 
         # E2
-        e2 = self._observed_set
+        e2 = self.observed_set
         logging.debug("|E2|=%s" % len(e2))
 
         # Get v=(pN-n+s) max degree observed nodes
@@ -353,7 +353,7 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
                 #                              observed_graph=self.observed_graph,
                 #                              observed_set=set(), crawled_set=self.crawled_set),
             ], observed_graph=self.observed_graph,
-            observed_set=self._observed_set, crawled_set=self.crawled_set)
+            observed_set=self.observed_set, crawled_set=self.crawled_set)
 
         for i in range(self.n-self.s):
             yield self.subcrawler.next_seed()
@@ -361,7 +361,7 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
     @property
     def observed_set(self):
         if self.subcrawler is None:
-            return self._observed_set
+            return self.observed_set
         return self.subcrawler.observed_set
 
     def _compute_answer(self):
