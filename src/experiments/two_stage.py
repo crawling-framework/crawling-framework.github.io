@@ -98,7 +98,7 @@ class TwoStageCrawlerSeedsAreHubs(ThreeStageCrawler):
             yield self.hubs[i]
 
         # memorize E1
-        self.e1 = set(self.observed_set)
+        self.e1 = set(self._observed_set)
         logging.debug("|E1|=", len(self.e1))
 
         # Check that e1 size is more than (n-s)
@@ -107,7 +107,7 @@ class TwoStageCrawlerSeedsAreHubs(ThreeStageCrawler):
                                    (len(self.e1), self.n - self.s))
 
         # 2) detect MOD batch
-        self.top_observed_seeds = self._get_mod_nodes(self.observed_set, self.n - self.s)
+        self.top_observed_seeds = self._get_mod_nodes(self._observed_set, self.n - self.s)
         self.e1s = set(self.top_observed_seeds)
         logging.debug("|E1*|=", len(self.e1s))
 
@@ -115,7 +115,7 @@ class TwoStageCrawlerSeedsAreHubs(ThreeStageCrawler):
             yield node
 
     def _compute_answer(self):  # E* = S + E1* + E2*
-        self.e2 = set(self.observed_set)
+        self.e2 = set(self._observed_set)
 
         # Get v=(pN-n) max degree observed nodes
         self.e2s = set(self._get_mod_nodes(self.e2, self.pN - self.n))
@@ -248,7 +248,7 @@ def test_target_set_coverage():
     #     {'s': 1000, 'n': 20000, 'p': p, 'b': 10},
     # ])
 
-    target_list = get_top_centrality_nodes(graph, 'degree', count=int(p * graph[Stat.NODES]))
+    target_list = get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(p * graph[Stat.NODES]))
     thr_degree = graph.snap.GetNI(target_list[-1]).GetDeg()
     target_set = set(target_list)
 
@@ -273,7 +273,6 @@ def test_target_set_coverage():
         # ThreeStageMODCrawler(graph, s=1000, n=budget, p=p, b=10),
         # MultiCrawler(graph, crawlers=[MaximumObservedDegreeCrawler(graph, batch=10) for _ in range(10)])
     ]
-
 
     def re(result):
         return 0 if len(target_set) == 0 else len(target_set.intersection(result)) / (len(target_set))

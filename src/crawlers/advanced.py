@@ -5,7 +5,7 @@ from operator import itemgetter
 import numpy as np
 
 from crawlers.basic import Crawler, CrawlerException, MaximumObservedDegreeCrawler, NoNextSeedError, \
-    RandomWalkCrawler, DepthFirstSearchCrawler, RandomCrawler
+    RandomWalkCrawler, DepthFirstSearchCrawler, RandomCrawler, ForestFireCrawler
 from crawlers.multiseed import MultiCrawler
 from graph_io import MyGraph
 
@@ -262,10 +262,10 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
             yield random_seeds[i]
 
         # 2) run MOD
-        use_skl = True if self.b < 5 else False  # use True if batch < 2-5
+        use_skl = True if self.b < 1000 else False  # use True if batch < 1000
         self.mod = MaximumObservedDegreeCrawler(
             self.orig_graph, batch=self.b, skl_mode=use_skl, observed_graph=self.observed_graph,
-            observed_set=self.observed_set, crawled_set=self.crawled_set)
+            observed_set=self._observed_set, crawled_set=self.crawled_set)
 
         for i in range(self.n-self.s):
             yield self.mod.next_seed()
@@ -274,7 +274,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1*[i] + E2*) of size pN
 
         # E2
-        e2 = self.observed_set
+        e2 = self._observed_set
         logging.debug("|E2|=%s" % len(e2))
 
         # Get v=(pN-n+s) max degree observed nodes
@@ -318,7 +318,7 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
         if self.subcrawler is None:
             return super().crawl(seed)
         res = self.subcrawler.crawl(seed)
-        if res:
+        if res:  # TODO add this to other 3-stage versions
             if self.observed_graph.snap.GetNI(seed).GetDeg() >= self.thr_degree:
                 self.e1s.add(seed)
         return res
@@ -333,16 +333,18 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
         #     yield random_seeds[i]
 
         # 2) run MOD
-        use_skl = True if self.b < 5 else False  # use True if batch < 2-5
+        use_skl = True if self.b < 1000 else False  # use True if batch < 1000
         self.subcrawler = MultiCrawler(
-            self.orig_graph, crawlers=self.s*[
+            self.orig_graph, crawlers=10*[
                 # RandomCrawler(graph=self.orig_graph, observed_graph=self.observed_graph,
                 #               observed_set=self.observed_set, crawled_set=self.crawled_set),
                 # RandomWalkCrawler(graph=self.orig_graph, observed_graph=self.observed_graph,
                 #                   observed_set=self.observed_set, crawled_set=self.crawled_set),
+                # ForestFireCrawler(graph=self.orig_graph, observed_graph=self.observed_graph,
+                #                   observed_set=self._observed_set, crawled_set=self.crawled_set),
                 MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b, skl_mode=use_skl,
                                              observed_graph=self.observed_graph,
-                                             observed_set=set(), crawled_set=self.crawled_set),
+                                             observed_set=self._observed_set, crawled_set=self.crawled_set),
                 # MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b, skl_mode=use_skl,
                 #                              observed_graph=self.observed_graph,
                 #                              observed_set=set(), crawled_set=self.crawled_set),
@@ -352,8 +354,7 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
                 # MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b, skl_mode=use_skl,
                 #                              observed_graph=self.observed_graph,
                 #                              observed_set=set(), crawled_set=self.crawled_set),
-            ], observed_graph=self.observed_graph,
-            observed_set=self.observed_set, crawled_set=self.crawled_set)
+            ], observed_graph=self.observed_graph, crawled_set=self.crawled_set)
 
         for i in range(self.n-self.s):
             yield self.subcrawler.next_seed()
@@ -361,7 +362,7 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
     @property
     def observed_set(self):
         if self.subcrawler is None:
-            return self.observed_set
+            return self._observed_set
         return self.subcrawler.observed_set
 
     def _compute_answer(self):

@@ -19,7 +19,7 @@ def test_mod(graph):
     for i in range(1, 2000, step):
         iterations.append(i)
         crawler.crawl_budget(step)
-        os.append(len(crawler.observed_set))
+        os.append(len(crawler._observed_set))
         ns.append(len(crawler.nodes_set))
 
         plt.cla()

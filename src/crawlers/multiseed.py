@@ -46,12 +46,13 @@ class MultiCrawler(Crawler):
 
         self.next_crawler = 0  # next crawler index to run
 
-    # @property
-    # def observed_set(self):  # TODO
-    #     res = set()
-    #     for c in self.crawlers:
-    #         res = res.union(c.observed_set)
-    #     return res
+    @property
+    def observed_set(self):
+        # TODO it's too expensive in case of many crawlers
+        res = set()
+        for c in self.crawlers:
+            res = res.union(c.observed_set)
+        return res
 
     def crawl(self, seed: int) -> bool:
         """ Run the next crawler.
@@ -106,7 +107,7 @@ class MultiSeedCrawler(Crawler, ABC):
         self.initial_seeds = [int(node) for node in np.random.choice(graph_nodes, n1)]
         for seed in self.initial_seeds:
             self.crawl(seed)
-        print("observed set after multiseed", list(self.observed_set))
+        print("observed set after multiseed", list(self._observed_set))
 
     def crawl(self, seed):
         """
@@ -122,14 +123,14 @@ class MultiSeedCrawler(Crawler, ABC):
             logging.debug("{}.-- seed {}, crawled #{}: {}, observed #{},".format(len(self.seed_sequence_), seed,
                                                                                  len(self.crawled_set),
                                                                                  self.crawled_set,
-                                                                                 len(self.observed_set),
-                                                                                 self.observed_set))
+                                                                                 len(self._observed_set),
+                                                                                 self._observed_set))
             return True
         else:
             logging.debug("{}. budget ={}, seed = {}, in crawled set={}, observed ={}".format(len(self.seed_sequence_),
                                                                                               self.budget_left, seed,
                                                                                               self.crawled_set,
-                                                                                              self.observed_set))
+                                                                                              self._observed_set))
             return False
 
     def crawl_budget(self, budget, p=0, file=False):
@@ -146,14 +147,14 @@ class MultiSeedCrawler(Crawler, ABC):
             self.crawl(int(np.random.choice(self.initial_seeds, 1)[0]))
             self.budget_left -= 1
 
-        while (self.budget_left > 0) and (len(self.observed_set) > 0) \
+        while (self.budget_left > 0) and (len(self._observed_set) > 0) \
                 and (self.observed_graph.snap.GetNodes() <= self.orig_graph.snap.GetNodes()):
             seed = self.next_seed()
             self.crawl(seed)
 
             # if file:
             logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
-                          (seed, self.crawled_set, self.observed_set, self.nodes_set))
+                          (seed, self.crawled_set, self._observed_set, self.nodes_set))
 
 
 def test():
