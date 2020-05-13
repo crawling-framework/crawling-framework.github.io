@@ -1,7 +1,7 @@
 import heapq
 import logging
 import random
-from queue import deque
+from queue import deque  # here was a warning in pycharm
 
 import numpy as np
 import snap
@@ -197,7 +197,57 @@ class BreadthFirstSearchCrawler(Crawler):
         if res:
             [self.bfs_queue.append(n) for n in self.orig_graph.neighbors(seed)
              if n in self._observed_set]
-             # if n not in self.crawled_set]  # not work in multiseed
+            # if n not in self.crawled_set]  # not work in multiseed
+        return res
+
+
+class SnowBallSampling(Crawler):
+    def __init__(self, graph: MyGraph, p=0.5, initial_seed=None, **kwargs):
+        """
+        Every step of BFS taking neighbors with probability p.
+        http://www.soundarajan.org/papers/CrawlingAnalysis.pdf
+        https://arxiv.org/pdf/1004.1729.pdf
+        :param initial_seed: if observed set is empty, the crawler will start from the given initial
+         node. If None is given, a random node of original graph will be used.
+        :param p: probability of taking neighbor into queue
+        """
+        super().__init__(graph, name='SBS%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
+        if len(self.observed_set) == 0:
+            if initial_seed is None:
+                initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+            self.observed_set.add(initial_seed)
+            self.observed_graph.snap.AddNode(initial_seed)
+        self.p = p
+        self.sbs_queue = deque(self.observed_set)  # FIXME what if its size > 1 ?
+        self.sbs_backlog = set()
+
+    def next_seed(self):
+        while len(self.sbs_queue) > 0:
+            seed = self.sbs_queue.popleft()
+            if seed not in self.crawled_set:
+                return seed
+
+        while len(self.sbs_backlog) > 0:
+            seed = self.sbs_backlog.pop()
+            if seed not in self.crawled_set:
+                return seed
+
+        assert len(self.observed_set) == 0
+        raise NoNextSeedError()
+
+    def crawl(self, seed):
+        res = super().crawl(seed)
+        if res:
+            neighbors = self.orig_graph.neighbors(seed)
+            binomial_map = np.random.binomial(1, p=self.p, size=len(neighbors))
+            # print('seed', seed, [(i, j) for i,j in zip(neighbors, binomial_map)], self.sbs_backlog)
+            [self.sbs_queue.append(n) for n in self.orig_graph.neighbors(seed)
+             if (n in self.observed_set) and (binomial_map[neighbors.index(n)] == 1)]
+
+            # to store observed nodes
+            [self.sbs_backlog.add(n) for n in self.orig_graph.neighbors(seed)
+             if (n in self.observed_set) and (binomial_map[neighbors.index(n)] == 0)]
+            # if n not in self.crawled_set]  # not work in multiseed
         return res
 
 
@@ -315,7 +365,7 @@ class MaximumObservedDegreeCrawler(Crawler):
         return self.mod_queue.pop(0)
 
 
-class PreferentialObservedDegreeCrawler(Crawler):  # TODO need to check and fix
+class PreferentialObservedDegreeCrawler(Crawler):
     def __init__(self, graph: MyGraph, batch=10, initial_seed=None, **kwargs):
         super().__init__(graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
 
@@ -345,47 +395,47 @@ class PreferentialObservedDegreeCrawler(Crawler):  # TODO need to check and fix
         return self.pod_queue.pop(0)
 
 
-class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and debug
-    """Algorythm from https://dl.acm.org/doi/abs/10.1145/1081870.1081893
-    with my little modification - stuck_ends, it is like illegitimate son of BFS and RC
-    :param p - forward burning probability of algorythm
-    :param stuck_ends - if true, finishes when queue is empty, otherwise crawl random from observed
-    """
-
-    def __init__(self, graph: MyGraph, p=0.35, initial_seed=None, **kwargs):
-        super().__init__(graph, **kwargs)
-        self.name = 'FFC_p=%s' % p
-        if len(self._observed_set) == 0:
-            if initial_seed is None:  # fixme duplicate code in all basic crawlers?
-                initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
-            self._observed_set.add(initial_seed)
-            self.observed_graph.snap.AddNode(initial_seed)
-
-        self.bfs_queue = [initial_seed]
-        self.p = p
-
-    # next_seed is the same with BFS, just choosing ambassador node w=seed, except empty queue
-    def next_seed(self):
-        while self.bfs_queue[0] not in self._observed_set:
-            self.bfs_queue.pop(0)
-            if len(self.bfs_queue) == 0:  # if we get stucked, choosing random from observed
-                return int(np.random.choice(tuple(self._observed_set)))
-        return self.bfs_queue[0]
-
-    def crawl(self, seed):
-        degree = self.orig_graph.snap.GetNI(seed).GetDeg()
-        # computing x - number of friends to add
-        # print("seed", seed, self.p, degree, (1 - self.p) ** (-1) / degree )
-        # in paper (1-p)**(-1) == E == degree * bin_prob
-        x = np.random.binomial(degree, self.p)  # (1 - self.p) ** (-1) / degree)
-        x = max(1, min(x, len(self.orig_graph.neighbors(seed))))
-        intersection = [n for n in self.orig_graph.neighbors(seed)]
-        burning = [int(n) for n in random.sample(intersection, x)]
-        # print("FF: queue:{},obs:{},crawl:{},x1={},burn={}".format(self.bfs_queue, self.observed_set,self.crawled_set,x, burning))
-        for node in burning:
-            self.bfs_queue.append(node)
-
-        return super(BreadthFirstSearchCrawler, self).crawl(seed)
+# class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and debug different p
+#     """Algorythm from https://dl.acm.org/doi/abs/10.1145/1081870.1081893
+#     with my little modification - stuck_ends, it is like illegitimate son of BFS and RC
+#     :param p - forward burning probability of algorythm
+#     :param stuck_ends - if true, finishes when queue is empty, otherwise crawl random from observed
+#     """
+#
+#     def __init__(self, orig_graph: MyGraph, p=0.35, initial_seed=None, **kwargs):
+#         super().__init__(orig_graph, **kwargs)
+#         self.name = 'FFC_p=%s' % p  # unless doesnt work because BFS (super) has own name
+#         if len(self.observed_set) == 0:
+#             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
+#                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+#             self.observed_set.add(initial_seed)
+#             self.observed_graph.snap.AddNode(initial_seed)
+#
+#         self.bfs_queue = [initial_seed]
+#         self.p = p
+#
+#     # next_seed is the same with BFS, just choosing ambassador node w=seed, except empty queue
+#     # def next_seed(self):
+#     #     while self.bfs_queue[0] not in self.observed_set:
+#     #         self.bfs_queue.pop(0)
+#     #         if len(self.bfs_queue) == 0:  # if we get stucked, choosing random from observed
+#     #             return int(np.random.choice(tuple(self.observed_set)))
+#     #     return self.bfs_queue[0]
+#
+#     def crawl(self, seed):
+#         degree = self.orig_graph.snap.GetNI(seed).GetDeg()
+#         # computing x - number of friends to add
+#         # print("seed", seed, self.p, degree, (1 - self.p) ** (-1) / degree )
+#         # in paper (1-p)**(-1) == E == degree * bin_prob
+#         x = np.random.binomial(degree, self.p)  # (1 - self.p) ** (-1) / degree)
+#         x = max(1, min(x, len(self.orig_graph.neighbors(seed))))
+#         intersection = [n for n in self.orig_graph.neighbors(seed)]
+#         burning = [int(n) for n in random.sample(intersection, x)]
+#         # print("FF: queue:{},obs:{},crawl:{},x1={},burn={}".format(self.bfs_queue, self.observed_set,self.crawled_set,x, burning))
+#         for node in burning:
+#             self.bfs_queue.append(node)
+#
+#         return super(BreadthFirstSearchCrawler, self).crawl(seed)
 
 
 def test_crawlers():

@@ -29,6 +29,8 @@ class CrawlerWithAnswer(Crawler):
     def crawl_budget(self, budget: int, *args):
         try:
             super().crawl_budget(budget, *args)
+            # FIXME this is for intermediate result only
+            self._compute_answer()
         except CrawlerException:
             # Reached maximum number of iterations or any other Crawler exception
             if self.answer is None:

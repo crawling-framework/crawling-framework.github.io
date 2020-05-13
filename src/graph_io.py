@@ -62,6 +62,7 @@ class MyGraph(object):
 
     def _check_consistency(self):
         """ Raise exception if graph has changed. """
+        f = fingerprint(self.snap)
         if fingerprint(self.snap) != self._fingerprint:
             raise Exception("snap graph has changed from the one saved in %s" % self.path)
 
