@@ -299,7 +299,7 @@ class MaximumObservedDegreeCrawler(Crawler):
 
         if skl_mode:
             self.observed_skl = SortedKeyList(
-                self.observed_set, key=lambda node: self.observed_graph.snap.GetNI(node).GetDeg())
+                self.observed_set, key=lambda node: (self.observed_graph.snap.GetNI(node).GetDeg(), node))
             self.crawl = self.skl_crawl
             self.next_seed = self.skl_next_seed
 

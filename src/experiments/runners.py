@@ -10,8 +10,9 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-from crawlers.basic import DepthFirstSearchCrawler, RandomWalkCrawler, \
+from crawlers.basic import DepthFirstSearchCrawler, RandomWalkCrawler, MaximumObservedDegreeCrawler, \
     PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler, SnowBallSampling
+from crawlers.multiseed import MultiCrawler
 # ForestFireCrawler
 from graph_io import GraphCollections
 from graph_io import MyGraph
@@ -316,14 +317,14 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
         PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
         BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),
         RandomCrawler(graph, initial_seed=initial_seed),
-        #  MultiCrawler(graph, crawlers=[
-        #      MaximumObservedDegreeCrawler(graph, batch=10) for i in range(2)]),
-        #  MultiCrawler(graph, crawlers=[
-        #      MaximumObservedDegreeCrawler(graph, batch=10) for i in range(5)]),
-        #  MultiCrawler(graph, crawlers=[
-        #      MaximumObservedDegreeCrawler(graph, batch=10) for i in range(10)]),
-        #  MultiCrawler(graph, crawlers=[
-        #      MaximumObservedDegreeCrawler(graph, batch=10) for i in range(100)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=10) for i in range(2)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=10) for i in range(5)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=10) for i in range(10)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=10) for i in range(100)]),
     ]
     logging.info([c.name for c in crawlers])
     # change target set to calculate another metric
@@ -358,13 +359,13 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
     # name = 'petster-friendships-cat'
-    # name = 'digg-friends'
+    # name = 'digg-friends' with 261489 nodes and 1536577 edges
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
-    # name = 'petster-hamster'
+    # name = 'petster-hamster' with 2000 nodes and 16098 edges
     # name = 'slashdot-threads' N=51083, V=116573.  use step=100,
     # 'dolphins' #  #''
-    graph_name = 'slashdot-threads'  # 'digg-friends'  # 'digg-friends'  # 'petster-hamster' # 'advogato'
+    graph_name = 'digg-friends'  # 'digg-friends'  # 'digg-friends'  # 'petster-hamster' # 'advogato'
     g = GraphCollections.get(graph_name, giant_only=True)
     # g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
     # all about sexgraph
@@ -385,7 +386,7 @@ if __name__ == '__main__':
     # graph_name = 'carpet_graph_'+str(x)+'_'+str(y)
     # g, layout_pos = test_carpet_graph(x,y)  # GraphCollections.get(name)
 
-    for exp in range(1):
+    for exp in range(4):
         logging.info('Running iteration {}'.format(exp))
         test_runner(g,
                     animated=False,
@@ -394,7 +395,6 @@ if __name__ == '__main__':
                     )
 
     from experiments.merger import merge
-
     merge(graph_name, show=True)
 
 # 'degree', 'betweenness', 'eccentricity', 'k-coreness',  'pagerank', 'clustering'

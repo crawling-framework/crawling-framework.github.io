@@ -11,7 +11,7 @@ from statistics import Stat
 from utils import RESULT_DIR
 
 
-def merge(graph_name, show=True):
+def merge(graph_name, show=True, filter_only=''):
     np.set_printoptions(precision=2)
     # colors = list({'MOD': 'red', 'POD': 'm', 'BFS': 'b', 'DFS': 'k',
     #               'RW_': 'green', 'RC_': 'gray', 'FFC': 'orange'}.values(),)
@@ -53,12 +53,12 @@ def merge(graph_name, show=True):
 
                         # print(len(np.array(imported)), crawler_name, experiment, np.array(imported))
                         average_plot[crawler_name] += (np.array(imported[:budget])) / count
-                        if '' in crawler_name:  # TODO normal filter
+                        if filter_only in crawler_name:  # TODO normal filter
                             axs[subplot_x, subplot_y].plot(x_arr, imported, color=colors[i],
                                                            linewidth=0.5, linestyle=':')
 
                 axs[subplot_x, subplot_y].set_title(stat.description)
-                if '' in crawler_name:  # TODO normal filter
+                if filter_only in crawler_name:  # TODO normal filter
                     axs[subplot_x, subplot_y].plot(x_arr, average_plot[crawler_name],
                                                    label='[' + str(count) + '] ' + crawler_name,
                                                    color=colors[i], linewidth=2)
@@ -74,7 +74,9 @@ def merge(graph_name, show=True):
         plt.xlabel('crawling iterations')
         plt.ylabel('fraction of target set crawled \n\n\n')
         plt.suptitle('Graph: {}, batches={}, step={}'.format(graph_name, budget, step))
-        fig_name = os.path.join(RESULT_DIR, graph_name, 'total_plot_step={},iter={}logy'.format(step, budget))
+        fig_name = os.path.join(RESULT_DIR, graph_name, 'total_plot_step={},iter={}log'.format(step, budget))
+        if filter_only != '':
+            fig_name += 'only_' + filter_only
         plt.savefig(fig_name + '.pdf')
         plt.savefig(fig_name + '.png')
 
@@ -83,4 +85,4 @@ def merge(graph_name, show=True):
 
 
 if __name__ == '__main__':
-    merge('petster-hamster', show=True)
+    merge('slashdot-threads', show=True, filter_only='SBS')
