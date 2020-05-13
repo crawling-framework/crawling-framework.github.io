@@ -85,4 +85,4 @@ def merge(graph_name, show=True, filter_only=''):
 
 
 if __name__ == '__main__':
-    merge('slashdot-threads', show=True, filter_only='SBS')
+    merge('digg-friends', show=True, filter_only='')

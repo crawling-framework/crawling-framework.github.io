@@ -301,30 +301,35 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
     import random
     initial_seed = random.sample([n.GetId() for n in graph.snap.Nodes()], 1)[0]
     crawlers = [
+        RandomWalkCrawler(graph, initial_seed=initial_seed),
+        RandomCrawler(graph, initial_seed=initial_seed),
+
         DepthFirstSearchCrawler(graph, initial_seed=initial_seed),
+        BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),
         # ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
+
         SnowBallSampling(graph, p=0.25, initial_seed=initial_seed),
         SnowBallSampling(graph, p=0.5, initial_seed=initial_seed),
         SnowBallSampling(graph, p=0.75, initial_seed=initial_seed),
-        # SnowBallSampling(graph, initial_seed=initial_seed),
-        # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed),
-        # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed),
-        #  MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
-        #  MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
-        RandomWalkCrawler(graph, initial_seed=initial_seed),
-        PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
-        PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed),
+
+        # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
+        MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
+        MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed),
+        MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed),
+
+        # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
         PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
-        BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),
-        RandomCrawler(graph, initial_seed=initial_seed),
+        PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed),
+        PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed),
+
         MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=10) for i in range(2)]),
+            MaximumObservedDegreeCrawler(graph, batch=100) for i in range(2)]),
         MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=10) for i in range(5)]),
+            MaximumObservedDegreeCrawler(graph, batch=100) for i in range(5)]),
         MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=10) for i in range(10)]),
+            MaximumObservedDegreeCrawler(graph, batch=100) for i in range(10)]),
         MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=10) for i in range(100)]),
+            MaximumObservedDegreeCrawler(graph, batch=100) for i in range(100)]),
     ]
     logging.info([c.name for c in crawlers])
     # change target set to calculate another metric
@@ -386,7 +391,7 @@ if __name__ == '__main__':
     # graph_name = 'carpet_graph_'+str(x)+'_'+str(y)
     # g, layout_pos = test_carpet_graph(x,y)  # GraphCollections.get(name)
 
-    for exp in range(4):
+    for exp in range(5):
         logging.info('Running iteration {}'.format(exp))
         test_runner(g,
                     animated=False,
