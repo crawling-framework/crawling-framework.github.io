@@ -6,7 +6,8 @@ from matplotlib import pyplot as plt
 from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, CrawlerWithAnswer, \
     AvrachenkovCrawler, ThreeStageFlexMODCrawler
 from crawlers.basic import CrawlerException, Crawler, MaximumObservedDegreeCrawler, \
-    DepthFirstSearchCrawler, BreadthFirstSearchCrawler, RandomWalkCrawler
+    DepthFirstSearchCrawler, BreadthFirstSearchCrawler, RandomWalkCrawler, \
+    PreferentialObservedDegreeCrawler
 from crawlers.multiseed import MultiCrawler
 from experiments.runners import Metric, AnimatedCrawlerRunner
 from graph_io import MyGraph, GraphCollections
@@ -109,9 +110,10 @@ def test_target_set_coverage():
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=1000, n=budget, p=p, b=10),
-        ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
+        # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageMODCrawler(graph, s=start_seeds, n=budget, p=p, b=100),
-        ThreeStageFlexMODCrawler(graph, s=start_seeds, n=budget, p=p, b=1, thr_degree=thr_degree),
+        # ThreeStageFlexMODCrawler(graph, s=start_seeds, n=budget, p=p, b=1, thr_degree=thr_degree),
+        PreferentialObservedDegreeCrawler(graph, batch=1),
         # BreadthFirstSearchCrawler(graph, initial_seed=None),
         # DepthFirstSearchCrawler(graph, initial_seed=None),
         # RandomCrawler(graph, initial_seed=1),

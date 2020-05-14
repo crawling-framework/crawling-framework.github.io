@@ -1,6 +1,7 @@
 import heapq
 import logging
 import random
+from operator import itemgetter
 from queue import deque  # here was a warning in pycharm
 
 import numpy as np
@@ -8,7 +9,7 @@ import snap
 from scipy import stats
 from sortedcontainers import SortedKeyList
 
-from graph_io import MyGraph
+from graph_io import MyGraph, GraphCollections
 
 
 class Crawler(object):
@@ -41,7 +42,8 @@ class Crawler(object):
     @property
     def nodes_set(self) -> set:
         """ Get nodes' ids of observed graph (crawled and observed). """
-        return set([n.GetId() for n in self.observed_graph.snap.Nodes()])
+        g = self.observed_graph.snap
+        return set([n.GetId() for n in g.Nodes()])
 
     @property
     def observed_set(self) -> set:
@@ -292,7 +294,9 @@ class MaximumObservedDegreeCrawler(Crawler):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node. If None is given, a random node of original graph will be used.
         :param skl_mode: if True, SortedKeyList is used and updated at each step. Use it if batch is
-         small (<1000). Do not use it in multiseed mode!
+         small depending on budget n
+          (Prefer SKL when: n=5K if b<50, n=50K if b<500, n=250K if b<1500).
+           Do not use SKL in multiseed mode!
         """
         super().__init__(graph, name='MOD%s' % (batch if batch > 1 else ''), **kwargs)
 
@@ -306,8 +310,9 @@ class MaximumObservedDegreeCrawler(Crawler):
         self.mod_queue = deque()
 
         if skl_mode:
+            g = self.observed_graph.snap  # seems to have no effect
             self.observed_skl = SortedKeyList(
-                self._observed_set, key=lambda node: (self.observed_graph.snap.GetNI(node).GetDeg(), node))
+                self._observed_set, key=lambda node: (g.GetNI(node).GetDeg(), node))
             self.crawl = self.skl_crawl
             self.next_seed = self.skl_next_seed
 
@@ -355,14 +360,17 @@ class MaximumObservedDegreeCrawler(Crawler):
         if len(self.mod_queue) == 0:  # making array of topk degrees
             if len(self._observed_set) == 0:
                 raise NoNextSeedError()
-            deg_dict = {node: self.observed_graph.snap.GetNI(node).GetDeg()
+            g = self.observed_graph.snap
+            deg_dict = {node: g.GetNI(node).GetDeg()
                         for node in self._observed_set}
 
-            heap = [(-value, key) for key, value in deg_dict.items()]
             min_iter = min(self.batch, len(deg_dict))
-            self.mod_queue = [heapq.nsmallest(self.batch, heap)[i][1] for i in range(min_iter)]  # FIXME check!
+            [self.mod_queue.append(n) for n, _ in
+             sorted(deg_dict.items(), key=itemgetter(1), reverse=True)[:min_iter]]  # FIXME check!
+            # heap = [(-value, key) for key, value in deg_dict.items()]
+            # self.mod_queue = [heapq.nsmallest(self.batch, heap)[i][1] for i in range(min_iter)]  # FIXME check!
             logging.debug("MOD queue: %s" % self.mod_queue)
-        return self.mod_queue.pop(0)
+        return self.mod_queue.pop()
 
 
 class PreferentialObservedDegreeCrawler(Crawler):
@@ -381,8 +389,9 @@ class PreferentialObservedDegreeCrawler(Crawler):
 
     def next_seed(self):
         if len(self.pod_queue) == 0:  # when batch ends, we create another one
-            prob_func = {node.GetId(): node.GetDeg() for node in self.observed_graph.snap.Nodes()
-                         if node.GetId() not in self.crawled_set}
+            g = self.observed_graph.snap
+            prob_func = {id: g.GetNI(id).GetDeg() for id in self._observed_set}
+
             if len(prob_func) == 0:
                 return None
             keys, values = zip(*prob_func.items())
@@ -463,5 +472,77 @@ def test_crawlers():
     crawler.crawl_budget(15)
 
 
+def test_snap_times():
+    from time import time
+
+    n = 100
+    g = GraphCollections.get('ego-gplus').snap
+    ids = [n.GetId() for n in g.Nodes()]
+    nodes = [n for n in g.Nodes()]
+
+    t = time()
+    for i in range(n):
+        # a = [n for n in range(g.GetNodes())]  # 1 ms
+
+        # a = [g.GetNI(n).GetDeg() for n in ids]  # 17 ms
+        # a = [n for n in g.Nodes()]  # 27 ms
+        # a = [n.GetId() for n in g.Nodes()]  # 32 ms
+
+        # a = [n.GetDeg() for n in g.Nodes()]  # 33 ms
+        # a = [n.GetDeg() for n in nodes]  # RuntimeError
+
+        a = {n: g.GetNI(n).GetDeg() for n in ids}  # 18 ms
+        # a = {n.GetId(): n.GetDeg() for n in g.Nodes()}  # 38 ms
+
+    print("%.3f ms" % ((time()-t)*1000))
+
+
+def test_crawler_times():
+    from time import time
+
+    n = 5000
+    g = GraphCollections.get('soc-pokec-relationships')
+    crawler = MaximumObservedDegreeCrawler(g, batch=10, skl_mode=False, initial_seed=1)
+    t = time()
+    for i in range(n):
+        crawler.crawl_budget(1)
+    print("%.3f ms" % ((time()-t)*1000))
+
+    # SKL vs dict per batches, s. 'digg-friends'
+    # n=5000               n=50000                n=250000
+    # batch  SKL   dict  |  batch  SKL   dict  |   batch  SKL   dict
+    # 1      10     314  |                     |
+    # 10     10     32   |                     |
+    # 30     11     12   |                     |
+    # 100    9      4.5  |  100    14     53   |   100    17     170
+    # 300    9      2.5  |  300    14     19   |   300    16     63
+    # 1000   8.4    1.6  |  1000   13     7.5  |   1000   16     20
+    # 3000   8.4    1.2  |  3000   13     4.1  |   3000   16     9
+    #
+    # SKL vs dict per batches, s. 'soc-pokec-relationships'
+    # n=5000               n=50000                n=250000
+    # batch  SKL   dict  |  batch  SKL   dict  |   batch  SKL   dict
+    # 10     18     42   |                     |
+    # 30     17     23   |                     |
+    # 100    16     17   |  100    51     136  |
+    # 300    16     15   |  300    54     53   |   300    234    577
+    # 1000   16     15   |  1000   45     30   |   1000   208    192
+    # 3000   17     14   |  3000   48     22   |   3000   211    88
+    #
+
+    # crawler = PreferentialObservedDegreeCrawler(g, batch=1, skl_mode=False)
+    # t = time()
+    # for i in range(n):
+    #     crawler.crawl_budget(1)  # initial - 40 s
+    #     # crawler.crawl_budget(1)  # self.observed_graph.snap -> g - 38-43 s
+    #     # crawler.crawl_budget(1)  # heap -> sort dict, queue - 38-46 s
+    #     # crawler.crawl_budget(1)  # batch=10, heap - 5.5 s
+    #     # crawler.crawl_budget(1)  # batch=10, sort dict, queue - 4 s
+    #
+    # print("%.3f ms" % ((time()-t)*1000))
+
+
 if __name__ == '__main__':
-    test_crawlers()
+    # test_crawlers()
+    # test_snap_times()
+    test_crawler_times()
