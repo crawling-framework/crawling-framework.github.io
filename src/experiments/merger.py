@@ -111,4 +111,6 @@ if __name__ == '__main__':
     # graph_name = 'facebook-wosn-links'
     graph_name = 'slashdot-threads'  # with 2000 nodes and 16098 edges
     merge(graph_name, show=True, set_x_scale='', filter_budget=0,
-          filter_only='', without_crawlers={'RW_', 'DFS', 'RC_'})
+          filter_only='POD',
+          without_crawlers={'RW_', 'DFS', 'RC_', 'SBS10', 'POD100', 'POD', 'POD10'}
+          )
