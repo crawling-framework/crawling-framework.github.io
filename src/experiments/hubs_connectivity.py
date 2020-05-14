@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from crawlers.advanced import AvrachenkovCrawler
 from crawlers.basic import Crawler
 from graph_io import MyGraph, GraphCollections
-from statistics import get_top_centrality_nodes
+from statistics import get_top_centrality_nodes, Stat
 
 
 def get_avg_deg_hubs(graph, count):
@@ -26,7 +26,7 @@ def get_avg_deg_hubs(graph, count):
 
 def compute_reachability(graph):
     g = graph.snap
-    centrality = 'degree'
+    centrality = Stat.DEGREE_DISTR
     mode = 'top-hubs'
     # mode = 'all'
     # mode = 'top-k'
@@ -173,7 +173,7 @@ def test_hubs_search_by_mod(graph: MyGraph):
         # neighs
         crawler = Crawler(graph)
         [crawler.crawl(s) for s in top_hubs]
-        E2 = crawler.observed_set
+        E2 = crawler._observed_set
 
         o = crawler.observed_graph.snap
         # o = g

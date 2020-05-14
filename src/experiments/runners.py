@@ -10,6 +10,7 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
+from crawlers.advanced import CrawlerWithAnswer
 from crawlers.basic import DepthFirstSearchCrawler, RandomWalkCrawler, MaximumObservedDegreeCrawler, \
     PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler, SnowBallSampling
 from crawlers.multiseed import MultiCrawler
@@ -100,6 +101,8 @@ class AnimatedCrawlerRunner:
             plt.cla()
             for c, crawler in enumerate(self.crawlers):
                 crawler.crawl_budget(budget=batch)
+                if isinstance(crawler, CrawlerWithAnswer):
+                    crawler._compute_answer()
 
                 for m, metric in enumerate(self.metrics):
                     metric_seq = crawler_metric_seq[crawler][metric]
