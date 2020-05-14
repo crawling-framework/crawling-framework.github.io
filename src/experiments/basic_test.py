@@ -15,7 +15,7 @@ def test_mod(graph):
     os = []
     ns = []
 
-    n = 50
+    n = 50000
     for i in range(n):
         crawler.crawl_budget(1)
         if i % 1000 == 0:

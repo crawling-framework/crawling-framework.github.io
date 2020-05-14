@@ -8,3 +8,4 @@ tqdm
 sortedcontainers
 jupyter
 scikit-learn
+Cython
