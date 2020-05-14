@@ -290,7 +290,7 @@ class DepthFirstSearchCrawler(Crawler):
 
 
 class MaximumObservedDegreeCrawler(Crawler):
-    def __init__(self, graph: MyGraph, batch=1, initial_seed=None, skl_mode=False, **kwargs):
+    def __init__(self, graph: MyGraph, batch=1, initial_seed=None, skl_mode=True, **kwargs):
         """
         :param batch: batch size
         :param initial_seed: if observed set is empty, the crawler will start from the given initial

@@ -2,8 +2,8 @@ import datetime
 import glob
 import json
 import os
-from math import ceil
-
+from math import ceil, log
+import logging
 import imageio
 import networkx as nx
 # import snap
@@ -19,7 +19,9 @@ from graph_io import GraphCollections
 from graph_io import MyGraph
 from statistics import Stat
 from statistics import get_top_centrality_nodes
-from utils import PICS_DIR, RESULT_DIR  # PICS_DIR = '/home/jzargo/PycharmProjects/crawling/crawling/pics/'
+from utils import PICS_DIR, RESULT_DIR, REMAP_ITER  # PICS_DIR = '/home/jzargo/PycharmProjects/crawling/crawling/pics/'
+
+REMAP_ITER_TO_STEP = REMAP_ITER(300)
 
 
 def make_gif(crawler_name, duration=1):
@@ -49,6 +51,7 @@ class Metric:
 
     def __call__(self, crawler: Crawler):
         return self._callback(crawler, **self.kwargs)
+
 
 # TODO need to check several statistics / metrics
 class AnimatedCrawlerRunner:
@@ -182,21 +185,26 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
             else:
                 logging.info('using current layout')
 
-    def save_history(self, crawler_metric_seq):
+    def save_history(self, crawler_metric_seq, step_seq, step=1):
         # print('crawler_metric_seq', crawler_metric_seq)
-        for crawler_name in crawler_metric_seq.keys():
+        logging.info('Making backup')
+        for crawler_name in tqdm(crawler_metric_seq.keys()):
             crawler_seq = crawler_metric_seq[crawler_name]
             for metric_object in crawler_seq.keys():
+                if step is None:
+                    metric_list = dict((it * 1000, res) for it, res in enumerate(crawler_seq[metric_object]))
+                else:
+                    # print('seq', crawler_seq[metric_object], '\n')
 
-                metric_list = crawler_seq[metric_object]
+                    metric_list = dict((step_seq[it], res) for it, res in enumerate(crawler_seq[metric_object]))
                 # like this: file_path = ../results/Graph_name/step=10,budget=10/MOD/crawled_centrality[NUM].json
                 file_path = os.path.join(RESULT_DIR, self.graph.name,
-                                         'step={},budget={}'.format(self.step, len(metric_list)), crawler_name.name)
+                                         'budget={}'.format(self.budget), crawler_name.name)
                 if not os.path.exists(file_path):
                     os.makedirs(file_path)
                 file_name = os.path.join(file_path, metric_object.name + '.json')
 
-                if os.path.isfile(file_name):
+                if os.path.isfile(file_name):  # if name exists, adding number to it
                     expand = 1
                     while True:
                         expand += 1
@@ -209,9 +217,9 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
 
                 with open(file_name, 'w') as f:
                     json.dump(metric_list, f)
-                #print('saving', crawler_name.name, metric_object.name, metric_list, file_name)
+                print('saving', crawler_name.name, metric_object.name, metric_list, file_name)
 
-    def save_pics(self):
+    def save_pics(self):  # TODO need to change it somehow
         if self.draw_mod == 'metric':
             plt.legend()
             for metric in self.metrics:
@@ -219,6 +227,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
                 file_path = os.path.join(RESULT_DIR, self.graph.name, 'crawling_plot')
                 if not os.path.exists(file_path):
                     os.makedirs(file_path)
+
                 plt.savefig(os.path.join(file_path, metric.name + ':' +
                                          ','.join([crawler.name for crawler in self.crawlers]) + '.png'))
         elif self.draw_mod == 'traversal':  # if traversal
@@ -233,19 +242,23 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
         step_seq = [0]  # starting for point 0
         crawler_metric_seq = dict([(c, dict([(m, [0]) for m in self.metrics])) for c in self.crawlers])
 
-        i = 0
+        i, batch = 0, 1
         # logging.info('Crawling method {} with budget {} and step {}'.format(self.self.budget, self.step))
         pbar = tqdm(total=self.budget)  # drawing crawling progress bar
-        #print('self metrics', [(metric._callback, metric.name + '\n') for metric in self.metrics])
+        # print('self metrics', [(metric._callback, metric.name + '\n') for metric in self.metrics])
 
         while i < self.budget:
-            batch = min(self.step, self.budget - i)
-            i += batch
+            # batch =self.budget - i)
+            if i in REMAP_ITER_TO_STEP:
+                batch = min(self.budget - i, REMAP_ITER_TO_STEP[i])
+            # else: batch =
+            i += batch  # TODO make exponential steps from 1 to 1000 depending on current iteration. (exp(log))
             step_seq.append(i)
             pbar.update(batch)
 
-            if i % 10000 == 0:  # making backup every 10k
-                self.save_history(crawler_metric_seq)
+            # print('i={}/{},batch={}'.format(i, self.budget, batch))
+            if i % 50000 == 0:  # making backup every 50k
+                self.save_history(crawler_metric_seq, step_seq)
                 self.save_pics()
                 logging.info('\n{} : Iteration {} made backup of pics and history'.format(datetime.datetime.now(), i))
 
@@ -294,7 +307,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
         #                      plt.show()
 
         pbar.close()  # closing progress bar
-        self.save_history(crawler_metric_seq)  # saving ending history
+        self.save_history(crawler_metric_seq, step_seq)  # saving ending history
         self.save_pics()
         # plt.show()
         logging.info('{} : finished running'.format(datetime.datetime.now()))
@@ -307,45 +320,49 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
         RandomWalkCrawler(graph, initial_seed=initial_seed),
         RandomCrawler(graph, initial_seed=initial_seed),
 
-        DepthFirstSearchCrawler(graph, initial_seed=initial_seed),
-        BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),
         # ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
-
+        DepthFirstSearchCrawler(graph, initial_seed=initial_seed),
+        SnowBallSampling(graph, p=0.1, initial_seed=initial_seed),
         SnowBallSampling(graph, p=0.25, initial_seed=initial_seed),
         SnowBallSampling(graph, p=0.5, initial_seed=initial_seed),
         SnowBallSampling(graph, p=0.75, initial_seed=initial_seed),
+        SnowBallSampling(graph, p=0.9, initial_seed=initial_seed),
+        BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),  # is like take SBS with p=1
 
-        # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
-        MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
+        MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed),
+        MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=10, initial_seed=initial_seed),
+        MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=100, initial_seed=initial_seed),
         MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed),
-        MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed),
+        MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=10000, initial_seed=initial_seed),
 
-        # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
-        PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
+        PreferentialObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed),
+        PreferentialObservedDegreeCrawler(graph, skl_mode=True, batch=10, initial_seed=initial_seed),
+        PreferentialObservedDegreeCrawler(graph, skl_mode=True, batch=100, initial_seed=initial_seed),
         PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed),
         PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed),
 
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=100) for i in range(2)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=100) for i in range(5)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=100) for i in range(10)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=100) for i in range(100)]),
+        # MultiCrawler(graph, crawlers=[
+        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=100) for i in range(2)]),
+        # MultiCrawler(graph, crawlers=[
+        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=100) for i in range(5)]),
+        # MultiCrawler(graph, crawlers=[
+        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=100) for i in range(10)]),
+        # MultiCrawler(graph, crawlers=[
+        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=100) for i in range(100)]),
     ]
     logging.info([c.name for c in crawlers])
     # change target set to calculate another metric
     metrics = []
-    target_set = {}  #{i.name: set() for i in statistics}
+    target_set = {}  # {i.name: set() for i in statistics}
     for target_statistics in statistics:
         target_set = set(get_top_centrality_nodes(graph, target_statistics, count=int(0.1 * graph[Stat.NODES])))
         # creating metrics and giving callable function to it (here - total fraction of nodes)
         # metrics.append(Metric(r'observed' + target_statistics.name, lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]))
-        metrics.append(Metric(r'crawled_' + target_statistics.name,
-                              lambda crawler, t: len(t.intersection(crawler.nodes_set)) / len(t),
+        metrics.append(Metric(r'crawled_' + target_statistics.name,  # TODO rename crawled to observed
+                              lambda crawler, t: len(t.intersection(crawler.crawled_set)) / len(t),
                               t=target_set))
-        #print(metrics[-1], target_set)
+        # TODO calculate intersection with observed set
+        # print(metrics[-1], target_set)
     if animated == True:
         ci = AnimatedCrawlerRunner(graph,
                                    crawlers,
@@ -353,7 +370,7 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
                                    budget=10000, step=10)
     else:
         ci = CrawlerRunner(graph, crawlers, metrics, budget=0,
-                           step=ceil(10 ** (len(str(graph.snap.GetNodes())) - 3)),
+                           # step=ceil(10 ** (len(str(graph.snap.GetNodes())) - 3)),
                            # if 5*10^5 then step = 10**2,if 10^7 => step=10^4
                            # batches_per_pic=10,
                            # draw_mod='traversal', layout_pos=layout_pos,
@@ -362,39 +379,23 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
 
 
 if __name__ == '__main__':
-    import logging
-
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
-    # name = 'petster-friendships-cat'
-    # name = 'digg-friends' with 261489 nodes and 1536577 edges
-    # name = 'loc-brightkite_edges'
-    # name = 'ego-gplus'
-    # name = 'petster-hamster' with 2000 nodes and 16098 edges
-    # name = 'slashdot-threads' N=51083, V=116573.  use step=100,
-    # 'dolphins' #  #''
-    graph_name = 'digg-friends'  # 'digg-friends'  # 'digg-friends'  # 'petster-hamster' # 'advogato'
+    # graph_name = 'digg-friends' # with 261489 nodes and 1536577 edges
+    # graph_name = 'douban' # http://konect.uni-koblenz.de/networks/douban
+    # graph_name = 'ego-gplus' # http://konect.uni-koblenz.de/networks/ego-gplus
+    # graph_name = 'slashdot-threads' # N=51083, V=116573.  use step=100,
+    # graph_name = 'facebook-wosn-links'
+    graph_name = 'slashdot-threads'  # with 2000 nodes and 16098 edges
     g = GraphCollections.get(graph_name, giant_only=True)
     # g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
-    # all about sexgraph
-    # name = 'sexgraph'
-    # snap_g = TUNGraph.New()
-    # pos = dict()
-    # nx_graph = nx.read_edgelist('/home/jzargo/PycharmProjects/crawling/crawling/data/Graphs/edgelist_sexgraph.json')
-    # for i in nx_graph.nodes():
-    #     snap_g.AddNodeUnchecked(int(i))
-    # for i, j in nx_graph.edges():
-    #     snap_g.AddEdgeUnchecked(int(i), int(j))
-    # g = MyGraph.new_snap(snap_g, name='test', directed=False)
-    # nx.draw_spring(g.snap_to_networkx)
-    # plt.plot()
     print('Graph {} with {} nodes and {} edges'.format(graph_name, g.snap.GetNodes(), g.snap.GetEdges()))
     # from crawlers.multiseed import test_carpet_graph, MultiCrawler
     # x,y = 7,7
     # graph_name = 'carpet_graph_'+str(x)+'_'+str(y)
     # g, layout_pos = test_carpet_graph(x,y)  # GraphCollections.get(name)
 
-    for exp in range(5):
+    for exp in range(4):
         logging.info('Running iteration {}'.format(exp))
         test_runner(g,
                     animated=False,
@@ -403,6 +404,7 @@ if __name__ == '__main__':
                     )
 
     from experiments.merger import merge
+
     merge(graph_name, show=True)
 
 # 'degree', 'betweenness', 'eccentricity', 'k-coreness',  'pagerank', 'clustering'
