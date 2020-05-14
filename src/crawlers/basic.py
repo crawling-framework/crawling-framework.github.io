@@ -1,4 +1,5 @@
-import heapq
+from cyth.build_cython import build_cython  # in order to compile all needed cython files
+
 import logging
 import random
 from operator import itemgetter
@@ -9,6 +10,7 @@ import snap
 from scipy import stats
 from sortedcontainers import SortedKeyList
 
+from cyth.node_deg_set import ND_Set
 from graph_io import MyGraph, GraphCollections
 
 
@@ -311,8 +313,8 @@ class MaximumObservedDegreeCrawler(Crawler):
 
         if skl_mode:
             g = self.observed_graph.snap  # seems to have no effect
-            self.observed_skl = SortedKeyList(
-                self._observed_set, key=lambda node: (g.GetNI(node).GetDeg(), node))
+            self.observed_skl = ND_Set(self._observed_set, key=lambda node: (g.GetNI(node).GetDeg()))  # for ND_Set
+            # self.observed_skl = SortedKeyList(self._observed_set, key=lambda node: (g.GetNI(node).GetDeg(), node))  # for SKL
             self.crawl = self.skl_crawl
             self.next_seed = self.skl_next_seed
 
@@ -321,13 +323,16 @@ class MaximumObservedDegreeCrawler(Crawler):
         """
         seed = int(seed)  # convert possible int64 to int, since snap functions would get error
         if seed in self.crawled_set:
+            # print("already %d" % seed)
             return False  # if already crawled - do nothing
+        # print("crawled %d" % seed)
         self.seed_sequence_.append(seed)
         self.crawled_set.add(seed)
         g = self.observed_graph.snap
         if g.IsNode(seed):  # remove from observed set
             self._observed_set.remove(seed)
-            self.observed_skl.discard(seed)
+            dsd = self.observed_skl.discard(seed)  # FIXME still need for ND_Set due to neighbors added in case of batch>1. can improve?
+            # print(seed, dsd)
         else:  # add to observed graph
             g.AddNode(seed)
 
@@ -350,7 +355,8 @@ class MaximumObservedDegreeCrawler(Crawler):
             if len(self.observed_skl) == 0:
                 assert len(self._observed_set) == 0
                 raise NoNextSeedError()
-            self.mod_queue = deque(self.observed_skl[-self.batch:])
+            # self.mod_queue = deque(self.observed_skl[-self.batch:])  # for SKL
+            self.mod_queue = deque(self.observed_skl.top(self.batch))  # for ND_Set
             logging.debug("MOD queue: %s" % self.mod_queue)
         return self.mod_queue.pop()
 
@@ -500,9 +506,10 @@ def test_snap_times():
 def test_crawler_times():
     from time import time
 
-    n = 5000
+    n = 50000
     g = GraphCollections.get('soc-pokec-relationships')
-    crawler = MaximumObservedDegreeCrawler(g, batch=10, skl_mode=False, initial_seed=1)
+    s = g.snap
+    crawler = MaximumObservedDegreeCrawler(g, batch=1, skl_mode=True, initial_seed=1)
     t = time()
     for i in range(n):
         crawler.crawl_budget(1)

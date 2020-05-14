@@ -8,32 +8,16 @@ from Cython.Distutils import build_ext
 ext_modules = [
     Extension("cyth.test_cython",
               ["cyth/test_cython.pyx"],
-                        language='c++',
-                        extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
-                        extra_link_args=['-fopenmp']
+              language='c++',
+              extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
+              extra_link_args=['-fopenmp']
               ),
-    # Extension("cython_test.representing.constr",
-    #           ["cython_test/representing/constr.pyx"],
-    #           language='c++',
-    #           extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
-    #           extra_link_args=['-fopenmp']
-    #           ),
-    # Extension("cython_test.test_cyth",
-    #           ["cython_test/test_cyth.pyx"],
-    #           language='c++',
-    #           extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
-    #           extra_link_args=['-fopenmp']
-    #           ),
-    # Extension("cython_test.cembedding.model",
-    #           ["cython_test/cembedding/model.pyx"],
-    #           language='c++',
-    #           extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
-    #           extra_link_args=['-fopenmp']
-    #           ),
-    # Extension("cython_test.cembedding.blm_mod",
-    #           ["cython_test/cembedding/blm_mod.pyx"],
-    #           language='c++',
-    #           ),
+    Extension("cyth.node_deg_set",
+              ["cyth/node_deg_set.pyx"],
+              language='c++',
+              extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
+              extra_link_args=['-fopenmp']
+              ),
 ]
 
 setup(

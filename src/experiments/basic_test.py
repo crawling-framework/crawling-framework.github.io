@@ -7,7 +7,7 @@ from graph_io import GraphCollections
 
 
 def test_mod(graph):
-    crawler = MaximumObservedDegreeCrawler(graph, batch=100, skl_mode=True)
+    crawler = MaximumObservedDegreeCrawler(graph, batch=10, skl_mode=True, initial_seed=1)
     # crawler = BreadthFirstSearchCrawler(graph, initial_seed=10)
     # crawler = RandomCrawler(graph)
 
@@ -15,7 +15,7 @@ def test_mod(graph):
     os = []
     ns = []
 
-    n = 50000
+    n = 50
     for i in range(n):
         crawler.crawl_budget(1)
         if i % 1000 == 0:
@@ -36,7 +36,7 @@ def test_mod(graph):
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG)
 
     # name = 'libimseti'
     # name = 'petster-friendships-cat'
