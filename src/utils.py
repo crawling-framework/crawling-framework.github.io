@@ -7,7 +7,7 @@ TMP_GRAPHS_DIR = os.path.join(GRAPHS_DIR, 'tmp')  # root directory to store temp
 PICS_DIR = os.path.join(rel_dir, 'pics')  # directory to store pictures
 RESULT_DIR = os.path.join(rel_dir, 'results')  # directory to store pictures
 
-COLLECTIONS = ['konect', 'networkrepository']
+COLLECTIONS = ['other', 'konect', 'networkrepository']
 
 
 # Remaping steps depending on used budget - on first iters step=1, on last it grows ~x^2

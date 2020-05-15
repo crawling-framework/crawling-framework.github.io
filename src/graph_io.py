@@ -116,14 +116,18 @@ class MyGraph(object):
             # raise KeyError("Unknown item type: %s" % type(item))
         return value
 
-    # def save_snap_edge_list(self):
-    #     """ Write current edge list of snap graph into file. """
-    #     assert self._snap_graph
-    #     if os.path.exists(self.path):
-    #         logging.warning("Graph file '%s' will be overwritten." % self.path)
-    #
-    #     # FIXME do not write commented section
-    #     snap.SaveEdgeList(self._snap_graph, self.path)
+    def save_snap_edge_list(self, new_path=None):
+        """ Write current edge list of snap graph into file. """
+        s = self._snap_graph
+        assert s
+        if new_path is None:
+            new_path = self.path
+        if new_path == self.path:
+            logging.warning("Graph file '%s' will be overwritten." % self.path)
+        # snap.SaveEdgeList writes commented section, we don't want it
+        with open(new_path, 'w') as f:
+            for e in s.Edges():
+                f.write("%s %s\n" % (e.GetSrcNId(), e.GetDstNId()))
 
     @property  # Denis:  could be useful to handle nx version of graph
     def snap_to_networkx(self):
@@ -137,7 +141,7 @@ class MyGraph(object):
 
 
 def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_with='#%',
-                        remove_original=False, self_loops=False):
+                        remove_original=False, self_loops=False, renumerate=False):
     """
 
     :param path:
@@ -146,9 +150,13 @@ def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_w
     :param ignore_lines_starting_with:
     :param remove_original: original file is not removed by default
     :param self_loops: self loops are removed by default.
+    :param renumerate: nodes are not re-numerated from 0 to N-1 by default.
     :return:
     """
     in_format = None
+    renums = {}
+
+    assert out_path != path
     with open(out_path, 'w') as out_file:
         for line in open(path, 'r'):
             if line[0] in ignore_lines_starting_with:  # Filter comments
@@ -164,8 +172,18 @@ def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_w
                 logging.info("Reformatting %s->%s for '%s' ..." % (in_format, out_format, path))
 
             items = line.split()
-            if not self_loops and items[0] == items[1]:
+            i, j = items[0], items[1]
+            if not self_loops and i == j:
                 continue
+
+            if renumerate:
+                if i not in renums:
+                    renums[i] = len(renums)
+                if j not in renums:
+                    renums[j] = len(renums)
+                items[0] = str(renums[i])
+                items[1] = str(renums[j])
+
             # TODO format depending on each symbol of 'ijwt'
             res_line = ' '.join(items[:len(out_format)]) + '\n'
             out_file.write(res_line)
@@ -186,7 +204,7 @@ class GraphCollections(object):
         giant_only and self_loops, you need to remove the file manually.
 
         :param name:
-        :param collection: 'konect', 'networkrepository'
+        :param collection: 'other', 'konect', 'networkrepository'.
         :param directed: undirected by default
         :param format: output will be in this format, 'ij' by default
         :param giant_only: giant component instead of full graph. Component extraction is applied
@@ -196,11 +214,10 @@ class GraphCollections(object):
         :return: MyGraph with snap graph
         """
         assert collection in COLLECTIONS
-        path = os.path.join(GRAPHS_DIR, collection, "%s.%s" % (name, format))
         # category = ''
+        path = os.path.join(GRAPHS_DIR, collection, "%s.%s" % (name, format))
 
         # TODO let collection be not specified, try Konect then Netrepo, etc
-
         if not os.path.exists(path):
             temp_path = os.path.join(GRAPHS_DIR, collection, '%s.tmp' % name)
 
@@ -213,6 +230,9 @@ class GraphCollections(object):
                 category = name.split('-')[0]
                 GraphCollections._download_networkrepository(
                     temp_path, GraphCollections.networkrepository_url_pattern % (category, name))
+
+            elif collection == 'other':
+                raise FileNotFoundError("File '%s' not found. Check graph name or file existence." % path)
 
             reformat_graph_file(temp_path, path, out_format=format, remove_original=True, self_loops=self_loops)
 
@@ -353,9 +373,25 @@ def test_graph():
     print(graph['EDGES'])  # Exception
 
 
+def test_graph_manipulations():
+    path = '/home/misha/workspace/crawling/data/mipt.ij'
+
+    # # # nodes renumerating
+    # reformat_graph_file(path, path+'_', renumerate=True)
+
+    # giant extraction
+    print("Giant component extraction")
+    graph = MyGraph(path+'_', 'mipt', False)
+    s = graph.snap
+    s = snap.GetMxWcc(s)
+    graph._snap_graph = s
+    graph.save_snap_edge_list(path)
+
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    test_io()
+    # test_io()
     # test_graph()
+    test_graph_manipulations()
