@@ -215,7 +215,7 @@ class SnowBallSampling(Crawler):
          node. If None is given, a random node of original graph will be used.
         :param p: probability of taking neighbor into queue
         """
-        super().__init__(graph, name='SBS%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
+        super().__init__(graph, name='SBS%s' % (int(p * 100)), **kwargs)
         if len(self.observed_set) == 0:
             if initial_seed is None:
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])

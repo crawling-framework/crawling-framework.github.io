@@ -14,6 +14,20 @@ from scipy.integrate import simps  # integrating
 # from numpy import trapz
 from sklearn import metrics  # import auc
 
+graphs_sizes = {'mipt': 14313,
+                'ego-gplus': 23613,
+                'facebook-wosn-links': 63392,
+                'slashdot-threads': 51083,
+                'digg-friends': 261489,
+                'douban': 154908,
+                'petster-hamster': 2000}
+
+#
+all_methods_list = ["MOD", "MOD10", "MOD100", "MOD1000", "MOD10000",
+                    "POD", "POD10", "POD100", "POD1000", "POD10000",
+                    "BFS", "SBS90", "SBS75", "SBS50", "SBS25", "SBS10",
+                    "RW_", "RC_", "DFS"]
+
 
 def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='', filter_budget=0,
           without_crawlers=set()):
@@ -30,18 +44,17 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
 
         # step = int(re.search('step=(\d+),', path_name).group(1))
         if ((filter_budget != 0) and (budget == filter_budget)) or (filter_budget == 0):
-            print('Running file {}, with {} iterations'.format(j, budget))
+            # print('Running file {}, with {} iterations'.format(j, budget))
             fig, axs = plt.subplots(2, 3, sharex=True, sharey=True, figsize=(16, 9), )
             fig.text(0.5, 0.00, 'crawling iterations X', ha='center')
             fig.text(0.02, 0.5, 'fraction of target set crawled', va='center', rotation='vertical')
             # x_arr = [int(i * step) for i in range(budget)]  # it was before removing step
-            # FIXME parse all names of files to get statistics (centralities)
             statistics = [s for s in Stat if 'DISTR' in s.name]
-            print('Statistics', [s.name for s in statistics])
             areas = dict((stat.name, dict()) for stat in statistics)
 
             for metr_id, stat in enumerate(statistics):
                 subplot_x, subplot_y = metr_id // 3, metr_id % 3
+                plt.sca(axs[subplot_x][subplot_y])
                 crawler_color_counter = 0  #
                 # file_path = ../results/Graph_name/budget=10/MOD/crawled_centrality[NUM].json
                 files_path = os.path.join(RESULT_DIR, graph_name, 'budget={}'.format(budget)) + '/'
@@ -54,14 +67,15 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
                 for i, crawler_name in enumerate(crawlers):
                     if (filter_only in crawler_name) and (crawler_name not in without_crawlers):
                         crawler_color_counter += 1
-                        experiments_path = glob(os.path.join(files_path, crawler_name) + '/*' + stat.name + '*.json')
+                        experiments_path = glob(os.path.join(files_path, crawler_name) + '/*' + stat.name + '*.json')[
+                                           :8]  # TODO check only 8
                         count = len(experiments_path)
                         if set_x_scale == 'log':
-                            axs[subplot_x, subplot_y].set_xscale('log')
+                            plt.set_xscale('log')
 
                         first_iter = True
-                        if metr_id == 1:
-                            print(crawler_name, 'total experiments:', count)
+                        # if metr_id == 1: 
+                        #     print(graph_name, crawler_name, 'total experiments:', count)
                         for experiment in experiments_path:
                             with open(experiment, 'r') as f:
                                 imported = json.load(f)
@@ -73,24 +87,27 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
                                 # print(i, crawler_name, len(x_arr), len(y_arr))
                                 # print(len(np.array(imported)), crawler_name, experiment, np.array(imported))
                                 average_plot[crawler_name] += (np.array(y_arr)) / count
-                                axs[subplot_x, subplot_y].plot(x_arr, y_arr, color=colors[crawler_color_counter],
-                                                               linewidth=0.2, linestyle=':')
+                                plt.plot(x_arr, y_arr, color=colors[crawler_color_counter],
+                                         linewidth=0.2, linestyle=':')
 
-                        axs[subplot_x, subplot_y].set_title(stat.description)
+                        plt.title(stat.description)
                         # if (filter_only in crawler_name) and (crawler_name not in without_crawlers):
-                        axs[subplot_x, subplot_y].plot(x_arr, average_plot[crawler_name],
-                                                       label='[' + str(count) + '] ' + crawler_name,
-                                                       color=colors[crawler_color_counter],
-                                                       linewidth=2.5)
+                        plt.legend()
+                        plt.plot(x_arr, average_plot[crawler_name],
+                                 label='[' + str(count) + '] ' + crawler_name,
+                                 color=colors[crawler_color_counter],
+                                 linewidth=2.5)
 
                         areas[stat.name][crawler_name] = float(metrics.auc(x_arr, average_plot[crawler_name])) / budget
 
             # , [int(i * step * budget/10) for i in range(10)])
-            axs[subplot_x, subplot_y].legend()  # loc='lower right', mode='expand')  # only on last iter
+            # loc='lower right', mode='expand')  # only on last iter
             # fig.add_subplot(111, frameon=False, xlabel=None)  # adding big frame to place names
+            plt.gca()
             plt.subplots_adjust(left=0.06, bottom=0.05, right=0.98, top=0.93, wspace=0.03, hspace=0.08)
             plt.suptitle('Graph: {}, budget={}'.format(graph_name, budget))
-            fig_name = os.path.join(RESULT_DIR, graph_name, 'total_plot_iter={}'.format(budget) + set_x_scale)
+            fig_name = os.path.join(RESULT_DIR,
+                                    'Crawling_curves_graph_{}_budget={}'.format(graph_name, budget) + set_x_scale)
             if filter_only != '':
                 fig_name += 'only_' + filter_only
             plt.savefig(fig_name + '.pdf')
@@ -111,78 +128,77 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
                 with open(os.path.join(RESULT_DIR, 'auc.json'), 'w') as f:
                     d = {graph_name: areas}
                     json.dump(d, f)
-                    # for stat_name in areas:
-                    #     for crawler_name in areas[stat_name]:
-                    #         if not crawler_name in calculated_aucs[stat_name].keys():
-                    #             calculated_aucs[stat_name][crawler_name] = dict()
-                    #         # if not graph_name in calculated_aucs[stat_name][crawler_name].keys():
-                    #         calculated_aucs[stat_name][crawler_name][graph_name] = \
-                    #             areas[stat_name][crawler_name][graph_name]
-                    #         # else:
-                    #         #     calculated_aucs[stat_name][crawler_name][graph_name].append(
-                    #         #     areas[stat_name][crawler_name][graph_name])
-
     if (show):
         plt.show()
 
 
-def draw_auc():
+def draw_auc(filter_only='', without_crawlers=set()):
     with open(os.path.join(RESULT_DIR, 'auc.json'), 'r') as f:
         calculated_aucs = json.load(f)
-    method_set = set()
+
+    with open(os.path.join(RESULT_DIR, 'all_methods_list.json'), 'r') as f:  # working with methods for x_axis of auc
+        all_methods_list = json.load(f)
+    method_names = [method_name for method_name in all_methods_list
+                    if (filter_only in method_name) and (method_name not in without_crawlers)]
+
     graph_names = list(calculated_aucs.keys())
     print('graphs ', graph_names, len(graph_names) // 3, len(graph_names) % 3)
-    fig, axs = plt.subplots(len(graph_names) // 3 + 1, len(graph_names) % 3 + 1, sharex=True, sharey=True,
+    fig, axs = plt.subplots(2, 3, sharex=True, sharey=True,  # len(graph_names) // 3 + 1, len(graph_names) % 3 + 1,
                             figsize=(20, 10), )
+    # fig.text(0.5, 0.00, 'method', ha='center')
+    fig.text(0.02, 0.5, 'AUCC score', va='center', rotation='vertical')
+
     plt.subplots_adjust(left=0.06, bottom=0.1, right=0.98, top=0.93, wspace=0.03, hspace=0.08)
     for i, graph_name in enumerate(graph_names):
         stat_names = list(calculated_aucs[graph_name].keys())
-
         subplot_x, subplot_y = i // 3, i % 3
         plt.sca(axs[subplot_x][subplot_y])
-        for stat_name in stat_names:
-            method_set.update(calculated_aucs[graph_name][stat_name].keys())
-            method_names = list(method_set)  # list(calculated_aucs[graph_name][stat_name].keys())
+        for c, stat_name in enumerate(stat_names):
             auc_avg = []
             for method_name in method_names:
-                if method_name in calculated_aucs[graph_name][stat_name].keys():
-                    auc_avg.append(
-                        calculated_aucs[graph_name][stat_name][method_name])  # for method_name in method_names]
-                else:
-                    auc_avg.append(0)  # calculated_aucs[graph_name][stat_name][method_name] = 0
+                if (filter_only in method_name) and (method_name not in without_crawlers):
+                    if method_name in calculated_aucs[graph_name][stat_name].keys():
+                        auc_avg.append(
+                            calculated_aucs[graph_name][stat_name][method_name])  # for method_name in method_names]
+                    else:
+                        auc_avg.append(0)  # calculated_aucs[graph_name][stat_name][method_name] = 0
 
-            lists = sorted(zip(*[auc_avg, method_names]), reverse=True, key=itemgetter(1))
-            auc_avg, method_names = list(zip(*lists))
-            # auc_avg, method_names =  zip(*sorted(zip(method_names, auc_avg), reverse=True, key=itemgetter(1)))
-            # print('meth', method_names)
-            # print('avg',auc_avg)
-            plt.plot(method_names, auc_avg, label=stat_name)
-        plt.title(graph_name)
+            plt.ylim(0.5, 1)
+            plt.plot(method_names, auc_avg, color=['r', 'y', 'g', 'cyan', 'magenta', 'b'][c])
+            plt.scatter(method_names, auc_avg, color=['r', 'y', 'g', 'cyan', 'magenta', 'b'][c], label=stat_name, )
+
+        plt.legend()
+        plt.title(graph_name + ' with {} nodes'.format(graphs_sizes[graph_name]))
         plt.xticks(rotation=90)
         plt.grid()
 
     plt.gca()
-    plt.legend()
+
     plt.savefig(os.path.join(RESULT_DIR, 'aucs.png'))
     plt.savefig(os.path.join(RESULT_DIR, 'aucs.pdf'))
     plt.show()
 
 
 if __name__ == '__main__':
-    graphs = ['mipt', 'petster-hamster', 'facebook-wosn-links', 'slashdot-threads', 'digg-friends']
+    graphs = ['mipt', 'slashdot-threads', 'douban',
+              'ego-gplus', 'facebook-wosn-links', 'digg-friends']  # in two rows one under another
     # graph_name = 'digg-friends' # with 261489 nodes and 1536577 edges
     # graph_name = 'douban' # http://konect.uni-koblenz.de/networks/douban         # !!!!!!
     # graph_name = 'ego-gplus' # http://konect.uni-koblenz.de/networks/ego-gplus   # !!!!!!!
     # graph_name = 'slashdot-threads' # N=51083, V=116573.  use step=100,
     # graph_name = 'facebook-wosn-links'
-    # graph_name = 'slashdot-threads'  # with 2000 nodes and 16098 edges
+    # graph_name = 'slashdot-threads'
     # graph_name ='mipt'
-    # graph_name = 'petster-hamster'
+    # graph_name = 'petster-hamster'    with 2000 nodes and 16098 edges
 
     for graph_name in tqdm(graphs):
         merge(graph_name, show=False, set_x_scale='', filter_budget=0,
               # filter_only='POD',
-              without_crawlers='Multi_BFS;BFS',  # {'RW_', 'DFS', 'RC_', 'SBS10', 'POD100', 'POD', 'POD10'}
+              # without_crawlers={'Multi_BFS;BFS'},
+              # {'RW_', 'DFS', 'RC_', 'SBS10', 'POD100', 'POD', 'POD10'}
               )
 
-    draw_auc()
+    draw_auc(
+        filter_only='',
+        # without_crawlers={'MOD'}
+    )
