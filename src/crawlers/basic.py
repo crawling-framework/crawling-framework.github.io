@@ -312,8 +312,9 @@ class MaximumObservedDegreeCrawler(Crawler):
         self.mod_queue = deque()
 
         if skl_mode:
-            g = self.observed_graph.snap  # seems to have no effect
-            self.observed_skl = ND_Set(self._observed_set, key=lambda node: (g.GetNI(node).GetDeg()))  # for ND_Set
+            # g = self.observed_graph.snap  # seems to have no effect
+            self.observed_skl = ND_Set(self._observed_set,
+                                       key=lambda node: (self.observed_graph.snap.GetNI(node).GetDeg()))  # for ND_Set
             # self.observed_skl = SortedKeyList(self._observed_set, key=lambda node: (g.GetNI(node).GetDeg(), node))  # for SKL
             self.crawl = self.skl_crawl
             self.next_seed = self.skl_next_seed

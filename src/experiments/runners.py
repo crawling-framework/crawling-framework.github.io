@@ -21,7 +21,7 @@ from statistics import Stat
 from statistics import get_top_centrality_nodes
 from utils import PICS_DIR, RESULT_DIR, REMAP_ITER  # PICS_DIR = '/home/jzargo/PycharmProjects/crawling/crawling/pics/'
 
-REMAP_ITER_TO_STEP = REMAP_ITER(300)
+REMAP_ITER_TO_STEP = REMAP_ITER(300)  # dynamic step size
 
 
 def make_gif(crawler_name, duration=1):
@@ -217,7 +217,7 @@ class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
 
                 with open(file_name, 'w') as f:
                     json.dump(metric_list, f)
-                print('saving', crawler_name.name, metric_object.name, metric_list, file_name)
+                # print('saving', crawler_name.name, metric_object.name, metric_list, file_name)
 
     def save_pics(self):  # TODO need to change it somehow
         if self.draw_mod == 'metric':
@@ -317,29 +317,32 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
     import random
     initial_seed = random.sample([n.GetId() for n in graph.snap.Nodes()], 1)[0]
     crawlers = [
-        RandomWalkCrawler(graph, initial_seed=initial_seed),
-        RandomCrawler(graph, initial_seed=initial_seed),
+        # RandomWalkCrawler(graph, initial_seed=initial_seed),
+        # RandomCrawler(graph, initial_seed=initial_seed),
 
         # ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
         DepthFirstSearchCrawler(graph, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.1, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.25, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.5, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.75, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.9, initial_seed=initial_seed),
+        # SnowBallSampling(graph, p=0.1, initial_seed=initial_seed),
+        # SnowBallSampling(graph, p=0.25, initial_seed=initial_seed),
+        # SnowBallSampling(graph, p=0.5, initial_seed=initial_seed),
+        # SnowBallSampling(graph, p=0.75, initial_seed=initial_seed),
+        # SnowBallSampling(graph, p=0.9, initial_seed=initial_seed),
         BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),  # is like take SBS with p=1
 
-        MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed),
-        MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=10, initial_seed=initial_seed),
-        MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=100, initial_seed=initial_seed),
-        MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed),
-        MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=10000, initial_seed=initial_seed),
+        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed),
+        # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
+        # MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
+        # MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed),
+        # MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed),
+        #
+        # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed),
+        # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
+        # PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
+        # PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed),
+        # PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed),
 
-        PreferentialObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed),
-        PreferentialObservedDegreeCrawler(graph, skl_mode=True, batch=10, initial_seed=initial_seed),
-        PreferentialObservedDegreeCrawler(graph, skl_mode=True, batch=100, initial_seed=initial_seed),
-        PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed),
-        PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed),
+        # MultiCrawler(graph, crawlers=[
+        #      PreferentialObservedDegreeCrawler(graph, batch=10) for i in range(2)]),
 
         # MultiCrawler(graph, crawlers=[
         #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=100) for i in range(2)]),
@@ -351,7 +354,6 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
         #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=100) for i in range(100)]),
     ]
     logging.info([c.name for c in crawlers])
-    # change target set to calculate another metric
     metrics = []
     target_set = {}  # {i.name: set() for i in statistics}
     for target_statistics in statistics:
@@ -359,9 +361,9 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
         # creating metrics and giving callable function to it (here - total fraction of nodes)
         # metrics.append(Metric(r'observed' + target_statistics.name, lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]))
         metrics.append(Metric(r'crawled_' + target_statistics.name,  # TODO rename crawled to observed
-                              lambda crawler, t: len(t.intersection(crawler.crawled_set)) / len(t),
-                              t=target_set))
-        # TODO calculate intersection with observed set
+                              lambda crawler, t: len(t.intersection(crawler.crawled_set)) / len(t), t=target_set
+                              ))
+
         # print(metrics[-1], target_set)
     if animated == True:
         ci = AnimatedCrawlerRunner(graph,
@@ -381,22 +383,26 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
-    # graph_name = 'digg-friends' # with 261489 nodes and 1536577 edges
-    # graph_name = 'douban' # http://konect.uni-koblenz.de/networks/douban
+    # graph_name = 'digg-friends'   # with 261489 nodes and 1536577 edges
+    # graph_name = 'douban' #           with 154908 nodes and 327162 edges
     # graph_name = 'ego-gplus' # http://konect.uni-koblenz.de/networks/ego-gplus
     # graph_name = 'slashdot-threads' # N=51083, V=116573.  use step=100,
-    # graph_name = 'facebook-wosn-links'
-    graph_name = 'slashdot-threads'  # with 2000 nodes and 16098 edges
+    # graph_name = 'facebook-wosn-links' #  with 63392 nodes and 816831 edges
+    graph_name = 'petster-hamster'  # with 2000 nodes and 16098 edges
     g = GraphCollections.get(graph_name, giant_only=True)
+
+    # graph_name = 'mipt'  #  with 14313 nodes and 488852 edges
+    # g = GraphCollections.get(graph_name, 'other', giant_only=True)
+
     # g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
     print('Graph {} with {} nodes and {} edges'.format(graph_name, g.snap.GetNodes(), g.snap.GetEdges()))
     # from crawlers.multiseed import test_carpet_graph, MultiCrawler
     # x,y = 7,7
     # graph_name = 'carpet_graph_'+str(x)+'_'+str(y)
     # g, layout_pos = test_carpet_graph(x,y)  # GraphCollections.get(name)
-
-    for exp in range(4):
-        logging.info('Running iteration {}'.format(exp))
+    iterations = 10
+    for exp in range(iterations):
+        logging.info('Running iteration {}/'.format(exp, iterations))
         test_runner(g,
                     animated=False,
                     statistics=[s for s in Stat if 'DISTR' in s.name],
