@@ -1,3 +1,5 @@
+from time import time
+
 from cyth.build_cython import build_cython  # in order to compile all needed cython files
 
 import logging
@@ -12,6 +14,8 @@ from sortedcontainers import SortedKeyList
 
 from cyth.node_deg_set import ND_Set
 from graph_io import MyGraph, GraphCollections
+
+logger = logging.getLogger(__name__)
 
 
 class Crawler(object):
@@ -52,18 +56,20 @@ class Crawler(object):
         """ Get nodes' ids of observed graph (crawled and observed). """
         return self._observed_set
 
-    def crawl(self, seed: int) -> bool:
+    def crawl(self, seed: int) -> set:
         """
         Crawl specified node. The observed graph is updated, also crawled and observed set.
         :param seed: node id to crawl
-        :return: whether the node was crawled
+        :return: set of newly seen nodes
         """
         seed = int(seed)  # convert possible int64 to int, since snap functions would get error
+        res = set()  # here will be new seen nodes
         if seed in self.crawled_set:
-            logging.debug("Already crawled: %s" % seed)
-            return False  # if already crawled - do nothing
+            logger.debug("Already crawled: %s" % seed)
+            return res  # if already crawled - return empty set
+        logger.debug("Crawled: %s" % seed)
 
-        self.seed_sequence_.append(seed)
+        self.seed_sequence_.append(seed)  # for debugging only
         self.crawled_set.add(seed)
         g = self.observed_graph.snap
         if g.IsNode(seed):  # remove from observed set
@@ -76,8 +82,9 @@ class Crawler(object):
             if not g.IsNode(n):  # add to observed graph and observed set
                 g.AddNode(n)
                 self._observed_set.add(n)
+                res.add(n)
             g.AddEdge(seed, n)
-        return True
+        return res
 
     def next_seed(self) -> int:
         """
@@ -98,8 +105,9 @@ class Crawler(object):
         :return:
         """
         for _ in range(budget):
-            while not self.crawl(self.next_seed()):
-                continue
+            self.crawl(self.next_seed())
+            # while not self.crawl(self.next_seed()):
+            #     continue
 
 
 class CrawlerException(Exception):
@@ -198,14 +206,15 @@ class BreadthFirstSearchCrawler(Crawler):
 
     def crawl(self, seed):
         res = super().crawl(seed)
-        if res:
-            [self.bfs_queue.append(n) for n in self.orig_graph.neighbors(seed)
-             if n in self._observed_set]
-            # if n not in self.crawled_set]  # not work in multiseed
+        [self.bfs_queue.append(n) for n in res]
+        # if res:
+        #     [self.bfs_queue.append(n) for n in self.orig_graph.neighbors(seed)
+        #      if n in self._observed_set]
+        #     # if n not in self.crawled_set]  # not work in multiseed
         return res
 
 
-class SnowBallSampling(Crawler):
+class SnowBallCrawler(Crawler):
     def __init__(self, graph: MyGraph, p=0.5, initial_seed=None, **kwargs):
         """
         Every step of BFS taking neighbors with probability p.
@@ -215,7 +224,7 @@ class SnowBallSampling(Crawler):
          node. If None is given, a random node of original graph will be used.
         :param p: probability of taking neighbor into queue
         """
-        super().__init__(graph, name='SBS%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
+        super().__init__(graph, name='SBC%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
         if len(self.observed_set) == 0:
             if initial_seed is None:
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
@@ -241,17 +250,20 @@ class SnowBallSampling(Crawler):
 
     def crawl(self, seed):
         res = super().crawl(seed)
-        if res:
-            neighbors = self.orig_graph.neighbors(seed)
-            binomial_map = np.random.binomial(1, p=self.p, size=len(neighbors))
-            # print('seed', seed, [(i, j) for i,j in zip(neighbors, binomial_map)], self.sbs_backlog)
-            [self.sbs_queue.append(n) for n in self.orig_graph.neighbors(seed)
-             if (n in self.observed_set) and (binomial_map[neighbors.index(n)] == 1)]
+        for n in res:
+            self.sbs_queue.append(n) if np.random.random() < self.p else self.sbs_backlog.add(n)
 
-            # to store observed nodes
-            [self.sbs_backlog.add(n) for n in self.orig_graph.neighbors(seed)
-             if (n in self.observed_set) and (binomial_map[neighbors.index(n)] == 0)]
-            # if n not in self.crawled_set]  # not work in multiseed
+        # if res:
+        #     neighbors = self.orig_graph.neighbors(seed)
+        #     binomial_map = np.random.binomial(1, p=self.p, size=len(neighbors))
+        #     # print('seed', seed, [(i, j) for i,j in zip(neighbors, binomial_map)], self.sbs_backlog)
+        #     [self.sbs_queue.append(n) for n in self.orig_graph.neighbors(seed)
+        #      if (n in self.observed_set) and (binomial_map[neighbors.index(n)] == 1)]
+        #
+        #     # to store observed nodes
+        #     [self.sbs_backlog.add(n) for n in self.orig_graph.neighbors(seed)
+        #      if (n in self.observed_set) and (binomial_map[neighbors.index(n)] == 0)]
+        #     # if n not in self.crawled_set]  # not work in multiseed
         return res
 
 
@@ -282,15 +294,16 @@ class DepthFirstSearchCrawler(Crawler):
 
     def crawl(self, seed):
         res = super().crawl(seed)
-        if res:
-            [self.dfs_queue.append(n) for n in self.orig_graph.neighbors(seed)
-             if n in self._observed_set]
-             # if n not in self.crawled_set]  # not work in multiseed
+        [self.dfs_queue.append(n) for n in res]
+        # if res:
+        #     [self.dfs_queue.append(n) for n in self.orig_graph.neighbors(seed)
+        #      if n in self._observed_set]
+        #      # if n not in self.crawled_set]  # not work in multiseed
         return res
 
 
 class MaximumObservedDegreeCrawler(Crawler):
-    def __init__(self, graph: MyGraph, batch=1, initial_seed=None, skl_mode=True, **kwargs):
+    def __init__(self, graph: MyGraph, batch=1, initial_seed=None, skl_mode=True, name=None, **kwargs):
         """
         :param batch: batch size
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
@@ -300,7 +313,7 @@ class MaximumObservedDegreeCrawler(Crawler):
           (Prefer SKL when: n=5K if b<50, n=50K if b<500, n=250K if b<1500).
            Do not use SKL in multiseed mode!
         """
-        super().__init__(graph, name='MOD%s' % (batch if batch > 1 else ''), **kwargs)
+        super().__init__(graph, name=name if name else 'MOD%s' % (batch if batch > 1 else ''), **kwargs)
 
         if len(self._observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
@@ -312,41 +325,31 @@ class MaximumObservedDegreeCrawler(Crawler):
         self.mod_queue = deque()
 
         if skl_mode:
-            g = self.observed_graph.snap  # seems to have no effect
-            self.observed_skl = ND_Set(self._observed_set, key=lambda node: (g.GetNI(node).GetDeg()))  # for ND_Set
-            # self.observed_skl = SortedKeyList(self._observed_set, key=lambda node: (g.GetNI(node).GetDeg(), node))  # for SKL
+            self.observed_skl = ND_Set([(n, self.observed_graph.snap.GetNI(n).GetDeg()) for n in self._observed_set])  # for ND_Set
+            # self.observed_skl = SortedKeyList(self._observed_set, key=lambda node: (self.observed_graph.snap.GetNI(node).GetDeg(), node))  # for SKL
             self.crawl = self.skl_crawl
             self.next_seed = self.skl_next_seed
 
-    def skl_crawl(self, seed: int) -> bool:
+    def update(self, nodes):
+        """ Update priority structures with specified nodes (suggested their degrees have changed).
+        """
+        g = self.observed_graph.snap
+        for n in nodes:
+            assert n in self._observed_set  # FIXME for debugging
+            d = g.GetNI(n).GetDeg()
+            logger.debug("%s.SKL.updating(%s, %s)" % (self.name, n, d))
+            self.observed_skl.update(n, d)
+
+    def skl_crawl(self, seed: int) -> set:
         """ Crawl specified node and update observed SortedKeyList
         """
-        seed = int(seed)  # convert possible int64 to int, since snap functions would get error
-        if seed in self.crawled_set:
-            # print("already %d" % seed)
-            return False  # if already crawled - do nothing
-        # print("crawled %d" % seed)
-        self.seed_sequence_.append(seed)
-        self.crawled_set.add(seed)
-        g = self.observed_graph.snap
-        if g.IsNode(seed):  # remove from observed set
-            self._observed_set.remove(seed)
-            dsd = self.observed_skl.discard(seed)  # FIXME still need for ND_Set due to neighbors added in case of batch>1. can improve?
-            # print(seed, dsd)
-        else:  # add to observed graph
-            g.AddNode(seed)
-
-        # iterate over neighbours
-        for n in self.orig_graph.neighbors(seed):
-            n = int(n)
-            if not g.IsNode(n):  # add to observed graph and observed set
-                g.AddNode(n)
-                self._observed_set.add(n)
-            self.observed_skl.discard(n)
-            g.AddEdge(seed, n)  # this is why we can't make it via super().crawl
-            if n not in self.crawled_set:
-                self.observed_skl.add(n)
-        return True
+        # t = time()
+        res = super().crawl(seed)
+        # print("%s in %s" % (len(self.observed_graph.neighbors(seed)), len(self._observed_set)))
+        self.update([n for n in self.observed_graph.neighbors(seed) if n in self._observed_set])
+        # logger.debug("%s.%s" % (self.name, self.observed_skl))
+        # print((time()-t))
+        return res
 
     def skl_next_seed(self):
         """ Next node is taken as SortedKeyList top
@@ -357,7 +360,7 @@ class MaximumObservedDegreeCrawler(Crawler):
                 raise NoNextSeedError()
             # self.mod_queue = deque(self.observed_skl[-self.batch:])  # for SKL
             self.mod_queue = deque(self.observed_skl.top(self.batch))  # for ND_Set
-            logging.debug("MOD queue: %s" % self.mod_queue)
+            logger.debug("%s.queue: %s" % (self.name, self.mod_queue))
         return self.mod_queue.pop()
 
     def next_seed(self):
@@ -372,10 +375,8 @@ class MaximumObservedDegreeCrawler(Crawler):
 
             min_iter = min(self.batch, len(deg_dict))
             [self.mod_queue.append(n) for n, _ in
-             sorted(deg_dict.items(), key=itemgetter(1), reverse=True)[:min_iter]]  # FIXME check!
-            # heap = [(-value, key) for key, value in deg_dict.items()]
-            # self.mod_queue = [heapq.nsmallest(self.batch, heap)[i][1] for i in range(min_iter)]  # FIXME check!
-            logging.debug("MOD queue: %s" % self.mod_queue)
+             sorted(deg_dict.items(), key=itemgetter(1), reverse=True)[:min_iter]]
+            logger.debug("MOD queue: %s" % self.mod_queue)
         return self.mod_queue.pop()
 
 
@@ -507,8 +508,9 @@ def test_crawler_times():
     from time import time
 
     n = 50000
+    # g = GraphCollections.get('digg-friends')
     g = GraphCollections.get('soc-pokec-relationships')
-    s = g.snap
+    # s = g.snap
     crawler = MaximumObservedDegreeCrawler(g, batch=1, skl_mode=True, initial_seed=1)
     t = time()
     for i in range(n):
@@ -549,7 +551,50 @@ def test_crawler_times():
     # print("%.3f ms" % ((time()-t)*1000))
 
 
+def test_numpy_times():
+    from time import time
+
+    n = 1000000
+    res = 100
+    p = 0.1
+
+    # t = time()
+    # for i in range(n):
+    #     a = []
+    #     for j in range(res):
+    #         if np.random.random() < p:
+    #             a.append(1)
+    #         else:
+    #             a.append(0)
+    # print("%.3f ms" % ((time()-t)*1000))
+    #
+    # t = time()
+    # for i in range(n):
+    #     a = []
+    #     neighbors = list(range(res))
+    #     binomial_map = np.random.binomial(1, p=p, size=len(neighbors))
+    #     [a.append(1) for j in neighbors if (binomial_map[neighbors.index(j)] == 1)]
+    #     [a.append(0) for j in neighbors if (binomial_map[neighbors.index(j)] == 0)]
+    #
+    # print("%.3f ms" % ((time()-t)*1000))
+
+    t = time()
+    for i in range(n):
+        a = set()
+        for k in range(100):
+            a.add(k)
+    print("%.3f ms" % ((time()-t)*1000))
+
+    t = time()
+    for i in range(n):
+        a = set()
+        a.update(range(100))
+
+    print("%.3f ms" % ((time()-t)*1000))
+
+
 if __name__ == '__main__':
     # test_crawlers()
     # test_snap_times()
     test_crawler_times()
+    # test_numpy_times()

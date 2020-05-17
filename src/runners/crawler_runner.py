@@ -2,19 +2,17 @@ import datetime
 import glob
 import json
 import os
-from math import ceil, log
+from math import ceil
 import logging
 import imageio
 import networkx as nx
-# import snap
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-from crawlers.advanced import CrawlerWithAnswer
 from crawlers.basic import DepthFirstSearchCrawler, RandomWalkCrawler, MaximumObservedDegreeCrawler, \
-    PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler, SnowBallSampling
-from crawlers.multiseed import MultiCrawler
+    PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, SnowBallCrawler
 # ForestFireCrawler
+from runners.animated_runner import AnimatedCrawlerRunner, Metric
 from graph_io import GraphCollections
 from graph_io import MyGraph
 from statistics import Stat
@@ -39,96 +37,6 @@ def make_gif(crawler_name, duration=1):
     name = file_path + "{}.gif".format(crawler_name)
     imageio.mimsave(name, images, duration=0.2 * duration, loop=2)
     logging.info("made gif " + name)
-
-
-class Metric:
-    def __init__(self, name, callback, **kwargs):
-        self.name = name
-        self._callback = callback
-        self.kwargs = kwargs
-        # for arg, value in kwargs.items():
-        #     setattr(self, arg, value)
-
-    def __call__(self, crawler: Crawler):
-        return self._callback(crawler, **self.kwargs)
-
-
-# TODO need to check several statistics / metrics
-class AnimatedCrawlerRunner:
-    def __init__(self, graph: MyGraph, crawlers, metrics, budget=-1, step=1):
-        """
-        :param graph:
-        :param crawlers: list of crawlers to run
-        :param metrics: list of metrics to compute at each step. Metric should be callable function
-         crawler -> float, and have name
-        :param budget: maximal number of nodes to be crawled, by default the whole graph
-        :param step: compute metrics each `step` steps
-        :return:
-        """
-        self.graph = graph
-        g = self.graph.snap
-        for crawler in crawlers:
-            assert crawler.orig_graph == graph
-        self.crawlers = crawlers
-        self.metrics = metrics
-        self.budget = budget if budget > 0 else g.GetNodes()
-        assert step < self.budget
-        self.step = step
-        self.nrows = 1
-        self.ncols = 1
-        scale = 5
-        # if len(self.crawlers) > 1:
-        #     self.nrows = 2
-        # self.ncols = ceil(len(self.crawlers) / self.nrows)
-
-        plt.figure("Graph %s:  N=%d, E=%d, d_max=%d" % (
-            self.graph.name, graph[Stat.NODES], graph[Stat.EDGES], graph[Stat.MAX_DEGREE]),
-                   figsize=(1 + scale * self.ncols, scale * self.nrows))
-
-    def run(self):
-        linestyles = ['-', '--', ':']
-        colors = ['b', 'g', 'r', 'c', 'm', 'y']
-
-        step_seq = []
-        crawler_metric_seq = dict([(c, dict([(m, []) for m in self.metrics])) for c in self.crawlers])
-
-        i = 0
-        while i < self.budget:
-            batch = min(self.step, self.budget - i)
-            i += batch
-            step_seq.append(i)
-
-            plt.cla()
-            for c, crawler in enumerate(self.crawlers):
-                crawler.crawl_budget(budget=batch)
-                if isinstance(crawler, CrawlerWithAnswer):
-                    crawler._compute_answer()
-
-                for m, metric in enumerate(self.metrics):
-                    metric_seq = crawler_metric_seq[crawler][metric]
-                    metric_seq.append(metric(crawler))
-                    plt.plot(step_seq, metric_seq, marker='.',
-                             linestyle=linestyles[m % len(linestyles)],
-                             color=colors[c % len(colors)],
-                             label=r'%s, %s' % (crawler.name, metric.name))
-
-            plt.legend()
-            plt.ylim((0, 1))
-            plt.xlabel('iteration, n')
-            plt.ylabel('metric value')
-            plt.grid()
-            plt.tight_layout()
-            plt.pause(0.001)
-
-        file_path = os.path.join(RESULT_DIR, self.graph.name, 'crawling_plot')
-        if not os.path.exists(file_path):
-            os.makedirs(file_path)
-        for metric in self.metrics:
-            file_name = os.path.join(file_path, metric.name + ':' +
-                                     ','.join([crawler.name for crawler in self.crawlers]) + 'animated.png')
-            logging.info('Saved pic ' + file_name)
-            plt.savefig(file_name)
-        plt.show()
 
 
 class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
@@ -322,11 +230,11 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
 
         # ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
         DepthFirstSearchCrawler(graph, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.1, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.25, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.5, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.75, initial_seed=initial_seed),
-        SnowBallSampling(graph, p=0.9, initial_seed=initial_seed),
+        SnowBallCrawler(graph, p=0.1, initial_seed=initial_seed),
+        SnowBallCrawler(graph, p=0.25, initial_seed=initial_seed),
+        SnowBallCrawler(graph, p=0.5, initial_seed=initial_seed),
+        SnowBallCrawler(graph, p=0.75, initial_seed=initial_seed),
+        SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed),
         BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),  # is like take SBS with p=1
 
         MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed),
@@ -358,9 +266,10 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
         target_set = set(get_top_centrality_nodes(graph, target_statistics, count=int(0.1 * graph[Stat.NODES])))
         # creating metrics and giving callable function to it (here - total fraction of nodes)
         # metrics.append(Metric(r'observed' + target_statistics.name, lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]))
-        metrics.append(Metric(r'crawled_' + target_statistics.name,  # TODO rename crawled to observed
-                              lambda crawler, t: len(t.intersection(crawler.crawled_set)) / len(t),
-                              t=target_set))
+        metrics.append(
+            Metric(r'crawled_' + target_statistics.name,  # TODO rename crawled to observed
+                   lambda crawler, t: len(t.intersection(crawler.crawled_set)) / len(t),
+                   t=target_set))
         # TODO calculate intersection with observed set
         # print(metrics[-1], target_set)
     if animated == True:

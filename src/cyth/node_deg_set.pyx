@@ -18,7 +18,8 @@ cdef extern from "nd_set.cpp":
             bint operator!=(reverse_iterator)
         IntPair_Set()
         bint add(int node, int deg)
-        bint remove(int node, int deg)
+        # bint remove(int node, int deg)
+        bint update(int node, int deg)
         # int pop()
         pair[int, int] pop()
         bint empty()
@@ -26,34 +27,44 @@ cdef extern from "nd_set.cpp":
         iterator begin()
         iterator end()
         reverse_iterator rbegin()
+        void print_me()
 
 
 cdef class ND_Set:
     cdef IntPair_Set ipset
-    cpdef key
 
-    def __init__(self, iterable=None, key=id):
+    def __init__(self, iterable=None):
         self.ipset = IntPair_Set()
-        self.key = key
 
         print(iterable)
         if iterable is not None:
-            for node in iterable:
-                deg = key(node)
+            for node, deg in iterable:
+                # deg = key(node)
                 self.ipset.add(node, deg)
 
-    cpdef bint add(self, int node):
-        deg = self.key(node)
+    cpdef bint add(self, int node, int deg):
         # print("Add %d, %d" % (node, deg))
         return self.ipset.add(node, deg)
 
-    cpdef bint remove(self, int node, int deg):
-        # print("Remove %d, %d" % (node, deg))
-        return self.ipset.remove(node, deg)
+    # cpdef bint remove(self, int node, int deg):
+    #     # print("Remove %d, %d" % (node, deg))
+    #     return self.ipset.remove(node, deg)
 
-    cpdef bint discard(self, int node):
-        deg = self.key(node)
-        return self.remove(node, deg)
+    cpdef bint update(self, int node, int deg):
+        """
+        Update node in set with a new degree. Or inserts if didn't exist.
+        :param node: node id
+        :param deg: new degree
+        :return: True if node existed False otherwise
+        """
+        # if pr:
+        #     print("C updating (%s, %s)" % (node, deg))
+        #     self.ipset.print_me()
+        # res = self.ipset.update(node, deg)
+        # if pr:
+        #     print("C updated:")
+        #     self.ipset.print_me()
+        return self.ipset.update(node, deg)
 
     # cpdef bint remove(self, int node, int deg):
     #     return self.ipset.remove(node, deg)
@@ -116,12 +127,12 @@ cdef class ND_Set:
     #             return res
     #         raise NotImplementedError()
 
-
 def key(n):
     return 20*(n)
 
 cpdef test_ndset():
     # from cyth.cskl import SKL
+
 
     elems = [(1, 40),
              (4, 30),

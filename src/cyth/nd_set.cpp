@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <map>
 #include <algorithm>    // std::swap, std::binary_search
 
 using namespace std;
@@ -8,23 +9,63 @@ using namespace std;
 
 class IntPair_Set : public set<pair<int, int>>
 {
+    private:
+        map<int, int> node_deg_map;
+
     public:
         IntPair_Set() {};
 
         bool inline add(int node, int deg) {
             auto it_res = insert(pair<int, int>(deg, node));
+            node_deg_map[node] = deg;
             return it_res.second;
         }
 
-        bool remove(int node, int deg){
-            return erase(pair<int, int>(deg, node));
+//        /// remove node->deg entry
+//        bool remove(int node, int deg){
+//            // remove from map if present
+//            auto it = node_deg_map.find(node);
+//            if (it != node_deg_map.end())
+//                node_deg_map.erase(it);
+//            // remove from set, return true if success
+//            return erase(pair<int, int>(deg, node)) > 0;
+//        }
+
+        /// update node entry with a new degree. Returns true if element was replaced.
+        bool update(int node, int new_deg) {
+            // detect degree in map
+            auto it = node_deg_map.find(node);
+            if (it != node_deg_map.end()) {
+                int old_deg = it->second;
+//                node_deg_map.emplace_hint(it, node, new_deg); // TODO may be faster?
+                node_deg_map[node] = new_deg;
+                erase(pair<int, int>(old_deg, node));
+                insert(pair<int, int>(new_deg, node));
+                return true;
+            }
+            node_deg_map[node] = new_deg;
+            insert(pair<int, int>(new_deg, node));
+            return false;
         }
 
         pair<int, int> pop() {
             auto r = --end();
             pair<int, int> res = *r;
             erase(r);
+            node_deg_map.erase(r->second);
             return res;
+        }
+
+        void print_me() {
+            printf("set (deg, node): ");
+            for (auto it = begin(); it != end(); ++it) {
+                std::cout << it->first << ',' << it->second << ' ';
+            }
+            printf("\nmap (node -> deg): ");
+            for(auto n : node_deg_map) {
+                std::cout << n.first << "->" << n.second << ' ';
+            }
+            printf("\n");
         }
 };
 
@@ -44,13 +85,14 @@ int main(int argc, char *argv[])
 //    for(int i=1; i<10; ++i) {
 //        l.push_back(pair<int, int>(i, 10*i));
 //    }
-    l.push_back(pair<int, int>(3, 30));
-    l.push_back(pair<int, int>(5, 10));
-    l.push_back(pair<int, int>(4, 10));
-    l.push_back(pair<int, int>(1, 10));
-    l.push_back(pair<int, int>(2, 20));
+    l.push_back(pair<int, int>(3, 1));
+    l.push_back(pair<int, int>(15, 1));
+    l.push_back(pair<int, int>(16, 1));
+    l.push_back(pair<int, int>(41, 1));
+    l.push_back(pair<int, int>(51, 1));
+    l.push_back(pair<int, int>(21, 2));
+    l.push_back(pair<int, int>(11, 3));
 
-//    priority_queue<int, vector<int>, function<bool(int, int)>> cpq = priority_queue<int, vector<int>, function<bool(int, int)>>(cmp);
     IntPair_Set cpq = IntPair_Set();
 
     for (pair<int, int> e : l) {
@@ -58,34 +100,137 @@ int main(int argc, char *argv[])
         cpq.add(e.first, e.second);
     }
 
-//    for (int i : l)
-//        printf("%d, ", i);
-//
-//    int e = 10;
-//    printf("pos of %d is %d\n", e, find<int>(l, e, cmp));
-
-
-//    while(!cpq.empty()) {
-//        int a = cpq.top();
-//        cpq.pop();
-//        printf("1:%d\n", a);
-//    }
-
-    for(pair<int, int> n : cpq) {
-        std::cout << n.first << ',' << n.second << ' ';
-    }
+    cpq.print_me();
 //    printf("back: %d\n", cpq.back());
 //    printf("back: %d\n", cpq.back());
 //    printf("back: %d\n", cpq.back());
 //
-    pair<int, int> r = pair<int, int>(3, 10);
-    printf("removing (%d, %d)\n", r.first, r.second);
-    cpq.remove(r.first, r.second);
-//    pair<int, int> a = cpq.pop();
 
-    for(pair<int, int> n : cpq) {
-        std::cout << n.first << ',' << n.second << ' ';
-    }
+//C updating (11, 1)
+//C updating (15, 1)
+//C updating (16, 1)
+//C updating (41, 1)
+//C updating (43, 1)
+//C updating (48, 1)
+//C updating (11, 2)
+//C updating (21, 1)
+//C updating (31, 1)
+//C updating (43, 2)
+//C updating (21, 2)
+//C updating (31, 2)
+//C updating (3, 1)
+//C updating (11, 3)
+//C updating (31, 3)
+//C updating (51, 1)
+//C updating (3, 2)
+//C updating (30, 1)
+//C updating (41, 2)
+
+    pair<int, int> r;
+    r = pair<int, int>(11, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(15, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(16, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(41, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(43, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(48, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(11, 2);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(21, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(31, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(43, 2);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(21, 2);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(31, 2);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(3, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(11, 3);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(31, 3);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(51, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(3, 2);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(30, 1);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    r = pair<int, int>(41, 2);
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+    printf("updating (%d, %d)\n", r.first, r.second);
+    cpq.update(r.first, r.second);
+    cpq.print_me();
+
+//    r = pair<int, int>(7, 10);
+//    printf("updating (%d, %d)\n", r.first, r.second);
+//    cpq.update(r.first, r.second);
+//
+//    cpq.print_me();
 
 //    while(!cpq.empty()) {
 //        int a = cpq.top();

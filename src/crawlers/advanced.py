@@ -182,6 +182,8 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
     def crawl(self, seed: int) -> bool:
         """ Apply MOD when time comes
         """
+        raise NotImplementedError()
+        # FIXME res is set now
         if self.mod is None:
             return super().crawl(seed)
         res = self.mod.crawl(seed)
@@ -252,6 +254,8 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
     def crawl(self, seed: int) -> bool:
         """ Apply MOD when time comes
         """
+        raise NotImplementedError()
+        # FIXME res is set now
         if self.subcrawler is None:
             return super().crawl(seed)
         res = self.subcrawler.crawl(seed)
