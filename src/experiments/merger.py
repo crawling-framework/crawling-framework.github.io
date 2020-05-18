@@ -147,7 +147,7 @@ def draw_auc(filter_only='', without_crawlers=set()):
                             figsize=(20, 10), )
     # fig.text(0.5, 0.00, 'method', ha='center')
     fig.text(0.02, 0.5, 'AUCC score', va='center', rotation='vertical')
-
+    mini = 1
     plt.subplots_adjust(left=0.06, bottom=0.1, right=0.98, top=0.93, wspace=0.03, hspace=0.08)
     for i, graph_name in enumerate(graph_names):
         stat_names = list(calculated_aucs[graph_name].keys())
@@ -160,18 +160,18 @@ def draw_auc(filter_only='', without_crawlers=set()):
                     if method_name in calculated_aucs[graph_name][stat_name].keys():
                         auc_avg.append(
                             calculated_aucs[graph_name][stat_name][method_name])  # for method_name in method_names]
+                        mini = min(mini, calculated_aucs[graph_name][stat_name][method_name])
                     else:
                         auc_avg.append(0)  # calculated_aucs[graph_name][stat_name][method_name] = 0
 
-            plt.ylim(0.5, 1)
+            plt.ylim(mini, 1)
             plt.plot(method_names, auc_avg, color=['r', 'y', 'g', 'cyan', 'magenta', 'b'][c])
             plt.scatter(method_names, auc_avg, color=['r', 'y', 'g', 'cyan', 'magenta', 'b'][c], label=stat_name, )
 
         plt.legend()
         plt.title(graph_name + ' with {} nodes'.format(graphs_sizes[graph_name]))
-        plt.xticks(rotation=90)
+        plt.xticks(rotation=75)
         plt.grid()
-
     plt.gca()
 
     plt.savefig(os.path.join(RESULT_DIR, 'aucs.png'))
@@ -194,7 +194,9 @@ if __name__ == '__main__':
     for graph_name in tqdm(graphs):
         merge(graph_name, show=False, set_x_scale='', filter_budget=0,
               # filter_only='POD',
-              # without_crawlers={'Multi_BFS;BFS'},
+              # without_crawlers={'MOD10', 'MOD100', 'MOD1000', 'MOD10000',
+              #                   'POD10', 'POD100', 'POD1000', 'POD10000',
+              #                   'SBS10', 'SBS90',  'SBS25',   'SBS75'},
               # {'RW_', 'DFS', 'RC_', 'SBS10', 'POD100', 'POD', 'POD10'}
               )
 
