@@ -19,7 +19,8 @@ cdef extern from "nd_set.cpp":
         IntPair_Set()
         bint add(int node, int deg)
         # bint remove(int node, int deg)
-        bint update(int node, int deg)
+        # bint update(int node, int deg)
+        bint update_1(int node, int deg)
         # int pop()
         pair[int, int] pop()
         bint empty()
@@ -50,22 +51,24 @@ cdef class ND_Set:
     #     # print("Remove %d, %d" % (node, deg))
     #     return self.ipset.remove(node, deg)
 
-    cpdef bint update(self, int node, int deg):
+    cpdef bint update_1(self, int node, int deg):
         """
-        Update node in set with a new degree. Or inserts if didn't exist.
+        Update node degree by 1. Or inserts if didn't exist.
         :param node: node id
-        :param deg: new degree
+        :param deg: old degree
         :return: True if node existed False otherwise
         """
-        # if pr:
-        #     print("C updating (%s, %s)" % (node, deg))
-        #     self.ipset.print_me()
-        # res = self.ipset.update(node, deg)
-        # if pr:
-        #     print("C updated:")
-        #     self.ipset.print_me()
-        return self.ipset.update(node, deg)
+        return self.ipset.update_1(node, deg)
 
+    # cpdef bint update(self, int node, int deg):
+    #     """
+    #     Update node in set with a new degree. Or inserts if didn't exist.
+    #     :param node: node id
+    #     :param deg: new degree
+    #     :return: True if node existed False otherwise
+    #     """
+    #     return self.ipset.update(node, deg)
+    #
     # cpdef bint remove(self, int node, int deg):
     #     return self.ipset.remove(node, deg)
     #

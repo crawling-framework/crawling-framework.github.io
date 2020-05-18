@@ -9,11 +9,45 @@ using namespace std;
 
 class IntPair_Set : public set<pair<int, int>>
 {
+    public:
+        IntPair_Set() {};
+
+        bool inline add(int node, int deg) {
+            auto it_res = insert(pair<int, int>(deg, node));
+            return it_res.second;
+        }
+
+        /// update degree of node entry by 1. Returns true if element was replaced.
+        bool update_1(int node, int deg) {
+            int r = erase(pair<int, int>(deg, node));
+            insert(pair<int, int>(deg+1, node));
+            return r > 0;
+        }
+
+        pair<int, int> pop() {
+            auto r = --end();
+            pair<int, int> res = *r;
+            erase(r);
+            return res;
+        }
+
+        void print_me() {
+            printf("set (deg, node): ");
+            for (auto it = begin(); it != end(); ++it) {
+                std::cout << it->first << ',' << it->second << ' ';
+            }
+            printf("\n");
+        }
+};
+
+
+class IntPair_Set_With_Map : public set<pair<int, int>>
+{
     private:
         map<int, int> node_deg_map;
 
     public:
-        IntPair_Set() {};
+        IntPair_Set_With_Map() {};
 
         bool inline add(int node, int deg) {
             auto it_res = insert(pair<int, int>(deg, node));
@@ -93,6 +127,7 @@ int main(int argc, char *argv[])
     l.push_back(pair<int, int>(21, 2));
     l.push_back(pair<int, int>(11, 3));
 
+//    IntPair_Set_With_Map cpq = IntPair_Set_With_Map();
     IntPair_Set cpq = IntPair_Set();
 
     for (pair<int, int> e : l) {
@@ -101,130 +136,12 @@ int main(int argc, char *argv[])
     }
 
     cpq.print_me();
-//    printf("back: %d\n", cpq.back());
-//    printf("back: %d\n", cpq.back());
-//    printf("back: %d\n", cpq.back());
-//
 
-//C updating (11, 1)
-//C updating (15, 1)
-//C updating (16, 1)
-//C updating (41, 1)
-//C updating (43, 1)
-//C updating (48, 1)
-//C updating (11, 2)
-//C updating (21, 1)
-//C updating (31, 1)
-//C updating (43, 2)
-//C updating (21, 2)
-//C updating (31, 2)
-//C updating (3, 1)
-//C updating (11, 3)
-//C updating (31, 3)
-//C updating (51, 1)
-//C updating (3, 2)
-//C updating (30, 1)
-//C updating (41, 2)
-
-    pair<int, int> r;
-    r = pair<int, int>(11, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(15, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(16, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(41, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(43, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(48, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(11, 2);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(21, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(31, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(43, 2);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(21, 2);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(31, 2);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(3, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(11, 3);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(31, 3);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(51, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(3, 2);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(30, 1);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    r = pair<int, int>(41, 2);
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
-
-    printf("updating (%d, %d)\n", r.first, r.second);
-    cpq.update(r.first, r.second);
-    cpq.print_me();
+//    pair<int, int> r;
+//    r = pair<int, int>(11, 1);
+//    printf("updating (%d, %d)\n", r.first, r.second);
+//    cpq.update(r.first, r.second);
+//    cpq.print_me();
 
 //    r = pair<int, int>(7, 10);
 //    printf("updating (%d, %d)\n", r.first, r.second);

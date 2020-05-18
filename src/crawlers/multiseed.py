@@ -22,7 +22,8 @@ class MultiCrawler(Crawler):
                          **kwargs)  # taking only first 15 into name
         # assert len(crawlers) > 1
         self.crawlers = crawlers
-        self.node_owner = {}  # node -> index of crawler who owns it
+        self.keep_node_owners = False  # True if any crawler is MOD or POD
+        self.node_owner = {}  # node -> index of crawler who owns it. Need for MOD, POD
 
         # Merge observed graph and crawled set for all crawlers
         g = self.observed_graph.snap
@@ -30,6 +31,8 @@ class MultiCrawler(Crawler):
         o = self._observed_set
         for index, crawler in enumerate(crawlers):
             assert crawler.orig_graph == self.orig_graph
+            if isinstance(crawler, MaximumObservedDegreeCrawler):  # TODO add POD
+                self.keep_node_owners = True
 
             # merge observed graph
             for n in crawler.observed_graph.snap.Nodes():
@@ -56,18 +59,10 @@ class MultiCrawler(Crawler):
             # crawler.observed_set is individual
 
         self.next_crawler = 0  # next crawler index to run
-        logger.debug("Multi. Initial:")
-        for i, c in enumerate(self.crawlers):
-            logger.debug("Multi[%s].SKL: %s" % (i, c.observed_skl))
 
     @property
     def observed_set(self):
-        # TODO it's too expensive in case of many crawlers
         return self._observed_set
-        # res = set()
-        # for c in self.crawlers:
-        #     res = res.union(c.observed_set)
-        # return res
 
     def crawl(self, seed: int) -> set:
         """ Run the next crawler.
@@ -78,20 +73,18 @@ class MultiCrawler(Crawler):
         self._observed_set.remove(seed)  # removed crawled node FIXME potentially error if node was already removed
         self._observed_set.update(res)  # add newly observed nodes
 
-        # update owners dict
-        del self.node_owner[seed]
-        for n in res:
-            self.node_owner[n] = self.crawlers[self.next_crawler]
+        if self.keep_node_owners:
+            # update owners dict
+            del self.node_owner[seed]
+            for n in res:
+                self.node_owner[n] = self.crawlers[self.next_crawler]
 
-        # # distribute nodes with changed degree among instances to update their priority structures
-        # logger.debug("Multi: updating all")
-        # for n in self.observed_graph.neighbors(seed):
-        #     if n in self.node_owner:
-        #         c = self.node_owner[n]
-        #         if c != self.crawlers[self.next_crawler] and isinstance(c, MaximumObservedDegreeCrawler):
-        #             c.update([n])
-        # for i, c in enumerate(self.crawlers):
-        #     logger.debug("Multi[%s].SKL: %s" % (i, c.observed_skl))
+            # distribute nodes with changed degree among instances to update their priority structures
+            for n in self.observed_graph.neighbors(seed):
+                if n in self.node_owner:
+                    c = self.node_owner[n]
+                    if c != self.crawlers[self.next_crawler] and isinstance(c, MaximumObservedDegreeCrawler):
+                        c.update([n])
 
         self.next_crawler = (self.next_crawler+1) % len(self.crawlers)
         self.seed_sequence_.append(seed)

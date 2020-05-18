@@ -335,20 +335,16 @@ class MaximumObservedDegreeCrawler(Crawler):
         """
         g = self.observed_graph.snap
         for n in nodes:
-            assert n in self._observed_set  # FIXME for debugging
+            # assert n in self._observed_set  # Just for debugging
             d = g.GetNI(n).GetDeg()
             logger.debug("%s.SKL.updating(%s, %s)" % (self.name, n, d))
-            self.observed_skl.update(n, d)
+            self.observed_skl.update_1(n, d-1)
 
     def skl_crawl(self, seed: int) -> set:
         """ Crawl specified node and update observed SortedKeyList
         """
-        # t = time()
         res = super().crawl(seed)
-        # print("%s in %s" % (len(self.observed_graph.neighbors(seed)), len(self._observed_set)))
         self.update([n for n in self.observed_graph.neighbors(seed) if n in self._observed_set])
-        # logger.debug("%s.%s" % (self.name, self.observed_skl))
-        # print((time()-t))
         return res
 
     def skl_next_seed(self):
@@ -510,7 +506,7 @@ def test_crawler_times():
     n = 50000
     # g = GraphCollections.get('digg-friends')
     g = GraphCollections.get('soc-pokec-relationships')
-    # s = g.snap
+    s = g.snap
     crawler = MaximumObservedDegreeCrawler(g, batch=1, skl_mode=True, initial_seed=1)
     t = time()
     for i in range(n):
