@@ -100,6 +100,12 @@ cdef class ND_Set:
             inc(it)
         return res
 
+    def __iter__(self):
+        cdef IntPair_Set.iterator it = self.ipset.begin()
+        for _ in range(self.ipset.size()):
+            yield deref(it)
+            inc(it)
+
     cpdef top(self, int size):
         res = []
         while size > 0 and not self.ipset.empty():

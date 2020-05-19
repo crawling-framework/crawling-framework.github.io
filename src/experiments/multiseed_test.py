@@ -17,11 +17,18 @@ def test_multi_mod(graph: MyGraph):
         # RandomCrawler(graph, initial_seed=int(init_nodes[2])),
         # SnowBallCrawler(graph, initial_seed=int(init_nodes[3])),
         MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[4])),
-        # MaximumObservedDegreeCrawler(graph, batch=1),
-        PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[0])),
+        MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=int(init_nodes[5])),
+        MultiCrawler(graph, [
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[i+10])) for i in range(100)
+        ]),
+        MultiCrawler(graph, [
+            MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=int(init_nodes[i+10])) for i in range(100)
+        ]),
         # MultiCrawler(graph, [
-        #     # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[i+10])) for i in range(100)
         #     PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[i+10])) for i in range(100)
+        # ]),
+        # MultiCrawler(graph, [
+        #     PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=int(init_nodes[i+10])) for i in range(100)
         # ]),
     ]
 
@@ -31,7 +38,7 @@ def test_multi_mod(graph: MyGraph):
         # Metric(r'$|V_{all} \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
     ]
 
-    acr = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=50000, step=500)
+    acr = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=50000, step=1000)
     acr.run()
 
 
@@ -43,7 +50,10 @@ if __name__ == '__main__':
 
     # name = 'libimseti'
     # name = 'petster-friendships-cat'
-    name = 'soc-pokec-relationships'
+    # name = 'youtube-u-growth'
+    # name = 'flixster'
+    name = 'flickr-links'
+    # name = 'soc-pokec-relationships'
     # name = 'digg-friends'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'

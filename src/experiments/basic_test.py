@@ -40,7 +40,8 @@ def test_basic(graph):
 def test_multi(graph):
     crawler = MultiCrawler(graph, crawlers=[
         # BreadthFirstSearchCrawler(graph, initial_seed=i+1) for i in range(100)
-        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=i+1) for i in range(10)
+        MaximumObservedDegreeCrawler(graph, name='MOD%s'%i, batch=10, initial_seed=i+1) for i in range(10)
+        # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=i+1) for i in range(10)
         # MaximumObservedDegreeCrawler(graph, name='MOD0', batch=1, initial_seed=1),
         # MaximumObservedDegreeCrawler(graph, name='MOD1', batch=1, initial_seed=2),
     ])
@@ -80,12 +81,14 @@ def test_multi(graph):
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s')
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
-    # logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
 
     # name = 'libimseti'
-    # name = 'petster-friendships-cat'
+    name = 'youtube-u-growth'
+    # name = 'flixster'
+    # name = 'flickr-links'
     # name = 'soc-pokec-relationships'
-    name = 'digg-friends'
+    # name = 'digg-friends'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
     # name = 'petster-hamster'
@@ -94,5 +97,5 @@ if __name__ == '__main__':
     g = GraphCollections.get(name, giant_only=True)
     # g = GraphCollections.get('test', 'other', giant_only=True)
 
-    test_basic(g)
-    # test_multi(g)
+    # test_basic(g)
+    test_multi(g)

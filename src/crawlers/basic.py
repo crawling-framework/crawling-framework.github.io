@@ -324,7 +324,7 @@ class MaximumObservedDegreeCrawler(CrawlerUpdatable):
           (Prefer SKL when: n=5K if b<50, n=50K if b<500, n=250K if b<1500).
            Do not use SKL in multiseed mode!
         """
-        super().__init__(graph, name=name if name else 'MOD%s' % (batch if batch > 1 else ''), **kwargs)
+        super().__init__(graph, name=name if name else 'MOD-%s' % (batch if batch > 1 else ''), **kwargs)
 
         if len(self._observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
@@ -346,9 +346,11 @@ class MaximumObservedDegreeCrawler(CrawlerUpdatable):
         """
         g = self.observed_graph.snap
         for n in nodes:
-            # assert n in self._observed_set  # Just for debugging
+            # assert n in self._observed_set and n not in self.mod_queue  # Just for debugging
+            if n in self.mod_queue:  # already in batch
+                continue
             d = g.GetNI(n).GetDeg()
-            logger.debug("%s.SKL.updating(%s, %s)" % (self.name, n, d))
+            logger.debug("%s.ND_Set.updating(%s, %s)" % (self.name, n, d))
             self.observed_skl.update_1(n, d-1)
 
     def skl_crawl(self, seed: int) -> set:
@@ -397,7 +399,7 @@ class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
             self.observed_graph.snap.AddNode(initial_seed)
 
         self.batch = batch
-        self.pod_queue = list()  # list of nodes to proceed in batch
+        self.pod_queue = set()  # list of nodes to proceed in batch
         g = self.observed_graph.snap
         self.nd_set = ND_Set([(n, g.GetNI(n).GetDeg()) for n in self._observed_set])
 
@@ -407,8 +409,10 @@ class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
         g = self.observed_graph.snap
         for n in nodes:
             # assert n in self._observed_set  # Just for debugging
+            if n in self.pod_queue:  # already in batch
+                continue
             d = g.GetNI(n).GetDeg()
-            logger.debug("%s.SKL.updating(%s, %s)" % (self.name, n, d))
+            logger.debug("%s.ND_Set.updating(%s, %s)" % (self.name, n, d))
             self.nd_set.update_1(n, d - 1)
 
     def crawl(self, seed: int) -> set:
@@ -422,8 +426,8 @@ class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
         if len(self.pod_queue) == 0:  # when batch ends, we create another one
             if len(self._observed_set) == 0:
                 raise NoNextSeedError()
-            self.pod_queue = [self.nd_set.pop_proportional_degree()[1] for _ in
-                              range(min(self.batch, len(self.nd_set)))]
+            self.pod_queue = set([self.nd_set.pop_proportional_degree()[1] for _ in
+                              range(min(self.batch, len(self.nd_set)))])
         return self.pod_queue.pop()
 
 
