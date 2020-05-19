@@ -3,8 +3,10 @@ from abc import ABC
 
 import numpy as np
 
-from crawlers.basic import Crawler, NoNextSeedError
+from crawlers.basic import Crawler, NoNextSeedError, MaximumObservedDegreeCrawler, CrawlerUpdatable
 from graph_io import MyGraph
+
+logger = logging.getLogger(__name__)
 
 
 class MultiCrawler(Crawler):
@@ -20,46 +22,75 @@ class MultiCrawler(Crawler):
                          **kwargs)  # taking only first 15 into name
         # assert len(crawlers) > 1
         self.crawlers = crawlers
+        self.keep_node_owners = False  # True if any crawler is MOD or POD
+        self.node_owner = {}  # node -> index of crawler who owns it. Need for MOD, POD
 
         # Merge observed graph and crawled set for all crawlers
-        o = self.observed_graph.snap
+        g = self.observed_graph.snap
         c = self.crawled_set
-        for crawler in crawlers:
+        o = self._observed_set
+        for index, crawler in enumerate(crawlers):
             assert crawler.orig_graph == self.orig_graph
+            if isinstance(crawler, CrawlerUpdatable):
+                self.keep_node_owners = True
 
             # merge observed graph
             for n in crawler.observed_graph.snap.Nodes():
                 n = n.GetId()
-                if not o.IsNode(n):
-                    o.AddNode(n)
+                if not g.IsNode(n):
+                    g.AddNode(n)
             for edge in crawler.observed_graph.snap.Edges():
                 i, j = edge.GetSrcNId(), edge.GetDstNId()
-                if not o.IsEdge(i, j):
-                    o.AddEdge(i, j)
+                if not g.IsEdge(i, j):
+                    g.AddEdge(i, j)
 
-            # merge crawled_set
+            # merge crawled_set and observed_set
             c = c.union(crawler.crawled_set)
+            assert o.isdisjoint(crawler.observed_set)  # making sure observed_sets are individual FIXME this is for debug, remove it to speedup
+            o = o.union(crawler.observed_set)
+            for n in crawler.observed_set:
+                self.node_owner[n] = index
 
         self.crawled_set = c
+        self._observed_set = o
         for crawler in crawlers:
             crawler.observed_graph = self.observed_graph
             crawler.crawled_set = self.crawled_set
+            # crawler.observed_set is individual
 
         self.next_crawler = 0  # next crawler index to run
 
     @property
     def observed_set(self):
-        # TODO it's too expensive in case of many crawlers
-        res = set()
-        for c in self.crawlers:
-            res = res.union(c.observed_set)
-        return res
+        return self._observed_set
 
-    def crawl(self, seed: int) -> bool:
+    def crawl(self, seed: int) -> set:
         """ Run the next crawler.
         """
+        if seed == 58:
+            pass
         res = self.crawlers[self.next_crawler].crawl(seed)
-        logging.debug("Run crawler[%s]: %s" % (self.next_crawler, res))
+        logger.debug("res of crawler[%s]: %s" % (self.next_crawler, res))
+        assert seed in self.crawled_set
+        self._observed_set.remove(seed)  # removed crawled node FIXME potentially error if node was already removed
+        self._observed_set.update(res)  # add newly observed nodes
+
+        # for c in self.crawlers:
+        #     logger.debug("%s.ND_Set: %s" % (c.name, c.observed_skl))
+
+        if self.keep_node_owners:
+            # update owners dict
+            del self.node_owner[seed]
+            for n in res:
+                self.node_owner[n] = self.crawlers[self.next_crawler]
+
+            # distribute nodes with changed degree among instances to update their priority structures
+            for n in self.observed_graph.neighbors(seed):
+                if n in self.node_owner:
+                    c = self.node_owner[n]
+                    if c != self.crawlers[self.next_crawler] and isinstance(c, CrawlerUpdatable):
+                        c.update([n])
+
         self.next_crawler = (self.next_crawler+1) % len(self.crawlers)
         self.seed_sequence_.append(seed)
         return res
@@ -71,13 +102,13 @@ class MultiCrawler(Crawler):
             try:
                 s = self.crawlers[self.next_crawler].next_seed()
             except NoNextSeedError as e:
-                logging.debug("Run crawler[%s]: %s Removing it." % (self.next_crawler, e))
+                logger.debug("Run crawler[%s]: %s Removing it." % (self.next_crawler, e))
                 del self.crawlers[self.next_crawler]
                 # idea - create a new instance
                 self.next_crawler = self.next_crawler % len(self.crawlers)
                 continue
 
-            logging.debug("Crawler[%s] next seed=%s" % (self.next_crawler, s))
+            logger.debug("Crawler[%s] next seed=%s" % (self.next_crawler, s))
             return s
 
         raise NoNextSeedError("None of %s subcrawlers can get next seed." % len(self.crawlers))
@@ -117,6 +148,8 @@ class MultiSeedCrawler(Crawler, ABC):
         """
         # http://conferences.sigcomm.org/imc/2010/papers/p390.pdf
         # TODO implement frontier choosing of component (one from m)
+        raise NotImplementedError()
+        # FIXME res is set now
         self.seed_sequence_.append(seed)  # updates every TRY of crawling
         if super().crawl(seed):
             self.budget_left -= 1
