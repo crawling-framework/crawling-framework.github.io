@@ -2,17 +2,16 @@ import json
 import os
 import re
 from glob import glob
-from tqdm import tqdm
-from operator import itemgetter
+
 import numpy as np
 from matplotlib import pyplot as plt
+# from numpy import trapz
+from sklearn import metrics  # import auc
+from tqdm import tqdm
 
 from statistics import Stat
 # from utils import CENTRALITIES
-from utils import RESULT_DIR, REMAP_ITER
-from scipy.integrate import simps  # integrating
-# from numpy import trapz
-from sklearn import metrics  # import auc
+from utils import RESULT_DIR
 
 graphs_sizes = {'mipt': 14313,
                 'ego-gplus': 23613,
@@ -201,6 +200,6 @@ if __name__ == '__main__':
               )
 
     draw_auc(
-        filter_only='',
+        # filter_only='',
         # without_crawlers={'MOD'}
     )
