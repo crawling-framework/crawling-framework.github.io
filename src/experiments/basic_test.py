@@ -2,13 +2,15 @@ import logging
 
 import matplotlib.pyplot as plt
 
-from crawlers.basic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler
+from crawlers.basic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler, \
+    PreferentialObservedDegreeCrawler
 from crawlers.multiseed import MultiCrawler, test_carpet_graph
 from graph_io import GraphCollections
 
 
 def test_basic(graph):
-    crawler = MaximumObservedDegreeCrawler(graph, batch=1, skl_mode=True, initial_seed=1)
+    # crawler = MaximumObservedDegreeCrawler(graph, batch=1, skl_mode=True, initial_seed=1)
+    crawler = PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=1)
     # crawler = BreadthFirstSearchCrawler(graph, initial_seed=10)
     # crawler = RandomCrawler(graph)
 
@@ -19,7 +21,7 @@ def test_basic(graph):
     n = 50000
     for i in range(n):
         crawler.crawl_budget(1)
-        if i % 1000 == 0:
+        if i % 500 == 0:
             iterations.append(i)
             os.append(len(crawler._observed_set))
             ns.append(len(crawler.nodes_set))
@@ -92,5 +94,5 @@ if __name__ == '__main__':
     g = GraphCollections.get(name, giant_only=True)
     # g = GraphCollections.get('test', 'other', giant_only=True)
 
-    # test_basic(g)
-    test_multi(g)
+    test_basic(g)
+    # test_multi(g)

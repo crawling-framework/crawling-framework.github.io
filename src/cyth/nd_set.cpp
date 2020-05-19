@@ -3,14 +3,29 @@
 #include <set>
 #include <map>
 #include <algorithm>    // std::swap, std::binary_search
+//#include <stdlib>       // rand, RAND_MAX
 
 using namespace std;
 
+unsigned long long seed = (unsigned long long) time(0);
+
+int inline rnd() {
+//	seed = seed * 25214903917 + 11;
+//	return (seed >> 16) % RAND_MAX;
+    return rand();
+}
+
+float inline rnd_01() {
+//    return float(rnd()) / RAND_MAX;
+    return float(rand()) / RAND_MAX;
+}
 
 class IntPair_Set : public set<pair<int, int>>
 {
     public:
-        IntPair_Set() {};
+        IntPair_Set() {
+            srand(time(NULL));
+        };
 
         bool inline add(int node, int deg) {
             auto it_res = insert(pair<int, int>(deg, node));
@@ -37,6 +52,34 @@ class IntPair_Set : public set<pair<int, int>>
                 std::cout << it->first << ',' << it->second << ' ';
             }
             printf("\n");
+        }
+
+        /// Sample a random node with probability proportional to node degree, and remove it.
+        /// Complexity - O(n)
+        pair<int, int> pop_proportional_degree() {
+            int len = size();
+            if (len == 0) {printf("ERROR: size = 0.\n");}
+            int nodes[len];
+            int degs[len];
+            float cums[len];
+            int i = 0; // index
+            float cum = 0; // cumulative degree FIXME may be double for more precision?
+            for (auto it = begin(); it != end(); ++it) {
+                degs[i] = it->first;
+                nodes[i] = it->second;
+                cum = cum + it->first;
+                cums[i] = cum;
+                ++i;
+            }
+
+            // random * sum of degrees to normalize
+            float r = cums[len-1] * rnd_01();
+            // bin search
+            int ix = std::lower_bound(&(cums[0]), cums+len, r) - cums;
+//                printf("ix=%d\n", ix);
+            pair<int, int> res = pair<int, int>(degs[ix], nodes[ix]);
+            erase(res);
+            return res;
         }
 };
 
@@ -134,8 +177,23 @@ int main(int argc, char *argv[])
         printf("C pushing (%d, %d)\n", e.first, e.second);
         cpq.add(e.first, e.second);
     }
-
     cpq.print_me();
+
+//    auto a = cpq.begin();
+//    a = a + 2;
+//    std::cout << a->first << ',' << a->second << '\n';
+
+//    int k = 100;
+//    int nodes[k];
+//    cpq.sample(k, nodes);
+//    for (int i=0; i<k; ++i)
+//        std::cout << nodes[i] << ' ';
+////        printf("%g\n", rnd_01());
+
+    for (int i=0; i<10; ++i) {
+        auto e = cpq.pop_proportional_degree();
+        cout << e.first << ',' << e.second << '\n';
+    }
 
 //    pair<int, int> r;
 //    r = pair<int, int>(11, 1);

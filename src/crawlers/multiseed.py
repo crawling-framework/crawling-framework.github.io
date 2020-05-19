@@ -3,7 +3,7 @@ from abc import ABC
 
 import numpy as np
 
-from crawlers.basic import Crawler, NoNextSeedError, MaximumObservedDegreeCrawler
+from crawlers.basic import Crawler, NoNextSeedError, MaximumObservedDegreeCrawler, CrawlerUpdatable
 from graph_io import MyGraph
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class MultiCrawler(Crawler):
         o = self._observed_set
         for index, crawler in enumerate(crawlers):
             assert crawler.orig_graph == self.orig_graph
-            if isinstance(crawler, MaximumObservedDegreeCrawler):  # TODO add POD
+            if isinstance(crawler, CrawlerUpdatable):
                 self.keep_node_owners = True
 
             # merge observed graph
@@ -83,7 +83,7 @@ class MultiCrawler(Crawler):
             for n in self.observed_graph.neighbors(seed):
                 if n in self.node_owner:
                     c = self.node_owner[n]
-                    if c != self.crawlers[self.next_crawler] and isinstance(c, MaximumObservedDegreeCrawler):
+                    if c != self.crawlers[self.next_crawler] and isinstance(c, CrawlerUpdatable):
                         c.update([n])
 
         self.next_crawler = (self.next_crawler+1) % len(self.crawlers)

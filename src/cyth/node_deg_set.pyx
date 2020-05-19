@@ -23,6 +23,7 @@ cdef extern from "nd_set.cpp":
         bint update_1(int node, int deg)
         # int pop()
         pair[int, int] pop()
+        pair[int, int] pop_proportional_degree()
         bint empty()
         int size()
         iterator begin()
@@ -73,7 +74,15 @@ cdef class ND_Set:
     #     return self.ipset.remove(node, deg)
     #
     cpdef (int, int) pop(self):
+        """ Pop (degree, node) with max degree.
+        """
         cdef pair[int, int] a = self.ipset.pop()
+        return a.first, a.second
+
+    cpdef (int, int) pop_proportional_degree(self):
+        """ Pop (degree, node) proportional to degree.
+        """
+        cdef pair[int, int] a = self.ipset.pop_proportional_degree()
         return a.first, a.second
 
     cpdef bint empty(self):

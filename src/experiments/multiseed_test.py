@@ -5,7 +5,7 @@ from runners.animated_runner import Metric, AnimatedCrawlerRunner
 from statistics import get_top_centrality_nodes, Stat
 from crawlers.advanced import CrawlerWithAnswer
 from crawlers.basic import RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, \
-    MaximumObservedDegreeCrawler, SnowBallCrawler
+    MaximumObservedDegreeCrawler, SnowBallCrawler, PreferentialObservedDegreeCrawler
 from crawlers.multiseed import MultiCrawler
 
 
@@ -16,11 +16,13 @@ def test_multi_mod(graph: MyGraph):
         # RandomWalkCrawler(graph, initial_seed=int(init_nodes[1])),
         # RandomCrawler(graph, initial_seed=int(init_nodes[2])),
         # SnowBallCrawler(graph, initial_seed=int(init_nodes[3])),
-        # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[4])),
+        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[4])),
         # MaximumObservedDegreeCrawler(graph, batch=1),
-        MultiCrawler(graph, [
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[i+10])) for i in range(100)
-        ]),
+        PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[0])),
+        # MultiCrawler(graph, [
+        #     # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[i+10])) for i in range(100)
+        #     PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[i+10])) for i in range(100)
+        # ]),
     ]
 
     target_set = set(get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(0.1 * graph[Stat.NODES])))
@@ -29,7 +31,7 @@ def test_multi_mod(graph: MyGraph):
         # Metric(r'$|V_{all} \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
     ]
 
-    acr = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=50000, step=1000)
+    acr = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=50000, step=500)
     acr.run()
 
 

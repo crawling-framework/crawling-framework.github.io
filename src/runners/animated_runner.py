@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 
-from crawlers.basic import Crawler
+from crawlers.basic import Crawler, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
 from graph_io import GraphCollections, MyGraph
 from statistics import Stat
 
@@ -95,10 +95,11 @@ def test_runner(graph):
     from statistics import Stat, get_top_centrality_nodes
 
     crawlers = [
-        # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=1),
+        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=1),
+        PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=1),
         # BreadthFirstSearchCrawler(graph, initial_seed=1),
-        RandomWalkCrawler(graph, initial_seed=1),
-        RandomCrawler(graph, initial_seed=1),
+        # RandomWalkCrawler(graph, initial_seed=1),
+        # RandomCrawler(graph, initial_seed=1),
         # MultiCrawler(graph, [
         #     # RandomCrawler(graph, initial_seed=1),
         #     BreadthFirstSearchCrawler(graph),
@@ -108,13 +109,13 @@ def test_runner(graph):
         # ])
     ]
 
-    target_set = set(get_top_centrality_nodes(graph, 'degree', count=int(0.1 * graph[Stat.NODES])))
+    target_set = set(get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(0.1 * graph[Stat.NODES])))
     metrics = [
         Metric(r'$|V_{all}|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
         Metric(r'$|V_{all} \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
     ]
 
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=500, step=10)
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=50000, step=500)
     ci.run()
 
 
@@ -128,10 +129,10 @@ if __name__ == '__main__':
     # name = 'libimseti'
     # name = 'petster-friendships-cat'
     # name = 'soc-pokec-relationships'
-    # name = 'digg-friends'
+    name = 'digg-friends'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
-    name = 'petster-hamster'
+    # name = 'petster-hamster'
     g = GraphCollections.get(name)
 
     test_runner(g)

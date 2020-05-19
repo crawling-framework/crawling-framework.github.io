@@ -302,7 +302,18 @@ class DepthFirstSearchCrawler(Crawler):
         return res
 
 
-class MaximumObservedDegreeCrawler(Crawler):
+class CrawlerUpdatable(Crawler):
+    def update(self, nodes):
+        """
+        Update inner structures, knowing that the specified nodes have changed their degrees.
+
+        :param nodes:
+        :return:
+        """
+        raise NotImplementedError()
+
+
+class MaximumObservedDegreeCrawler(CrawlerUpdatable):
     def __init__(self, graph: MyGraph, batch=1, initial_seed=None, skl_mode=True, name=None, **kwargs):
         """
         :param batch: batch size
@@ -325,8 +336,8 @@ class MaximumObservedDegreeCrawler(Crawler):
         self.mod_queue = deque()
 
         if skl_mode:
-            self.observed_skl = ND_Set([(n, self.observed_graph.snap.GetNI(n).GetDeg()) for n in self._observed_set])  # for ND_Set
-            # self.observed_skl = SortedKeyList(self._observed_set, key=lambda node: (self.observed_graph.snap.GetNI(node).GetDeg(), node))  # for SKL
+            g = self.observed_graph.snap
+            self.observed_skl = ND_Set([(n, g.GetNI(n).GetDeg()) for n in self._observed_set])
             self.crawl = self.skl_crawl
             self.next_seed = self.skl_next_seed
 
@@ -354,7 +365,6 @@ class MaximumObservedDegreeCrawler(Crawler):
             if len(self.observed_skl) == 0:
                 assert len(self._observed_set) == 0
                 raise NoNextSeedError()
-            # self.mod_queue = deque(self.observed_skl[-self.batch:])  # for SKL
             self.mod_queue = deque(self.observed_skl.top(self.batch))  # for ND_Set
             logger.debug("%s.queue: %s" % (self.name, self.mod_queue))
         return self.mod_queue.pop()
@@ -376,7 +386,7 @@ class MaximumObservedDegreeCrawler(Crawler):
         return self.mod_queue.pop()
 
 
-class PreferentialObservedDegreeCrawler(Crawler):
+class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
     def __init__(self, graph: MyGraph, batch=10, initial_seed=None, **kwargs):
         super().__init__(graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
 
@@ -386,25 +396,66 @@ class PreferentialObservedDegreeCrawler(Crawler):
             self._observed_set.add(initial_seed)
             self.observed_graph.snap.AddNode(initial_seed)
 
-        self.discrete_distribution = None
-        self.pod_queue = [initial_seed]  # queue of nodes to proceed in batch
-        self.batch = batch  # crawling by batches if > 1 #
+        self.batch = batch
+        self.pod_queue = list()  # list of nodes to proceed in batch
+        g = self.observed_graph.snap
+        self.nd_set = ND_Set([(n, g.GetNI(n).GetDeg()) for n in self._observed_set])
+
+    def update(self, nodes):
+        """ Update priority structures with specified nodes (suggested their degrees have changed).
+        """
+        g = self.observed_graph.snap
+        for n in nodes:
+            # assert n in self._observed_set  # Just for debugging
+            d = g.GetNI(n).GetDeg()
+            logger.debug("%s.SKL.updating(%s, %s)" % (self.name, n, d))
+            self.nd_set.update_1(n, d - 1)
+
+    def crawl(self, seed: int) -> set:
+        """ Crawl specified node and update observed SortedKeyList
+        """
+        res = super().crawl(seed)
+        self.update([n for n in self.observed_graph.neighbors(seed) if n in self._observed_set])
+        return res
 
     def next_seed(self):
         if len(self.pod_queue) == 0:  # when batch ends, we create another one
-            g = self.observed_graph.snap
-            prob_func = {id: g.GetNI(id).GetDeg() for id in self._observed_set}
+            if len(self._observed_set) == 0:
+                raise NoNextSeedError()
+            self.pod_queue = [self.nd_set.pop_proportional_degree()[1] for _ in
+                              range(min(self.batch, len(self.nd_set)))]
+        return self.pod_queue.pop()
 
-            if len(prob_func) == 0:
-                return None
-            keys, values = zip(*prob_func.items())
-            values = np.array(values) / sum(values)
-            # print(keys, values)
-            self.discrete_distribution = stats.rv_discrete(values=(keys, values))
-            self.pod_queue = [node for node in self.discrete_distribution.rvs(size=self.batch)]
 
-        # print("node degrees (probabilities)", prob_func)
-        return self.pod_queue.pop(0)
+# class PreferentialObservedDegreeCrawler(Crawler):
+#     def __init__(self, graph: MyGraph, batch=10, initial_seed=None, **kwargs):
+#         super().__init__(graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
+#
+#         if len(self._observed_set) == 0:
+#             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
+#                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
+#             self._observed_set.add(initial_seed)
+#             self.observed_graph.snap.AddNode(initial_seed)
+#
+#         self.discrete_distribution = None
+#         self.pod_queue = [initial_seed]  # queue of nodes to proceed in batch
+#         self.batch = batch  # crawling by batches if > 1 #
+#
+#     def next_seed(self):
+#         if len(self.pod_queue) == 0:  # when batch ends, we create another one
+#             g = self.observed_graph.snap
+#             prob_func = {id: g.GetNI(id).GetDeg() for id in self._observed_set}
+#
+#             if len(prob_func) == 0:
+#                 raise NoNextSeedError()
+#             keys, values = zip(*prob_func.items())
+#             values = np.array(values) / sum(values)
+#             # print(keys, values)
+#             self.discrete_distribution = stats.rv_discrete(values=(keys, values))
+#             self.pod_queue = [node for node in self.discrete_distribution.rvs(size=self.batch)]
+#
+#         # print("node degrees (probabilities)", prob_func)
+#         return self.pod_queue.pop(0)
 
 
 # class ForestFireCrawler(BreadthFirstSearchCrawler):  # TODO need testing and debug different p
@@ -507,13 +558,14 @@ def test_crawler_times():
     # g = GraphCollections.get('digg-friends')
     g = GraphCollections.get('soc-pokec-relationships')
     s = g.snap
-    crawler = MaximumObservedDegreeCrawler(g, batch=1, skl_mode=True, initial_seed=1)
+    # crawler = MaximumObservedDegreeCrawler(g, batch=1, skl_mode=True, initial_seed=1)
+    crawler = PreferentialObservedDegreeCrawler(g, batch=1, initial_seed=1)
     t = time()
     for i in range(n):
         crawler.crawl_budget(1)
     print("%.3f ms" % ((time()-t)*1000))
 
-    # SKL vs dict per batches, s. 'digg-friends'
+    # SKL vs dict per batches, s. 'digg-friends'. Graph loading time included :(
     # n=5000               n=50000                n=250000
     # batch  SKL   dict  |  batch  SKL   dict  |   batch  SKL   dict
     # 1      10     314  |                     |
