@@ -1,0 +1,232 @@
+import logging
+import os
+
+from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc
+
+from utils import TMP_GRAPHS_DIR
+
+cimport cgraph  # pxd import DON'T DELETE
+
+logger = logging.getLogger(__name__)
+
+cdef inline fingerprint(TUNGraph snap_graph):  # FIXME duplicate
+    """ Graph fingerprint to make sure briefly if it has changed.
+
+    :param snap_graph:
+    :return: (|V|, |E|)
+    """
+    return snap_graph.GetNodes(), snap_graph.GetEdges()
+
+
+cdef class CGraph:
+    def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False):
+        """
+
+        :param path: load from path. If None, create empty graph
+        :param name: name. 'noname' by default
+        :param directed: ignored: undirected only
+        :param weighted: ignored: unweighted only
+        """
+        assert directed == False
+        assert weighted == False
+        if path is None:
+            from datetime import datetime
+            path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
+            self._path = str_to_chars(path)
+            self._snap_graph = TUNGraph()
+        else:
+            self._path = str_to_chars(path)
+            self._snap_graph = deref(LoadEdgeList[TPt[TUNGraph]](TStr(self._path), 0, 1))
+            # self.load()
+
+        self._name = str_to_chars(name)
+        self._directed = directed
+        self._weighted = weighted
+        # self.format = format
+
+        self._fingerprint = fingerprint(self._snap_graph)
+        self._stats_dict = {}
+
+    cdef CGraph load(self):
+        self._snap_graph = deref(LoadEdgeList[TPt[TUNGraph]](TStr(self._path), 0, 1))
+
+    @property
+    def path(self):
+        return bytes.decode(self._path)
+
+    @property
+    def name(self):
+        return bytes.decode(self._name)
+
+    @property
+    def directed(self):
+        return self._directed
+
+    @property
+    def weighted(self):
+        return self._weighted
+
+    cpdef int nodes(self):
+        """ Number of nodes """
+        return self._snap_graph.GetNodes()
+
+    cpdef int edges(self):
+        """ Number of edges """
+        return self._snap_graph.GetEdges()
+
+    cpdef bint add_node(self, int node):
+        return self._snap_graph.AddNode(node)
+
+    cpdef bint add_edge(self, int i, int j):
+        return self._snap_graph.AddEdge(i, j)
+
+    cpdef bint has_node(self, int node):
+        return self._snap_graph.IsNode(node)
+
+    def neighbors(self, int node):
+        """ Generator of neighbors of the given node in this graph.
+
+        :param node: 
+        :return: 
+        """
+        cdef TUNGraph.TNodeI n_iter = self._snap_graph.GetNI(node)
+        # cdef TUNGraph.TNode dat = n.NodeHI.GetDat()  TODO could be optimized if have access to private NodeHI
+        for i in range(0, n_iter.GetDeg()):
+            # yield dat.GetNbrNId(i)
+            yield n_iter.GetNbrNId(i)
+
+    def iter_nodes(self):
+        cdef TUNGraph.TNodeI ni = self._snap_graph.BegNI()
+        cdef int count = self._snap_graph.GetNodes()
+        for i in range(count):
+            yield ni.GetId()
+            pinc(ni)
+
+    # @classmethod TODO
+    # def new_snap(cls, snap_graph=None, name='tmp', directed=False, weighted=False, format='ij'):
+    #     """
+    #     Create a new instance of MyGraph with a given snap graph.
+    #     :param snap_graph: initial snap graph, or empty if None
+    #     :param name: name will be appended with current timestamp
+    #     :param directed: will be ignored if snap_graph is specified
+    #     :param weighted:
+    #     :param format:
+    #     :return: MyGraph
+    #     """
+    #     from datetime import datetime
+    #     path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
+    #
+    #     if snap_graph:
+    #         if isinstance(snap_graph, snap.PNGraph):
+    #             directed = True
+    #         elif isinstance(snap_graph, snap.PUNGraph):
+    #             directed = False
+    #         else:
+    #             raise TypeError("Unknown snap graph type: %s" % type(snap_graph))
+    #     else:
+    #         snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
+    #
+    #     graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
+    #     graph._snap_graph = snap_graph
+    #     graph._fingerprint = fingerprint(snap_graph)
+    #     return graph
+    #
+    def _check_consistency(self):
+        """ Raise exception if graph has changed. """
+        f = fingerprint(self._snap_graph)
+        if fingerprint(self._snap_graph) != self._fingerprint:
+            raise Exception("snap graph has changed from the one saved in %s" % self._path)
+
+    def __getitem__(self, stat):
+        """ Get graph statistics. Index by str or Stat. Works only if snap graph is immutable. """
+        self._check_consistency()
+        if isinstance(stat, str):
+            from statistics import Stat
+            stat = Stat[stat]
+
+        if stat in self._stats_dict:
+            value = self._stats_dict[stat]
+        else:
+            # Try to load from file or compute
+            stat_path = os.path.join(
+                os.path.dirname(self.path), os.path.basename(self.path) + '_stats', stat.short)
+            if not os.path.exists(stat_path):
+                # Compute and save stats
+                logger.info("Could not find stats '%s' at '%s'. Will be computed." %
+                             (stat, stat_path))
+                value = stat.computer(self)
+
+                # Save stats to file
+                if not os.path.exists(os.path.dirname(stat_path)):
+                    os.makedirs(os.path.dirname(stat_path))
+                with open(stat_path, 'w') as f:
+                    f.write(str(value))
+            else:
+                # Read stats from file - value or dict
+                value = eval(open(stat_path, 'r').read())
+
+        return value
+
+    def save(self, new_path=None):
+        """ Write current edge list of snap graph into file. """
+        raise NotImplementedError()
+        # s = self._snap_graph TODO
+        # assert s
+        # if new_path is None:
+        #     new_path = self.path
+        # if new_path == self.path:
+        #     logging.warning("Graph file '%s' will be overwritten." % self.path)
+        # # snap.SaveEdgeList writes commented section, we don't want it
+        # with open(new_path, 'w') as f:
+        #     for e in s.Edges():
+        #         f.write("%s %s\n" % (e.GetSrcNId(), e.GetDstNId()))
+
+    @property  # Denis:  could be useful to handle nx version of graph
+    def snap_to_networkx(self):
+        raise NotImplementedError()
+        # nx_graph = nx.Graph() TODO
+        # for NI in self.snap.Nodes():
+        #     nx_graph.add_node(NI.GetId())
+        #     for Id in NI.GetOutEdges():
+        #         nx_graph.add_edge(NI.GetId(), Id)
+        #
+        # return nx_graph
+
+
+def cgraph_test():
+    # print("cgraph")
+
+    cdef TUNGraph g
+    g = TUNGraph()
+    g.AddNode(0)
+    g.AddNode(1)
+    g.AddEdge(0, 1)
+    N = g.GetNodes()
+    E = g.GetEdges()
+    print(N, E)
+
+    # cdef char* a = 'asd'
+    # cdef TStr s = TStr(a)
+    # # cdef PUNGraph p
+    # cdef TPt[TUNGraph] p
+    # p = LoadEdgeList[TPt[TUNGraph]](TStr('/home/misha/workspace/crawling/data/konect/dolphins.ij'), 0, 1)
+    #
+    # cdef TUNGraph t
+    # # t = *p
+    # t = deref(p)
+    #
+    # print(t.GetNodes())
+
+    # cdef char* name = 'douban'
+    # cdef char* path = '/home/misha/workspace/crawling/data/konect/dolphins.ij'
+    graph = CGraph(path='/home/misha/workspace/crawling/data/konect/dolphins.ij', name='d')
+    # graph = CGraph.CLoad(path)
+    # graph = CGraph.Empty('')
+    # print(graph.add_node(10))
+    print("path=%s" % 'abc' + graph.path)
+    print("N=%s" % graph.nodes())
+    print("E=%s" % graph.edges())
+    n = 1
+    print("Neighs of %s:" % n)
+    # for n in graph.neighbors(n):
+    #     print(n)

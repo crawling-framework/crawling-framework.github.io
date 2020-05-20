@@ -1,3 +1,7 @@
+from cyth.build_cython import build_cython
+from utils import rel_dir
+build_cython(rel_dir)  # Should go before any cython imports
+
 import logging
 import random
 from queue import deque  # here was a warning in pycharm
@@ -5,6 +9,7 @@ from queue import deque  # here was a warning in pycharm
 import numpy as np
 import snap
 
+from cyth.cbasic import CCrawler
 from cyth.node_deg_set import ND_Set
 from graph_io import MyGraph
 
@@ -135,6 +140,41 @@ class RandomCrawler(Crawler):
         if len(self._observed_set) == 0:
             raise NoNextSeedError()
         return random.choice(tuple(self._observed_set))
+
+
+# class CRandomWalkCrawler(CCrawler):
+#     def __init__(self, graph: MyGraph, initial_seed=None, **kwargs):
+#         """
+#         :param initial_seed: if observed set is empty, the crawler will start from the given initial
+#          node. If None is given, a random node of original graph will be used.
+#         """
+#         super().__init__(graph, name='RW_', **kwargs)
+#
+#         if len(self.observed_set) == 0:
+#             if initial_seed is None:  # is not a duplicate code
+#                 initial_seed = random.choice([n for n in self._orig_graph.iter_nodes()])
+#             self.initial_seed = initial_seed
+#         else:
+#             if initial_seed is None:
+#                 self.initial_seed = random.choice(list(self._observed_set))
+#
+#         self.prev_seed = None
+#
+#     def next_seed(self):
+#         if not self.prev_seed:  # first step
+#             self.prev_seed = self.initial_seed
+#             return self.initial_seed
+#
+#         node_neighbours = list(self._observed_graph.neighbors(self.prev_seed))
+#         # for walking we need to step on already crawled nodes too
+#         if len(node_neighbours) == 0:
+#             raise NoNextSeedError("No neighbours to go next.")
+#             # node_neighbours = tuple(self.observed_set)
+#
+#         # Since we do not check if seed is in crawled_set, many re-crawls will occur
+#         seed = (random.choice(node_neighbours))
+#         self.prev_seed = seed
+#         return seed
 
 
 class RandomWalkCrawler(Crawler):

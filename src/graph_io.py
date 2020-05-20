@@ -1,3 +1,7 @@
+from cyth.build_cython import build_cython
+from utils import rel_dir
+build_cython(rel_dir)  # Should go before any cython imports
+
 import logging
 import os.path
 import shutil
@@ -8,6 +12,7 @@ import patoolib
 import snap
 
 from utils import GRAPHS_DIR, COLLECTIONS, TMP_GRAPHS_DIR
+from cyth.cgraph import CGraph
 
 
 def fingerprint(snap_graph):
@@ -193,26 +198,11 @@ def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_w
     logging.info("Reformatting finished '%s'." % out_path)
 
 
-class GraphCollections(object):
+class GraphCollections:
     konect_url_pattern = 'http://konect.uni-koblenz.de/downloads/tsv/%s.tar.bz2'
     networkrepository_url_pattern = 'http://nrvis.com/download/data/%s/%s.zip'
 
-    @staticmethod
-    def get(name, collection='konect', directed=False, format='ij', giant_only=False, self_loops=False) -> MyGraph:
-        """
-        Read graph from storage or download it from the specified collection. In order to apply
-        giant_only and self_loops, you need to remove the file manually.
-
-        :param name:
-        :param collection: 'other', 'konect', 'networkrepository'.
-        :param directed: undirected by default
-        :param format: output will be in this format, 'ij' by default
-        :param giant_only: giant component instead of full graph. Component extraction is applied
-         only once when the graph is downloaded.
-        :param self_loops: self loops are removed by default. Applied only once when the graph is
-         downloaded.
-        :return: MyGraph with snap graph
-        """
+    def _get(self, name, collection='konect', directed=False, format='ij', giant_only=False, self_loops=False):
         assert collection in COLLECTIONS
         # category = ''
         path = os.path.join(GRAPHS_DIR, collection, "%s.%s" % (name, format))
@@ -246,8 +236,50 @@ class GraphCollections(object):
                     for e in s.Edges():
                         f.write("%s %s\n" % (e.GetSrcNId(), e.GetDstNId()))
                 logging.info("done.")
+        return path
+
+    @staticmethod
+    def get(name, collection='konect', directed=False, format='ij', giant_only=False, self_loops=False) -> MyGraph:
+        """
+        Read graph from storage or download it from the specified collection. In order to apply
+        giant_only and self_loops, you need to remove the file manually.
+
+        :param name:
+        :param collection: 'other', 'konect', 'networkrepository'.
+        :param directed: undirected by default
+        :param format: output will be in this format, 'ij' by default
+        :param giant_only: giant component instead of full graph. Component extraction is applied
+         only once when the graph is downloaded.
+        :param self_loops: self loops are removed by default. Applied only once when the graph is
+         downloaded.
+        :return: MyGraph with snap graph
+        """
+        path = GraphCollections()._get(name=name, collection=collection, directed=directed,
+                                       format=format, giant_only=giant_only, self_loops=self_loops)
 
         return MyGraph(path, name, directed, format=format)
+
+    @staticmethod
+    def cget(name, collection='konect', directed=False, format='ij', giant_only=False, self_loops=False) -> CGraph:
+        """
+        Read graph from storage or download it from the specified collection. In order to apply
+        giant_only and self_loops, you need to remove the file manually.
+        Same as `get(...)` just returns cython optimized CGraph instead of MyGraph.
+
+        :param name:
+        :param collection: 'other', 'konect', 'networkrepository'.
+        :param directed: undirected by default
+        :param format: output will be in this format, 'ij' by default
+        :param giant_only: giant component instead of full graph. Component extraction is applied
+         only once when the graph is downloaded.
+        :param self_loops: self loops are removed by default. Applied only once when the graph is
+         downloaded.
+        :return: CGraph
+        """
+        path = GraphCollections()._get(name=name, collection=collection, directed=directed,
+                                       format=format, giant_only=giant_only, self_loops=self_loops)
+
+        return CGraph(path, name, directed)
 
     @staticmethod
     def _download_konect(graph_path, url_konect):

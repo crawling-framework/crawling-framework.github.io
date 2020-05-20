@@ -1,9 +1,13 @@
+from cyth.build_cython import build_cython
+from utils import rel_dir
+build_cython(rel_dir)  # Should go before any cython imports
+
 import logging
 
 import matplotlib.pyplot as plt
 
 from crawlers.basic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler, \
-    PreferentialObservedDegreeCrawler
+    PreferentialObservedDegreeCrawler, RandomWalkCrawler
 from crawlers.multiseed import MultiCrawler, test_carpet_graph
 from graph_io import GraphCollections
 from runners.animated_runner import AnimatedCrawlerRunner, Metric
@@ -11,8 +15,8 @@ from runners.animated_runner import AnimatedCrawlerRunner, Metric
 
 def test_basic(graph):
     crawlers = [
-        # MaximumObservedDegreeCrawler(graph, batch=1, skl_mode=True, initial_seed=1),
-        PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=1),
+        MaximumObservedDegreeCrawler(graph, batch=1, skl_mode=True, initial_seed=1),
+        # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=1),
         # BreadthFirstSearchCrawler(graph, initial_seed=10),
         # RandomCrawler(graph),
     ]
@@ -22,7 +26,7 @@ def test_basic(graph):
         Metric('nodes_set', lambda crawler: len(crawler.nodes_set)),
     ]
     acr = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=5000, step=50)
-    acr.run(ylims=(0, 1))
+    acr.run()
 
     # iterations = []
     # os = []
@@ -116,16 +120,20 @@ def test_snap_times():
 def test_crawler_times():
     from time import time
 
-    n = 50000
-    # g = GraphCollections.get('digg-friends')
-    g = GraphCollections.get('soc-pokec-relationships')
+    n = 5000
+    g = GraphCollections.get('digg-friends')
+    # c = GraphCollections.cget('digg-friends')
+    # g = GraphCollections.get('soc-pokec-relationships')
     s = g.snap
+    # crawler = PreferentialObservedDegreeCrawler(g, batch=1, initial_seed=1)
+
+    crawler = RandomWalkCrawler(g, initial_seed=1)
     # crawler = MaximumObservedDegreeCrawler(g, batch=1, skl_mode=True, initial_seed=1)
-    crawler = PreferentialObservedDegreeCrawler(g, batch=1, initial_seed=1)
+
     t = time()
     for i in range(n):
         crawler.crawl_budget(1)
-    print("%.3f ms" % ((time()-t)*1000))
+    print("MyGraph. %.3f ms" % ((time()-t)*1000))
 
     # SKL vs dict per batches, s. 'digg-friends'. Graph loading time included :(
     # n=5000               n=50000                n=250000
@@ -206,7 +214,7 @@ def test_numpy_times():
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s')
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.CRITICAL)
 
     # test_snap_times()
     # test_crawler_times()
@@ -222,8 +230,9 @@ if __name__ == '__main__':
     name = 'petster-hamster'
     # name = 'dolphins'
     # g = test_carpet_graph(8, 8)[0]
-    g = GraphCollections.get(name, giant_only=True)
+    g = GraphCollections.cget(name, giant_only=True)
     # g = GraphCollections.get('test', 'other', giant_only=True)
 
-    test_basic(g)
+    # test_basic(g)
     # test_multi(g)
+    test_crawler_times()

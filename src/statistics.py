@@ -16,7 +16,7 @@ class Stat(Enum):
 
     NODES = 'n', "number of nodes", lambda graph: graph.snap.GetNodes()
     EDGES = 'e', "number of edges", lambda graph: graph.snap.GetEdges()
-    AVG_DEGREE = 'avg-deg', "average (out)degree", lambda graph: (1 if graph.directed else 2) * graph.snap.GetEdges() / graph.snap.GetNodes()
+    AVG_DEGREE = 'avg-deg', "average (out)degree", lambda graph: (1 if graph._directed else 2) * graph.snap.GetEdges() / graph.snap.GetNodes()
     MAX_DEGREE = 'max-deg', "maximal degree", lambda graph: graph.snap.GetNI(snap.GetMxDegNId(graph.snap)).GetDeg()
     # RECIPROCITY = 'reciprocity', "edge reciprocity"
     ASSORTATIVITY = 'ass', "nodes degree assortativity", lambda graph: assortativity(graph=graph)
@@ -201,7 +201,7 @@ def test_stats():
 
 def main():
     import argparse
-    stats = [s.name for s in Stat]
+    stats = [s._name for s in Stat]
     parser = argparse.ArgumentParser(description='Compute centralities for graph nodes.')
     parser.add_argument('-p', '--path', required=True, help='path to input graph as edgelist')
     parser.add_argument('-d', action='store_true', help='specify if graph is directed')
