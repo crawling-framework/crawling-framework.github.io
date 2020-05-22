@@ -400,6 +400,9 @@ def test_graph():
     g.AddEdge(4, 3)
     g.AddEdge(5, 4)
     print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
+    for e in g.Edges():
+        print(e)  # Exception
+
     graph = MyGraph.new_snap(g)
     g.AddEdge(4, 1)
     print(graph['EDGES'])  # Exception
@@ -425,5 +428,5 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
 
     # test_io()
-    # test_graph()
-    test_graph_manipulations()
+    test_graph()
+    # test_graph_manipulations()

@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from crawlers.basic import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
     DepthFirstSearchCrawler, BreadthFirstSearchCrawler, SnowBallCrawler, RandomWalkCrawler, \
     RandomCrawler
-# from crawlers.multiseed import MultiCrawler, test_carpet_graph
+
 from graph_io import GraphCollections
 from runners.animated_runner import AnimatedCrawlerRunner, Metric
 
@@ -55,10 +55,34 @@ def test_basic(graph):
     # plt.show()
 
 
-def test_multi(graph):
+def test_multi():
+
+    n = 5000
+    # name = 'dolphins'
+    name = 'digg-friends'
+    # name = 'soc-pokec-relationships'
+
+    from crawlers.multiseed import MultiCrawler
+    from crawlers.basic import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
+        DepthFirstSearchCrawler, BreadthFirstSearchCrawler, SnowBallCrawler, RandomWalkCrawler, \
+        RandomCrawler
+    graph = GraphCollections.get(name)
+    s = graph.snap
+    print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
+
+    # from cyth.cmultiseed import MultiCrawler
+    # from cyth.cbasic import CCrawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+    #     DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
+    #     PreferentialObservedDegreeCrawler
+    # graph = GraphCollections.cget(name)
+    # print("After cython crawlers. Graph %s, n=%s steps" % (name, n))
+
     crawler = MultiCrawler(graph, crawlers=[
+        # RandomCrawler(graph) for i in range(10)
+        # RandomWalkCrawler(graph) for i in range(10)
         # BreadthFirstSearchCrawler(graph, initial_seed=i+1) for i in range(100)
-        MaximumObservedDegreeCrawler(graph, name='MOD%s'%i, batch=10, initial_seed=i+1) for i in range(10)
+        DepthFirstSearchCrawler(graph, initial_seed=i+1) for i in range(100)
+        # MaximumObservedDegreeCrawler(graph, name='MOD%s'%i, batch=10, initial_seed=i+1) for i in range(10)
         # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=i+1) for i in range(10)
         # MaximumObservedDegreeCrawler(graph, name='MOD0', batch=1, initial_seed=1),
         # MaximumObservedDegreeCrawler(graph, name='MOD1', batch=1, initial_seed=2),
@@ -129,6 +153,7 @@ def test_crawler_times():
     name = 'digg-friends'
     # name = 'soc-pokec-relationships'
 
+    # from crawlers.multiseed import MultiCrawler
     # from crawlers.basic import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
     #     DepthFirstSearchCrawler, BreadthFirstSearchCrawler, SnowBallCrawler, RandomWalkCrawler, \
     #     RandomCrawler
@@ -136,6 +161,7 @@ def test_crawler_times():
     # s = g.snap
     # print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
 
+    from cyth.cmultiseed import MultiCrawler
     from cyth.cbasic import CCrawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
         DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
         PreferentialObservedDegreeCrawler
@@ -144,24 +170,29 @@ def test_crawler_times():
 
     import numpy as np
     for crawler_cls in [
-        RandomCrawler,
+        # RandomCrawler,
         RandomWalkCrawler,
-        BreadthFirstSearchCrawler, DepthFirstSearchCrawler,
-        SnowBallCrawler,
-        MaximumObservedDegreeCrawler,
-        PreferentialObservedDegreeCrawler,
+        # BreadthFirstSearchCrawler,
+        # DepthFirstSearchCrawler,
+        # SnowBallCrawler,
+        # MaximumObservedDegreeCrawler,
+        # PreferentialObservedDegreeCrawler,
     ]:
         times = []
-        it = 10
+        it = 20
         for _ in range(it):
-            crawler = crawler_cls(g, initial_seed=1, batch=100)
+            # crawler = crawler_cls(g, initial_seed=1, batch=100)
+            crawler = MultiCrawler(g, [
+                crawler_cls(g, batch=10) for _ in range(10)
+            ])
             t = time()
             for i in range(n):
+                # print(i)
                 crawler.crawl_budget(1)
             t = (time()-t)*1000
             print("%s. %.3f ms" % (crawler.name, t))
             times.append(t)
-        print("%s. %.1f +- %.1f ms" % (crawler.name, np.mean(times), np.var(times)**0.5))
+        print("%s %.1f +- %.1f ms" % (crawler.name, np.mean(times), np.var(times)**0.5))
 
     # print("next_seed times", crawler.timer*1000)
 
@@ -265,7 +296,9 @@ if __name__ == '__main__':
     # g = GraphCollections.get('test', 'other', giant_only=True)
 
     # test_basic(g)
-    # test_multi(g)
+    # test_multi()
     test_crawler_times()
+
+
 
 

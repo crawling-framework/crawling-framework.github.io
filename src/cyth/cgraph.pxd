@@ -41,6 +41,14 @@ cdef extern from "Snap.h":
             int GetDeg()
             int GetNbrNId(int)
 
+        cppclass TEdgeI:
+            TEdgeI operator++ ()
+            int GetId() const
+            int GetSrcNId() const
+            int GetDstNId() const
+            # int GetDeg()
+            # int GetNbrNId(int)
+
         TUNGraph()
         # @staticmethod
         # TUNGraph New()
@@ -51,7 +59,10 @@ cdef extern from "Snap.h":
         TNodeI GetNI(int)
         TNodeI BegNI() const
         TNodeI EndNI() const
+        TEdgeI BegEI() const
+        TEdgeI EndEI() const
         bint IsNode(const int)
+        bint IsEdge(const int, const int)
         int GetRndNId(TRnd)
 
     cdef cppclass TStr:
@@ -86,6 +97,8 @@ cdef class CGraph:
     cpdef bint add_edge(self, int i, int j)
 
     cpdef bint has_node(self, int node)
+
+    cpdef bint has_edge(self, int i, int j)
 
     cpdef int deg(self, int node)
 

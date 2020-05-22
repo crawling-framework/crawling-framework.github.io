@@ -4,6 +4,7 @@ from utils import rel_dir
 build_cython(rel_dir)
 
 from cyth.cbasic import cbasic_test
+from cyth.cmultiseed import test_multiseed
 from cyth.node_deg_set import test_ndset
 from cyth.test_cython import test_class
 
@@ -14,5 +15,6 @@ if __name__ == '__main__':
     # test_class()
     # test_ndset()
 
-    cbasic_test()
     # cgraph_test()
+    # cbasic_test()
+    test_multiseed()

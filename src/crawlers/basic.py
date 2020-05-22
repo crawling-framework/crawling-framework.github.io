@@ -158,6 +158,8 @@ class RandomWalkCrawler(Crawler):
         else:
             if initial_seed is None:
                 self.initial_seed = random.choice(list(self._observed_set))
+        self._observed_set.add(self.initial_seed)
+        self.observed_graph.snap.AddNode(self.initial_seed)
 
         self.prev_seed = None
 
@@ -165,6 +167,9 @@ class RandomWalkCrawler(Crawler):
         if not self.prev_seed:  # first step
             self.prev_seed = self.initial_seed
             return self.initial_seed
+
+        if len(self._observed_set) == 0:
+            raise NoNextSeedError()
 
         # Since we do not check if seed is in crawled_set, many re-crawls will occur
         while True:
@@ -176,7 +181,7 @@ class RandomWalkCrawler(Crawler):
 
             seed = random.choice(node_neighbours)
             self.prev_seed = seed
-            if seed not in self.crawled_set:
+            if seed in self._observed_set:
                 return seed
 
 
@@ -373,7 +378,7 @@ class MaximumObservedDegreeCrawler(CrawlerUpdatable):
 
 class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
     def __init__(self, graph: MyGraph, batch=10, initial_seed=None, **kwargs):
-        super().__init__(graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
+        super().__init__(graph, name='POD-%s' % (batch if batch > 1 else ''), **kwargs)
 
         if len(self._observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?

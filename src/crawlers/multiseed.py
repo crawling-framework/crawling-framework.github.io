@@ -18,7 +18,9 @@ class MultiCrawler(Crawler):
         """
         :param crawlers: crawler instances to run in parallel
         """
-        super().__init__(graph, name='Multi_%s' % ";".join([c.name for c in crawlers[:15]]),  # TODO 10xMOD ...
+        super().__init__(graph,
+                         # name='Multi_%s' % ";".join([c.name for c in crawlers[:15]]),  # TODO 10xMOD ...
+                         name='Multi_%sx%s' % (len(crawlers), crawlers[0].name),  # FIXME we suppose all crawlers are the same class
                          **kwargs)  # taking only first 15 into name
         # assert len(crawlers) > 1
         self.crawlers = crawlers
@@ -67,8 +69,9 @@ class MultiCrawler(Crawler):
     def crawl(self, seed: int) -> set:
         """ Run the next crawler.
         """
-        if seed == 58:
-            pass
+        # if seed == 58:
+        #     pass
+
         res = self.crawlers[self.next_crawler].crawl(seed)
         logger.debug("res of crawler[%s]: %s" % (self.next_crawler, res))
         assert seed in self.crawled_set

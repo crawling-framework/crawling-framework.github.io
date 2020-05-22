@@ -5,46 +5,25 @@ from libcpp.set cimport set as cset
 from libcpp.vector cimport vector
 from libcpp.queue cimport queue
 from libcpp.deque cimport deque
-from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec
+from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec, address as addr
 
 from cgraph cimport CGraph, str_to_chars
-# cimport node_deg_set
+cimport cbasic
 from node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
-
-from graph_io import GraphCollections
 
 logger = logging.getLogger(__name__)
 
 
 cdef class CCrawler:
-    cdef char* _name
-    cdef readonly CGraph _orig_graph
-    cdef readonly CGraph _observed_graph
-    cdef readonly cset[int] _crawled_set  # FIXME python set is 3x faster than cython
-    cdef public cset[int] _observed_set
-
-
     def __init__(self, CGraph graph, name=None, **kwargs):
         # original graph
         self._orig_graph = graph  # FIXME conversion here?
 
         # observed graph
-        if 'observed_graph' in kwargs:
-            self._observed_graph = kwargs['observed_graph']
-        else:
-            self._observed_graph = CGraph(directed=self._orig_graph.directed, weighted=self._orig_graph.weighted)
+        self._observed_graph = CGraph(directed=self._orig_graph.directed, weighted=self._orig_graph.weighted)
 
-        # crawled ids set
-        if 'crawled_set' in kwargs:
-            self._crawled_set = kwargs['crawled_set']
-        # else:
-        #     self._crawled_set = ()
-
-        # observed ids set excluding crawled ones
-        if 'observed_set' in kwargs:
-            self._observed_set = kwargs['observed_set']
-        # else:
-        #     self._observed_set = ()
+        self._crawled_set = new cset[int]()
+        self._observed_set = new cset[int]()
 
         # self.seed_sequence_ = []  # D: sequence of tries to add nodes to draw history and debug
         name = name if name is not None else type(self).__name__
@@ -58,12 +37,21 @@ cdef class CCrawler:
     @property
     def crawled_set(self) -> set:
         """ Get nodes' ids of observed graph (crawled and observed). """
-        return self._crawled_set
+        return deref(self._crawled_set)
+
+    cdef set_crawled_set(self, cset[int]* new_crawled_set):
+        self._crawled_set = new_crawled_set
+
+    cdef set_observed_set(self, cset[int]* new_observed_set):
+        self._observed_set = new_observed_set
+
+    cdef set_observed_graph(self, CGraph new_observed_graph):
+        self._observed_graph = new_observed_graph
 
     @property
     def observed_set(self) -> set:
         """ Get nodes' ids of observed graph (crawled and observed). """
-        return self._observed_set
+        return deref(self._observed_set)
 
     @property
     def name(self):
@@ -97,6 +85,7 @@ cdef class CCrawler:
         # cdef cset[int]* o = self._observed_set
         # cdef CGraph* g = self._observed_graph
         if self._observed_graph.has_node(seed):  # remove from observed set
+            assert self._observed_set.find(seed) != self._observed_set.end()
             self._observed_set.erase(seed)
         else:  # add to observed graph
             self._observed_graph.add_node(seed)
@@ -150,8 +139,8 @@ class NoNextSeedError(CrawlerException):
 
 cdef inline int random_from_iterable(const cset[int]* an_iterable):
     """ Works in O(n) """
-    cdef cset[int].iterator it = deref(an_iterable).begin()
-    for _ in range(random.randint(0, deref(an_iterable).size())):
+    cdef cset[int].iterator it = an_iterable.begin()
+    for _ in range(random.randint(0, an_iterable.size()-1)):
         inc(it)
     return deref(it)
 
@@ -164,7 +153,7 @@ cdef class RandomCrawler(CCrawler):
         """
         super().__init__(graph, name=name if name else 'RC_', **kwargs)
 
-        if len(self._observed_set) == 0:
+        if self._observed_set.size() == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
@@ -172,8 +161,11 @@ cdef class RandomCrawler(CCrawler):
     cpdef int next_seed(self) except -1:
         if self._observed_set.size() == 0:
             raise NoNextSeedError()
-        return random_from_iterable(&self._observed_set)
+        return random_from_iterable(self._observed_set)
         # return random.choice([n for n in self._observed_set])
+
+    cdef vector[int] crawl(self, int seed):
+        return CCrawler.crawl(self, seed)
 
 
 cdef class RandomWalkCrawler(CCrawler):
@@ -187,14 +179,14 @@ cdef class RandomWalkCrawler(CCrawler):
         """
         super().__init__(graph, name='RW_', **kwargs)
 
-        if len(self._observed_set) == 0:
+        if self._observed_set.size() == 0:
             if initial_seed == -1:  # is not a duplicate code
                 initial_seed = self._orig_graph.random_node()
             self.initial_seed = initial_seed
             self.observe(initial_seed)
         else:
             if initial_seed == -1:
-                self.initial_seed = random_from_iterable(&self._observed_set)
+                self.initial_seed = random_from_iterable(self._observed_set)
 
         self.prev_seed = -1
 
@@ -202,6 +194,9 @@ cdef class RandomWalkCrawler(CCrawler):
         if self.prev_seed == -1:  # first step
             self.prev_seed = self.initial_seed
             return self.initial_seed
+
+        if self._observed_set.size() == 0:
+            raise NoNextSeedError()
 
         # for walking we need to step on already crawled nodes too
         if self._observed_graph.deg(self.prev_seed) == 0:
@@ -213,7 +208,7 @@ cdef class RandomWalkCrawler(CCrawler):
         while True:
             seed = self._observed_graph.random_neighbor(self.prev_seed)
             self.prev_seed = seed
-            if self._crawled_set.find(seed) == self._crawled_set.end():
+            if self._observed_set.find(seed) != self._observed_set.end():
                 return seed
 
 
@@ -227,13 +222,13 @@ cdef class BreadthFirstSearchCrawler(CCrawler):
         """
         super().__init__(graph, name=name if name else 'BFS', **kwargs)
 
-        if len(self._observed_set) == 0:
+        if self._observed_set.size() == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
 
         cdef int n
-        for n in self._observed_set:
+        for n in deref(self._observed_set):
             self.bfs_queue.push(n)
 
     cpdef int next_seed(self) except -1:
@@ -264,13 +259,13 @@ cdef class DepthFirstSearchCrawler(CCrawler):
         """
         super().__init__(graph, name=name if name else 'DFS', **kwargs)
 
-        if len(self._observed_set) == 0:
+        if self._observed_set.size() == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
 
         cdef int n
-        for n in self._observed_set:
+        for n in deref(self._observed_set):
             self.dfs_queue.push_back(n)
 
     cpdef int next_seed(self) except -1:
@@ -307,14 +302,14 @@ cdef class SnowBallCrawler(CCrawler):
         """
         super().__init__(graph, name=name if name else 'SB_%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
 
-        if len(self._observed_set) == 0:
+        if self._observed_set.size() == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
 
         self.p = p
         cdef int n
-        for n in self._observed_set:
+        for n in deref(self._observed_set):
             self.sbs_queue.push_back(n)
 
     cpdef int next_seed(self) except -1:
@@ -364,7 +359,7 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
         """
         super().__init__(graph, name=name if name else ("MOD-%s" %  batch if batch > 1 else 'MOD'), **kwargs)
 
-        if len(self._observed_set) == 0:
+        if self._observed_set.size() == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
@@ -373,7 +368,7 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
         # self.mod_set = set()  # we need to create, pop and lookup nodes
         cdef int n, d
         self.nd_set = ND_Set()
-        for n in self._observed_set:
+        for n in deref(self._observed_set):
             self.nd_set.add(n, self._observed_graph.deg(n))
 
     cpdef void update(self, vector[int] nodes):  # FIXME maybe ref faster?
@@ -432,7 +427,7 @@ cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
     def __init__(self, CGraph graph, int batch=1, int initial_seed=-1, name=None, **kwargs):
         super().__init__(graph, name=name if name else ("POD-%s" %  batch if batch > 1 else 'POD'), **kwargs)
 
-        if len(self._observed_set) == 0:
+        if self._observed_set.size() == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
@@ -440,10 +435,8 @@ cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
         self.batch = batch
         cdef int n, d
         self.nd_set = ND_Set()
-        for n in self._observed_set:
+        for n in deref(self._observed_set):
             self.nd_set.add(n, self._observed_graph.deg(n))
-
-        self._timer = 0
 
     cpdef void update(self, vector[int] nodes):  # FIXME maybe ref faster?
         """ Update priority structures with specified nodes (suggested their degrees have changed).

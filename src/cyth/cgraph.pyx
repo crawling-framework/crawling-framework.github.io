@@ -86,6 +86,9 @@ cdef class CGraph:
     cpdef bint has_node(self, int node):
         return self._snap_graph.IsNode(node)
 
+    cpdef bint has_edge(self, int i, int j):
+        return self._snap_graph.IsEdge(i, j)
+
     cpdef int deg(self, int node):
         """ Get node degree. """
         return self._snap_graph.GetNI(node).GetDeg()
@@ -108,6 +111,13 @@ cdef class CGraph:
         for i in range(count):
             yield ni.GetId()
             pinc(ni)
+
+    def iter_edges(self):
+        cdef TUNGraph.TEdgeI ei = self._snap_graph.BegEI()
+        cdef int count = self._snap_graph.GetEdges()
+        for i in range(count):
+            yield ei.GetSrcNId(), ei.GetDstNId()
+            pinc(ei)
 
     cpdef int random_node(self):
         """ Return a random node. """
