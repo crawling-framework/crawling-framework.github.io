@@ -41,7 +41,7 @@ cdef class ND_Set:
 
     cpdef (int, int) pop(self)
 
-    cpdef (int, int) pop_proportional_degree(self)
+    cpdef int pop_proportional_degree(self)
 
     cpdef bint empty(self)
 

@@ -5,7 +5,7 @@ from libcpp.set cimport set as cset
 from libcpp.vector cimport vector
 from libcpp.queue cimport queue
 from libcpp.deque cimport deque
-from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc
+from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec
 
 from cgraph cimport CGraph, str_to_chars
 # cimport node_deg_set
@@ -208,10 +208,13 @@ cdef class RandomWalkCrawler(CCrawler):
             raise NoNextSeedError("No neighbours to go next.")
             # node_neighbours = tuple(self.observed_set)
 
-        # Since we do not check if seed is in crawled_set, many re-crawls will occur
-        cdef int seed = self._observed_graph.random_neighbor(self.prev_seed)
-        self.prev_seed = seed
-        return seed
+        # Go to a neighbor until encounter not crawled node
+        cdef int seed
+        while True:
+            seed = self._observed_graph.random_neighbor(self.prev_seed)
+            self.prev_seed = seed
+            if self._crawled_set.find(seed) == self._crawled_set.end():
+                return seed
 
 
 cdef class BreadthFirstSearchCrawler(CCrawler):
@@ -348,87 +351,141 @@ cdef class CCrawlerUpdatable(CCrawler):
         raise NotImplementedError()
 
 
-# cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
-#     cdef int batch
-#     # cdef vector[int] mod_queue
-#     cdef ND_Set nd_set
-#
-#     def __init__(self, CGraph graph, int batch=1, int initial_seed=-1, name=None, **kwargs):
-#         """
-#         :param batch: batch size
-#         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-#          node. If None is given, a random node of original graph will be used.
-#         """
-#         super().__init__(graph, name=name if name else 'MOD-%s' % (batch if batch > 1 else ''), **kwargs)
-#
-#         if len(self._observed_set) == 0:
-#             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
-#                 initial_seed = self._orig_graph.random_node()
-#             self.observe(initial_seed)
-#
-#         self.batch = batch
-#         self.mod_set = set()  # we need to create, pop and lookup nodes
-#         for n in self._observed_set:
-#             self.nd_set.add(n, self._observed_graph.deg(n))
-#
-#     cpdef void update(self, vector[int] nodes):  # FIXME maybe ref faster?
-#         """ Update priority structures with specified nodes (suggested their degrees have changed).
-#         """
-#         cdef int d, n
-#         for n in nodes:
-#             # assert n in self._observed_set and n not in self.mod_queue  # Just for debugging
-#             if n in self.mod_set:  # already in batch
-#                 continue
-#             d = self._observed_graph.deg(n)
-#             # logger.debug("%s.ND_Set.updating(%s, %s)" % (self.name, n, d))
-#             self.nd_set.update_1(n, d - 1)
-#
-#     cpdef vector[int] crawl(self, int seed):
-#         """ Crawl specified node and update observed ND_Set
-#         """
-#         cdef vector[int] res = super().crawl(seed)
-#         cdef vector[int] upd
-#         cdef int n
-#         for n in self._observed_graph.neighbors(seed):
-#             # if n in self._observed_set:
-#             if self._observed_set.find(seed) != self._observed_set.end():
-#                 upd.push_back(n)
-#         self.update(upd)
-#         return res
-#
-#     cpdef int next_seed(self) except -1:
-#         """ Next node is taken as SortedKeyList top
-#         """
-#         cdef int n
-#         if len(self.mod_set) == 0:  # making array of top-k degrees
-#             if len(self.nd_set) == 0:
-#                 assert len(self._observed_set) == 0
-#                 raise NoNextSeedError()
-#             for n in self.nd_set.top(self.batch):
-#                 self.mod_set.add(n)  # TODO could be simplified if nd_set and self.mod_set the same type
-#             logger.debug("%s.queue: %s" % (self.name, self.mod_set))
-#         return self.mod_set.pop()
-#
-#     # def next_seed(self):
-#     #     """ Next node is taken by sorting degrees for the observed set
-#     #     """
-#     #     if len(self.mod_queue) == 0:  # making array of topk degrees
-#     #         if len(self._observed_set) == 0:
-#     #             raise NoNextSeedError()
-#     #         g = self.observed_graph.snap
-#     #         deg_dict = {node: g.GetNI(node).GetDeg()
-#     #                     for node in self._observed_set}
-#     #
-#     #         min_iter = min(self.batch, len(deg_dict))
-#     #         [self.mod_queue.append(n) for n, _ in
-#     #          sorted(deg_dict.items(), key=itemgetter(1), reverse=True)[:min_iter]]
-#     #         logger.debug("MOD queue: %s" % self.mod_queue)
-#     #     return self.mod_queue.pop()
+cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
+    cdef int batch
+    cdef ND_Set nd_set
+    cdef cset[int] mod_set  # FIXME python set would be faster, but how to?
+
+    def __init__(self, CGraph graph, int batch=1, int initial_seed=-1, name=None, **kwargs):
+        """
+        :param batch: batch size
+        :param initial_seed: if observed set is empty, the crawler will start from the given initial
+         node. If None is given, a random node of original graph will be used.
+        """
+        super().__init__(graph, name=name if name else ("MOD-%s" %  batch if batch > 1 else 'MOD'), **kwargs)
+
+        if len(self._observed_set) == 0:
+            if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
+                initial_seed = self._orig_graph.random_node()
+            self.observe(initial_seed)
+
+        self.batch = batch
+        # self.mod_set = set()  # we need to create, pop and lookup nodes
+        cdef int n, d
+        self.nd_set = ND_Set()
+        for n in self._observed_set:
+            self.nd_set.add(n, self._observed_graph.deg(n))
+
+    cpdef void update(self, vector[int] nodes):  # FIXME maybe ref faster?
+        """ Update priority structures with specified nodes (suggested their degrees have changed).
+        """
+        cdef int d, n
+        for n in nodes:
+            # assert n in self._observed_set and n not in self.mod_queue  # Just for debugging
+            # if n in self.mod_set:  # already in batch
+            if self.mod_set.find(n) != self.mod_set.end():  # already in batch
+                continue
+            d = self._observed_graph.deg(n)
+            # logger.debug("%s.ND_Set.updating(%s, %s)" % (self.name, n, d))
+            self.nd_set.update_1(n, d - 1)
+
+    cpdef vector[int] crawl(self, int seed):
+        """ Crawl specified node and update observed ND_Set
+        """
+        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] upd
+        cdef int n
+        for n in self._observed_graph.neighbors(seed):
+            # if n in self._observed_set:
+            if self._observed_set.find(n) != self._observed_set.end():
+                upd.push_back(n)
+        self.update(upd)
+        return res
+
+    cpdef int next_seed(self) except -1:
+        """ Next node with highest degree
+        """
+        cdef int n
+        cdef vector[int] vec
+        if self.mod_set.size() == 0:  # making array of top-k degrees
+            if len(self.nd_set) == 0:
+                assert self._observed_set.size() == 0
+                raise NoNextSeedError()
+            vec = self.nd_set.top(self.batch)
+            for n in vec:
+                self.mod_set.insert(n)  # TODO could be simplified if nd_set and self.mod_set the same type
+            # logger.debug("%s.queue: %s" % (self.name, self.mod_set))
+        # return self.mod_set.pop()
+        cdef cset[int].iterator it = dec(self.mod_set.end())  # TODO simplify?
+        n = deref(it)
+        self.mod_set.erase(it)
+        return n
+
+from time import time
+timer = 0
+
+cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
+    cdef int batch
+    cdef ND_Set nd_set
+    cdef cset[int] pod_set  # FIXME python set would be faster, but how to?
+
+    def __init__(self, CGraph graph, int batch=1, int initial_seed=-1, name=None, **kwargs):
+        super().__init__(graph, name=name if name else ("POD-%s" %  batch if batch > 1 else 'POD'), **kwargs)
+
+        if len(self._observed_set) == 0:
+            if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
+                initial_seed = self._orig_graph.random_node()
+            self.observe(initial_seed)
+
+        self.batch = batch
+        cdef int n, d
+        self.nd_set = ND_Set()
+        for n in self._observed_set:
+            self.nd_set.add(n, self._observed_graph.deg(n))
+
+        self._timer = 0
+
+    cpdef void update(self, vector[int] nodes):  # FIXME maybe ref faster?
+        """ Update priority structures with specified nodes (suggested their degrees have changed).
+        """
+        cdef int d, n
+        for n in nodes:
+            # assert n in self._observed_set and n not in self.mod_queue  # Just for debugging
+            # if n in self.mod_set:  # already in batch
+            if self.pod_set.find(n) != self.pod_set.end():  # already in batch
+                continue
+            d = self._observed_graph.deg(n)
+            # logger.debug("%s.ND_Set.updating(%s, %s)" % (self.name, n, d))
+            self.nd_set.update_1(n, d - 1)
+
+    cpdef vector[int] crawl(self, int seed):
+        """ Crawl specified node and update observed ND_Set
+        """
+        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] upd
+        cdef int n
+        for n in self._observed_graph.neighbors(seed):
+            # if n in self._observed_set:
+            if self._observed_set.find(n) != self._observed_set.end():
+                upd.push_back(n)
+        self.update(upd)
+        return res
+
+    cpdef int next_seed(self) except -1:
+        cdef int n
+        if self.pod_set.size() == 0:  # when batch ends, we create another one
+            if self._observed_set.size() == 0:
+                raise NoNextSeedError()
+            for _ in range(min(self.batch, len(self.nd_set))):
+                n = self.nd_set.pop_proportional_degree()
+                self.pod_set.insert(n)
+        cdef cset[int].iterator it = dec(self.pod_set.end())  # TODO simplify?
+        n = deref(it)
+        self.pod_set.erase(it)
+        return n
 
 
 # --------------------------------------
-
-cimport node_deg_set
 
 # cdef extern from "int_iter.cpp":
 #     cdef cppclass IntIter:

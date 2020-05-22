@@ -11,7 +11,7 @@ cdef class ND_Set:
     def __init__(self, iterable=None):
         self.ipset = IntPair_Set()
 
-        print(iterable)
+        # print(iterable)
         if iterable is not None:
             for node, deg in iterable:
                 # deg = key(node)
@@ -52,32 +52,32 @@ cdef class ND_Set:
         cdef pair[int, int] a = self.ipset.pop()
         return a.first, a.second
 
-    cpdef (int, int) pop_proportional_degree(self):
+    cpdef int pop_proportional_degree(self):
         """ Pop (degree, node) proportional to degree.
         """
         cdef pair[int, int] a = self.ipset.pop_proportional_degree()
-        return a.first, a.second
+        return a.second
 
     cpdef bint empty(self):
         return self.ipset.empty()
 
-    # def __len__(self):
-    #     return self.ipset.size()
-    #
-    # def __str__(self):
-    #     res = "ND_Set: "
-    #     cdef IntPair_Set.iterator it = self.ipset.begin()
-    #     cdef IntPair_Set.iterator end = self.ipset.end()
-    #     while it != end:
-    #         res += str(deref(it))
-    #         inc(it)
-    #     return res
-    #
-    # def __iter__(self):
-    #     cdef IntPair_Set.iterator it = self.ipset.begin()
-    #     for _ in range(self.ipset.size()):
-    #         yield deref(it)
-    #         inc(it)
+    def __len__(self):
+        return self.ipset.size()
+
+    def __str__(self):
+        res = "ND_Set: "
+        cdef IntPair_Set.iterator it = self.ipset.begin()
+        cdef IntPair_Set.iterator end = self.ipset.end()
+        while it != end:
+            res += str(deref(it))
+            inc(it)
+        return res
+
+    def __iter__(self):
+        cdef IntPair_Set.iterator it = self.ipset.begin()
+        for _ in range(self.ipset.size()):
+            yield deref(it)
+            inc(it)
 
     cpdef vector[int] top(self, int size):
         cpdef vector[int] res

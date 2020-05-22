@@ -6,9 +6,12 @@ import logging
 
 import matplotlib.pyplot as plt
 
-from cyth.cbasic import CCrawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
-    DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler
-# from crawlers.basic import RandomCrawler
+# from cyth.cbasic import CCrawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+#     DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
+#     PreferentialObservedDegreeCrawler
+from crawlers.basic import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
+    DepthFirstSearchCrawler, BreadthFirstSearchCrawler, SnowBallCrawler, RandomWalkCrawler, \
+    RandomCrawler
 # from crawlers.multiseed import MultiCrawler, test_carpet_graph
 from graph_io import GraphCollections
 from runners.animated_runner import AnimatedCrawlerRunner, Metric
@@ -124,62 +127,44 @@ def test_crawler_times():
     n = 5000
     # name = 'dolphins'
     name = 'digg-friends'
+    # name = 'soc-pokec-relationships'
+
+    # from crawlers.basic import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
+    #     DepthFirstSearchCrawler, BreadthFirstSearchCrawler, SnowBallCrawler, RandomWalkCrawler, \
+    #     RandomCrawler
     # g = GraphCollections.get(name)
-    g = GraphCollections.cget(name)
-    # g = GraphCollections.get('soc-pokec-relationships')
     # s = g.snap
-    # crawler = PreferentialObservedDegreeCrawler(g, batch=1, initial_seed=1)
+    # print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
 
-    # crawler = MaximumObservedDegreeCrawler(g, batch=1, skl_mode=True, initial_seed=1)
+    from cyth.cbasic import CCrawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
+        PreferentialObservedDegreeCrawler
+    g = GraphCollections.cget(name)
+    print("After cython crawlers. Graph %s, n=%s steps" % (name, n))
 
-    print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
-    # crawler = RandomCrawler(g, initial_seed=1)
-    # t = time()
-    # for i in range(n):
-    #     crawler.crawl_budget(1)
-    # print("%s. %.3f ms" % (crawler.name, (time()-t)*1000))
+    import numpy as np
+    for crawler_cls in [
+        RandomCrawler,
+        RandomWalkCrawler,
+        BreadthFirstSearchCrawler, DepthFirstSearchCrawler,
+        SnowBallCrawler,
+        MaximumObservedDegreeCrawler,
+        PreferentialObservedDegreeCrawler,
+    ]:
+        times = []
+        it = 10
+        for _ in range(it):
+            crawler = crawler_cls(g, initial_seed=1, batch=100)
+            t = time()
+            for i in range(n):
+                crawler.crawl_budget(1)
+            t = (time()-t)*1000
+            print("%s. %.3f ms" % (crawler.name, t))
+            times.append(t)
+        print("%s. %.1f +- %.1f ms" % (crawler.name, np.mean(times), np.var(times)**0.5))
 
-    # crawler = RandomWalkCrawler(g, initial_seed=1)
-    # t = time()
-    # for i in range(n):
-    #     crawler.crawl_budget(1)
-    # print("%s. %.3f ms" % (crawler.name, (time()-t)*1000))
-    #
-    # crawler = BreadthFirstSearchCrawler(g, initial_seed=1)
-    # t = time()
-    # for i in range(n):
-    #     crawler.crawl_budget(1)
-    # print("%s. %.3f ms" % (crawler.name, (time()-t)*1000))
+    # print("next_seed times", crawler.timer*1000)
 
-    # crawler = DepthFirstSearchCrawler(g, initial_seed=1)
-    # t = time()
-    # for i in range(n):
-    #     crawler.crawl_budget(1)
-    # print("%s. %.3f ms" % (crawler.name, (time()-t)*1000))
-    #
-    # crawler = SnowBallCrawler(g, initial_seed=1)
-    # t = time()
-    # for i in range(n):
-    #     crawler.crawl_budget(1)
-    # print("%s. %.3f ms" % (crawler.name, (time()-t)*1000))
-    #
-    crawler = MaximumObservedDegreeCrawler(g, initial_seed=1)
-    t = time()
-    for i in range(n):
-        crawler.crawl_budget(1)
-    print("%s. %.3f ms" % (crawler.name, (time()-t)*1000))
-    #
-    # crawler = PreferentialObservedDegreeCrawler(g, initial_seed=1)
-    # t = time()
-    # for i in range(n):
-    #     crawler.crawl_budget(1)
-    # print("%s. %.3f ms" % (crawler.name, (time()-t)*1000))
-
-    # crawler = RandomWalkCrawler(g, initial_seed=1)
-    # t = time()
-    # for i in range(n):
-    #     crawler.crawl_budget(1)
-    # print("MyGraph. %.3f ms" % ((time()-t)*1000))
 
     # SKL vs dict per batches, s. 'digg-friends'. Graph loading time included :(
     # n=5000               n=50000                n=250000
@@ -260,7 +245,7 @@ def test_numpy_times():
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s')
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
-    logging.getLogger().setLevel(logging.INFO)
+    # logging.getLogger().setLevel(logging.DEBUG)
 
     # test_snap_times()
     # test_crawler_times()
@@ -282,3 +267,5 @@ if __name__ == '__main__':
     # test_basic(g)
     # test_multi(g)
     test_crawler_times()
+
+
