@@ -9,6 +9,9 @@ cimport cgraph  # pxd import DON'T DELETE
 
 logger = logging.getLogger(__name__)
 
+cdef TRnd t_random
+t_random.Randomize()
+
 cdef inline fingerprint(TUNGraph snap_graph):  # FIXME duplicate
     """ Graph fingerprint to make sure briefly if it has changed.
 
@@ -83,6 +86,10 @@ cdef class CGraph:
     cpdef bint has_node(self, int node):
         return self._snap_graph.IsNode(node)
 
+    cpdef int deg(self, int node):
+        """ Get node degree. """
+        return self._snap_graph.GetNI(node).GetDeg()
+
     def neighbors(self, int node):
         """ Generator of neighbors of the given node in this graph.
 
@@ -101,6 +108,17 @@ cdef class CGraph:
         for i in range(count):
             yield ni.GetId()
             pinc(ni)
+
+    cpdef int random_node(self):
+        """ Return a random node. """
+        return self._snap_graph.GetRndNId(t_random)
+
+    cpdef int random_neighbor(self, int node):
+        """ Return a random neighbor of the given node in this graph.
+        """
+        cdef TUNGraph.TNodeI n_iter = self._snap_graph.GetNI(node)
+        cdef int r = t_random.GetUniDevInt(n_iter.GetDeg())
+        return n_iter.GetNbrNId(r)
 
     # @classmethod TODO
     # def new_snap(cls, snap_graph=None, name='tmp', directed=False, weighted=False, format='ij'):
@@ -226,7 +244,12 @@ def cgraph_test():
     print("path=%s" % 'abc' + graph.path)
     print("N=%s" % graph.nodes())
     print("E=%s" % graph.edges())
-    n = 1
-    print("Neighs of %s:" % n)
+    # n = 1
+    # print("Neighs of %s:" % n)
     # for n in graph.neighbors(n):
     #     print(n)
+
+    for _ in range(5):
+        # print(graph.random_node())
+        print(graph.random_neighbor(1))
+

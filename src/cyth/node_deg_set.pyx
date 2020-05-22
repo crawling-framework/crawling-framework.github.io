@@ -1,39 +1,12 @@
-from libcpp.set cimport set
+from libcpp.set cimport set as cset
+from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from cython.operator cimport dereference as deref, preincrement as inc
 
-cdef extern from "nd_set.cpp":
-    cdef cppclass IntPair_Set:
-        cppclass iterator:
-            pair[int, int]& operator*()
-            iterator operator++()
-            iterator operator--()
-            bint operator==(iterator)
-            bint operator!=(iterator)
-        cppclass reverse_iterator:
-            pair[int, int]& operator*()
-            iterator operator++()
-            iterator operator--()
-            bint operator==(reverse_iterator)
-            bint operator!=(reverse_iterator)
-        IntPair_Set()
-        bint add(int node, int deg)
-        # bint remove(int node, int deg)
-        # bint update(int node, int deg)
-        bint update_1(int node, int deg)
-        # int pop()
-        pair[int, int] pop()
-        pair[int, int] pop_proportional_degree()
-        bint empty()
-        int size()
-        iterator begin()
-        iterator end()
-        reverse_iterator rbegin()
-        void print_me()
+cimport node_deg_set
 
 
 cdef class ND_Set:
-    cdef IntPair_Set ipset
 
     def __init__(self, iterable=None):
         self.ipset = IntPair_Set()
@@ -88,28 +61,29 @@ cdef class ND_Set:
     cpdef bint empty(self):
         return self.ipset.empty()
 
-    def __len__(self):
-        return self.ipset.size()
+    # def __len__(self):
+    #     return self.ipset.size()
+    #
+    # def __str__(self):
+    #     res = "ND_Set: "
+    #     cdef IntPair_Set.iterator it = self.ipset.begin()
+    #     cdef IntPair_Set.iterator end = self.ipset.end()
+    #     while it != end:
+    #         res += str(deref(it))
+    #         inc(it)
+    #     return res
+    #
+    # def __iter__(self):
+    #     cdef IntPair_Set.iterator it = self.ipset.begin()
+    #     for _ in range(self.ipset.size()):
+    #         yield deref(it)
+    #         inc(it)
 
-    def __str__(self):
-        res = "ND_Set: "
-        cdef IntPair_Set.iterator it = self.ipset.begin()
-        cdef IntPair_Set.iterator end = self.ipset.end()
-        while it != end:
-            res += str(deref(it))
-            inc(it)
-        return res
-
-    def __iter__(self):
-        cdef IntPair_Set.iterator it = self.ipset.begin()
-        for _ in range(self.ipset.size()):
-            yield deref(it)
-            inc(it)
-
-    cpdef top(self, int size):
-        res = []
+    cpdef vector[int] top(self, int size):
+        cpdef vector[int] res
         while size > 0 and not self.ipset.empty():
-            res.append(self.ipset.pop().second)
+            # res.append(self.ipset.pop().second)
+            res.push_back(self.ipset.pop().second)
             size -= 1
         return res
 
@@ -147,6 +121,7 @@ cdef class ND_Set:
 
 def key(n):
     return 20*(n)
+
 
 cpdef test_ndset():
     # from cyth.cskl import SKL

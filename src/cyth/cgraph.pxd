@@ -11,8 +11,14 @@ cdef extern from "Snap.h":
         cppclass TIter:
             TDat GetDat()
 
+    cdef cppclass TRnd:
+        TRnd()
+        void Randomize()
+        int GetUniDevInt(const int&)
+
     cdef cppclass TInt:
         Tint()
+        TRnd Rnd
 
     cdef cppclass PUNGraph:
         PUNGraph()
@@ -46,6 +52,7 @@ cdef extern from "Snap.h":
         TNodeI BegNI() const
         TNodeI EndNI() const
         bint IsNode(const int)
+        int GetRndNId(TRnd)
 
     cdef cppclass TStr:
         TStr()
@@ -57,8 +64,6 @@ cdef extern from "Snap.h":
 
 cdef extern from "Snap.h" namespace "TSnap":
     PGraph LoadEdgeList[PGraph](const TStr&, const int&, const int&)
-
-cdef class CGraph
 
 
 cdef class CGraph:
@@ -81,6 +86,12 @@ cdef class CGraph:
     cpdef bint add_edge(self, int i, int j)
 
     cpdef bint has_node(self, int node)
+
+    cpdef int deg(self, int node)
+
+    cpdef int random_node(self)
+
+    cpdef int random_neighbor(self, int node)
 
 
 cdef inline char* str_to_chars(str string):

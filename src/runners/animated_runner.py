@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 
-from crawlers.basic import Crawler, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
+# from crawlers.basic import Crawler, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
+from cyth.cbasic import CCrawler
 from graph_io import GraphCollections, MyGraph
 from statistics import Stat
 
@@ -11,7 +12,7 @@ class Metric:
         self._callback = callback
         self._kwargs = kwargs
 
-    def __call__(self, crawler: Crawler):
+    def __call__(self, crawler: CCrawler):
         return self._callback(crawler, **self._kwargs)
 
 
@@ -28,8 +29,8 @@ class AnimatedCrawlerRunner:
         :return:
         """
         self.graph = graph
-        for crawler in crawlers:
-            assert crawler.orig_graph == graph
+        # for crawler in crawlers:  FIXME
+        #     assert crawler.orig_graph == graph
         self.crawlers = crawlers
         self.metrics = metrics
         self.budget = min(budget, graph[Stat.NODES]) if budget > 0 else graph[Stat.NODES]
@@ -59,7 +60,7 @@ class AnimatedCrawlerRunner:
             plt.cla()
             plt.title(self.title)
             for c, crawler in enumerate(self.crawlers):
-                crawler.crawl_budget(budget=batch)
+                crawler.crawl_budget(batch)
 
                 for m, metric in enumerate(self.metrics):
                     metric_seq = crawler_metric_seq[crawler][metric]
