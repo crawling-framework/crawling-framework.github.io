@@ -3,12 +3,7 @@ from utils import rel_dir
 
 build_cython(rel_dir)
 
-from cyth.cbasic import cbasic_test
-from cyth.cmultiseed import test_multiseed
-from cyth.node_deg_set import test_ndset
-from cyth.test_cython import test_class
-
-from cyth.cgraph import cgraph_test
+from base.cmultiseed import test_multiseed
 
 if __name__ == '__main__':
 

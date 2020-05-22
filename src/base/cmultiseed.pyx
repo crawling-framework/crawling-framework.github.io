@@ -1,14 +1,12 @@
 import logging
-from abc import ABC
 
-import numpy as np
 from libcpp.vector cimport vector
-from libcpp.map cimport map as cmap
 from libcpp.set cimport set as cset
 
 from cbasic cimport CCrawler, CCrawlerUpdatable
 from cgraph cimport CGraph
-from cyth.cbasic import RandomCrawler, NoNextSeedError
+from base.cbasic import RandomCrawler, NoNextSeedError
+from cython.operator cimport dereference as deref
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +16,11 @@ cdef class MultiCrawler(CCrawler):
     Runs several crawlers in parallel. Each crawler makes a step iteratively in a cycle.
     When the crawler can't get next seed it is discarded from the cycle.
     """
-    # cdef cmap[int, CCrawler] crawlers
-
     cdef int next_crawler
     cdef bint keep_node_owners
     cdef dict __dict__  # for pythonic fields, makes it slower
     # cdef cmap[int, int] node_owners  TODO faster?
+    # cdef cmap[int, CCrawler] crawlers
 
     def __init__(self, CGraph graph, crawlers, **kwargs):
         """
@@ -40,7 +37,7 @@ cdef class MultiCrawler(CCrawler):
         self.node_owner = {}  # node -> index of crawler who owns it. Need for MOD, POD
 
         # Merge observed graph and crawled set for all crawlers
-        cdef int index
+        cdef int index, x
         cdef cset[int]* a  # TODO ref faster?
         for index, crawler in enumerate(crawlers):
             assert crawler._orig_graph == self._orig_graph
@@ -57,15 +54,15 @@ cdef class MultiCrawler(CCrawler):
                     self._observed_graph.add_edge(i, j)
 
             # Merge crawled_set and observed_set
-            # c = c.union(crawler.crawled_set)
             a = crawler._crawled_set
             self._crawled_set.insert(a.begin(), a.end())
-            # assert o.isdisjoint(crawler.observed_set)  # making sure observed_sets are individual FIXME this is for debug, remove it to speedup
-            # o = o.union(crawler.observed_set)
+            for x in deref(crawler._observed_set):
+                # making sure observed_sets are individual FIXME this is for debug, remove it to speedup
+                assert self._observed_set.find(x) == self._observed_set.end(), "Crawlers' observed sets are not disjoint!"
             a = crawler._observed_set
             self._observed_set.insert(a.begin(), a.end())
             for n in crawler._observed_set[0]:
-                self.node_owner[n] = index
+                self.node_owner[n] = crawler
 
         cdef cset[int]* c = self._crawled_set
         for crawler in crawlers:
@@ -79,7 +76,7 @@ cdef class MultiCrawler(CCrawler):
     def observed_set(self) -> set:
         return self._observed_set[0]
 
-    cdef vector[int] crawl(self, int seed):
+    cdef vector[int] crawl(self, int seed) except *:
         """ Run the next crawler.
         """
         cdef CCrawler c = self.crawlers[self.next_crawler]  # FIXME ref better?
@@ -107,6 +104,7 @@ cdef class MultiCrawler(CCrawler):
             # distribute nodes with changed degree among instances to update their priority structures
             for n in self._observed_graph.neighbors(seed):
                 if n in self.node_owner:
+                    # print(self.node_owner[n])
                     c = self.node_owner[n]
                     if c != self.crawlers[self.next_crawler] and isinstance(c, CCrawlerUpdatable):
                         c.update([n])
@@ -138,8 +136,6 @@ cdef class MultiCrawler(CCrawler):
 
 
 # ------------------------------------------------------------
-
-from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec
 
 cpdef test_multiseed():
     # cdef cset[int] a

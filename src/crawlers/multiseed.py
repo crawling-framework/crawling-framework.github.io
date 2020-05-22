@@ -4,7 +4,7 @@ from abc import ABC
 import numpy as np
 
 from crawlers.basic import Crawler, NoNextSeedError, MaximumObservedDegreeCrawler, CrawlerUpdatable
-from graph_io import MyGraph
+from base.graph import MyGraph
 
 logger = logging.getLogger(__name__)
 

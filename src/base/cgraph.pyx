@@ -22,13 +22,14 @@ cdef inline fingerprint(TUNGraph snap_graph):  # FIXME duplicate
 
 
 cdef class CGraph:
-    def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False):
+    def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij'):
         """
 
         :param path: load from path. If None, create empty graph
         :param name: name. 'noname' by default
         :param directed: ignored: undirected only
         :param weighted: ignored: unweighted only
+        :param format: ignored: 'ij' only
         """
         assert directed == False
         assert weighted == False
@@ -45,7 +46,7 @@ cdef class CGraph:
         self._name = str_to_chars(name)
         self._directed = directed
         self._weighted = weighted
-        # self.format = format
+        # self._format = format  # unused
 
         self._fingerprint = fingerprint(self._snap_graph)
         self._stats_dict = {}
@@ -247,7 +248,7 @@ def cgraph_test():
 
     # cdef char* name = 'douban'
     # cdef char* path = '/home/misha/workspace/crawling/data/konect/dolphins.ij'
-    graph = CGraph(path='/home/misha/workspace/crawling/data/konect/dolphins.ij', name='d')
+    graph = CGraph(path='/data/konect/dolphins.ij', name='d')
     # graph = CGraph.CLoad(path)
     # graph = CGraph.Empty('')
     # print(graph.add_node(10))

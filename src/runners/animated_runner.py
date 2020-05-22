@@ -1,8 +1,14 @@
 from matplotlib import pyplot as plt
 
-# from crawlers.basic import Crawler, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
-from cyth.cbasic import CCrawler
-from graph_io import GraphCollections, MyGraph
+from utils import USE_CYTHON_CRAWLERS
+
+if USE_CYTHON_CRAWLERS:
+    from base.cbasic import CCrawler as Crawler
+else:
+    from base.graph import MyGraph
+    from crawlers.basic import Crawler, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
+
+from graph_io import GraphCollections
 from statistics import Stat
 
 
@@ -12,7 +18,7 @@ class Metric:
         self._callback = callback
         self._kwargs = kwargs
 
-    def __call__(self, crawler: CCrawler):
+    def __call__(self, crawler: Crawler):
         return self._callback(crawler, **self._kwargs)
 
 

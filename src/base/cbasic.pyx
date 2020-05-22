@@ -66,7 +66,7 @@ cdef class CCrawler:
         return already
 
     # FIXME may be reference to vector?
-    cdef vector[int] crawl(self, int seed):
+    cdef vector[int] crawl(self, int seed) except *:
         """ Crawl specified node. The observed graph is updated, also crawled and observed set.
 
         :param seed: node id to crawl

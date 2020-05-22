@@ -1,17 +1,19 @@
-from cyth.build_cython import build_cython
-from utils import rel_dir
-build_cython(rel_dir)  # Should go before any cython imports
+from utils import rel_dir, USE_CYTHON_CRAWLERS
+from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
 
 import logging
-
 import matplotlib.pyplot as plt
 
-# from cyth.cbasic import CCrawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
-#     DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
-#     PreferentialObservedDegreeCrawler
-from crawlers.basic import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
-    DepthFirstSearchCrawler, BreadthFirstSearchCrawler, SnowBallCrawler, RandomWalkCrawler, \
-    RandomCrawler
+if USE_CYTHON_CRAWLERS:
+    from base.cbasic import CCrawler as Crawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
+        PreferentialObservedDegreeCrawler
+    from base.cmultiseed import MultiCrawler
+else:
+    from crawlers.basic import RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
+        PreferentialObservedDegreeCrawler
+    from crawlers.multiseed import MultiCrawler
 
 from graph_io import GraphCollections
 from runners.animated_runner import AnimatedCrawlerRunner, Metric
@@ -61,21 +63,12 @@ def test_multi():
     # name = 'dolphins'
     name = 'digg-friends'
     # name = 'soc-pokec-relationships'
-
-    from crawlers.multiseed import MultiCrawler
-    from crawlers.basic import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
-        DepthFirstSearchCrawler, BreadthFirstSearchCrawler, SnowBallCrawler, RandomWalkCrawler, \
-        RandomCrawler
     graph = GraphCollections.get(name)
-    s = graph.snap
-    print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
 
-    # from cyth.cmultiseed import MultiCrawler
-    # from cyth.cbasic import CCrawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
-    #     DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
-    #     PreferentialObservedDegreeCrawler
-    # graph = GraphCollections.cget(name)
-    # print("After cython crawlers. Graph %s, n=%s steps" % (name, n))
+    if USE_CYTHON_CRAWLERS:
+        print("After cython crawlers. Graph %s, n=%s steps" % (name, n))
+    else:
+        print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
 
     crawler = MultiCrawler(graph, crawlers=[
         # RandomCrawler(graph) for i in range(10)
@@ -161,11 +154,9 @@ def test_crawler_times():
     # s = g.snap
     # print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
 
-    from cyth.cmultiseed import MultiCrawler
-    from cyth.cbasic import CCrawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
-        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
-        PreferentialObservedDegreeCrawler
-    g = GraphCollections.cget(name)
+    from base.cmultiseed import MultiCrawler
+    from base.cbasic import RandomWalkCrawler
+    g = GraphCollections.get(name)
     print("After cython crawlers. Graph %s, n=%s steps" % (name, n))
 
     import numpy as np
@@ -292,7 +283,7 @@ if __name__ == '__main__':
     # name = 'petster-hamster'
     # name = 'dolphins'
     # g = test_carpet_graph(8, 8)[0]
-    g = GraphCollections.cget(name, giant_only=True)
+    g = GraphCollections.get(name, giant_only=True)
     # g = GraphCollections.get('test', 'other', giant_only=True)
 
     # test_basic(g)

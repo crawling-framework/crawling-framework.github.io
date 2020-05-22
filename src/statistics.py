@@ -5,7 +5,7 @@ from operator import itemgetter
 import snap
 from tqdm import tqdm
 
-from graph_io import MyGraph
+from base.graph import MyGraph
 
 
 class Stat(Enum):

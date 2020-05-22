@@ -9,19 +9,31 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-from crawlers.advanced import CrawlerWithAnswer
-from crawlers.basic import DepthFirstSearchCrawler, RandomWalkCrawler, MaximumObservedDegreeCrawler, \
-    PreferentialObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, Crawler, SnowBallCrawler
-from crawlers.multiseed import MultiCrawler
-# ForestFireCrawler
+from utils import PICS_DIR, RESULT_DIR, REMAP_ITER, USE_CYTHON_CRAWLERS  # PICS_DIR = '/home/jzargo/PycharmProjects/crawling/crawling/pics/'
+
+if USE_CYTHON_CRAWLERS:
+    from base.cgraph import CGraph as MyGraph
+    from base.cbasic import CCrawler as Crawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
+        PreferentialObservedDegreeCrawler
+    from base.cmultiseed import MultiCrawler
+else:
+    from base.graph import MyGraph
+    from crawlers.basic import RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
+        PreferentialObservedDegreeCrawler
+    from crawlers.multiseed import MultiCrawler
+
 from runners.animated_runner import AnimatedCrawlerRunner, Metric
 from graph_io import GraphCollections
-from graph_io import MyGraph
 from statistics import Stat
 from statistics import get_top_centrality_nodes
-from utils import PICS_DIR, RESULT_DIR, REMAP_ITER  # PICS_DIR = '/home/jzargo/PycharmProjects/crawling/crawling/pics/'
 
 REMAP_ITER_TO_STEP = REMAP_ITER(300)  # dynamic step size
+
+#
+# FIXME check if works
+#
 
 
 def make_gif(crawler_name, duration=1):

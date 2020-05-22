@@ -1,12 +1,8 @@
-import os
 from time import time
 
 from crawlers.basic import Crawler
-from cyth.cbasic import CCrawler
+from base.cbasic import CCrawler
 from graph_io import GraphCollections
-from utils import GRAPHS_DIR
-
-from cyth.cgraph import CGraph
 
 
 def test_neighbours():

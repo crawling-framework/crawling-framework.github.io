@@ -1,5 +1,4 @@
 from cyth.build_cython import build_cython
-from cyth.cgraph import CGraph
 from utils import rel_dir
 build_cython(rel_dir)  # Should go before any cython imports
 
@@ -10,9 +9,8 @@ from queue import deque  # here was a warning in pycharm
 import numpy as np
 import snap
 
-from cyth.cbasic import CCrawler
-from cyth.node_deg_set import ND_Set
-from graph_io import MyGraph
+from base.node_deg_set import ND_Set
+from base.graph import MyGraph
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +25,7 @@ class Crawler(object):
         if 'observed_graph' in kwargs:
             self.observed_graph = kwargs['observed_graph']
         else:
-            self.observed_graph = MyGraph.new_snap(directed=graph.directed, weighted=graph.weighted)
+            self.observed_graph = MyGraph(directed=graph.directed, weighted=graph.weighted)
 
         # crawled ids set
         if 'crawled_set' in kwargs:
