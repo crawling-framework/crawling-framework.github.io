@@ -7,7 +7,8 @@ from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer
 from crawlers.basic import CrawlerException, MaximumObservedDegreeCrawler
 from crawlers.multiseed import MultiCrawler
 from runners.animated_runner import AnimatedCrawlerRunner, Metric
-from graph_io import MyGraph, GraphCollections
+from graph_io import GraphCollections
+from base.graph import MyGraph
 from statistics import Stat, get_top_centrality_nodes
 
 

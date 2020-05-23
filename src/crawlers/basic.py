@@ -1,3 +1,7 @@
+from cyth.build_cython import build_cython
+from utils import rel_dir
+build_cython(rel_dir)  # Should go before any cython imports
+
 import logging
 import random
 from queue import deque  # here was a warning in pycharm
@@ -5,8 +9,8 @@ from queue import deque  # here was a warning in pycharm
 import numpy as np
 import snap
 
-from cyth.node_deg_set import ND_Set
-from graph_io import MyGraph
+from base.node_deg_set import ND_Set
+from base.graph import MyGraph
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +25,7 @@ class Crawler(object):
         if 'observed_graph' in kwargs:
             self.observed_graph = kwargs['observed_graph']
         else:
-            self.observed_graph = MyGraph.new_snap(directed=graph.directed, weighted=graph.weighted)
+            self.observed_graph = MyGraph(directed=graph.directed, weighted=graph.weighted)
 
         # crawled ids set
         if 'crawled_set' in kwargs:
@@ -152,6 +156,8 @@ class RandomWalkCrawler(Crawler):
         else:
             if initial_seed is None:
                 self.initial_seed = random.choice(list(self._observed_set))
+        self._observed_set.add(self.initial_seed)
+        self.observed_graph.snap.AddNode(self.initial_seed)
 
         self.prev_seed = None
 
@@ -160,16 +166,21 @@ class RandomWalkCrawler(Crawler):
             self.prev_seed = self.initial_seed
             return self.initial_seed
 
-        node_neighbours = self.observed_graph.neighbors(self.prev_seed)
-        # for walking we need to step on already crawled nodes too
-        if len(node_neighbours) == 0:
-            raise NoNextSeedError("No neighbours to go next.")
-            # node_neighbours = tuple(self.observed_set)
+        if len(self._observed_set) == 0:
+            raise NoNextSeedError()
 
         # Since we do not check if seed is in crawled_set, many re-crawls will occur
-        seed = (random.choice(node_neighbours))
-        self.prev_seed = seed
-        return seed
+        while True:
+            node_neighbours = self.observed_graph.neighbors(self.prev_seed)
+            # for walking we need to step on already crawled nodes too
+            if len(node_neighbours) == 0:
+                raise NoNextSeedError("No neighbours to go next.")
+                # node_neighbours = tuple(self.observed_set)
+
+            seed = random.choice(node_neighbours)
+            self.prev_seed = seed
+            if seed in self._observed_set:
+                return seed
 
 
 class BreadthFirstSearchCrawler(Crawler):
@@ -293,7 +304,7 @@ class CrawlerUpdatable(Crawler):
         """
         raise NotImplementedError()
 
-
+#
 class MaximumObservedDegreeCrawler(CrawlerUpdatable):
     def __init__(self, graph: MyGraph, batch=1, initial_seed=None, name=None, **kwargs):
         """
@@ -365,7 +376,7 @@ class MaximumObservedDegreeCrawler(CrawlerUpdatable):
 
 class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
     def __init__(self, graph: MyGraph, batch=10, initial_seed=None, **kwargs):
-        super().__init__(graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
+        super().__init__(graph, name='POD-%s' % (batch if batch > 1 else ''), **kwargs)
 
         if len(self._observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
@@ -401,7 +412,7 @@ class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
         if len(self.pod_queue) == 0:  # when batch ends, we create another one
             if len(self._observed_set) == 0:
                 raise NoNextSeedError()
-            self.pod_queue = set([self.nd_set.pop_proportional_degree()[1] for _ in
+            self.pod_queue = set([self.nd_set.pop_proportional_degree() for _ in
                               range(min(self.batch, len(self.nd_set)))])
         return self.pod_queue.pop()
 

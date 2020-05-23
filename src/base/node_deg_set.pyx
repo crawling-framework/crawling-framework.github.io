@@ -1,44 +1,17 @@
-from libcpp.set cimport set
+from libcpp.set cimport set as cset
+from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from cython.operator cimport dereference as deref, preincrement as inc
 
-cdef extern from "nd_set.cpp":
-    cdef cppclass IntPair_Set:
-        cppclass iterator:
-            pair[int, int]& operator*()
-            iterator operator++()
-            iterator operator--()
-            bint operator==(iterator)
-            bint operator!=(iterator)
-        cppclass reverse_iterator:
-            pair[int, int]& operator*()
-            iterator operator++()
-            iterator operator--()
-            bint operator==(reverse_iterator)
-            bint operator!=(reverse_iterator)
-        IntPair_Set()
-        bint add(int node, int deg)
-        # bint remove(int node, int deg)
-        # bint update(int node, int deg)
-        bint update_1(int node, int deg)
-        # int pop()
-        pair[int, int] pop()
-        pair[int, int] pop_proportional_degree()
-        bint empty()
-        int size()
-        iterator begin()
-        iterator end()
-        reverse_iterator rbegin()
-        void print_me()
+cimport node_deg_set
 
 
 cdef class ND_Set:
-    cdef IntPair_Set ipset
 
     def __init__(self, iterable=None):
         self.ipset = IntPair_Set()
 
-        print(iterable)
+        # print(iterable)
         if iterable is not None:
             for node, deg in iterable:
                 # deg = key(node)
@@ -79,11 +52,11 @@ cdef class ND_Set:
         cdef pair[int, int] a = self.ipset.pop()
         return a.first, a.second
 
-    cpdef (int, int) pop_proportional_degree(self):
+    cpdef int pop_proportional_degree(self):
         """ Pop (degree, node) proportional to degree.
         """
         cdef pair[int, int] a = self.ipset.pop_proportional_degree()
-        return a.first, a.second
+        return a.second
 
     cpdef bint empty(self):
         return self.ipset.empty()
@@ -106,10 +79,11 @@ cdef class ND_Set:
             yield deref(it)
             inc(it)
 
-    cpdef top(self, int size):
-        res = []
+    cpdef vector[int] top(self, int size):
+        cpdef vector[int] res
         while size > 0 and not self.ipset.empty():
-            res.append(self.ipset.pop().second)
+            # res.append(self.ipset.pop().second)
+            res.push_back(self.ipset.pop().second)
             size -= 1
         return res
 
@@ -147,6 +121,7 @@ cdef class ND_Set:
 
 def key(n):
     return 20*(n)
+
 
 cpdef test_ndset():
     # from cyth.cskl import SKL

@@ -7,7 +7,7 @@ import numpy as np
 from crawlers.basic import Crawler, CrawlerException, MaximumObservedDegreeCrawler, NoNextSeedError, \
     RandomWalkCrawler, DepthFirstSearchCrawler, RandomCrawler
 from crawlers.multiseed import MultiCrawler
-from graph_io import MyGraph
+from base.graph import MyGraph
 
 
 class CrawlerWithAnswer(Crawler):
