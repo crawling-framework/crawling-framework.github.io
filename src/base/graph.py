@@ -78,6 +78,18 @@ class MyGraph(object):
             self._fingerprint = fingerprint(self._snap_graph)
         return self._snap_graph
 
+    def nodes(self):
+        return self._snap_graph.GetNodes()
+
+    def edges(self):
+        return self._snap_graph.GetEdges()
+
+    def add_node(self, node: int):
+        return self._snap_graph.AddNode(node)
+
+    def add_edge(self, i: int, j: int):
+        return self._snap_graph.AddEdge(i, j)
+
     def neighbors(self, node: int):
         """
         List of neighbors of the given node in this graph. (snap wrapper for simplicity)
@@ -109,7 +121,9 @@ class MyGraph(object):
                 # Compute and save stats
                 logging.info("Could not find stats '%s' at '%s'. Will be computed." %
                              (stat, stat_path))
-                value = stat.computer(self)
+                from statistics import stat_computer
+                # value = stat.computer(self)
+                value = stat_computer[stat](self)
 
                 # Save stats to file
                 if not os.path.exists(os.path.dirname(stat_path)):
@@ -123,7 +137,7 @@ class MyGraph(object):
             # raise KeyError("Unknown item type: %s" % type(item))
         return value
 
-    def save_snap_edge_list(self, new_path=None):
+    def save(self, new_path=None):
         """ Write current edge list of snap graph into file. """
         s = self._snap_graph
         assert s
@@ -135,6 +149,7 @@ class MyGraph(object):
         with open(new_path, 'w') as f:
             for e in s.Edges():
                 f.write("%s %s\n" % (e.GetSrcNId(), e.GetDstNId()))
+        self._fingerprint = fingerprint(s)
 
     @property  # Denis:  could be useful to handle nx version of graph
     def snap_to_networkx(self):
@@ -145,28 +160,3 @@ class MyGraph(object):
                 nx_graph.add_edge(NI.GetId(), Id)
 
         return nx_graph
-
-
-def test_graph():
-    g = snap.TUNGraph.New()
-    g.AddNode(1)
-    g.AddNode(2)
-    g.AddNode(3)
-    g.AddNode(4)
-    g.AddNode(5)
-    g.AddEdge(1, 1)
-    g.AddEdge(1, 1)
-    g.AddEdge(1, 2)
-    g.AddEdge(1, 2)
-    g.AddEdge(2, 1)
-    g.AddEdge(2, 3)
-    g.AddEdge(4, 2)
-    g.AddEdge(4, 3)
-    g.AddEdge(5, 4)
-    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-    for e in g.Edges():
-        print(e)  # Exception
-
-    graph = MyGraph.new_snap(g)
-    g.AddEdge(4, 1)
-    print(graph['EDGES'])  # Exception

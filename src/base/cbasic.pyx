@@ -561,7 +561,6 @@ cpdef cbasic_test():
     # print(a)
     # print("cy for %s ms" % ((time()-t)*1000))
 
-
     cdef ND_Set nd = ND_Set()
     print(nd)
     # cdef CGraph g

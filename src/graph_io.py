@@ -1,4 +1,3 @@
-from base.graph import MyGraph, test_graph
 from utils import rel_dir, USE_CYTHON_CRAWLERS
 from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
 
@@ -242,7 +241,32 @@ def test_graph_manipulations():
     s = graph.snap
     s = snap.GetMxWcc(s)
     graph._snap_graph = s
-    graph.save_snap_edge_list(path)
+    graph.save(path)
+
+
+def test_graph():
+    g = snap.TUNGraph.New()
+    g.AddNode(1)
+    g.AddNode(2)
+    g.AddNode(3)
+    g.AddNode(4)
+    g.AddNode(5)
+    g.AddEdge(1, 1)
+    g.AddEdge(1, 1)
+    g.AddEdge(1, 2)
+    g.AddEdge(1, 2)
+    g.AddEdge(2, 1)
+    g.AddEdge(2, 3)
+    g.AddEdge(4, 2)
+    g.AddEdge(4, 3)
+    g.AddEdge(5, 4)
+    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
+    for e in g.Edges():
+        print(e)  # Exception
+
+    graph = MyGraph.new_snap(g)
+    g.AddEdge(4, 1)
+    print(graph['EDGES'])  # Exception
 
 
 if __name__ == '__main__':

@@ -178,7 +178,6 @@ def test_crawler_times():
             ])
             t = time()
             for i in range(n):
-                # print(i)
                 crawler.crawl_budget(1)
             t = (time()-t)*1000
             print("%s. %.3f ms" % (crawler.name, t))

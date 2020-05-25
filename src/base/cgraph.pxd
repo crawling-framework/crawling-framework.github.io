@@ -1,4 +1,5 @@
 from cpython.mem cimport PyMem_Malloc
+from cython.operator cimport dereference as deref
 
 
 cdef extern from "Snap.h":
@@ -6,27 +7,6 @@ cdef extern from "Snap.h":
     #     PUNGraph()
     #     PUNGraph New()
     #     int AddEdge(int, int)
-
-    cdef cppclass THash[TKey, TDat]:
-        cppclass TIter:
-            TDat GetDat()
-
-    cdef cppclass TRnd:
-        TRnd()
-        void Randomize()
-        int GetUniDevInt(const int&)
-
-    cdef cppclass TInt:
-        Tint()
-        TRnd Rnd
-
-    cdef cppclass PUNGraph:
-        PUNGraph()
-        PUNGraph New()
-        int AddNode(int)
-        int AddEdge(int, int)
-        int GetNodes()
-        int GetEdges()
 
     cdef cppclass TUNGraph:
         cppclass TNode:
@@ -51,7 +31,7 @@ cdef extern from "Snap.h":
 
         TUNGraph()
         # @staticmethod
-        # TUNGraph New()
+        # static PUNGraph New()
         int AddNode(int)
         int AddEdge(int, int)
         int GetNodes()
@@ -65,26 +45,83 @@ cdef extern from "Snap.h":
         bint IsEdge(const int, const int)
         int GetRndNId(TRnd)
 
+    cdef cppclass THash[TKey, TDat]:
+        cppclass TIter:
+            TDat GetDat()
+        THash()
+        THashKeyDatI BegI()
+        THashKeyDatI EndI()
+
+    cdef cppclass TRnd:
+        TRnd()
+        void Randomize()
+        int GetUniDevInt(const int&)
+
+    cdef cppclass TInt:
+        Tint()
+        int operator() () const
+        TRnd Rnd
+
+    cdef cppclass TIntPr:
+        TIntPr()
+
+    cdef cppclass TFlt:
+        TFlt()
+        float operator() () const
+
+    cdef cppclass TFltPtr:
+        TFltPtr()
+
     cdef cppclass TStr:
         TStr()
         TStr(const char*)
 
     cdef cppclass TPt[T]:
         TPt()
+        TPt(T*)
+        void Clr()
         T operator*()
+
+    cdef cppclass THashKeyDatI[TKey, TDat]:
+        THashKeyDatI& operator++ ()
+        bint operator==(const THashKeyDatI& HashKeyDatI) const
+        const TKey& GetKey()
+        const TDat& GetDat()
+
+    ctypedef TPt[TUNGraph] PUNGraph
+    ctypedef THash[TInt, TFlt] TIntFltH
+    ctypedef THash[TIntPr, TFlt] TIntPrFltH
+
 
 cdef extern from "Snap.h" namespace "TSnap":
     PGraph LoadEdgeList[PGraph](const TStr&, const int&, const int&)
+    double GetClustCf[PGraph](const PGraph& Graph, int SampleNodes)
+    double GetMxWccSz[PGraph](const PGraph& Graph)
+    PGraph GetMxWcc[PGraph](const PGraph& Graph)
+    double GetBfsEffDiam[PGraph](const PGraph& Graph, const int& NTestNodes, const bint& IsDir)
+    void GetBetweennessCentr[PGraph](const PGraph& Graph, TIntFltH& NIdBtwH, const double& NodeFrac, const bint& IsDir)
+    void GetPageRank[PGraph](const PGraph& Graph, TIntFltH& PRankH, const double& C, const double& Eps, const int& MaxIter)
+    double GetClosenessCentr[PGraph](const PGraph& Graph, const int& NId, const bint& Normalized, const bint& IsDir)
+    int GetNodeEcc[PGraph](const PGraph& Graph, const int& NId, const bint& IsDir)
+    double GetNodeClustCf[PGraph](const PGraph& Graph, const int& NId)
+    void GetNodeClustCf[PGraph](const PGraph& Graph, TIntFltH& NIdCCfH)
+    PGraph GetKCore[PGraph](const PGraph& Graph, const int& K)
 
 
 cdef class CGraph:
     cdef TUNGraph _snap_graph  # TODO extend for directed
+    cdef PUNGraph _snap_graph_ptr
     cdef char* _path
     cdef char* _name
     cdef bint _directed
     cdef bint _weighted
     cdef _fingerprint
     cdef _stats_dict
+
+    # cdef inline TUNGraph _snap(self):
+    #     return deref(self._snap_graph)
+
+    cdef PUNGraph snap_graph_ptr(self)
 
     cdef CGraph load(self)
 
@@ -101,6 +138,8 @@ cdef class CGraph:
     cpdef bint has_edge(self, int i, int j)
 
     cpdef int deg(self, int node)
+
+    cpdef int max_deg(self)
 
     cpdef int random_node(self)
 

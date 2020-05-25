@@ -11,7 +11,7 @@ RESULT_DIR = os.path.join(rel_dir, 'results')  # directory to store pictures
 
 COLLECTIONS = ['other', 'konect', 'networkrepository']
 
-USE_CYTHON_CRAWLERS = False
+USE_CYTHON_CRAWLERS = True
 
 
 # Remaping steps depending on used budget - on first iters step=1, on last it grows ~x^2

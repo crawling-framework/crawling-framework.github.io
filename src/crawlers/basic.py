@@ -1,5 +1,6 @@
 from cyth.build_cython import build_cython
-from utils import rel_dir
+from utils import rel_dir, USE_CYTHON_CRAWLERS
+
 build_cython(rel_dir)  # Should go before any cython imports
 
 import logging
@@ -133,7 +134,7 @@ class RandomCrawler(Crawler):
             if initial_seed is None:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
             self._observed_set.add(initial_seed)
-            self.observed_graph.snap.AddNode(initial_seed)
+            self.observed_graph.add_node(initial_seed)
 
     def next_seed(self):
         if len(self._observed_set) == 0:
@@ -157,7 +158,7 @@ class RandomWalkCrawler(Crawler):
             if initial_seed is None:
                 self.initial_seed = random.choice(list(self._observed_set))
         self._observed_set.add(self.initial_seed)
-        self.observed_graph.snap.AddNode(self.initial_seed)
+        self.observed_graph.add_node(self.initial_seed)
 
         self.prev_seed = None
 
@@ -195,7 +196,7 @@ class BreadthFirstSearchCrawler(Crawler):
             if initial_seed is None:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
             self._observed_set.add(initial_seed)
-            self.observed_graph.snap.AddNode(initial_seed)
+            self.observed_graph.add_node(initial_seed)
 
         self.bfs_queue = deque(self._observed_set)  # FIXME what if its size > 1 ?
 
@@ -233,7 +234,7 @@ class SnowBallCrawler(Crawler):
             if initial_seed is None:
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
             self.observed_set.add(initial_seed)
-            self.observed_graph.snap.AddNode(initial_seed)
+            self.observed_graph.add_node(initial_seed)
         self.p = p
         self.sbs_queue = deque(self.observed_set)  # FIXME what if its size > 1 ?
         self.sbs_backlog = set()
@@ -271,7 +272,7 @@ class DepthFirstSearchCrawler(Crawler):
             if initial_seed is None:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
             self._observed_set.add(initial_seed)
-            self.observed_graph.snap.AddNode(initial_seed)
+            self.observed_graph.add_node(initial_seed)
 
         self.dfs_queue = deque(self._observed_set)  # FIXME what if its size > 1 ?
 
@@ -318,7 +319,7 @@ class MaximumObservedDegreeCrawler(CrawlerUpdatable):
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
             self._observed_set.add(initial_seed)
-            self.observed_graph.snap.AddNode(initial_seed)
+            self.observed_graph.add_node(initial_seed)
 
         self.batch = batch
         self.mod_queue = deque()
@@ -382,7 +383,7 @@ class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
             self._observed_set.add(initial_seed)
-            self.observed_graph.snap.AddNode(initial_seed)
+            self.observed_graph.add_node(initial_seed)
 
         self.batch = batch
         self.pod_queue = set()  # list of nodes to proceed in batch
@@ -425,7 +426,7 @@ class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
 #             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
 #                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
 #             self._observed_set.add(initial_seed)
-#             self.observed_graph.snap.AddNode(initial_seed)
+#             self.observed_graph.add_node(initial_seed)
 #
 #         self.discrete_distribution = None
 #         self.pod_queue = [initial_seed]  # queue of nodes to proceed in batch
@@ -462,7 +463,7 @@ class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
 #             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
 #                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
 #             self.observed_set.add(initial_seed)
-#             self.observed_graph.snap.AddNode(initial_seed)
+#             self.observed_graph.add_node(initial_seed)
 #
 #         self.bfs_queue = [initial_seed]
 #         self.p = p
@@ -492,19 +493,18 @@ class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
 
 
 def test_crawlers():
-    g = snap.TUNGraph.New()
-    g.AddNode(1)
-    g.AddNode(2)
-    g.AddNode(3)
-    g.AddNode(4)
-    g.AddNode(5)
-    g.AddEdge(1, 2)
-    g.AddEdge(2, 3)
-    g.AddEdge(4, 2)
-    g.AddEdge(4, 3)
-    g.AddEdge(5, 4)
-    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-    graph = MyGraph.new_snap(g, name='test', directed=False)
+    g = MyGraph(name='test', directed=False)
+    g.add_node(1)
+    g.add_node(2)
+    g.add_node(3)
+    g.add_node(4)
+    g.add_node(5)
+    g.add_edge(1, 2)
+    g.add_edge(2, 3)
+    g.add_edge(4, 2)
+    g.add_edge(4, 3)
+    g.add_edge(5, 4)
+    print("N=%s E=%s" % (g.nodes(), g.edges()))
 
     # crawler = Crawler(graph)
     # for i in range(1, 6):
@@ -512,9 +512,10 @@ def test_crawlers():
     #     print("crawled:%s, observed:%s, all:%s" %
     #           (crawler.crawled_set, crawler.observed_set, crawler.nodes_set))
 
-    crawler = RandomCrawler(graph)
+    crawler = RandomCrawler(g)
     crawler.crawl_budget(15)
 
 
 if __name__ == '__main__':
+    assert USE_CYTHON_CRAWLERS
     test_crawlers()

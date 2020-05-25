@@ -54,7 +54,7 @@ def make_gif(crawler_name, duration=1):
 
 
 # TODO : make 1 parent Runner for CrawlerRunner and AnimatedCrawlerRunner
-class CrawlerRunner:  # take budget=int(graph.snap.GetNodes() / 10)
+class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
     def __init__(self, graph: MyGraph, crawlers, metrics, budget=-1, step=1,
                  draw_mod=None, batches_per_pic=1, layout_pos=None):
         """
@@ -292,7 +292,7 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
                                    budget=10000, step=10)
     else:
         ci = CrawlerRunner(graph, crawlers, metrics, budget=0,
-                           # step=ceil(10 ** (len(str(graph.snap.GetNodes())) - 3)),
+                           # step=ceil(10 ** (len(str(graph.nodes())) - 3)),
                            # if 5*10^5 then step = 10**2,if 10^7 => step=10^4
                            # batches_per_pic=10,
                            # draw_mod='traversal', layout_pos=layout_pos,
@@ -315,7 +315,7 @@ if __name__ == '__main__':
     # g = GraphCollections.get(graph_name, 'other', giant_only=True)
 
     # g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
-    print('Graph {} with {} nodes and {} edges'.format(graph_name, g.snap.GetNodes(), g.snap.GetEdges()))
+    print('Graph {} with {} nodes and {} edges'.format(graph_name, g.nodes(), g.edges()))
     # from crawlers.multiseed import test_carpet_graph, MultiCrawler
     # x,y = 7,7
     # graph_name = 'carpet_graph_'+str(x)+'_'+str(y)

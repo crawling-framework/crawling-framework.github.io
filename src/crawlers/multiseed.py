@@ -37,7 +37,7 @@ class MultiCrawler(Crawler):
                 self.keep_node_owners = True
 
             # merge observed graph
-            for n in crawler.observed_graph.snap.Nodes():
+            for n in crawler.observed_graph.nodes():
                 n = n.GetId()
                 if not g.IsNode(n):
                     g.AddNode(n)
@@ -124,13 +124,13 @@ class MultiSeedCrawler(Crawler, ABC):
 
     def __init__(self, graph: MyGraph):
         super().__init__(graph)
-        # assert n1 <= self.budget_left <= self.orig_graph.snap.GetNodes()
+        # assert n1 <= self.budget_left <= self.orig_graph.nodes()
         # assert k <= self.budget_left - n1
         # self.n1 = n1  # n1 seeds crawled on first steps, then comes crawler
         self.seed_sequence_ = []  # sequence of tries to add nodes
         self.initial_seeds = []  # store n1 seeds # TODO maybe use it not only in Random Walk (Frontier Sampling)
         self.budget_left = 1  # how many iterations left. stops when 0
-        # print("n1={}, budget={}, nodes={}".format(self.n1, self.budget_left, self.orig_graph.snap.GetNodes()))
+        # print("n1={}, budget={}, nodes={}".format(self.n1, self.budget_left, self.orig_graph.nodes()))
         self.crawler_name = ""  # will be used in names of files
         # self.components_current_seeds
 
@@ -178,14 +178,14 @@ class MultiSeedCrawler(Crawler, ABC):
         :param file: - if you need to
         :return:
         """
-        self.budget_left = min(budget, self.observed_graph.snap.GetNodes() - 1)
+        self.budget_left = min(budget, self.observed_graph.nodes() - 1)
         if np.random.randint(0, 100, 1) < p * 100:  # TODO to play with this dead staff
             print("variety play")
             self.crawl(int(np.random.choice(self.initial_seeds, 1)[0]))
             self.budget_left -= 1
 
         while (self.budget_left > 0) and (len(self._observed_set) > 0) \
-                and (self.observed_graph.snap.GetNodes() <= self.orig_graph.snap.GetNodes()):
+                and (self.observed_graph.nodes() <= self.orig_graph.nodes()):
             seed = self.next_seed()
             self.crawl(seed)
 
