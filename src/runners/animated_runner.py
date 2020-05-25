@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from utils import USE_CYTHON_CRAWLERS
 
 if USE_CYTHON_CRAWLERS:
+    from base.cgraph import CGraph as MyGraph
     from base.cbasic import CCrawler as Crawler
 else:
     from base.graph import MyGraph

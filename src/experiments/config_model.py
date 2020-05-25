@@ -318,7 +318,7 @@ def test_conf_model():
     print('deg_seq', deg_seq)
 
     graph = conf_model(deg_seq)
-    print("graph N=%d E=%d" % (graph.snap.GetNodes(), graph.snap.GetEdges()))
+    print("graph N=%d E=%d" % (graph.nodes(), graph.edges()))
     print('assortativity', assortativity(graph))
 
 
@@ -352,7 +352,7 @@ def test_ba_model():
     print('assortativity', assortativity(graph))
 
     graph = assort_conf_model_MH(node_deg, r=0.6)
-    print("graph N=%d E=%d" % (graph.snap.GetNodes(), graph.snap.GetEdges()))
+    print("graph N=%d E=%d" % (graph.nodes(), graph.edges()))
     print('assortativity', assortativity(graph))
 
 

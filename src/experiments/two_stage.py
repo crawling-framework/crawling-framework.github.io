@@ -27,7 +27,7 @@ def test_initial_graph(i: str):
         # name = 'slashdot-zoo'
         # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
         graph = GraphCollections.get(name, giant_only=True)
-        print("N=%s E=%s" % (graph.snap.GetNodes(), graph.snap.GetEdges()))
+        print("N=%s E=%s" % (graph.nodes(), graph.edges()))
     else:
         g = snap.TUNGraph.New()
         g.AddNode(1)
@@ -116,7 +116,7 @@ def test_target_set_coverage():
         # DepthFirstSearchCrawler(graph, initial_seed=None),
         # RandomCrawler(graph, initial_seed=1),
         # RandomWalkCrawler(graph, initial_seed=None),
-        # AvrachenkovCrawler(graph, n=budget, n1=start_seeds, k=int(p * graph.snap.GetNodes())),
+        # AvrachenkovCrawler(graph, n=budget, n1=start_seeds, k=int(p * graph.nodes())),
         # ThreeStageMODCrawler(graph, s=1000, n=budget, p=p, b=10),
         MultiCrawler(graph, crawlers=[
             MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=i+1) for i in range(100)
