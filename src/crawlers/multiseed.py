@@ -37,7 +37,7 @@ class MultiCrawler(Crawler):
                 self.keep_node_owners = True
 
             # merge observed graph
-            for n in crawler.observed_graph.nodes():
+            for n in crawler.observed_graph.snap.Nodes():
                 n = n.GetId()
                 if not g.IsNode(n):
                     g.AddNode(n)
@@ -194,53 +194,11 @@ class MultiSeedCrawler(Crawler, ABC):
                           (seed, self.crawled_set, self._observed_set, self.nodes_set))
 
 
-def test():
-    import snap
-    g = snap.TUNGraph.New()
-
-    for i in range(19):
-        g.AddNode(i)
-
-    g.AddEdge(1, 2)
-    g.AddEdge(2, 3)
-    g.AddEdge(4, 2)
-    g.AddEdge(4, 3)
-    g.AddEdge(5, 4)
-    g.AddEdge(1, 6)
-    g.AddEdge(6, 7)
-    g.AddEdge(8, 7)
-    g.AddEdge(8, 16)
-    g.AddEdge(8, 9)
-    g.AddEdge(8, 10)
-    g.AddEdge(8, 7)
-    g.AddEdge(0, 10)
-    g.AddEdge(0, 9)
-    g.AddEdge(1, 17)
-    g.AddEdge(7, 17)
-    g.AddEdge(1, 18)
-    g.AddEdge(7, 18)
-    g.AddEdge(11, 15)
-
-    g.AddEdge(11, 12)
-    g.AddEdge(12, 13)
-    g.AddEdge(14, 12)
-    g.AddEdge(14, 13)
-    g.AddEdge(15, 13)
-    g.AddEdge(15, 5)
-    g.AddEdge(11, 16)
-
-    # for dfs
-
-    g.AddEdge(14, 0)
-    g.AddEdge(3, 0)
-
-    return g
-
-
 def test_carpet_graph(n, m):
     # special n*m graph for visual testing
     import snap
-    g = snap.TUNGraph.New()
+    graph = MyGraph(name='test', directed=False)
+    g = graph.snap
     pos = dict()
     for i in range(0, n * m):
         g.AddNodeUnchecked(i)
@@ -255,9 +213,8 @@ def test_carpet_graph(n, m):
                 # g.AddEdgeUnchecked(node - n, node)
 
             pos[node] = [float(k / n), float(i / m)]
-    graph = MyGraph.new_snap(g, name='test', directed=False)
     return [graph, pos]
 
 
 if __name__ == '__main__':
-    test()
+    test_carpet_graph(10, 10)

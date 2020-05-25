@@ -516,5 +516,5 @@ def test_crawlers():
 
 
 if __name__ == '__main__':
-    assert USE_CYTHON_CRAWLERS
+    # assert USE_CYTHON_CRAWLERS
     test_crawlers()

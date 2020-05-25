@@ -1,5 +1,4 @@
 from utils import rel_dir, USE_CYTHON_CRAWLERS
-from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
 
 import logging
 import matplotlib.pyplot as plt
@@ -142,36 +141,28 @@ def test_snap_times():
 def test_crawler_times():
     from time import time
 
-    n = 5000
+    n = 50
     # name = 'dolphins'
     name = 'digg-friends'
     # name = 'soc-pokec-relationships'
-
-    # from crawlers.multiseed import MultiCrawler
-    # from crawlers.basic import PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler, \
-    #     DepthFirstSearchCrawler, BreadthFirstSearchCrawler, SnowBallCrawler, RandomWalkCrawler, \
-    #     RandomCrawler
-    # g = GraphCollections.get(name)
-    # s = g.snap
-    # print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
-
-    from base.cmultiseed import MultiCrawler
-    from base.cbasic import RandomWalkCrawler
     g = GraphCollections.get(name)
-    print("After cython crawlers. Graph %s, n=%s steps" % (name, n))
+    if USE_CYTHON_CRAWLERS:
+        print("After cython crawlers. Graph %s, n=%s steps" % (name, n))
+    else:
+        print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
 
     import numpy as np
     for crawler_cls in [
-        # RandomCrawler,
+        RandomCrawler,
         RandomWalkCrawler,
-        # BreadthFirstSearchCrawler,
-        # DepthFirstSearchCrawler,
-        # SnowBallCrawler,
-        # MaximumObservedDegreeCrawler,
-        # PreferentialObservedDegreeCrawler,
+        BreadthFirstSearchCrawler,
+        DepthFirstSearchCrawler,
+        SnowBallCrawler,
+        MaximumObservedDegreeCrawler,
+        PreferentialObservedDegreeCrawler,
     ]:
         times = []
-        it = 20
+        it = 1
         for _ in range(it):
             # crawler = crawler_cls(g, initial_seed=1, batch=100)
             crawler = MultiCrawler(g, [
@@ -286,9 +277,9 @@ if __name__ == '__main__':
     g = GraphCollections.get(name, giant_only=True)
     # g = GraphCollections.get('test', 'other', giant_only=True)
 
-    # test_basic(g)
+    test_basic(g)
     # test_multi()
-    test_crawler_times()
+    # test_crawler_times()
 
 
 

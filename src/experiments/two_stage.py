@@ -98,7 +98,7 @@ def test_target_set_coverage():
     graph = GraphCollections.get(name, giant_only=True)
     p = 0.1
     target_list = get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(p * graph[Stat.NODES]))
-    thr_degree = graph.snap.GetNI(target_list[-1]).GetDeg()
+    thr_degree = graph.deg(target_list[-1])
     target_set = set(target_list)
 
     crawlers = [

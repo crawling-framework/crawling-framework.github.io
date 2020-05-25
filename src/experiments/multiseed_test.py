@@ -20,7 +20,7 @@ else:
 
 def test_multi_mod(graph: MyGraph):
     # graph.random_node()
-    # init_nodes = np.random.choice([n.GetId() for n in graph.snap.Nodes()], 1000, replace=False)
+    init_nodes = graph.random_nodes(1000)
     crawlers = [
         # BreadthFirstSearchCrawler(graph, initial_seed=int(init_nodes[0])),
         # RandomWalkCrawler(graph, initial_seed=int(init_nodes[1])),
@@ -29,10 +29,10 @@ def test_multi_mod(graph: MyGraph):
         MaximumObservedDegreeCrawler(graph, batch=1),
         MaximumObservedDegreeCrawler(graph, batch=10),
         MultiCrawler(graph, [
-            MaximumObservedDegreeCrawler(graph, batch=1) for i in range(100)
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=init_nodes[i]) for i in range(100)
         ]),
         MultiCrawler(graph, [
-            MaximumObservedDegreeCrawler(graph, batch=10) for i in range(100)
+            MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=init_nodes[i]) for i in range(100)
         ]),
         # MultiCrawler(graph, [
         #     PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[i+10])) for i in range(100)

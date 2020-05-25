@@ -1,9 +1,12 @@
 import logging
 import os.path
+from builtins import int
 
 import networkx as nx
 import numpy as np
 import snap
+from future.builtins import int
+from numpy import int32
 
 from utils import TMP_GRAPHS_DIR
 
@@ -90,6 +93,9 @@ class MyGraph(object):
     def add_edge(self, i: int, j: int):
         return self._snap_graph.AddEdge(i, j)
 
+    def deg(self, node: int):
+        return self._snap_graph.GetNI(node).GetDeg()
+
     def neighbors(self, node: int):
         """
         List of neighbors of the given node in this graph. (snap wrapper for simplicity)
@@ -105,7 +111,8 @@ class MyGraph(object):
         return self.random_nodes(1)
 
     def random_nodes(self, count=1):
-        return np.random.choice([n.GetId() for n in self._snap_graph.Nodes()], count, replace=False)
+        res = np.random.choice([n.GetId() for n in self._snap_graph.Nodes()], count, replace=False)
+        return getattr(res, "tolist", lambda: res)()  # converting from numpy.int64 -> python int
 
     def __getitem__(self, stat):
         """ Get graph statistics. Index by str or Stat. Works only if snap graph is immutable. """
