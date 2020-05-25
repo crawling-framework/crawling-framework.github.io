@@ -152,7 +152,9 @@ cdef class CGraph:
 
     cpdef int max_deg(self)
 
-    cpdef vector[int] random_node(self, int count=?)
+    cpdef int random_node(self)
+
+    cpdef vector[int] random_nodes(self, int count=?)
 
     cpdef int random_neighbor(self, int node)
 

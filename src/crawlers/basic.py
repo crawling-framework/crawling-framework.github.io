@@ -1,7 +1,6 @@
-from cyth.build_cython import build_cython
 from utils import rel_dir, USE_CYTHON_CRAWLERS
-
-build_cython(rel_dir)  # Should go before any cython imports
+if USE_CYTHON_CRAWLERS:
+    from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
 
 import logging
 import random

@@ -8,7 +8,6 @@ from libcpp.deque cimport deque
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec
 
 from cgraph cimport CGraph, str_to_chars
-# cimport node_deg_set
 from node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 
 

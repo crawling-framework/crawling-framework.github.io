@@ -145,8 +145,12 @@ cdef class CGraph:
             yield ei.GetSrcNId(), ei.GetDstNId()
             pinc(ei)
 
-    cpdef vector[int] random_node(self, int count=1):
-        """ Return a random node. """
+    cpdef int random_node(self):
+        """ Return a random node. O(1) """
+        return self._snap_graph.GetRndNId(t_random)
+
+    cpdef vector[int] random_nodes(self, int count=1):
+        """ Return a vector of random nodes without repetition. O(N) """
         cdef int size = self._snap_graph.GetNodes(), i, n
         assert count <= size
         cdef TInt* it
@@ -319,10 +323,12 @@ def cgraph_test():
 
     print("Rand nodes")
     cdef vector[int] rnodes
+    cdef int n
 
     t = time()
     for _ in range(100):
-        rnodes = graph.random_node(1000)
+        n = graph.random_node()
+        # rnodes = graph.random_nodes(1000)
         # np.random.choice(range(250000), 1000, replace=False)
     # for n in rnodes:
     #     print(n)

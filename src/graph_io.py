@@ -1,5 +1,4 @@
 from utils import rel_dir, USE_CYTHON_CRAWLERS
-from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
 
 import logging
 import os.path
@@ -13,6 +12,7 @@ from utils import GRAPHS_DIR, COLLECTIONS
 
 
 if USE_CYTHON_CRAWLERS:
+    from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
     from base.cgraph import CGraph as MyGraph
 else:
     from base.graph import MyGraph

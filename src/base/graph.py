@@ -101,7 +101,10 @@ class MyGraph(object):
             raise NotImplementedError("For directed graph and all neighbors, take GetInEdges + GetOutEdges")
         return list(self.snap.GetNI(int(node)).GetOutEdges())
 
-    def random_node(self, count=1):
+    def random_node(self):
+        return self.random_nodes(1)
+
+    def random_nodes(self, count=1):
         return np.random.choice([n.GetId() for n in self._snap_graph.Nodes()], count, replace=False)
 
     def __getitem__(self, stat):

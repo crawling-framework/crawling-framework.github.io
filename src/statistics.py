@@ -1,5 +1,7 @@
+from argparse import ArgumentError
+
+from graph_io import GraphCollections
 from utils import rel_dir, USE_CYTHON_CRAWLERS
-from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
 
 import logging
 from enum import Enum
@@ -9,6 +11,7 @@ import snap
 from tqdm import tqdm
 
 if USE_CYTHON_CRAWLERS:
+    from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
     from base.cgraph import CGraph as MyGraph
 else:
     from base.graph import MyGraph
@@ -235,15 +238,24 @@ def test_stats():
 def main():
     import argparse
     stats = [s.name for s in Stat]
-    parser = argparse.ArgumentParser(description='Compute centralities for graph nodes.')
-    parser.add_argument('-p', '--path', required=True, help='path to input graph as edgelist')
+    parser = argparse.ArgumentParser(description='Compute centralities for graph nodes. Graph is '
+                                                 'specified via path (-p) or name at Konect (-n).')
+    parser.add_argument('-p', '--path', required=False, help='path to input graph as edgelist')
+    parser.add_argument('-n', '--name', required=False, help='path to input graph as edgelist')
     parser.add_argument('-d', action='store_true', help='specify if graph is directed')
     parser.add_argument('-s', '--stats', required=True, nargs='+', choices=stats,
                         help='node statistics to compute')
 
     args = parser.parse_args()
     # print(args)
-    graph = MyGraph(path=args.path, name='', directed=args.d)
+    if (1 if args.path else 0) + (1 if args.name else 0) != 1:
+        raise ArgumentError("Exactly one of '-p' and '-n' args must be specified.")
+
+    if args.path:
+        graph = MyGraph(path=args.path, name='', directed=args.d)
+    else:
+        graph = GraphCollections.get(args.name, giant_only=True)
+
     for s in args.stats:
         assert s in stats, "Unknown statistics %s, available are: %s" % (s, stats)
         # print("Computing %s centrality for %s..." % (c, args.path))
