@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 cdef class CCrawler:
     def __init__(self, CGraph graph, name=None, **kwargs):
         # original graph
-        self._orig_graph = graph  # FIXME conversion here?
+        self._orig_graph = graph  # FIXME copying here?
 
         # observed graph
         self._observed_graph = CGraph(directed=self._orig_graph.directed, weighted=self._orig_graph.weighted)
@@ -38,6 +38,10 @@ cdef class CCrawler:
     def crawled_set(self) -> set:
         """ Get nodes' ids of observed graph (crawled and observed). """
         return deref(self._crawled_set)
+
+    @property
+    def orig_graph(self):
+        return self._orig_graph
 
     cdef set_crawled_set(self, cset[int]* new_crawled_set):
         self._crawled_set = new_crawled_set

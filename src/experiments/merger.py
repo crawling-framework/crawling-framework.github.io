@@ -48,8 +48,8 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
             fig.text(0.5, 0.00, 'crawling iterations X', ha='center')
             fig.text(0.02, 0.5, 'fraction of target set crawled', va='center', rotation='vertical')
             # x_arr = [int(i * step) for i in range(budget)]  # it was before removing step
-            statistics = [s for s in Stat if 'DISTR' in s._name]
-            areas = dict((stat._name, dict()) for stat in statistics)
+            statistics = [s for s in Stat if 'DISTR' in s.name]
+            areas = dict((stat.name, dict()) for stat in statistics)
 
             for metr_id, stat in enumerate(statistics):
                 subplot_x, subplot_y = metr_id // 3, metr_id % 3
@@ -60,13 +60,13 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
                 crawlers = [file.replace(files_path, '') for file in glob(files_path + '*')
                             if not file.replace(files_path, '') in without_crawlers]
                 # areas like: areas['petster-hamster']['DEGREE_DISTR']['MOD100']
-                areas[stat._name] = dict((crawler_name, dict()) for crawler_name in crawlers)
+                areas[stat.name] = dict((crawler_name, dict()) for crawler_name in crawlers)
                 average_plot = dict([(c, dict()) for c in crawlers])
 
                 for i, crawler_name in enumerate(crawlers):
                     if (filter_only in crawler_name) and (crawler_name not in without_crawlers):
                         crawler_color_counter += 1
-                        experiments_path = glob(os.path.join(files_path, crawler_name) + '/*' + stat._name + '*.json')[
+                        experiments_path = glob(os.path.join(files_path, crawler_name) + '/*' + stat.name + '*.json')[
                                            :8]  # TODO check only 8
                         count = len(experiments_path)
                         if set_x_scale == 'log':
@@ -97,7 +97,7 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
                                  color=colors[crawler_color_counter],
                                  linewidth=2.5)
 
-                        areas[stat._name][crawler_name] = float(metrics.auc(x_arr, average_plot[crawler_name])) / budget
+                        areas[stat.name][crawler_name] = float(metrics.auc(x_arr, average_plot[crawler_name])) / budget
 
             # , [int(i * step * budget/10) for i in range(10)])
             # loc='lower right', mode='expand')  # only on last iter

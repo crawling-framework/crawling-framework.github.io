@@ -1,5 +1,6 @@
 from cpython.mem cimport PyMem_Malloc
 from cython.operator cimport dereference as deref
+from libcpp.vector cimport vector
 
 
 cdef extern from "Snap.h":
@@ -7,6 +8,61 @@ cdef extern from "Snap.h":
     #     PUNGraph()
     #     PUNGraph New()
     #     int AddEdge(int, int)
+
+    cdef cppclass THash[TKey, TDat]:
+        cppclass TIter:
+            TDat GetDat()
+        THash()
+        THashKeyDatI BegI()
+        THashKeyDatI EndI()
+
+    cdef cppclass TRnd:
+        TRnd()
+        void Randomize()
+        int GetUniDevInt(const int&)
+
+    cdef cppclass TInt:
+        Tint()
+        int operator() () const
+        TRnd Rnd
+
+    cdef cppclass TVec[T]:
+        TVec()
+        void Shuffle(TRnd& Rnd)
+        T* BegI() const
+        T* EndI() const
+
+    ctypedef TVec[TInt] TIntV
+
+    cdef cppclass TIntPr:
+        TIntPr()
+
+    cdef cppclass TFlt:
+        TFlt()
+        float operator() () const
+
+    cdef cppclass TFltPtr:
+        TFltPtr()
+
+    cdef cppclass TStr:
+        TStr()
+        TStr(const char*)
+
+    cdef cppclass TPt[T]:
+        TPt()
+        TPt(T*)
+        void Clr()
+        T operator*()
+
+    cdef cppclass THashKeyDatI[TKey, TDat]:
+        THashKeyDatI& operator++ ()
+        bint operator==(const THashKeyDatI& HashKeyDatI) const
+        const TKey& GetKey()
+        const TDat& GetDat()
+
+    ctypedef TPt[TUNGraph] PUNGraph
+    ctypedef THash[TInt, TFlt] TIntFltH
+    ctypedef THash[TIntPr, TFlt] TIntPrFltH
 
     cdef cppclass TUNGraph:
         cppclass TNode:
@@ -44,53 +100,8 @@ cdef extern from "Snap.h":
         bint IsNode(const int)
         bint IsEdge(const int, const int)
         int GetRndNId(TRnd)
-
-    cdef cppclass THash[TKey, TDat]:
-        cppclass TIter:
-            TDat GetDat()
-        THash()
-        THashKeyDatI BegI()
-        THashKeyDatI EndI()
-
-    cdef cppclass TRnd:
-        TRnd()
-        void Randomize()
-        int GetUniDevInt(const int&)
-
-    cdef cppclass TInt:
-        Tint()
-        int operator() () const
-        TRnd Rnd
-
-    cdef cppclass TIntPr:
-        TIntPr()
-
-    cdef cppclass TFlt:
-        TFlt()
-        float operator() () const
-
-    cdef cppclass TFltPtr:
-        TFltPtr()
-
-    cdef cppclass TStr:
-        TStr()
-        TStr(const char*)
-
-    cdef cppclass TPt[T]:
-        TPt()
-        TPt(T*)
-        void Clr()
-        T operator*()
-
-    cdef cppclass THashKeyDatI[TKey, TDat]:
-        THashKeyDatI& operator++ ()
-        bint operator==(const THashKeyDatI& HashKeyDatI) const
-        const TKey& GetKey()
-        const TDat& GetDat()
-
-    ctypedef TPt[TUNGraph] PUNGraph
-    ctypedef THash[TInt, TFlt] TIntFltH
-    ctypedef THash[TIntPr, TFlt] TIntPrFltH
+        # void GetNIdV(TVec[TInt]& NIdV) const
+        void GetNIdV(TIntV& NIdV) const
 
 
 cdef extern from "Snap.h" namespace "TSnap":
@@ -141,7 +152,7 @@ cdef class CGraph:
 
     cpdef int max_deg(self)
 
-    cpdef int random_node(self)
+    cpdef vector[int] random_node(self, int count=?)
 
     cpdef int random_neighbor(self, int node)
 

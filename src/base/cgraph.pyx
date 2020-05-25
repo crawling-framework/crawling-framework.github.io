@@ -1,6 +1,7 @@
 import logging
 import os
 
+from libcpp.vector cimport vector
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, address as addr
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 
@@ -144,9 +145,20 @@ cdef class CGraph:
             yield ei.GetSrcNId(), ei.GetDstNId()
             pinc(ei)
 
-    cpdef int random_node(self):
+    cpdef vector[int] random_node(self, int count=1):
         """ Return a random node. """
-        return self._snap_graph.GetRndNId(t_random)
+        cdef int size = self._snap_graph.GetNodes(), i, n
+        assert count <= size
+        cdef TInt* it
+        cdef vector[int] res
+        cdef TIntV NIdV
+        self._snap_graph.GetNIdV(NIdV)
+        NIdV.Shuffle(t_random)
+        it = NIdV.BegI()
+        for i in range(count):
+            res.push_back(deref(it)())
+            inc(it)
+        return res
 
     cpdef int random_neighbor(self, int node):
         """ Return a random neighbor of the given node in this graph.
@@ -250,6 +262,8 @@ cdef class CGraph:
 
 def cgraph_test():
     # print("cgraph")
+    from time import time
+    import numpy as np
 
     # cdef TUNGraph g
     # g = TUNGraph()
@@ -275,7 +289,7 @@ def cgraph_test():
     # cdef char* name = 'douban'
     # cdef char* path = '/home/misha/workspace/crawling/data/konect/dolphins.ij'
     empty = CGraph()
-    graph = CGraph(path='/home/misha/workspace/crawling/data/konect/dolphins.ij', name='d')
+    graph = CGraph(path='/home/misha/workspace/crawling/data/konect/digg-friends.ij', name='d')
     cdef TUNGraph g = deref(LoadEdgeList[PUNGraph](TStr('/home/misha/workspace/crawling/data/konect/dolphins.ij'), 0, 1))
     # graph = CGraph.CLoad(path)
     # graph = CGraph.Empty('')
@@ -284,22 +298,34 @@ def cgraph_test():
     # print("N=%s" % graph.nodes())
     # print("E=%s" % graph.edges())
 
-    print("Nodes:")
-    for n in graph.iter_nodes():
-        print(n)
+    # print("Nodes:")
+    # for n in graph.iter_nodes():
+    #     print(n)
     # cdef TUNGraph.TNodeI ni = g.BegNI()
     # cdef int count = g.GetNodes()
     # for i in range(count):
     #     print(ni.GetId())
     #     pinc(ni)
 
-    n = 1
-    print("Neighs of %s:" % n)
-    for n in graph.neighbors(n):
-        print(n)
+    # n = 1
+    # print("Neighs of %s:" % n)
+    # for n in graph.neighbors(n):
+    #     print(n)
+    #
+    # print("Rand neighs")
+    # for _ in range(5):
+    #     # print(graph.random_node())
+    #     print(graph.random_neighbor(1))
 
-    print("Rand neighs")
-    for _ in range(5):
-        # print(graph.random_node())
-        print(graph.random_neighbor(1))
+    print("Rand nodes")
+    cdef vector[int] rnodes
+
+    t = time()
+    for _ in range(100):
+        rnodes = graph.random_node(1000)
+        # np.random.choice(range(250000), 1000, replace=False)
+    # for n in rnodes:
+    #     print(n)
+    print(time()-t)
+
     print("End")
