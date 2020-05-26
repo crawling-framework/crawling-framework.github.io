@@ -185,7 +185,7 @@ if __name__ == '__main__':
     # graph_name = 'douban' # http://konect.uni-koblenz.de/networks/douban         # !!!!!!
     # graph_name = 'ego-gplus' # http://konect.uni-koblenz.de/networks/ego-gplus   # !!!!!!!
     # graph_name = 'slashdot-threads' # N=51083, V=116573.  use step=100,
-    # graph_name = 'facebook-wosn-links'
+    graph_name = 'facebook-wosn-links'
     # graph_name = 'slashdot-threads'
     # graph_name ='mipt'
     # graph_name = 'petster-hamster'    with 2000 nodes and 16098 edges
