@@ -5,7 +5,7 @@ from numpy import random
 import scipy.stats as stats
 import snap
 
-from graph_io import MyGraph
+from base.graph import MyGraph
 from statistics import Stat
 
 

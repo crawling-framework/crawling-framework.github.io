@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from graph_io import GraphCollections, MyGraph
+from graph_io import GraphCollections
+from base.graph import MyGraph
 from statistics import Stat, get_top_centrality_nodes
 
 

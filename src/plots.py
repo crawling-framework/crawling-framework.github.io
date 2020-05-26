@@ -75,7 +75,7 @@ def plot_degree_distribution(graph_list, direction='total', cumulative=False, no
     lines = []
     for i, gr in enumerate(graph_list):
         if verbose:
-            print("DD for ", gr.name, gr.get_size())
+            print("DD for ", gr._name, gr.get_size())
 
         deg_sequence = list(gr.get_node_property_dict('degree').values())
 
@@ -128,7 +128,7 @@ def plot_degree_distribution(graph_list, direction='total', cumulative=False, no
         lines.append(line)
 
     if legend:
-        plt.legend(lines, map(lambda gr: gr.name, graph_list), loc=0)
+        plt.legend(lines, map(lambda gr: gr._name, graph_list), loc=0)
     if lang == 'RU':
         direction_ru = {'in': u'входящая степень', 'out': u'исходящая степень', 'total': u'степень'}[direction]
         plt.xlabel(direction_ru, fontsize=fontsize)
@@ -343,7 +343,7 @@ def plot_statistics(graph_list, title=None, stats=['in-DD', 'out-DD', '3-GP'], s
     else:
         count = 1
         for i, graph in enumerate(graph_list):
-            print("Stats for %s" % graph.name)
+            print("Stats for %s" % graph._name)
             for j, stat in enumerate(stats):
                 print("  " + stat)
                 ax = plt.subplot(nrows, ncols, count)
@@ -355,9 +355,9 @@ def plot_statistics(graph_list, title=None, stats=['in-DD', 'out-DD', '3-GP'], s
                                  fontsize=fontsize, **kwargs)[0]
                 if j == 0:
                     lines.append(line)
-                    legends.append(graph.name)
+                    legends.append(graph._name)
                     # legend is  only 1 current graph on 1st plot
-                    plt.legend([line], [graph.name], loc=0)
+                    plt.legend([line], [graph._name], loc=0)
 
     plt.tight_layout()
 

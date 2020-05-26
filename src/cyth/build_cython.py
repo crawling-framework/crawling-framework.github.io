@@ -1,10 +1,8 @@
 import logging
 import os
 
-from utils import rel_dir
 
-
-def build_cython(setup_file="cyth/setup.py"):
+def build_cython(rel_dir, setup_file="cyth/setup.py"):
     logging.info("Building cyth...")
 
     src_dir = os.path.join(rel_dir, 'src')
@@ -17,4 +15,4 @@ def build_cython(setup_file="cyth/setup.py"):
     logging.info(" *** Built Cython files successfully *** \n\n\n")
 
 
-build_cython()
+# build_cython()

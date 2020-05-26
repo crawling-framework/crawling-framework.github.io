@@ -3,14 +3,12 @@ import logging
 import snap
 from matplotlib import pyplot as plt
 
-from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, CrawlerWithAnswer, \
-    AvrachenkovCrawler, ThreeStageFlexMODCrawler
-from crawlers.basic import CrawlerException, Crawler, MaximumObservedDegreeCrawler, \
-    DepthFirstSearchCrawler, BreadthFirstSearchCrawler, RandomWalkCrawler, \
-    PreferentialObservedDegreeCrawler
+from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer
+from crawlers.basic import CrawlerException, MaximumObservedDegreeCrawler
 from crawlers.multiseed import MultiCrawler
-from experiments.runners import Metric, AnimatedCrawlerRunner
-from graph_io import MyGraph, GraphCollections
+from runners.animated_runner import AnimatedCrawlerRunner, Metric
+from graph_io import GraphCollections
+from base.graph import MyGraph
 from statistics import Stat, get_top_centrality_nodes
 
 
@@ -29,7 +27,7 @@ def test_initial_graph(i: str):
         # name = 'slashdot-zoo'
         # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
         graph = GraphCollections.get(name, giant_only=True)
-        print("N=%s E=%s" % (graph.snap.GetNodes(), graph.snap.GetEdges()))
+        print("N=%s E=%s" % (graph.nodes(), graph.edges()))
     else:
         g = snap.TUNGraph.New()
         g.AddNode(1)
@@ -100,11 +98,11 @@ def test_target_set_coverage():
     graph = GraphCollections.get(name, giant_only=True)
     p = 0.1
     target_list = get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(p * graph[Stat.NODES]))
-    thr_degree = graph.snap.GetNI(target_list[-1]).GetDeg()
+    thr_degree = graph.deg(target_list[-1])
     target_set = set(target_list)
 
     crawlers = [
-        # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=None),
+        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=None),
         # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
@@ -113,14 +111,16 @@ def test_target_set_coverage():
         # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageMODCrawler(graph, s=start_seeds, n=budget, p=p, b=100),
         # ThreeStageFlexMODCrawler(graph, s=start_seeds, n=budget, p=p, b=1, thr_degree=thr_degree),
-        PreferentialObservedDegreeCrawler(graph, batch=1),
+        # PreferentialObservedDegreeCrawler(graph, batch=1),
         # BreadthFirstSearchCrawler(graph, initial_seed=None),
         # DepthFirstSearchCrawler(graph, initial_seed=None),
         # RandomCrawler(graph, initial_seed=1),
         # RandomWalkCrawler(graph, initial_seed=None),
-        # AvrachenkovCrawler(graph, n=budget, n1=start_seeds, k=int(p * graph.snap.GetNodes())),
+        # AvrachenkovCrawler(graph, n=budget, n1=start_seeds, k=int(p * graph.nodes())),
         # ThreeStageMODCrawler(graph, s=1000, n=budget, p=p, b=10),
-        # MultiCrawler(graph, crawlers=[MaximumObservedDegreeCrawler(graph, batch=10) for _ in range(10)])
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=i+1) for i in range(100)
+        ])
     ]
 
     def re(result):
@@ -148,9 +148,9 @@ def test_target_set_coverage():
     metrics = [
         # Metric(r'$|V_o|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
         # Metric(r'$|V_o \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
-        Metric(r'$F_1$', f1_measure),
+        # Metric(r'$F_1$', f1_measure),
         # Metric(r'Pr', precision),
-        # Metric(r'Re', recall),
+        Metric(r'Re', recall),
         # Metric(r'Re - all nodes', recall_all),
         # Metric(r'Pr - E1*', lambda crawler: pr(crawler.e1s)),
         # Metric(r'Pr - E2*', lambda crawler: pr(crawler.e2s)),
@@ -159,7 +159,7 @@ def test_target_set_coverage():
     ]
 
     ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=int(budget/30))
-    ci.run()
+    ci.run(ylims=(0, 1))
 
 
 def test_detection_quality():
@@ -232,7 +232,7 @@ def test_detection_quality():
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG)
 
     # test()
     test_target_set_coverage()

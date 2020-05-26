@@ -7,7 +7,7 @@ import numpy as np
 from crawlers.basic import Crawler, CrawlerException, MaximumObservedDegreeCrawler, NoNextSeedError, \
     RandomWalkCrawler, DepthFirstSearchCrawler, RandomCrawler
 from crawlers.multiseed import MultiCrawler
-from graph_io import MyGraph
+from base.graph import MyGraph
 
 
 class CrawlerWithAnswer(Crawler):
@@ -70,7 +70,7 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
     """
     def __init__(self, graph, n=1000, n1=500, k=100):
         super().__init__(graph, limit=n, name='Avrach_n=%s_n1=%s_k=%s' % (n, n1, k))
-        assert n1 <= n <= self.orig_graph.snap.GetNodes()
+        assert n1 <= n <= self.orig_graph.nodes()
         #assert k <= n-n1
         self.n1 = n1
         self.n = n
@@ -107,7 +107,7 @@ class ThreeStageCrawler(CrawlerWithAnswer):
         super().__init__(graph, limit=n, name='3-Stage_s=%s_n=%s_p=%s' % (s, n, p))
         self.s = s
         self.n = n
-        self.pN = int(p*self.orig_graph.snap.GetNodes())
+        self.pN = int(p*self.orig_graph.nodes())
         assert s <= n <= self.pN
 
         self.random_seeds = []  # S
@@ -172,7 +172,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         super().__init__(graph=graph, limit=n, name='3-StageMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
         self.s = s
         self.n = n
-        self.pN = int(p*self.orig_graph.snap.GetNodes())
+        self.pN = int(p*self.orig_graph.nodes())
         assert s <= n <= self.pN
         self.b = b
 
@@ -182,6 +182,8 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
     def crawl(self, seed: int) -> bool:
         """ Apply MOD when time comes
         """
+        raise NotImplementedError()
+        # FIXME res is set now
         if self.mod is None:
             return super().crawl(seed)
         res = self.mod.crawl(seed)
@@ -240,7 +242,7 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
         super().__init__(graph=graph, limit=n, name='3-StageFlexMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
         self.s = s
         self.n = n
-        self.pN = int(p*self.orig_graph.snap.GetNodes())
+        self.pN = int(p*self.orig_graph.nodes())
         assert s <= n <= self.pN
         self.b = b
 
@@ -252,6 +254,8 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
     def crawl(self, seed: int) -> bool:
         """ Apply MOD when time comes
         """
+        raise NotImplementedError()
+        # FIXME res is set now
         if self.subcrawler is None:
             return super().crawl(seed)
         res = self.subcrawler.crawl(seed)

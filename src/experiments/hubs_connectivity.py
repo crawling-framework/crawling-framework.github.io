@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 
 from crawlers.advanced import AvrachenkovCrawler
 from crawlers.basic import Crawler
-from graph_io import MyGraph, GraphCollections
+from graph_io import GraphCollections
+from base.graph import MyGraph
 from statistics import get_top_centrality_nodes, Stat
 
 
