@@ -9,7 +9,10 @@ from matplotlib import pyplot as plt
 from sklearn import metrics  # import auc
 from tqdm import tqdm
 
-from statistics import Stat
+# from statistics import Stat as file # for small graphs
+# Stat = ["DEGREE_DISTR", "BETWEENNESS_DISTR", "ECCENTRICITY_DISTR",
+#         "CLOSENESS_DISTR", "PAGERANK_DISTR", "K_CORENESS_DISTR"]
+Stat = ["DEGREE_DISTR", "PAGERANK_DISTR", "K_CORENESS_DISTR"]  # for big graphs
 # from utils import CENTRALITIES
 from utils import RESULT_DIR
 
@@ -70,8 +73,8 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
             fig.text(0.5, 0.00, 'crawling iterations X', ha='center')
             fig.text(0.02, 0.5, 'fraction of target set crawled', va='center', rotation='vertical')
             # x_arr = [int(i * step) for i in range(budget)]  # it was before removing step
-            statistics = [s for s in Stat if 'DISTR' in s.name]
-            areas = dict((stat.name, dict()) for stat in statistics)
+            statistics = Stat  # [s for s in Stat if 'DISTR' in s.name]
+            areas = dict((stat, dict()) for stat in statistics)
 
             for metr_id, stat in enumerate(statistics):
                 subplot_x, subplot_y = metr_id // 3, metr_id % 3
@@ -85,13 +88,13 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
                 crawlers.sort()
                 # print(budget,stat, crawlers)
                 # areas like: areas['petster-hamster']['DEGREE_DISTR']['MOD100']
-                areas[stat.name] = dict((crawler_name, dict()) for crawler_name in crawlers)
+                areas[stat] = dict((crawler_name, dict()) for crawler_name in crawlers)
                 average_plot = dict([(c, dict()) for c in crawlers])
 
                 for i, crawler_name in enumerate(crawlers):
                     if (filter_only in crawler_name) and (crawler_name not in without_crawlers):
                         crawler_color_counter += 1
-                        experiments_path = glob(os.path.join(files_path, crawler_name) + '/*' + stat.name + '*.json')[
+                        experiments_path = glob(os.path.join(files_path, crawler_name) + '/*' + stat + '*.json')[
                                            :8]  # TODO check only 8
                         count = len(experiments_path)
 
@@ -130,7 +133,7 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
                                  color=colors[crawler_color_counter],
                                  linewidth=2.5)
 
-                        areas[stat.name][crawler_name] = float(metrics.auc(x_arr, average_plot[crawler_name])) / maxauc
+                        areas[stat][crawler_name] = float(metrics.auc(x_arr, average_plot[crawler_name])) / maxauc
 
             # , [int(i * step * budget/10) for i in range(10)])
             # loc='lower right', mode='expand')  # only on last iter
@@ -171,7 +174,7 @@ def draw_auc(filter_only='', without_crawlers=set(), set_x_scale=''):
 
     graph_names = list(calculated_aucs.keys())
     method_names = get_methods_list(calculated_aucs)
-    statistics_names = [s.name for s in Stat if 'DISTR' in s.name]
+    statistics_names = Stat  # [s.name for s in Stat if 'DISTR' in s.name]
     aggregated_auc = dict(
         (method, dict((stat, 0) for stat in statistics_names)) for method in method_names)  # sum of real aucs values
     max_aggregated_auc = dict(
@@ -230,7 +233,7 @@ def draw_auc(filter_only='', without_crawlers=set(), set_x_scale=''):
 
 def draw_aggregated_auc(count=6, filter_only=''):
     method_names = get_methods_list()
-    statistics_names = [s.name for s in Stat if 'DISTR' in s.name]
+    statistics_names = Stat  # [s.name for s in Stat if 'DISTR' in s.name]
     fig, axs = plt.subplots(2, 2, sharex=True, sharey=False, figsize=(18, 9), )
     for log_num, set_x_scale in enumerate(['', 'log']):
         with open(os.path.join(RESULT_DIR, 'max_aggregated_auc_only_{},{}scale.json'.format(filter_only, set_x_scale)),

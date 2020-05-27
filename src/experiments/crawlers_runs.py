@@ -139,7 +139,8 @@ if __name__ == '__main__':
         # little multiprocessing magic, that calculates several iterations in parallel
         p = multiprocessing.Process(target=test_runner, args=(g,),
                                     kwargs={'animated': False,
-                                            'statistics': [s for s in Stat if 'DISTR' in s.name],
+                                            'statistics': ["DEGREE_DISTR", "PAGERANK_DISTR", "K_CORENESS_DISTR"]
+                                            # [s for s in Stat if 'DISTR' in s.name],
                                             # 'layout_pos':layout_pos,
                                             'tqdm_info': 'core-' + str(exp)
                                             })
