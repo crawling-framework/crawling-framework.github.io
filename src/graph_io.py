@@ -4,6 +4,7 @@ import logging
 import os.path
 import shutil
 import urllib.request
+import re
 
 import patoolib
 import snap
@@ -16,6 +17,61 @@ if USE_CYTHON_CRAWLERS:
     from base.cgraph import CGraph as MyGraph
 else:
     from base.graph import MyGraph
+
+
+konect_metadata_path = os.path.join(GRAPHS_DIR, 'konect', 'metadata')
+netrepo_metadata_path = os.path.join(GRAPHS_DIR, 'netrepo', 'metadata')
+
+
+def parse_konect_page():
+    """ Parse konect page and create name resolution dict. E.g. 'CL' -> 'actor-collaborations'
+    """
+    from bs4 import BeautifulSoup
+
+    logging.info("Parsing Konect metadata...")
+    name_ref_dict = {}
+    url = 'http://konect.uni-koblenz.de/networks/'
+    html = urllib.request.urlopen(url).read()
+
+    rows = BeautifulSoup(html, "lxml").table.find_all('tr')
+    for row in rows[1:]:
+        cols = row.find_all('td')
+        code = cols[0].contents[0].contents[0]
+        name = cols[1].contents[0].contents[0]
+        ref = cols[1].contents[0]['href']
+        name_ref_dict[code] = ref
+        name_ref_dict[name] = ref
+        name_ref_dict[ref] = ref
+
+    with open(konect_metadata_path, 'w') as f:
+        f.write(str(name_ref_dict))
+    logging.info("Konect metadata saved to %s" % konect_metadata_path)
+
+
+def parse_netrepo_page():
+    """ Parse networkrepository page and create name resolution dict: name -> url
+    """
+    from bs4 import BeautifulSoup
+
+    logging.info("Parsing networkrepository metadata...")
+    name_ref_dict = {}
+    url = 'http://networkrepository.com/networks.php'
+    html = urllib.request.urlopen(url).read()
+
+    rows = BeautifulSoup(html, "lxml").table.find_all('tr')
+    for row in rows[1:]:
+        name = row.contents[0].contents[0].text.strip()
+        ref = row.contents[-1].contents[2]['href']
+        name_ref_dict[name] = ref
+
+    with open(netrepo_metadata_path, 'w') as f:
+        f.write(str(name_ref_dict))
+    logging.info("networkrepository metadata saved to %s" % netrepo_metadata_path)
+
+
+# Should be run anyways
+if not os.path.exists(konect_metadata_path): parse_konect_page()
+if not os.path.exists(netrepo_metadata_path): parse_netrepo_page()
 
 
 def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_with='#%',
@@ -33,6 +89,7 @@ def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_w
     """
     in_format = None
     renums = {}
+    separators = ' |\t|,'
 
     assert out_path != path
     with open(out_path, 'w') as out_file:
@@ -43,13 +100,13 @@ def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_w
             assert line[0].isdigit(), "expected alpha-numeric line: '%s'" % line
             if not in_format:
                 # Define format
-                items = line.split()
+                items = re.split(separators, line)
                 in_format = 'ijwt'[:len(items)]
                 if len(out_format) > len(in_format):
                     raise Exception("Could not reformat from '%s' to '%s'" % (in_format, out_format))
                 logging.info("Reformatting %s->%s for '%s' ..." % (in_format, out_format, path))
 
-            items = line.split()
+            items = re.split(separators, line)
             i, j = items[0], items[1]
             if not self_loops and i == j:
                 continue
@@ -81,8 +138,8 @@ class GraphCollections:
         Read graph from storage or download it from the specified collection. In order to apply
         giant_only and self_loops, you need to remove the file manually.
 
-        :param name:
-        :param collection: 'other', 'konect', 'networkrepository'.
+        :param name: any of e.g. 'CL' or 'Actor collaborations' or 'actor-collaborations'
+        :param collection: 'other', 'konect', 'netrepo'.
         :param directed: undirected by default
         :param format: output will be in this format, 'ij' by default
         :param giant_only: giant component instead of full graph. Component extraction is applied
@@ -92,7 +149,11 @@ class GraphCollections:
         :return: MyGraph with snap graph
         """
         assert collection in COLLECTIONS
-        # category = ''
+
+        if collection == 'konect':  # Resolve name TODO get collection
+            name_ref_dict = eval(open(konect_metadata_path, 'r').read())
+            name = name_ref_dict[name]
+
         path = os.path.join(GRAPHS_DIR, collection, "%s.%s" % (name, format))
 
         # TODO let collection be not specified, try Konect then Netrepo, etc
@@ -103,11 +164,10 @@ class GraphCollections:
                 GraphCollections._download_konect(
                     temp_path, GraphCollections.konect_url_pattern % name)
 
-            elif collection == 'networkrepository':
-                raise NotImplementedError()
-                category = name.split('-')[0]
-                GraphCollections._download_networkrepository(
-                    temp_path, GraphCollections.networkrepository_url_pattern % (category, name))
+            elif collection == 'netrepo':
+                name_ref_dict = eval(open(netrepo_metadata_path, 'r').read())
+                url = name_ref_dict[name]
+                GraphCollections._download_netrepo(temp_path, url)
 
             elif collection == 'other':
                 raise FileNotFoundError("File '%s' not found. Check graph name or file existence." % path)
@@ -171,7 +231,7 @@ class GraphCollections:
         shutil.rmtree(os.path.join(graph_dir, archive_dir_name))
 
     @staticmethod
-    def _download_networkrepository(graph_path, url):
+    def _download_netrepo(graph_path, url):
         """
         Downloads graph data from http://networkrepository.com/networks.php
 
@@ -180,7 +240,7 @@ class GraphCollections:
         :return:
         """
         # 'http://nrvis.com/download/data/eco/eco-florida.zip'
-        # Convert "url_konect.tar.*" -> "filename.tar"
+        # Convert "url.tar.*" -> "filename.tar"
         if (url.rsplit('/', 1)[1]).rsplit('.', 2)[1] == "tar":
             archive_name = (url.rsplit('/', 1)[1]).rsplit('.', 1)[0]
         else:
@@ -191,41 +251,78 @@ class GraphCollections:
             os.makedirs(graph_dir)
 
         # Download archive and extract graph file
-        logging.info("Downloading graph archive from networkrepository...")
+        logging.info("Downloading graph archive from %s..." % url)
         filename = os.path.join(graph_dir, archive_name)
         urllib.request.urlretrieve(url, filename=filename)
         logging.info("done.")
         archive_dir_name = archive_name.split('.', 1)[0]
         patoolib.extract_archive(filename, outdir=os.path.join(graph_dir, archive_dir_name))
 
-        # Rename extracted graph file
-        # FIXME files are in various formats '.edges', '.mtx' etc
-        netwrepo_file_name = os.path.join(graph_dir, archive_dir_name, archive_dir_name + ".edges")
         out_file_name = os.path.join(graph_dir, os.path.basename(graph_path))
-        os.rename(netwrepo_file_name, out_file_name)
+
+        # Rename extracted graph file
+        while True:
+            # todo are there else formats besides '.edges', '.mtx' ?
+            try:
+                netrepo_file_name = os.path.join(graph_dir, archive_dir_name, archive_dir_name + ".edges")
+                os.rename(netrepo_file_name, out_file_name)
+                break
+            except IOError: pass
+            try:
+                netrepo_file_name = os.path.join(graph_dir, archive_dir_name, archive_dir_name + ".mtx")
+                # Remove first two lines (solution from https://stackoverflow.com/a/2329972/8900030)
+                fro = open(netrepo_file_name, "rb")
+                fro.readline()
+                fro.readline()
+                frw = open(netrepo_file_name, "r+b")
+                chars = fro.readline()
+                while chars:
+                    frw.write(chars)
+                    chars = fro.readline()
+                fro.close()
+                frw.truncate()
+                frw.close()
+                os.rename(netrepo_file_name, out_file_name)
+                break
+            except IOError: pass
+            break
 
         os.remove(os.path.join(graph_dir, archive_name))
         shutil.rmtree(os.path.join(graph_dir, archive_dir_name))
 
 
-def test_io():
+def test_konect():
     # name = 'soc-pokec-relationships'
     # name = 'petster-hamster'
     # name = 'github'
     # name = 'twitter'
-    name = 'ego-gplus'
+    # name = 'ego-gplus'
     # name = 'libimseti'
-    # name = 'advogato'
+    name = 'Advogato'  # 'AD' 'advogato' # 'Advogato'
     # name = 'facebook-wosn-links'
     # name = 'soc-Epinions1'
     # name = 'douban'
     # name = 'slashdot-threads'
     # name = 'digg-friends'
     # name = 'petster-friendships-cat'  # snap load is long, possibly due to unordered ids
-    graph = GraphCollections.get(name, directed=False, giant_only=True, self_loops=False)
-    g = graph.snap
+    g = GraphCollections.get(name, directed=False, giant_only=True, self_loops=False)
     # g = GraphCollections.get('eco-florida', collection='networkrepository').snap
-    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
+    print("N=%s E=%s" % (g.nodes(), g.edges()))
+    # print("neigbours of %d: %s" % (2, graph.neighbors(2)))
+
+
+def test_netrepo():
+    # name = 'cit-DBLP'
+    # name = 'cit-HepPh'
+    # name = 'road-chesapeake'
+    # name = 'fb-pages-tvshow'
+    # name = 'socfb-Amherst41'
+    # name = 'socfb-nips-ego'
+    # name = 'ca-CSphd'
+    name = 'ia-crime-moreno'
+    g = GraphCollections.get(name, 'netrepo', directed=False, giant_only=True, self_loops=False)
+    # g = GraphCollections.get('eco-florida', collection='networkrepository').snap
+    print("N=%s E=%s" % (g.nodes(), g.edges()))
     # print("neigbours of %d: %s" % (2, graph.neighbors(2)))
 
 
@@ -273,6 +370,10 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    # test_io()
-    test_graph()
+    # test_konect()
+    test_netrepo()
+    # test_graph()
     # test_graph_manipulations()
+    # parse_konect_page()
+    # parse_netrepo_page()
+

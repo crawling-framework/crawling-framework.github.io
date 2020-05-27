@@ -9,3 +9,4 @@ sortedcontainers
 jupyter
 scikit-learn
 Cython
+bs4

@@ -9,7 +9,7 @@ TMP_GRAPHS_DIR = os.path.join(GRAPHS_DIR, 'tmp')  # root directory to store temp
 PICS_DIR = os.path.join(rel_dir, 'pics')  # directory to store pictures
 RESULT_DIR = os.path.join(rel_dir, 'results')  # directory to store pictures
 
-COLLECTIONS = ['other', 'konect', 'networkrepository']
+COLLECTIONS = ['other', 'konect', 'netrepo']
 
 USE_CYTHON_CRAWLERS = False
 
