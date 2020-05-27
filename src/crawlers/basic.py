@@ -318,7 +318,7 @@ class MaximumObservedDegreeCrawler(CrawlerUpdatable):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node. If None is given, a random node of original graph will be used.
         """
-        super().__init__(graph, name=name if name else 'MOD-%s' % (batch if batch > 1 else ''), **kwargs)
+        super().__init__(graph, name=name if name else 'MOD%s' % (batch if batch > 1 else ''), **kwargs)
 
         if len(self._observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?

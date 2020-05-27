@@ -15,7 +15,7 @@ USE_CYTHON_CRAWLERS = False
 
 
 # Remaping steps depending on used budget - on first iters step=1, on last it grows ~x^2
-def REMAP_ITER(total=300):
+def REMAP_ITER(total=400):
     step_budget = 0
     REMAP_ITER_TO_STEP = {}
     for i in range(total):  # for budget less than 100 mln nodes
