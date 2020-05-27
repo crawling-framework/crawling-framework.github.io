@@ -1,3 +1,5 @@
+import os
+
 from utils import rel_dir, USE_CYTHON_CRAWLERS
 if USE_CYTHON_CRAWLERS:
     from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
@@ -9,6 +11,10 @@ from queue import deque  # here was a warning in pycharm
 import numpy as np
 import snap
 
+try:
+    from cyth.build_cython import build_cython
+    build_cython(rel_dir)  # for ND_Set only
+except : pass
 from base.node_deg_set import ND_Set
 from base.graph import MyGraph
 
