@@ -5,8 +5,6 @@ from builtins import int
 import networkx as nx
 import numpy as np
 import snap
-from future.builtins import int
-from numpy import int32
 
 from utils import TMP_GRAPHS_DIR
 

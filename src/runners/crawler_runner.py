@@ -49,7 +49,7 @@ def make_gif(crawler_name, duration=1):
 # TODO : make 1 parent Runner for CrawlerRunner and AnimatedCrawlerRunner
 class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
     def __init__(self, graph: MyGraph, crawlers, metrics, budget=-1, step=1,
-                 draw_mod=None, batches_per_pic=1, layout_pos=None):
+                 draw_mod=None, batches_per_pic=1, layout_pos=None, tqdm_info=''):
         """
         :param graph:
         :param crawlers: list of crawlers to run
@@ -58,6 +58,7 @@ class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
         :param budget: maximal number of nodes to be crawled, by default the whole graph
         :param step: compute metrics each `step` steps
         :param batches_per_pic: save picture every batches_per_pic batches. more -> faster
+        tqdm_info - description of tqdm progressbar
         :return:
         """
         self.graph = graph
@@ -68,7 +69,7 @@ class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
         self.budget = min(budget, graph.nodes()) if budget > 0 else graph.nodes()
         assert step < self.budget
         self.step = step
-
+        self.tqdm_info = tqdm_info
         self.batches_per_pic = batches_per_pic
         self.draw_mod = draw_mod  # 'metric'   # 'traversal' / 'metric' / 'None
         print('Crawler runner with budget={},step={},iters={}. Draw {}'.format(
@@ -159,7 +160,7 @@ class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
 
         i, batch = 0, 1
         # logging.info('Crawling method {} with budget {} and step {}'.format(self.self.budget, self.step))
-        pbar = tqdm(total=self.budget)  # drawing crawling progress bar
+        pbar = tqdm(total=self.budget, desc=self.tqdm_info)  # drawing crawling progress bar
         # print('self metrics', [(metric._callback, metric.name + '\n') for metric in self.metrics])
 
         while i < self.budget:

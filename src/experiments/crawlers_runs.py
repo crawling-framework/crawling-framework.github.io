@@ -15,9 +15,10 @@ from graph_io import GraphCollections
 from runners.animated_runner import Metric, AnimatedCrawlerRunner
 from runners.crawler_runner import CrawlerRunner
 from statistics import get_top_centrality_nodes, Stat
+import multiprocessing
 
 
-def test_runner(graph, animated=False, statistics: list = None, layout_pos=None):
+def test_runner(graph, animated=False, statistics: list = None, layout_pos=None, tqdm_info=''):
     import random
     # initial_seed = random.sample([n.GetId() for n in graph.snap.Nodes()], 1)[0]
     initial_seed = graph.random_nodes(1000)
@@ -34,7 +35,7 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
         # SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed),
         # BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),  # is like take SBS with p=1
 
-        # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
         # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
         # MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
         # MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
@@ -48,14 +49,30 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
 
         MultiCrawler(graph, crawlers=[
             MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(2)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(3)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(4)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(5)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(10)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
+            range(20)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
+            range(50)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(100)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
+            range(500)]),
+        MultiCrawler(graph, crawlers=[
+            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(1000)]),
         # MultiCrawler(graph, crawlers=[
-        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed[i]) for i in range(5)]),
-        # MultiCrawler(graph, crawlers=[
-        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed[i]) for i in range(10)]),
-        # MultiCrawler(graph, crawlers=[
-        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed[i]) for i in range(100)]),
-        # MultiCrawler(graph, crawlers=[
-        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed[i]) for i in range(1000)]),
+        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed[i]) for i in
+        #     range(10000)]),
     ]
     logging.info([c.name for c in crawlers])
     metrics = []
@@ -73,10 +90,15 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
         ci = AnimatedCrawlerRunner(graph,
                                    crawlers,
                                    metrics,
-                                   budget=10000, step=10)
+                                   budget=10000,
+                                   step=10)
     else:
-        ci = CrawlerRunner(graph, crawlers, metrics, budget=0,
+        ci = CrawlerRunner(graph,
+                           crawlers,
+                           metrics,
+                           budget=0,
                            # step=ceil(10 ** (len(str(graph.nodes())) - 3)),
+                           tqdm_info=tqdm_info,
                            # if 5*10^5 then step = 10**2,if 10^7 => step=10^4
                            # batches_per_pic=10,
                            # draw_mod='traversal', layout_pos=layout_pos,
@@ -87,15 +109,17 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None)
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
-    # graph_name = 'digg-friends'  # 261489 nodes and 1536577 edges
-    # graph_name = 'douban'  # with 154908 nodes and 327162 edges
-    # graph_name = 'ego-gplus' # http://konect.uni-koblenz.de/networks/ego-gplus
-    # graph_name = 'slashdot-threads'  # N=51083, V=116573.  use step=100,
-    graph_name = 'facebook-wosn-links' #  with 63392 nodes and 816831 edges
-    # graph_name = 'petster-hamster'  # with 2000 nodes and 16098 edges
-    g = GraphCollections.get(graph_name, giant_only=True)
+    # graph_name = 'digg-friends'       # with 261489 nodes and 1536577 edges
+    # graph_name = 'douban'             # with 154908 nodes and  327162 edges
+    # graph_name = 'facebook-wosn-links'# with  63392 nodes and  816831 edges
+    # graph_name = 'slashdot-threads'   # with  51083 nodes and  116573 edges
+    # graph_name = 'ego-gplus'          # with  23613 nodes and   39182 edges
+    # graph_name = 'petster-hamster'    # with   2000 nodes and   16098 edges
+    for graph_name in ['petster-friendships-dog', 'munmun_twitter_social', 'com-youtube',
+                       'soc-pokec-relationships', 'flixster', 'youtube-u-growth', 'petster-friendships-cat', ]:
+        g = GraphCollections.get(graph_name, giant_only=True)
 
-    # graph_name = 'mipt'  #  with 14313 nodes and 488852 edges
+    # graph_name = 'mipt'                 #  with 14313 nodes and 488852 edges
     # g = GraphCollections.get(graph_name, 'other', giant_only=True)
 
     # g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
@@ -104,17 +128,30 @@ if __name__ == '__main__':
     # x,y = 7,7
     # graph_name = 'carpet_graph_'+str(x)+'_'+str(y)
     # g, layout_pos = test_carpet_graph(x,y)  # GraphCollections.get(name)
-    iterations = 8
+
+    import time
+
+    start_time = time.time()
+    processes = []
+    iterations = multiprocessing.cpu_count() - 1  # making parallel itarations. Number of processes
     for exp in range(iterations):
-        logging.info('Running iteration {}/'.format(exp, iterations))
-        test_runner(g,
-                    animated=False,
-                    statistics=[s for s in Stat if 'DISTR' in s.name],
-                    # layout_pos=layout_pos
-                    )
+        logging.info('Running iteration {}/{}'.format(exp, iterations))
+        # little multiprocessing magic, that calculates several iterations in parallel
+        p = multiprocessing.Process(target=test_runner, args=(g,),
+                                    kwargs={'animated': False,
+                                            'statistics': [s for s in Stat if 'DISTR' in s.name],
+                                            # 'layout_pos':layout_pos,
+                                            'tqdm_info': 'core-' + str(exp)
+                                            })
+        p.start()
+
+    p.join()
+    print("time elapsed: {:.2f}s, {}".format(time.time() - start_time, processes))
 
     from experiments.merger import merge
 
-    merge(graph_name, show=True)
+    # merge(graph_name,
+    #       show=True,
+    #       filter_only='MOD', )
 
 # 'degree', 'betweenness', 'eccentricity', 'k-coreness',  'pagerank', 'clustering'
