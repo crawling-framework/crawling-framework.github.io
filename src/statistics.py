@@ -11,10 +11,14 @@ import snap
 from tqdm import tqdm
 
 if USE_CYTHON_CRAWLERS:
-    from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
     from base.cgraph import CGraph as MyGraph
 else:
     from base.graph import MyGraph
+
+USE_NETWORKIT = True  # Use networkit library for approximate centrality calculation
+
+if USE_NETWORKIT:
+    from networkit._NetworKit import Betweenness, ApproxBetweenness, EstimateBetweenness, ApproxCloseness
 
 
 class Stat(Enum):
@@ -116,7 +120,7 @@ if not USE_CYTHON_CRAWLERS:
         # assert centrality in CENTRALITIES
 
         s = graph.snap
-        logging.info("Computing '%s' for graph N=%d, E=%d. Can take a while..." %
+        logging.info("Computing '%s' for graph N=%d, E=%d. May take a while..." %
                      (centrality, s.GetNodes(), s.GetEdges()))
 
         if only_giant:
@@ -126,12 +130,26 @@ if not USE_CYTHON_CRAWLERS:
             node_cent = {n.GetId(): n.GetDeg() for n in tqdm(s.Nodes())}
 
         elif centrality == 'betweenness':
-            Nodes = snap.TIntFltH()
-            Edges = snap.TIntPrFltH()
-            if nodes_fraction_approximate is None and s.GetNodes() > 10000:
-                nodes_fraction_approximate = 10000 / s.GetNodes()
-            snap.GetBetweennessCentr(s, Nodes, Edges, nodes_fraction_approximate, graph.directed)
-            node_cent = {node: Nodes[node] for node in Nodes}
+            if not USE_NETWORKIT:  # s.GetNodes() < 1e5:  # snap
+                Nodes = snap.TIntFltH()
+                Edges = snap.TIntPrFltH()
+                if nodes_fraction_approximate is None and s.GetNodes() > 10000:
+                    nodes_fraction_approximate = 10000 / s.GetNodes()
+                snap.GetBetweennessCentr(s, Nodes, Edges, nodes_fraction_approximate, graph.directed)
+                node_cent = {node: Nodes[node] for node in Nodes}
+
+            else:  # networkit
+                # Based on the paper:
+                # Sanders, Geisberger, Schultes: Better Approximation of Betweenness Centrality
+                node_map = {}
+                g = graph.networkit(node_map)
+                # centrality = ApproxBetweenness(g, epsilon=0.01, delta=0.1)
+                centr = EstimateBetweenness(g, nSamples=1000, normalized=False, parallel=True)
+                centr.run()
+                scores = centr.scores()
+                node_cent = {node_map[i]: score for i, score in enumerate(scores)}
+                if None in node_cent:
+                    del node_cent[None]
 
         elif centrality == 'pagerank':
             PRankH = snap.TIntFltH()
@@ -139,9 +157,23 @@ if not USE_CYTHON_CRAWLERS:
             node_cent = {item: PRankH[item] for item in PRankH}
 
         elif centrality == 'closeness':
-            # FIXME seems to not distinguish edge directions
-            # node_cent = []  # TODO :made it to see progrees, mb need to be optimized
-            node_cent = {n.GetId(): snap.GetClosenessCentr(s, n.GetId(), graph.directed) for n in tqdm(s.Nodes())}
+            if not USE_NETWORKIT:  # s.GetNodes() < 1e5:  # snap
+                # FIXME seems to not distinguish edge directions
+                # node_cent = []  # TODO :made it to see progrees, mb need to be optimized
+                node_cent = {n.GetId(): snap.GetClosenessCentr(s, n.GetId(), graph.directed) for n in tqdm(s.Nodes())}
+
+            else:  # networkit
+                # Based on the paper:
+                # Cohen et al., Computing Classic Closeness Centrality, at Scale.
+                node_map = {}
+                g = graph.networkit(node_map)
+                # TODO for directed graphs see documentation
+                centr = ApproxCloseness(g, nSamples=min(g.numberOfNodes(), 300), epsilon=0.1, normalized=False)
+                centr.run()
+                scores = centr.scores()
+                node_cent = {node_map[i]: score for i, score in enumerate(scores)}
+                if None in node_cent:
+                    del node_cent[None]
 
         elif centrality == 'eccentricity':
             node_cent = {n.GetId(): snap.GetNodeEcc(s, n.GetId(), graph.directed) for n in tqdm(s.Nodes())}
@@ -194,40 +226,43 @@ def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=F
 
 
 def test():
-    # # imports workaround https://stackoverflow.com/questions/26589805/python-enums-across-modules
-    import sys
-    sys.modules['statistics'] = sys.modules['__main__']
+    # # 1.
+    # g = MyGraph(name='test', directed=False)
+    # g.add_node(1)
+    # g.add_node(2)
+    # g.add_node(3)
+    # g.add_node(4)
+    # g.add_node(5)
+    # g.add_edge(1, 2)
+    # g.add_edge(3, 2)
+    # g.add_edge(4, 2)
+    # g.add_edge(4, 3)
+    # g.add_edge(5, 4)
+    # g.save()
+    # print("N=%s E=%s" % (g.nodes(), g.edges()))
+    #
+    # # for stat in Stat:
+    # #     print("%s = %s" % (stat.short, g[stat]))
 
-    # 1.
-    g = MyGraph(name='test', directed=False)
-    g.add_node(1)
-    g.add_node(2)
-    g.add_node(3)
-    g.add_node(4)
-    g.add_node(5)
-    g.add_edge(1, 2)
-    g.add_edge(3, 2)
-    g.add_edge(4, 2)
-    g.add_edge(4, 3)
-    g.add_edge(5, 4)
-    g.save()
-    print("N=%s E=%s" % (g.nodes(), g.edges()))
+    # 2.
+    from graph_io import GraphCollections
+    # graph = GraphCollections.get('test', 'other', giant_only=True)
+    # graph = GraphCollections.get('dolphins', giant_only=True)
+    # graph = GraphCollections.get('douban', giant_only=True)
+    graph = GraphCollections.get('GP', giant_only=True)
+    # graph = GraphCollections.get('Lj', giant_only=True)
+    # graph = GraphCollections.get('com-youtube', giant_only=True)
 
-    # for stat in Stat:
-    #     print("%s = %s" % (stat.short, g[stat]))
+    stat = Stat.CLOSENESS_DISTR
 
-    # # 2.
-    # from graph_io import GraphCollections
-    # graph = GraphCollections.get('ego-gplus', giant_only=True)
-    # node_prop = graph[Stat.BETWEENNESS_DISTR]
-    # print(node_prop)
+    print(graph.name, graph.nodes(), graph.edges(), stat)
+    node_prop = graph[stat]
+    print(str(node_prop)[:100])
+
+    # test_approx_stat(graph, stat)
 
 
 def test_stats():
-    # # imports workaround https://stackoverflow.com/questions/26589805/python-enums-across-modules
-    import sys
-    sys.modules['statistics'] = sys.modules['__main__']
-
     from graph_io import GraphCollections
     graph = GraphCollections.get('dolphins', giant_only=True)
 
@@ -235,14 +270,48 @@ def test_stats():
         print("%s = %s" % (stat.short, graph[stat]))
 
 
+def test_approx_stat(graph: MyGraph, stat: Stat):
+    """ Measure the intersection of top-set centrality nodes found by snap vs networkit
+    """
+    import networkit as nk
+    node_map = {}
+    g = graph.networkit(node_map)
+    # centrality = Betweenness(g, normalized=False)
+    # centrality = DegreeCentrality(g, normalized=False)
+    # centrality = ApproxBetweenness(g, epsilon=0.01, delta=0.1)
+    # centrality = EstimateBetweenness(g, nSamples=1000, normalized=False, parallel=True)
+    # centrality.run()
+
+    # print(g.nodes())
+    # print(node_map)
+    # print(centrality.scores())
+    count = int(0.1*graph.nodes())
+    snap = sorted(list(eval(open(graph.path + '_stats/%s (snap)' % stat.short, 'r').read()).items()), key=itemgetter(1), reverse=True)
+    top_snap = set([n for (n, d) in snap[:count]])
+    nk = sorted(list(eval(open(graph.path + '_stats/%s' % stat.short, 'r').read()).items()), key=itemgetter(1), reverse=True)
+    top_nk = set([n for (n, d) in nk[:count]])
+
+    # scores = centrality.scores()
+    # print(scores)
+    # node_cent = {node_map[i+1]: score for i, score in enumerate(scores)}
+    # sorted_node_cent = sorted(list(node_cent.items()), key=itemgetter(1), reverse=True)
+    # print(node_cent)
+    # top = set([n for (n, d) in sorted_node_cent[:count]])
+    print("counted")
+    print(len(top_snap.intersection(top_nk))/count)
+
+    # print({i+1: val for i, val in enumerate(centrality.scores())})
+
+
 def main():
     import argparse
     stats = [s.name for s in Stat]
-    parser = argparse.ArgumentParser(description='Compute centralities for graph nodes. Graph is '
-                                                 'specified via path (-p) or name at Konect (-n).')
-    parser.add_argument('-p', '--path', required=False, help='path to input graph as edgelist')
-    parser.add_argument('-n', '--name', required=False, help='path to input graph as edgelist')
-    parser.add_argument('-d', action='store_true', help='specify if graph is directed')
+    parser = argparse.ArgumentParser(
+        description='Compute statistics for graphs. Graph is specified via path (-p) or name in Konect (-n).')
+    parser.add_argument('-p', '--path', required=False, nargs='+', help='path to input graphs as edgelist')
+    parser.add_argument('-n', '--name', required=False, nargs='+', help='names/codes of input graphs in Konect')
+    # parser.add_argument('-d', action='store_true', help='specify if graph is directed')
+    parser.add_argument('-f', '--full', action='store_true', help='print full statistics value')
     parser.add_argument('-s', '--stats', required=True, nargs='+', choices=stats,
                         help='node statistics to compute')
 
@@ -251,21 +320,30 @@ def main():
     if (1 if args.path else 0) + (1 if args.name else 0) != 1:
         raise ArgumentError("Exactly one of '-p' and '-n' args must be specified.")
 
-    if args.path:
-        graph = MyGraph(path=args.path, name='', directed=args.d)
-    else:
-        graph = GraphCollections.get(args.name, giant_only=True)
-
     for s in args.stats:
         assert s in stats, "Unknown statistics %s, available are: %s" % (s, stats)
-        # print("Computing %s centrality for %s..." % (c, args.path))
-        v = graph[s]
-        print("%s: %s" % (s, v))
+
+    if args.path:
+        graphs = [MyGraph(path=p, name='', directed=args.d) for p in args.path]
+    else:
+        graphs = [GraphCollections.get(n, giant_only=True) for n in args.name]
+
+    for graph in graphs:
+        for s in args.stats:
+            # print("Computing %s centrality for %s..." % (c, args.path))
+            v = graph[s]
+            if not args.full:  # short print
+                v = (str(v)[:100] + '...') if len(str(v)) > 100 else str(v)
+            logging.info("%s: %s" % (s, v))
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
+
+    # # imports workaround https://stackoverflow.com/questions/26589805/python-enums-across-modules
+    import sys
+    sys.modules['statistics'] = sys.modules['__main__']
 
     # test_stats()
     # test()

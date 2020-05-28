@@ -4,7 +4,6 @@ import logging
 import matplotlib.pyplot as plt
 
 if USE_CYTHON_CRAWLERS:
-    from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
     from base.cbasic import CCrawler as Crawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
         DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
         PreferentialObservedDegreeCrawler

@@ -79,6 +79,31 @@ class MyGraph(object):
             self._fingerprint = fingerprint(self._snap_graph)
         return self._snap_graph
 
+    def networkit(self, node_map: dict = None):
+        """ Get networkit graph, create node ids mapping (neworkit_node_id -> snap_node_id) if
+        node_map is specified.
+        """
+        import networkit as nk
+        tab_or_space = '\t' in open(self.path).readline()
+        reader = nk.Format.EdgeListTabZero if tab_or_space else nk.Format.EdgeListSpaceZero
+        networkit_graph = nk.readGraph(self.path, reader, directed=self.directed)
+
+        # Create node mapping if needed
+        if node_map is not None:
+            node_map.clear()
+            nodes = sorted(self.iter_nodes())
+            n_max = nodes[-1]
+            assert networkit_graph.numberOfNodes() == n_max+1
+            n = 0
+            for s in range(n_max+1):
+                if nodes[n] > s:
+                    node_map[s] = None
+                else:
+                    node_map[s] = nodes[n]
+                    n += 1
+
+        return networkit_graph
+
     def nodes(self):
         return self._snap_graph.GetNodes()
 
@@ -102,8 +127,13 @@ class MyGraph(object):
         :return: list of ids
         """
         if self.directed:
-            raise NotImplementedError("For directed graph and all neighbors, take GetInEdges + GetOutEdges")
+            raise NotImplementedError(
+                "For directed graph and all neighbors, take GetInEdges + GetOutEdges")
         return list(self.snap.GetNI(int(node)).GetOutEdges())
+
+    def iter_nodes(self):
+        for n in self._snap_graph.Nodes():
+            yield n.GetId()
 
     def random_node(self):
         return self.random_nodes(1)

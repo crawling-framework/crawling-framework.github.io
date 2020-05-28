@@ -121,9 +121,6 @@ cdef class CGraph:
 
     def neighbors(self, int node):
         """ Generator of neighbors of the given node in this graph.
-
-        :param node: 
-        :return: 
         """
         cdef TUNGraph.TNodeI n_iter = self._snap_graph.GetNI(node)
         # cdef TUNGraph.TNode dat = n.NodeHI.GetDat()  TODO could be optimized if have access to private NodeHI
@@ -251,6 +248,31 @@ cdef class CGraph:
         # with open(new_path, 'w') as f:
         #     for e in s.Edges():
         #         f.write("%s %s\n" % (e.GetSrcNId(), e.GetDstNId()))
+
+    def networkit(self, node_map: dict = None):
+        """ Get networkit graph, create node ids mapping (neworkit_node_id -> snap_node_id) if
+        node_map is specified.
+        """
+        import networkit as nk
+        tab_or_space = '\t' in open(self.path).readline()
+        reader = nk.Format.EdgeListTabZero if tab_or_space else nk.Format.EdgeListSpaceZero
+        networkit_graph = nk.readGraph(self.path, reader, directed=self.directed)
+
+        # Create node mapping if needed
+        if node_map is not None:
+            node_map.clear()
+            nodes = sorted(self.iter_nodes())
+            n_max = nodes[-1]
+            assert networkit_graph.numberOfNodes() == n_max+1
+            n = 0
+            for s in range(n_max+1):
+                if nodes[n] > s:
+                    node_map[s] = None
+                else:
+                    node_map[s] = nodes[n]
+                    n += 1
+
+        return networkit_graph
 
     @property  # Denis:  could be useful to handle nx version of graph
     def snap_to_networkx(self):

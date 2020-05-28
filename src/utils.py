@@ -11,8 +11,11 @@ RESULT_DIR = os.path.join(rel_dir, 'results')  # directory to store pictures
 
 COLLECTIONS = ['other', 'konect', 'netrepo']
 
-USE_CYTHON_CRAWLERS = False
+USE_CYTHON_CRAWLERS = False  # python/cython mode switcher
 
+if USE_CYTHON_CRAWLERS:
+    # Should go before any cython imports. By calling here it is run once
+    from cyth.build_cython import build_cython; build_cython(rel_dir)
 
 # Remaping steps depending on used budget - on first iters step=1, on last it grows ~x^2
 def REMAP_ITER(total=400):

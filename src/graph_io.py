@@ -13,7 +13,6 @@ from utils import GRAPHS_DIR, COLLECTIONS
 
 
 if USE_CYTHON_CRAWLERS:
-    from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
     from base.cgraph import CGraph as MyGraph
 else:
     from base.graph import MyGraph
@@ -24,7 +23,8 @@ netrepo_metadata_path = os.path.join(GRAPHS_DIR, 'netrepo', 'metadata')
 
 
 def parse_konect_page():
-    """ Parse konect page and create name resolution dict. E.g. 'CL' -> 'actor-collaborations'
+    """ Parse konect page and create name resolution dict. E.g. 'CL' -> 'actor-collaborations'.
+    Note several non-unique codes: DB, HY, OF, PL, WT.
     """
     from bs4 import BeautifulSoup
 
@@ -39,6 +39,9 @@ def parse_konect_page():
         code = cols[0].contents[0].contents[0]
         name = cols[1].contents[0].contents[0]
         ref = cols[1].contents[0]['href']
+        if code in name_ref_dict:
+            logging.warning("Konect repeating code", code)
+            pass  # FIXME codes are not unique, some repeat!
         name_ref_dict[code] = ref
         name_ref_dict[name] = ref
         name_ref_dict[ref] = ref

@@ -1,12 +1,14 @@
 import logging
 from tqdm import tqdm
 
-from statistics import Stat
+from statistics import Stat, USE_NETWORKIT
 from base.cgraph cimport CGraph, GetClustCf, GetMxWccSz, PUNGraph, TUNGraph, GetBfsEffDiam, \
     GetMxWcc, TIntFltH, GetBetweennessCentr, THashKeyDatI, TInt, TFlt, GetPageRank, \
     GetClosenessCentr, GetNodeEcc, GetNodeClustCf, GetKCore
 from cython.operator cimport dereference as deref, postincrement as pinc
 
+if USE_NETWORKIT:
+    from networkit._NetworKit import Betweenness, ApproxBetweenness, EstimateBetweenness, ApproxCloseness
 
 stat_computer = {
     Stat.NODES: lambda graph: graph.nodes(),
@@ -95,16 +97,29 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
             pinc(ni)
 
     elif centrality == 'betweenness':
-        # cdef TIntPrFltH Edges
-        Nodes = TIntFltH()
-        # Edges = TIntPrFltH()
-        if nodes_fraction_approximate is None and n > 10000:
-            nodes_fraction_approximate = 10000 / n
-        GetBetweennessCentr[PUNGraph](p, Nodes, nodes_fraction_approximate, graph.directed)
-        if_iter = Nodes.BegI()
-        while not if_iter == Nodes.EndI():
-            node_cent[if_iter.GetKey()()] = if_iter.GetDat()()
-            pinc(if_iter)
+        if not USE_NETWORKIT:
+            # cdef TIntPrFltH Edges
+            Nodes = TIntFltH()
+            # Edges = TIntPrFltH()
+            if nodes_fraction_approximate is None and n > 10000:
+                nodes_fraction_approximate = 10000 / n
+            GetBetweennessCentr[PUNGraph](p, Nodes, nodes_fraction_approximate, graph.directed)
+            if_iter = Nodes.BegI()
+            while not if_iter == Nodes.EndI():
+                node_cent[if_iter.GetKey()()] = if_iter.GetDat()()
+                pinc(if_iter)
+
+        else:  # networkit
+            # Based on the paper:
+            # Sanders, Geisberger, Schultes: Better Approximation of Betweenness Centrality
+            node_map = {}
+            nk_graph = graph.networkit(node_map)
+            centr = EstimateBetweenness(nk_graph, nSamples=1000, normalized=False, parallel=True)
+            centr.run()
+            scores = centr.scores()
+            node_cent = {node_map[i]: score for i, score in enumerate(scores)}
+            if None in node_cent:
+                del node_cent[None]
 
     elif centrality == 'pagerank':
         Nodes = TIntFltH()
@@ -115,11 +130,24 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
             pinc(if_iter)
 
     elif centrality == 'closeness':
-        # FIXME seems to not distinguish edge directions
-        ni = g.BegNI()
-        for i in tqdm(range(n)):
-            node_cent[ni.GetId()] = GetClosenessCentr[PUNGraph](p, ni.GetId(), graph.directed)
-            pinc(ni)
+        if not USE_NETWORKIT:  # snap
+            # FIXME seems to not distinguish edge directions
+            ni = g.BegNI()
+            for i in tqdm(range(n)):
+                node_cent[ni.GetId()] = GetClosenessCentr[PUNGraph](p, ni.GetId(), graph.directed)
+                pinc(ni)
+        else:  # networkit
+            # Based on the paper:
+            # Cohen et al., Computing Classic Closeness Centrality, at Scale.
+            node_map = {}
+            nk_graph = graph.networkit(node_map)
+            # TODO for directed graphs see documentation
+            centr = ApproxCloseness(nk_graph, nSamples=min(nk_graph.numberOfNodes(), 300), epsilon=0.1, normalized=False)
+            centr.run()
+            scores = centr.scores()
+            node_cent = {node_map[i]: score for i, score in enumerate(scores)}
+            if None in node_cent:
+                del node_cent[None]
 
     elif centrality == 'eccentricity':
         ni = g.BegNI()
