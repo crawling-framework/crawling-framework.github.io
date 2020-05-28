@@ -51,7 +51,7 @@ make all
 
 * Final preparations 
 
-Replace path to snap in `src/utils.py`:
+Replace path to snap in `src/cyth/setup.py`:
 in place of `SNAP_DIR = "/home/ubuntu/Snap-5.0/"` put your path to snap.
 
 (NOTE: don't start the path from '~' or it will fail with the g++ option '-I')

@@ -1,5 +1,7 @@
 from utils import rel_dir, USE_CYTHON_CRAWLERS
-from cyth.build_cython import build_cython; build_cython(rel_dir)  # Should go before any cython imports
+from cyth.setup import build_cython
+
+build_cython(rel_dir)  # Should go before any cython imports
 
 from base.cgraph import cgraph_test
 from base.cbasic import cbasic_test

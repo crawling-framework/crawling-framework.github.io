@@ -67,7 +67,7 @@ class AnimatedCrawlerRunner:
             plt.cla()
             plt.title(self.title)
             for c, crawler in enumerate(self.crawlers):
-                crawler.crawl_budget(batch)
+                crawler.crawl_budget(int(batch))
 
                 for m, metric in enumerate(self.metrics):
                     metric_seq = crawler_metric_seq[crawler][metric]
@@ -82,7 +82,7 @@ class AnimatedCrawlerRunner:
                 plt.ylim(ylims)
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
-            plt.grid()
+            plt.grid(b=True)
             plt.tight_layout()
             plt.pause(0.001)
 

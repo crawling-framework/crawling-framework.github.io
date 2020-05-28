@@ -20,9 +20,9 @@ from runners.animated_runner import AnimatedCrawlerRunner, Metric
 
 def test_basic(graph):
     crawlers = [
-        # MaximumObservedDegreeCrawler(graph, batch=1, skl_mode=True, initial_seed=1),
+        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=1),
         # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=1),
-        BreadthFirstSearchCrawler(graph, initial_seed=10),
+        # BreadthFirstSearchCrawler(graph, initial_seed=10),
         # RandomCrawler(graph),
     ]
 
@@ -30,7 +30,7 @@ def test_basic(graph):
         Metric('observed_set', lambda crawler: len(crawler.observed_set)),
         Metric('nodes_set', lambda crawler: len(crawler.nodes_set)),
     ]
-    acr = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=50000, step=5000)
+    acr = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=1e3, step=1e2)
     acr.run()
 
     # iterations = []
@@ -200,7 +200,7 @@ def test_crawler_times():
     # 3000   17     14   |  3000   48     22   |   3000   211    88
     #
 
-    # crawler = PreferentialObservedDegreeCrawler(g, batch=1, skl_mode=False)
+    # crawler = PreferentialObservedDegreeCrawler(g, batch=1)
     # t = time()
     # for i in range(n):
     #     crawler.crawl_budget(1)  # initial - 40 s
@@ -267,10 +267,11 @@ if __name__ == '__main__':
     # name = 'flixster'
     # name = 'flickr-links'
     # name = 'soc-pokec-relationships'
-    name = 'digg-friends'
+    # name = 'digg-friends'
+    # name = 'Lj'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
-    # name = 'petster-hamster'
+    name = 'petster-hamster'
     # name = 'dolphins'
     # g = test_carpet_graph(8, 8)[0]
     g = GraphCollections.get(name, giant_only=True)
@@ -279,7 +280,4 @@ if __name__ == '__main__':
     test_basic(g)
     # test_multi()
     # test_crawler_times()
-
-
-
 

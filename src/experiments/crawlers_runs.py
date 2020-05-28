@@ -71,7 +71,7 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None,
         MultiCrawler(graph, crawlers=[
             MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(1000)]),
         # MultiCrawler(graph, crawlers=[
-        #     MaximumObservedDegreeCrawler(graph, skl_mode=True, batch=1, initial_seed=initial_seed[i]) for i in
+        #     MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
         #     range(10000)]),
     ]
     logging.info([c.name for c in crawlers])

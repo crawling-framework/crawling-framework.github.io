@@ -10,7 +10,8 @@ import numpy as np
 import snap
 
 try:
-    from cyth.build_cython import build_cython
+    from cyth.setup import build_cython
+
     build_cython(rel_dir)  # for ND_Set only
 except : pass
 from base.node_deg_set import ND_Set

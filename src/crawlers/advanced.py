@@ -203,7 +203,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         # 2) run MOD
         use_skl = True if self.b < 1000 else False  # use True if batch < 1000
         self.mod = MaximumObservedDegreeCrawler(
-            self.orig_graph, batch=self.b, skl_mode=use_skl, observed_graph=self.observed_graph,
+            self.orig_graph, batch=self.b, observed_graph=self.observed_graph,
             observed_set=self._observed_set, crawled_set=self.crawled_set)
 
         for i in range(self.n-self.s):
@@ -283,16 +283,16 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
                 #                   observed_set=self.observed_set, crawled_set=self.crawled_set),
                 # ForestFireCrawler(graph=self.orig_graph, observed_graph=self.observed_graph,
                 #                   observed_set=self._observed_set, crawled_set=self.crawled_set),
-                MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b, skl_mode=use_skl,
+                MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b,
                                              observed_graph=self.observed_graph,
                                              observed_set=self._observed_set, crawled_set=self.crawled_set),
-                # MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b, skl_mode=use_skl,
+                # MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b,
                 #                              observed_graph=self.observed_graph,
                 #                              observed_set=set(), crawled_set=self.crawled_set),
-                # MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b, skl_mode=use_skl,
+                # MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b,
                 #                              observed_graph=self.observed_graph,
                 #                              observed_set=set(), crawled_set=self.crawled_set),
-                # MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b, skl_mode=use_skl,
+                # MaximumObservedDegreeCrawler(graph=self.orig_graph, batch=self.b,
                 #                              observed_graph=self.observed_graph,
                 #                              observed_set=set(), crawled_set=self.crawled_set),
             ], observed_graph=self.observed_graph, crawled_set=self.crawled_set)
