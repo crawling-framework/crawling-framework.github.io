@@ -3,12 +3,23 @@ import logging
 import snap
 from matplotlib import pyplot as plt
 
-from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer
-from crawlers.basic import CrawlerException, MaximumObservedDegreeCrawler
-from crawlers.multiseed import MultiCrawler
+from utils import USE_CYTHON_CRAWLERS
+
+if USE_CYTHON_CRAWLERS:
+    from base.cgraph import CGraph as MyGraph
+    from base.cadvanced import AvrachenkovCrawler, CrawlerWithAnswer, ThreeStageCrawler, \
+        ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs
+    from base.cbasic import CrawlerException, MaximumObservedDegreeCrawler
+    from base.cmultiseed import MultiCrawler
+else:
+    from base.graph import MyGraph
+    from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer, AvrachenkovCrawler, \
+        ThreeStageMODCrawler
+    from crawlers.basic import CrawlerException, MaximumObservedDegreeCrawler
+    from crawlers.multiseed import MultiCrawler
+
 from runners.animated_runner import AnimatedCrawlerRunner, Metric
 from graph_io import GraphCollections
-from base.graph import MyGraph
 from statistics import Stat, get_top_centrality_nodes
 
 
@@ -45,55 +56,54 @@ def test_initial_graph(i: str):
     return graph
 
 
-class TwoStageCrawlerSeedsAreHubs(ThreeStageCrawler):
-    """
-    Artificial version of ThreeStageCrawler, where instead of initial random seeds we take hubs
-    """
-    def _seeds_generator(self):
-        # 1) hubs as seeds
-        self.hubs = get_top_centrality_nodes(self.orig_graph, 'degree', count=self.s)
-        for i in range(self.s):
-            yield self.hubs[i]
+if not USE_CYTHON_CRAWLERS:
+    class ThreeStageCrawlerSeedsAreHubs(ThreeStageCrawler):
+        """
+        Artificial version of ThreeStageCrawler, where instead of initial random seeds we take hubs
+        """
+        def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1):
+            super().__init__(graph, s=s, n=n, p=p, name='3-StageHubs_s=%s_n=%s_p=%s' % (s, n, p))
+            self.hubs = []
 
-        # memorize E1
-        self.e1 = set(self._observed_set)
-        logging.debug("|E1|=", len(self.e1))
+        def _seeds_generator(self):
+            # 1) hubs as seeds
+            hubs = get_top_centrality_nodes(self.orig_graph, Stat.DEGREE_DISTR, count=self.s)
+            for i in range(self.s):
+                self.hubs.append(hubs[i])
+                yield hubs[i]
 
-        # Check that e1 size is more than (n-s)
-        if self.n - self.s > len(self.e1):
-            raise CrawlerException("E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." %
-                                   (len(self.e1), self.n - self.s))
+            # memorize E1
+            self.e1 = set(self._observed_set)
+            logging.debug("|E1|=", len(self.e1))
 
-        # 2) detect MOD batch
-        self.top_observed_seeds = self._get_mod_nodes(self._observed_set, self.n - self.s)
-        self.e1s = set(self.top_observed_seeds)
-        logging.debug("|E1*|=", len(self.e1s))
+            # Check that e1 size is more than (n-s)
+            if self.n - self.s > len(self.e1):
+                raise CrawlerException("E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." %
+                                       (len(self.e1), self.n - self.s))
 
-        for node in self.top_observed_seeds:
-            yield node
+            # 2) detect MOD batch
+            self.top_observed_seeds = self._get_mod_nodes(self._observed_set, self.n - self.s)
+            self.e1s = set(self.top_observed_seeds)
+            logging.debug("|E1*|=", len(self.e1s))
 
-    def _compute_answer(self):  # E* = S + E1* + E2*
-        self.e2 = set(self._observed_set)
+            for node in self.top_observed_seeds:
+                yield node
 
-        # Get v=(pN-n) max degree observed nodes
-        self.e2s = set(self._get_mod_nodes(self.e2, self.pN - self.n))
+        def _compute_answer(self):  # E* = S + E1* + E2*
+            self.e2 = set(self._observed_set)
 
-        # Final answer - E* = S + E1* + E2*
-        self.answer = set(self.hubs).union(self.e1s.union(self.e2s))
+            # Get v=(pN-n+|self.hubs|) max degree observed nodes
+            self.e2s = set(self._get_mod_nodes(self.e2, self.pN - self.n + len(self.hubs)))
+
+            # Final answer - E* = S + E1* + E2*, |E*|=pN
+            self.answer = set(self.hubs).union(self.e1s.union(self.e2s))
 
 
 def test_target_set_coverage():
-    # name = 'libimseti'
-    # name = 'petster-friendships-cat'
-    # name = 'soc-pokec-relationships'
-    # name = 'digg-friends'
-    # name = 'loc-brightkite_edges'
-    # name = 'ego-gplus'
-    # name = 'petster-hamster'
-
     # name, budget, start_seeds = 'soc-pokec-relationships', 50000, 5000
-    name, budget, start_seeds = 'digg-friends', 5000, 1000
+    # name, budget, start_seeds = 'digg-friends', 5000, 1000
     # name, budget, start_seeds = 'loc-brightkite_edges', 2500, 500
+    name, budget, start_seeds = 'petster-hamster', 150, 50
 
     graph = GraphCollections.get(name, giant_only=True)
     p = 0.1
@@ -102,7 +112,7 @@ def test_target_set_coverage():
     target_set = set(target_list)
 
     crawlers = [
-        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=None),
+        # MaximumObservedDegreeCrawler(graph, batch=1),
         # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
@@ -117,10 +127,12 @@ def test_target_set_coverage():
         # RandomCrawler(graph, initial_seed=1),
         # RandomWalkCrawler(graph, initial_seed=None),
         # AvrachenkovCrawler(graph, n=budget, n1=start_seeds, k=int(p * graph.nodes())),
-        # ThreeStageMODCrawler(graph, s=1000, n=budget, p=p, b=10),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=i+1) for i in range(100)
-        ])
+        ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
+        ThreeStageCrawlerSeedsAreHubs(graph, s=start_seeds, n=budget, p=p),
+        # ThreeStageMODCrawler(graph, s=start_seeds, n=budget, p=p, b=10),
+        # MultiCrawler(graph, crawlers=[
+        #     MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=i+1) for i in range(100)
+        # ])
     ]
 
     def re(result):
@@ -148,9 +160,9 @@ def test_target_set_coverage():
     metrics = [
         # Metric(r'$|V_o|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
         # Metric(r'$|V_o \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
-        # Metric(r'$F_1$', f1_measure),
+        Metric(r'$F_1$', f1_measure),
         # Metric(r'Pr', precision),
-        Metric(r'Re', recall),
+        # Metric(r'Re', recall),
         # Metric(r'Re - all nodes', recall_all),
         # Metric(r'Pr - E1*', lambda crawler: pr(crawler.e1s)),
         # Metric(r'Pr - E2*', lambda crawler: pr(crawler.e2s)),
@@ -232,6 +244,7 @@ def test_detection_quality():
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.DEBUG)
 
     # test()

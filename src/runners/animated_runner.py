@@ -75,7 +75,7 @@ class AnimatedCrawlerRunner:
                     plt.plot(step_seq, metric_seq, marker='.',
                              linestyle=linestyles[m % len(linestyles)],
                              color=colors[c % len(colors)],
-                             label=r'%s, %s' % (crawler.name[:30], metric.name))
+                             label=r'%s, %s' % (crawler.name, metric.name))
 
             plt.legend()
             if ylims:

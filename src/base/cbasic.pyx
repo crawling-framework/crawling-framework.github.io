@@ -40,6 +40,11 @@ cdef class CCrawler:
         return deref(self._crawled_set)
 
     @property
+    def observed_set(self) -> set:
+        """ Get nodes' ids of observed graph (crawled and observed). """
+        return deref(self._observed_set)
+
+    @property
     def orig_graph(self):
         return self._orig_graph
 
@@ -51,11 +56,6 @@ cdef class CCrawler:
 
     cdef set_observed_graph(self, CGraph new_observed_graph):
         self._observed_graph = new_observed_graph
-
-    @property
-    def observed_set(self) -> set:
-        """ Get nodes' ids of observed graph (crawled and observed). """
-        return deref(self._observed_set)
 
     @property
     def name(self):
@@ -153,7 +153,7 @@ cdef class RandomCrawler(CCrawler):
     def __init__(self, CGraph graph, int initial_seed=-1, name=None, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node. If None is given, a random node of original graph will be used.
+         node (if -1 is given, a random node of original graph will be used).
         """
         super().__init__(graph, name=name if name else 'RC_', **kwargs)
 
@@ -179,7 +179,7 @@ cdef class RandomWalkCrawler(CCrawler):
     def __init__(self, CGraph graph, int initial_seed=-1, name=None, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node. If None is given, a random node of original graph will be used.
+         node (if -1 is given, a random node of original graph will be used).
         """
         super().__init__(graph, name='RW_', **kwargs)
 
@@ -222,7 +222,7 @@ cdef class BreadthFirstSearchCrawler(CCrawler):
     def __init__(self, CGraph graph, int initial_seed=-1, name=None, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node. If None is given, a random node of original graph will be used.
+         node (if -1 is given, a random node of original graph will be used).
         """
         super().__init__(graph, name=name if name else 'BFS', **kwargs)
 
@@ -259,7 +259,7 @@ cdef class DepthFirstSearchCrawler(CCrawler):
     def __init__(self, graph: CGraph, int initial_seed=-1, name=None, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node. If None is given, a random node of original graph will be used.
+         node (if -1 is given, a random node of original graph will be used).
         """
         super().__init__(graph, name=name if name else 'DFS', **kwargs)
 
@@ -301,7 +301,7 @@ cdef class SnowBallCrawler(CCrawler):
         http://www.soundarajan.org/papers/CrawlingAnalysis.pdf
         https://arxiv.org/pdf/1004.1729.pdf
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node. If None is given, a random node of original graph will be used.
+         node (if -1 is given, a random node of original graph will be used).
         :param p: probability of taking neighbor into queue
         """
         super().__init__(graph, name=name if name else 'SB_%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
@@ -359,7 +359,7 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
         """
         :param batch: batch size
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node. If None is given, a random node of original graph will be used.
+         node (if -1 is given, a random node of original graph will be used).
         """
         super().__init__(graph, name=name if name else ("MOD-%s" %  batch if batch > 1 else 'MOD'), **kwargs)
 

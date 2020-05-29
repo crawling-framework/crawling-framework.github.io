@@ -68,8 +68,8 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
     Algorithm from paper "Quick Detection of High-degree Entities in Large Directed Networks" (2014)
     https://arxiv.org/pdf/1410.0571.pdf
     """
-    def __init__(self, graph, n=1000, n1=500, k=100):
-        super().__init__(graph, limit=n, name='Avrach_n=%s_n1=%s_k=%s' % (n, n1, k))
+    def __init__(self, graph, n=1000, n1=500, k=100, name=None):
+        super().__init__(graph, limit=n, name=name if name else 'Avrach_n=%s_n1=%s_k=%s' % (n, n1, k))
         assert n1 <= n <= self.orig_graph.nodes()
         #assert k <= n-n1
         self.n1 = n1
@@ -97,14 +97,14 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
 class ThreeStageCrawler(CrawlerWithAnswer):
     """
     """
-    def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1):
+    def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, name=None):
         """
         :param graph: original graph
         :param s: number of initial random seed
         :param n: number of nodes to be crawled, must be >= seeds
         :param p: fraction of graph nodes to be returned
         """
-        super().__init__(graph, limit=n, name='3-Stage_s=%s_n=%s_p=%s' % (s, n, p))
+        super().__init__(graph, limit=n, name=name if name else '3-Stage_s=%s_n=%s_p=%s' % (s, n, p))
         self.s = s
         self.n = n
         self.pN = int(p*self.orig_graph.nodes())
@@ -160,7 +160,7 @@ class ThreeStageCrawler(CrawlerWithAnswer):
 class ThreeStageMODCrawler(CrawlerWithAnswer):
     """
     """
-    def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, b=10):
+    def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, b=10, name=None):
         """
         :param graph: original graph
         :param s: number of initial random seed
@@ -169,7 +169,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         :param b: batch size
         """
         assert 1 <= b <= n-s
-        super().__init__(graph=graph, limit=n, name='3-StageMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
+        super().__init__(graph=graph, limit=n, name=name if name else '3-StageMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
         self.s = s
         self.n = n
         self.pN = int(p*self.orig_graph.nodes())
@@ -179,16 +179,13 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         self.e1s = set()
         self.mod = None
 
-    def crawl(self, seed: int) -> bool:
+    def crawl(self, seed: int) -> set:
         """ Apply MOD when time comes
         """
-        raise NotImplementedError()
-        # FIXME res is set now
         if self.mod is None:
             return super().crawl(seed)
         res = self.mod.crawl(seed)
-        if res:
-            self.e1s.add(seed)
+        self.e1s.add(seed)
         return res
 
     def _seeds_generator(self):
@@ -229,7 +226,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
 class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
     """
     """
-    def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, b=100, thr_degree=None):
+    def __init__(self, graph: MyGraph, s=500, n=1000, p=0.1, b=100, thr_degree=None, name=None):
         """
         :param graph: original graph
         :param s: number of initial random seed
@@ -239,7 +236,7 @@ class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
         :param thr_degree: nodes with >= threshold degree are the nodes we need
         """
         assert 1 <= b <= n-s
-        super().__init__(graph=graph, limit=n, name='3-StageFlexMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
+        super().__init__(graph=graph, limit=n, name=name if name else '3-StageFlexMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
         self.s = s
         self.n = n
         self.pN = int(p*self.orig_graph.nodes())
