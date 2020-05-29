@@ -50,8 +50,9 @@ class Crawler(object):
     @property
     def nodes_set(self) -> set:
         """ Get nodes' ids of observed graph (crawled and observed). """
-        g = self.observed_graph.snap
-        return set([n.GetId() for n in g.Nodes()])
+        # g = self.observed_graph.snap
+        # return set([n.GetId() for n in g.Nodes()])
+        return self._observed_set.union(self.crawled_set)
 
     @property
     def observed_set(self) -> set:

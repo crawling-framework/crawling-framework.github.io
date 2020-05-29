@@ -15,13 +15,3 @@ if USE_CYTHON_CRAWLERS:
     # Should go before any cython imports. By calling here it is run once
     from cyth.setup import build_cython
     build_cython(rel_dir)
-
-# Remaping steps depending on used budget - on first iters step=1, on last it grows ~x^2
-def REMAP_ITER(total=400):
-    step_budget = 0
-    REMAP_ITER_TO_STEP = {}
-    for i in range(total):  # for budget less than 100 mln nodes
-        remap = int(max(1, step_budget / 20))
-        REMAP_ITER_TO_STEP[step_budget] = remap
-        step_budget += remap
-    return REMAP_ITER_TO_STEP
