@@ -8,7 +8,8 @@ if USE_CYTHON_CRAWLERS:
     from base.cmultiseed import MultiCrawler
 else:
     from base.graph import MyGraph
-    from crawlers.basic import MaximumObservedDegreeCrawler
+    from crawlers.basic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler, DepthFirstSearchCrawler, \
+        SnowBallCrawler, PreferentialObservedDegreeCrawler, RandomCrawler, RandomWalkCrawler
     from crawlers.multiseed import MultiCrawler
 
 from graph_io import GraphCollections
@@ -22,58 +23,41 @@ def test_runner(graph, animated=False, statistics: list = None, layout_pos=None,
     import random
     # initial_seed = random.sample([n.GetId() for n in graph.snap.Nodes()], 1)[0]
     initial_seed = graph.random_nodes(1000)
+    ranges = [2, 3, 4, 5, 10, 20, 100]
     crawlers = [  ## ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
-        # RandomWalkCrawler(graph, initial_seed=initial_seed),
-        # RandomCrawler(graph, initial_seed=initial_seed),
-        #
-        # DepthFirstSearchCrawler(graph, initial_seed=initial_seed),
-        # SnowBallCrawler(graph, p=0.1, initial_seed=initial_seed),
-        # SnowBallCrawler(graph, p=0.1, initial_seed=initial_seed),
-        # SnowBallCrawler(graph, p=0.25, initial_seed=initial_seed),
-        # SnowBallCrawler(graph, p=0.5, initial_seed=initial_seed),
-        # SnowBallCrawler(graph, p=0.75, initial_seed=initial_seed),
-        # SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed),
-        # BreadthFirstSearchCrawler(graph, initial_seed=initial_seed),  # is like take SBS with p=1
+                   RandomWalkCrawler(graph, initial_seed=initial_seed[0]),
+                   RandomCrawler(graph, initial_seed=initial_seed[0]),
 
-        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-        # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-        # MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-        # MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
-        # MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+                   DepthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.1, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.25, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.5, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.75, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed[0]),
+                   BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),  # is like take SBS with p=1
 
-        # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed),
-        # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed),
-        # PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed),
-        # PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed),
-        # PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed),
+                   MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   # MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
 
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(2)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(3)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(4)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(5)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(10)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
-            range(20)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
-            range(50)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(100)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
-            range(500)]),
-        MultiCrawler(graph, crawlers=[
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(1000)]),
-        # MultiCrawler(graph, crawlers=[
-        #     MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
-        #     range(10000)]),
-    ]
+                   # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+               ] + [
+                   MultiCrawler(graph, crawlers=[
+                       BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[i]) for i in range(range_i)])
+                   for range_i in ranges \
+                   ] + [
+                   MultiCrawler(graph, crawlers=[
+                       MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
+                       range(range_i)])
+                   for range_i in ranges \
+ \
+                   ]
     logging.info([c.name for c in crawlers])
     metrics = []
     target_set = {}  # {i.name: set() for i in statistics}
@@ -114,45 +98,52 @@ if __name__ == '__main__':
     # graph_name = 'facebook-wosn-links'# with  63392 nodes and  816831 edges
     # graph_name = 'slashdot-threads'   # with  51083 nodes and  116573 edges
     # graph_name = 'ego-gplus'          # with  23613 nodes and   39182 edges
+    # graph_name = 'mipt'               # with  14313 nodes and  488852 edges
     # graph_name = 'petster-hamster'    # with   2000 nodes and   16098 edges
-    for graph_name in ['petster-friendships-dog', 'munmun_twitter_social', 'com-youtube',
-                       'soc-pokec-relationships', 'flixster', 'youtube-u-growth', 'petster-friendships-cat', ]:
-        g = GraphCollections.get(graph_name, giant_only=True)
 
-    # graph_name = 'mipt'                 #  with 14313 nodes and 488852 edges
-    # g = GraphCollections.get(graph_name, 'other', giant_only=True)
+    # ['mipt' , 'ego-gplus', 'slashdot-threads', 'facebook-wosn-links', 'douban','digg-friends']\
+    # +\
+    graphs = ['petster-friendships-cat', 'petster-friendships-dog', 'munmun_twitter_social', 'com-youtube',
+              'soc-pokec-relationships', 'flixster', 'youtube-u-growth']
+    # graphs = ['petster-friendships-dog', 'munmun_twitter_social', 'com-youtube',
+    #           'soc-pokec-relationships', 'flixster', 'youtube-u-growth', 'petster-friendships-cat',]
 
-    # g._snap_graph = snap.GetMxWcc(g.snap)  # Taking only giant component
-    print('Graph {} with {} nodes and {} edges'.format(graph_name, g.nodes(), g.edges()))
-    # from crawlers.multiseed import test_carpet_graph, MultiCrawler
-    # x,y = 7,7
-    # graph_name = 'carpet_graph_'+str(x)+'_'+str(y)
-    # g, layout_pos = test_carpet_graph(x,y)  # GraphCollections.get(name)
+    for graph_name in graphs:
+        if graph_name == 'mipt':
+            g = GraphCollections.get(graph_name, 'other', giant_only=True)
+        else:
+            g = GraphCollections.get(graph_name, giant_only=True)
+        print('Graph {} with {} nodes and {} edges'.format(graph_name, g.nodes(), g.edges()))
+        # from crawlers.multiseed import test_carpet_graph, MultiCrawler
+        # x,y = 7,7
+        # graph_name = 'carpet_graph_'+str(x)+'_'+str(y)
+        # g, layout_pos = test_carpet_graph(x,y)  # GraphCollections.get(name)
 
-    import time
+        import time
 
-    start_time = time.time()
-    processes = []
-    iterations = multiprocessing.cpu_count() - 1  # making parallel itarations. Number of processes
-    for exp in range(iterations):
-        logging.info('Running iteration {}/{}'.format(exp, iterations))
-        # little multiprocessing magic, that calculates several iterations in parallel
-        p = multiprocessing.Process(target=test_runner, args=(g,),
-                                    kwargs={'animated': False,
-                                            'statistics': ["DEGREE_DISTR", "PAGERANK_DISTR", "K_CORENESS_DISTR"],
-                                            # [s for s in Stat if 'DISTR' in s.name],
-                                            # 'layout_pos':layout_pos,
-                                            'tqdm_info': 'core-' + str(exp)
-                                            })
-        p.start()
+        # TODO: to check and download graph before multiprocessing
+        iterations = multiprocessing.cpu_count() - 3
+        for iter in range(int(8 // iterations)):
+            start_time = time.time()
+            processes = []
+            # making parallel itarations. Number of processes
+            for exp in range(iterations):
+                logging.info('Running iteration {}/{}'.format(exp, iterations))
+                # little multiprocessing magic, that calculates several iterations in parallel
+                p = multiprocessing.Process(target=test_runner, args=(g,),
+                                            kwargs={'animated': False,
+                                                    'statistics': [s for s in Stat if 'DISTR' in s.name],
+                                                    # 'layout_pos':layout_pos,
+                                                    'tqdm_info': 'core-' + str(exp + 1)
+                                                    })
+                p.start()
 
-    p.join()
-    print("time elapsed: {:.2f}s, {}".format(time.time() - start_time, processes))
+            p.join()
+            print("Completed graph {} with {} nodes and {} edges".format(graph_name, g.nodes(), g.edges()),
+                  "time elapsed: {:.2f}s, {}".format(time.time() - start_time, processes))
 
     from experiments.merger import merge
 
     # merge(graph_name,
     #       show=True,
     #       filter_only='MOD', )
-
-# 'degree', 'betweenness', 'eccentricity', 'k-coreness',  'pagerank', 'clustering'
