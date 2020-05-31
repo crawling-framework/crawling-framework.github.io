@@ -28,7 +28,8 @@ graphs_sizes = {'mipt': 14313,
                 'slashdot-threads': 51083,
                 'digg-friends': 261489,
                 'douban': 154908,
-                'petster-hamster': 2000}
+                'petster-hamster': 2000,
+                'petster-friendships-cat': 148826}
 
 STATISTICS_COLOR = {'ECCENTRICITY_DISTR': 'r',
                     'BETWEENNESS_DISTR': 'y',
@@ -43,10 +44,11 @@ all_methods_list = ["MOD", "MOD10", "MOD100", "MOD1000", "MOD10000",
                     "RW_", "RC_", "DFS"]
 
 
-def get_methods_list(calculated_aucs=None,
+def get_methods_list(calculated_aucs=None, top_k_percent=0.01,
                      filter_only=''):  # get all needed methods with filter, that we need (for all graphs)
     if calculated_aucs == None:
-        with open(os.path.join(RESULT_DIR, 'auc_only{}.json'.format(filter_only)), 'r') as f:
+        with open(os.path.join(RESULT_DIR + '/k={:1.2f}'.format(top_k_percent), 'auc_only{}.json'.format(filter_only)),
+                  'r') as f:
             calculated_aucs = json.load(f)
     method_names_set = set()  # getting all methods for drawing
     graph_names = list(calculated_aucs.keys())
@@ -60,15 +62,16 @@ def get_methods_list(calculated_aucs=None,
     return method_names
 
 
-def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='', filter_budget=0,
+def merge(graph_name='petster-hamster', show=True, top_k_percent=0.1, filter_only='', set_x_scale='', filter_budget=0,
           without_crawlers=set()):
+    RESULT_DIR_BUDG = RESULT_DIR + '/k={:1.2f}'.format(top_k_percent)
     np.set_printoptions(precision=2)
     # colors = list({'MOD': 'red', 'POD': 'm', 'BFS': 'b', 'DFS': 'k',
     #               'RW_': 'green', 'RC_': 'gray', 'FFC': 'orange'}.values(),)
     colors = ['r', 'darkgreen', 'b', 'k', 'gray', 'magenta', 'darkviolet', 'cyan', 'gold', 'brown', 'lime',
               'darkblue', 'sienna', 'teal', 'peru'] * 2
 
-    budget_path = glob(os.path.join(RESULT_DIR, graph_name, 'budget=*'))  # TODO take first founded budget, step
+    budget_path = glob(os.path.join(RESULT_DIR_BUDG, graph_name, 'budget=*'))  # TODO take first founded budget, step
     for j, path_name in enumerate(budget_path):
         budget = int(re.search('budget=(\d+)$', path_name).group(1))
         print('budget=', budget, budget_path)
@@ -76,8 +79,8 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
         # step = int(re.search('step=(\d+),', path_name).group(1))
         if ((filter_budget != 0) and (budget == filter_budget)) or (filter_budget == 0):
             # print('Running file {}, with {} iterations'.format(j, budget))
-            subplotcount = (2, 3)  # 2 3
-            fig, axs = plt.subplots(*subplotcount, sharex=True, sharey=True, figsize=(10, 5), )
+            subplotcount = (3, 2)  # 2 3
+            fig, axs = plt.subplots(*subplotcount, sharex=True, sharey=True, figsize=(20, 15), )
             fig.text(0.5, 0.02, 'Число итераций краулинга', ha='center')
             fig.text(0.02, 0.5, 'Доля собранных влиятельных вершин', va='center', rotation='vertical')
             # x_arr = [int(i * step) for i in range(budget)]  # it was before removing step
@@ -85,12 +88,12 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
             areas = dict((stat, dict()) for stat in statistics)
 
             for metr_id, stat in enumerate(statistics):
-                subplot_x, subplot_y = metr_id // 3, metr_id % 3
+                subplot_x, subplot_y = metr_id // 2, metr_id % 2
                 if subplotcount[0] * subplotcount[1] > 1:
                     plt.sca(axs[subplot_x][subplot_y])
                 crawler_color_counter = 0  #
                 # file_path = ../results/Graph_name/budget=10/MOD/crawled_centrality[NUM].json
-                files_path = os.path.join(RESULT_DIR, graph_name, 'budget={}'.format(budget)) + '/'
+                files_path = os.path.join(RESULT_DIR_BUDG, graph_name, 'budget={}'.format(budget)) + '/'
                 crawlers = [file.replace(files_path, '') for file in glob(files_path + '*')
                             if (not file.replace(files_path, '') in without_crawlers) and
                             (filter_only in file.replace(files_path, ''))]
@@ -104,7 +107,7 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
                     if (filter_only in crawler_name) and (crawler_name not in without_crawlers):
 
                         experiments_path = glob(
-                            os.path.join(files_path, crawler_name) + '/*' + stat + '*.json')  # [:8]  FIXME check only 8
+                            os.path.join(files_path, crawler_name) + '/*' + stat + '*.json')[:8]  # FIXME check only 8
                         count = len(experiments_path)
 
                         first_iter = True
@@ -140,7 +143,7 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
                                  label='[' + str(count) + '] ' + crawler_name,
                                  color=colors[crawler_color_counter],
                                  linewidth=3)
-                        print('plotted ', '[' + str(count) + '] ' + crawler_name, colors[crawler_color_counter])
+                        # print('plotted ', '[' + str(count) + '] ' + crawler_name, colors[crawler_color_counter])
                         crawler_color_counter += 1
                         areas[stat][crawler_name] = float(metrics.auc(x_arr, average_plot[crawler_name])) / maxauc
                 plt.legend()
@@ -149,11 +152,11 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
             # loc='lower right', mode='expand')  # only on last iter
             # fig.add_subplot(111, frameon=False, xlabel=None)  # adding big frame to place names
             plt.gca()
-            plt.subplots_adjust(left=0.1, bottom=0.1, right=0.98, top=0.87, wspace=0.03, hspace=0.08)
+            plt.subplots_adjust(left=0.07, bottom=0.08, right=0.98, top=0.93, wspace=0.03, hspace=0.08)
             # plt.suptitle('Graph: {}, budget={}'.format(graph_name, budget))
             plt.suptitle('Граф: {}, бюджет={}'.format(graph_name, budget))
 
-            fig_name = os.path.join(RESULT_DIR,
+            fig_name = os.path.join(RESULT_DIR_BUDG,
                                     'Crawling_curves_graph_{}_budget={}'.format(graph_name, budget) + set_x_scale)
             if filter_only != '':
                 fig_name += 'only_' + filter_only
@@ -166,24 +169,30 @@ def merge(graph_name='petster-hamster', show=True, filter_only='', set_x_scale='
             #     for crawler_name in areas[stat_name]:
             #         print('stat {}, crawler {}, auc={}'.format(stat_name,crawler_name,areas[stat_name][crawler_name][graph_name]))
             # print('areas', areas)
-            if os.path.exists(os.path.join(RESULT_DIR, '{}auc_only{}.json'.format(set_x_scale, filter_only))):
-                with open(os.path.join(RESULT_DIR, '{}auc_only{}.json'.format(set_x_scale, filter_only)), 'r') as f:
+            if os.path.exists(os.path.join(RESULT_DIR_BUDG, '{}auc_only{}.json'.format(set_x_scale, filter_only))):
+                with open(os.path.join(RESULT_DIR_BUDG, '{}auc_only{}.json'.format(set_x_scale, filter_only)),
+                          'r') as f:
                     calculated_aucs = json.load(f)
                     calculated_aucs[graph_name] = areas
-                with open(os.path.join(RESULT_DIR, '{}auc_only{}.json'.format(set_x_scale, filter_only)), 'w') as f:
+                with open(os.path.join(RESULT_DIR_BUDG, '{}auc_only{}.json'.format(set_x_scale, filter_only)),
+                          'w') as f:
                     json.dump(calculated_aucs, f)
             else:
                 # print('aaaaauc', areas)
-                with open(os.path.join(RESULT_DIR, '{}auc_only{}.json'.format(set_x_scale, filter_only)), 'w') as f:
+                with open(os.path.join(RESULT_DIR_BUDG, '{}auc_only{}.json'.format(set_x_scale, filter_only)),
+                          'w') as f:
                     d = {graph_name: areas}
                     json.dump(d, f)
     if (show):
         plt.show()
+    else:
+        plt.close()
 
 
-def draw_auc(filter_only='', without_crawlers=set(), set_x_scale='', show=False, ):
+def draw_auc(filter_only='', without_crawlers=set(), top_k_percent=0.1, set_x_scale='', show=False, ):
     # set_x_scale - 'log' or '' for 2 types of AUC
-    with open(os.path.join(RESULT_DIR, '{}auc_only{}.json'.format(set_x_scale, filter_only)), 'r') as f:
+    RESULT_DIR_BUDG = RESULT_DIR + '/k={:1.2f}'.format(top_k_percent)
+    with open(os.path.join(RESULT_DIR_BUDG, '{}auc_only{}.json'.format(set_x_scale, filter_only)), 'r') as f:
         calculated_aucs = json.load(f)
 
     graph_names = list(calculated_aucs.keys())
@@ -194,15 +203,17 @@ def draw_auc(filter_only='', without_crawlers=set(), set_x_scale='', show=False,
     max_aggregated_auc = dict(
         (method, dict((stat, 0) for stat in statistics_names)) for method in method_names)  # sum of win counts
     print('graphs ', graph_names, len(graph_names) // 3, len(graph_names) % 3)
-    fig, axs = plt.subplots(2, 3, sharex=True, sharey=True,  # len(graph_names) // 3 + 1, len(graph_names) % 3 + 1,
-                            figsize=(12, 8), )
+    fig, axs = plt.subplots((len(graph_names) + 1) // 2, 2, sharex=True, sharey=True,
+                            # len(graph_names) // 3 + 1, len(graph_names) % 3 + 1,
+                            figsize=(20, 15), )
     # fig.text(0.5, 0.00, 'method', ha='center')
     fig.text(0.02, 0.5, 'значение {}AUCC'.format(set_x_scale), va='center', rotation='vertical')
     mini = 1
-    plt.subplots_adjust(left=0.04, bottom=0.06, right=0.98, top=0.96, wspace=0.15, hspace=0.18)
+    plt.subplots_adjust(left=0.04, bottom=0.12, right=0.98, top=0.92, wspace=0.15, hspace=0.18)
     for i, graph_name in enumerate(graph_names):
         stat_names = list(calculated_aucs[graph_name].keys())
-        subplot_x, subplot_y = i // 3, i % 3
+        subplot_x, subplot_y = i // 2, i % 2
+        # print(i, len(graph_names), subplot_x, subplot_y)
         plt.sca(axs[subplot_x][subplot_y])
         for c, stat_name in enumerate(stat_names):
             auc_avg = []
@@ -214,7 +225,7 @@ def draw_auc(filter_only='', without_crawlers=set(), set_x_scale='', show=False,
                             calculated_aucs[graph_name][stat_name][method_name])  # for method_name in method_names]
                         mini = min(mini, calculated_aucs[graph_name][stat_name][method_name])
                         aggregated_auc[method_name][stat_name] += auc_avg[-1]
-
+                        # print('-',graph_name, stat_name, method_name, calculated_aucs[graph_name][stat_name][method_name])
                         if max_auc_method_value < auc_avg[-1]:
                             max_auc_method_value = auc_avg[-1]
                             max_auc_method = method_name
@@ -229,33 +240,36 @@ def draw_auc(filter_only='', without_crawlers=set(), set_x_scale='', show=False,
 
         plt.legend()
         plt.title(graph_name + ' с {} вершинами'.format(graphs_sizes[graph_name]))
-        plt.xticks(rotation=75)
+        plt.xticks(rotation=80)
         plt.grid()
 
     plt.gca()
-    plt.savefig(os.path.join(RESULT_DIR, 'aucs_only_{},{}scale.png'.format(filter_only, set_x_scale)))
-    plt.savefig(os.path.join(RESULT_DIR, 'aucs_only_{},{}scale.pdf'.format(filter_only, set_x_scale)))
+    plt.title(graph_name + ' с {} вершинами'.format(graphs_sizes[graph_name]))
+    plt.savefig(os.path.join(RESULT_DIR_BUDG, 'aucs_only_{},{}scale.png'.format(filter_only, set_x_scale)))
+    plt.savefig(os.path.join(RESULT_DIR_BUDG, 'aucs_only_{},{}scale.pdf'.format(filter_only, set_x_scale)))
     if (show):
         plt.show()
 
-    with open(os.path.join(RESULT_DIR, 'max_aggregated_auc_only_{},{}scale.json'.format(filter_only, set_x_scale)),
+    with open(os.path.join(RESULT_DIR_BUDG, 'max_aggregated_auc_only_{},{}scale.json'.format(filter_only, set_x_scale)),
               'w') as f:
         json.dump(max_aggregated_auc, f)
-    with open(os.path.join(RESULT_DIR, 'aggregated_auc_only_{},{}scale.json'.format(filter_only, set_x_scale)),
+    with open(os.path.join(RESULT_DIR_BUDG, 'aggregated_auc_only_{},{}scale.json'.format(filter_only, set_x_scale)),
               'w') as f:
         json.dump(aggregated_auc, f)
 
 
-def draw_aggregated_auc(count=6, filter_only=''):
+def draw_aggregated_auc(count=6, top_k_percent=0.01, filter_only=''):
+    RESULT_DIR_K = RESULT_DIR + '/k={:1.2f}'.format(top_k_percent)
     method_names = get_methods_list(filter_only=filter_only)
     statistics_names = Stat  # [s.name for s in Stat if 'DISTR' in s.name]
     fig, axs = plt.subplots(2, 2, sharex=True, sharey=False, figsize=(10, 8), )
-    plt.subplots_adjust(left=0.01, bottom=0.00, right=0.98, top=0.96, wspace=0.10, hspace=0.10)
+    plt.subplots_adjust(left=0.09, bottom=0.05, right=0.98, top=0.96, wspace=0.10, hspace=0.10)
     for log_num, set_x_scale in enumerate(['', 'log']):
-        with open(os.path.join(RESULT_DIR, 'max_aggregated_auc_only_{},{}scale.json'.format(filter_only, set_x_scale)),
-                  'r') as f:
+        with open(
+                os.path.join(RESULT_DIR_K, 'max_aggregated_auc_only_{},{}scale.json'.format(filter_only, set_x_scale)),
+                'r') as f:
             max_aggregated_auc = json.load(f)
-        with open(os.path.join(RESULT_DIR, 'aggregated_auc_only_{},{}scale.json'.format(filter_only, set_x_scale)),
+        with open(os.path.join(RESULT_DIR_K, 'aggregated_auc_only_{},{}scale.json'.format(filter_only, set_x_scale)),
                   'r') as f:
             aggregated_auc = json.load(f)
         for pl_num, aggr_auc in enumerate([max_aggregated_auc, aggregated_auc]):
@@ -276,69 +290,86 @@ def draw_aggregated_auc(count=6, filter_only=''):
             plt.subplots_adjust(bottom=0.20)
             plt.legend(lines, [rus_stat[stat_name] for stat_name in statistics_names])
             plt.xticks(xs, method_names)
-            plt.xticks(rotation=75)
+            plt.xticks(rotation=65)
             plt.ylabel('Счёт у метода')
             if pl_num % 2 == 0:
-                max_auc = 'Max'
+                max_auc = 'побед по'
             else:
-                max_auc = ''
+                max_auc = 'значений'
 
             # plt.title('Aggregated {}AUCC with {} in {} scale'.format(max_auc, count, set_x_scale))
+            if set_x_scale == 'log':
+                plt.title('Сумма {} wAUCC по {} графам'.format(max_auc, count))
+            else:
+                plt.title('Сумма {} AUCC по {} графам'.format(max_auc, count))
 
-            plt.title('Агрегированная по {} графам метрика {}AUCC в {}масштабе'.format(count, max_auc, set_x_scale))
-
-    plt.savefig(os.path.join(RESULT_DIR, 'total_aucs_vals_only_{}.png'.format(filter_only)))
-    plt.savefig(os.path.join(RESULT_DIR, 'total_aucs_vals_only_{}.pdf'.format(filter_only)))
+    plt.savefig(os.path.join(RESULT_DIR_K, 'total_aucs_vals_only_{}.png'.format(filter_only)))
+    plt.savefig(os.path.join(RESULT_DIR_K, 'total_aucs_vals_only_{}.pdf'.format(filter_only)))
 
     plt.show()
 
 
 if __name__ == '__main__':
-    graphs = ['mipt', 'slashdot-threads', 'douban',
-              'ego-gplus', 'facebook-wosn-links', 'digg-friends']  # in two rows one under another
+    graphs = [
+        #  'mipt',
+        # 'slashdot-threads',
+        # 'douban',
+        # 'petster-hamster',
+        # 'ego-gplus',
+        # 'facebook-wosn-links',
+        # 'digg-friends',
+        'petster-friendships-cat',
+    ]  # in two rows one under another
 
     # TODO normal arguments for function launch
 
-    filter_only = 'R'
-    without_crawlers = {'SBS10', 'SBS25', 'SBS75', 'POD10',
-                        'MOD10', 'MOD100', 'MOD1000', 'MOD10000', 'Multi_1000xMOD', 'Multi_100xMOD',
-                        'Multi_10xMOD', 'Multi_20xMOD', 'Multi_2xMOD', 'Multi_3xMOD', 'Multi_4xMOD', 'Multi_500xMOD',
-                        'Multi_50xMOD', 'Multi_5xMOD',
-                        'POD100', 'POD1000', 'POD10000',
+    filter_only = 'MOD'
+    without_crawlers = {'SB_', 'SB_10', 'SB_25', 'SB_50', 'SB_75', 'SB_90',
+                        # 'SBS10', 'SBS25', 'SBS75','SBS90', 'POD10',
                         # 'MOD10', 'MOD100', 'MOD1000', 'MOD10000',
-                        #                   'POD10',
-                        #                    'SBS90',
+
+                        # 'Multi_10xMOD', 'Multi_30xMOD', 'Multi_2xMOD', 'Multi_3xMOD', 'Multi_4xMOD', 'Multi_100xMOD',
+                        # 'Multi_50xMOD', 'Multi_5xMOD',
+                        # 'Multi_10xBFS', 'Multi_30xBFS', 'Multi_2xBFS', 'Multi_3xBFS', 'Multi_4xBFS', 'Multi_500xBFS',
+                        # 'Multi_50xBFS', 'Multi_5xBFS', 'Multi_1000xBFS','Multi_100xBFS',
+                        # 'POD10', 'POD100', 'POD1000', 'POD10000',
+                        # 'MOD10', 'MOD100', 'MOD1000', 'MOD10000',
                         }
 
+    for graph_name in tqdm(graphs):
+        merge(graph_name, show=True,
+              filter_budget=0,
+              filter_only=filter_only,
+              without_crawlers=without_crawlers,
+              top_k_percent=0.01,
+              # set_x_scale='log',
+              )
+
     # for graph_name in tqdm(graphs):
     #     merge(graph_name, show=False,
     #           filter_budget=0,
     #           filter_only=filter_only,
     #           without_crawlers=without_crawlers,
-    #           # set_x_scale='log',
-    #           )
-    #
-    # for graph_name in tqdm(graphs):
-    #     merge(graph_name, show=False,
-    #           filter_budget=0,
-    #           filter_only=filter_only,
-    #           without_crawlers=without_crawlers,
+    #           top_k_percent=0.01,
     #           set_x_scale='log',
     #           )
-
-    draw_auc(show=False,
-             filter_only=filter_only,
-             without_crawlers=without_crawlers,
-             set_x_scale='log',
-             )
-    draw_auc(show=False,
-             filter_only=filter_only,
-             without_crawlers=without_crawlers,
-             # set_x_scale='log',
-             )
-
-    draw_aggregated_auc(
-        filter_only=filter_only,
-        # without_crawlers=without_crawlers,
-        count=len(graphs),
-    )
+    #
+    # draw_auc(show=True,
+    #          filter_only=filter_only,
+    #          without_crawlers=without_crawlers,
+    #          set_x_scale='log',
+    #          top_k_percent=0.01,
+    #          )
+    # draw_auc(show=True,
+    #          filter_only=filter_only,
+    #          without_crawlers=without_crawlers,
+    #          top_k_percent=0.01,
+    #          # set_x_scale='log',
+    #          )
+    #
+    # draw_aggregated_auc(
+    #     filter_only=filter_only,
+    #     top_k_percent=0.01,
+    #     # without_crawlers=without_crawlers,
+    #     count=len(graphs),
+    # )

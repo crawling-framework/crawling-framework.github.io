@@ -57,7 +57,7 @@ def make_gif(crawler_name, duration=1):
 
 # TODO : make 1 parent Runner for CrawlerRunner and AnimatedCrawlerRunner
 class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
-    def __init__(self, graph: MyGraph, crawlers, metrics, budget=-1, step=1,
+    def __init__(self, graph: MyGraph, crawlers, metrics, top_k_percent=0.1, budget=-1, step=1,
                  draw_mod=None, batches_per_pic=1, layout_pos=None, tqdm_info=''):
         """
         :param graph:
@@ -76,6 +76,7 @@ class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
             assert crawler.orig_graph == graph
         self.crawlers = crawlers
         self.metrics = metrics
+        self.top_k_percent = top_k_percent
         self.budget = min(budget, graph.nodes()) if budget > 0 else graph.nodes()
         assert step < self.budget
         self.step = step
@@ -123,8 +124,8 @@ class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
                     # print('seq', crawler_seq[metric_object], '\n')
 
                     metric_list = dict((step_seq[it], res) for it, res in enumerate(crawler_seq[metric_object]))
-                # like this: file_path = ../results/Graph_name/step=10,budget=10/MOD/crawled_centrality[NUM].json
-                file_path = os.path.join(RESULT_DIR, self.graph.name,
+                # like this: file_path = ../results/k=0.01/Graph_name/step=10,budget=10/MOD/crawled_centrality[NUM].json
+                file_path = os.path.join(RESULT_DIR, 'k={:1.2f}'.format(self.top_k_percent), self.graph.name,
                                          'budget={}'.format(self.budget), crawler_name.name)
                 if not os.path.exists(file_path):
                     os.makedirs(file_path)
@@ -150,7 +151,8 @@ class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
             plt.legend()
             for metric in self.metrics:
                 plt.title(metric.name)
-                file_path = os.path.join(RESULT_DIR, self.graph.name, 'crawling_plot')
+                file_path = os.path.join(RESULT_DIR, 'k={:1.2f}'.format(self.top_k_percent), self.graph.name,
+                                         'crawling_plot')
                 if not os.path.exists(file_path):
                     os.makedirs(file_path)
 

@@ -10,6 +10,8 @@ from operator import itemgetter
 import snap
 from tqdm import tqdm
 
+# import networkit
+
 if USE_CYTHON_CRAWLERS:
     from base.cgraph import CGraph as MyGraph
 else:
@@ -17,8 +19,9 @@ else:
 
 USE_NETWORKIT = True  # Use networkit library for approximate centrality calculation
 
-if USE_NETWORKIT:
-    from networkit._NetworKit import Betweenness, ApproxBetweenness, EstimateBetweenness, ApproxCloseness
+
+# if USE_NETWORKIT:
+#     from networkit._NetworKit import Betweenness, ApproxBetweenness, EstimateBetweenness, ApproxCloseness
 
 
 class Stat(Enum):

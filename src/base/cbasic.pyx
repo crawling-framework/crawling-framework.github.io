@@ -304,7 +304,7 @@ cdef class SnowBallCrawler(CCrawler):
          node (if -1 is given, a random node of original graph will be used).
         :param p: probability of taking neighbor into queue
         """
-        super().__init__(graph, name=name if name else 'SB_%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
+        super().__init__(graph, name=name if name else 'SBS%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
 
         if self._observed_set.size() == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
@@ -361,7 +361,7 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
-        super().__init__(graph, name=name if name else ("MOD-%s" %  batch if batch > 1 else 'MOD'), **kwargs)
+        super().__init__(graph, name=name if name else ("MOD%s" %  batch if batch > 1 else 'MOD'), **kwargs)
 
         if self._observed_set.size() == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
@@ -429,7 +429,7 @@ cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
     cdef cset[int] pod_set  # FIXME python set would be faster, but how to?
 
     def __init__(self, CGraph graph, int batch=1, int initial_seed=-1, name=None, **kwargs):
-        super().__init__(graph, name=name if name else ("POD-%s" %  batch if batch > 1 else 'POD'), **kwargs)
+        super().__init__(graph, name=name if name else ("POD%s" %  batch if batch > 1 else 'POD'), **kwargs)
 
         if self._observed_set.size() == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?

@@ -27,7 +27,7 @@ def parse_konect_page():
     Note several non-unique codes: DB, HY, OF, PL, WT.
     """
     from bs4 import BeautifulSoup
-
+    import lxml
     logging.info("Parsing Konect metadata...")
     name_ref_dict = {}
     url = 'http://konect.uni-koblenz.de/networks/'
