@@ -20,7 +20,7 @@ from statistics import get_top_centrality_nodes, Stat
 import multiprocessing
 
 
-def test_runner(graph, animated=False, statistics: list = None, top_k_percent=0.1, layout_pos=None, tqdm_info=''):
+def start_runner(graph, animated=False, statistics: list = None, top_k_percent=0.1, layout_pos=None, tqdm_info=''):
     import random
     # initial_seed = random.sample([n.GetId() for n in graph.snap.Nodes()], 1)[0]
     print([stat_name.name for stat_name in statistics])
@@ -103,20 +103,31 @@ def test_runner(graph, animated=False, statistics: list = None, top_k_percent=0.
     ci.run()
 
 
-if __name__ == '__main__':
+def big_run():
 
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
+    # graph_name = 'digg-friends'       # with 261489 nodes and 1536577 edges
+    # graph_name = 'douban'             # with 154908 nodes and  327162 edges
+    # graph_name = 'facebook-wosn-links'# with  63392 nodes and  816831 edges
+    # graph_name = 'slashdot-threads'   # with  51083 nodes and  116573 edges
+    # graph_name = 'ego-gplus'          # with  23613 nodes and   39182 edges
+    # graph_name = 'petster-hamster'    # with   2000 nodes and   16098 edges
+    for graph_name in ['petster-friendships-dog', 'munmun_twitter_social', 'com-youtube',
+                       'soc-pokec-relationships', 'flixster', 'youtube-u-growth', 'petster-friendships-cat', ]:
+        g = GraphCollections.get(graph_name, giant_only=True)
 
     graphs = [
         # # # # 'livejournal-links', toooo large need all metrics
-        'youtube-u-growth',  # with 3216075 nodes and  9369874 edges, davg= 5.83     no ecc
-        'flixster',  # with 2523386 nodes and  7918801 edges, davg= 6.28     no ecc
-        'soc-pokec-relationships',  # with 1632803 nodes and 22301964 edges, davg=27.32     no ecc
-        'com-youtube',  # with 1134890 nodes and  2987624 edges, davg= 5.27     no cls, no ecc
-        'munmun_twitter_social',  # with  465017 nodes and   833540 edges, davg= 3.58
-        'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06
-        'petster-friendships-cat',  # with  148826 nodes and  5447464 edges, davg=73.21
+        # 'soc-pokec-relationships',  # with 1632803 nodes and 22301964 edges, davg=27.32     no ecc
+        # 'youtube-u-growth',         # with 3216075 nodes and  9369874 edges, davg= 5.83     no ecc
+        # 'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06
+
+        # 'flixster',                 # with 2523386 nodes and  7918801 edges, davg= 6.28     no ecc
+        # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27     no ecc
+        # 'munmun_twitter_social',    # with  465017 nodes and   833540 edges, davg= 3.58  8/10
+
+        'petster-friendships-cat',  # with  148826 nodes and  5447464 edges, davg=73.21 6/10
         # 'digg-friends',           # with  261489 nodes and  1536577 edges, davg=11.75
         # 'douban',                 # with  154908 nodes and   327162 edges, davg= 4.22
         # 'facebook-wosn-links',    # with   63392 nodes and   816831 edges, davg=25.77
@@ -140,15 +151,17 @@ if __name__ == '__main__':
             big_graph_no_ecc = '----'
 
         # TODO: to check and download graph before multiprocessing
-        iterations = multiprocessing.cpu_count() - 2
-        for iter in range(int(8 // iterations)):
+        msg = "Did not finish"
+        iterations = 4
+        # iterations = multiprocessing.cpu_count() - 2
+        for iter in range(int(4 // iterations)):
             start_time = time.time()
             processes = []
             # making parallel itarations. Number of processes
             for exp in range(iterations):
                 logging.info('Running iteration {}/{}'.format(exp, iterations))
                 # little multiprocessing magic, that calculates several iterations in parallel
-                p = multiprocessing.Process(target=test_runner, args=(g,),
+                p = multiprocessing.Process(target=start_runner, args=(g,),
                                             kwargs={'animated': False,
                                                     'statistics': [s for s in Stat if 'DISTR' in s.name
                                                                    if big_graph_no_ecc not in s.name
@@ -160,10 +173,30 @@ if __name__ == '__main__':
                 p.start()
 
             p.join()
-            print("Completed graph {} with {} nodes and {} edges".format(graph_name, g.nodes(), g.edges()),
-                  "time elapsed: {:.2f}s, {}".format(time.time() - start_time, processes))
+            msg = "Completed graph {} with {} nodes and {} edges. time elapsed: {:.2f}s, {}".\
+                format(graph_name, g.nodes(), g.edges(), time.time() - start_time, processes)
+            print(msg)
+
+        # send to my vk
+        import os
+        command = "python3 /home/misha/workspace/utils/src/vk_bot.py -m '%s'" % (msg)
+        exit_code = os.system(command)
 
     # from experiments.merger import merge
     # merge(graph_name,
     #       show=True,
     #       filter_only='MOD', )
+
+
+def test_runner():
+    g = GraphCollections.get('digg-friends')
+    kwargs = {'animated': False,
+              'statistics': [s for s in Stat if 'DISTR' in s.name],
+              'top_k_percent': 0.01,
+              }
+    start_runner(g, **kwargs)
+
+
+if __name__ == '__main__':
+    big_run()
+    # test_runner()
