@@ -51,8 +51,9 @@ make all
 
 * Final preparations 
 
-Replace path to snap in `src/cyth/setup.py`:
-in place of `SNAP_DIR = "/home/ubuntu/Snap-5.0/"` put your path to snap.
+Rename file `config.exmaple` to `config` - this file will contain your specific flags and paths.
+Find line `SNAP_DIR: "/home/ubuntu/Snap-5.0/"`, and put your path to the installed snap root 
+directory.
 
 (NOTE: don't start the path from '~' or it will fail with the g++ option '-I')
 
