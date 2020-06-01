@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 from runners.animated_runner import Metric
-from utils import PICS_DIR, RESULT_DIR, REMAP_ITER, USE_CYTHON_CRAWLERS  # PICS_DIR = '/home/jzargo/PycharmProjects/crawling/crawling/pics/'
+from utils import PICS_DIR, RESULT_DIR, USE_CYTHON_CRAWLERS  # PICS_DIR = '/home/jzargo/PycharmProjects/crawling/crawling/pics/'
 
 if USE_CYTHON_CRAWLERS:
     from base.cgraph import CGraph as MyGraph
@@ -22,11 +22,20 @@ else:
 from graph_io import GraphCollections
 from statistics import Stat, get_top_centrality_nodes
 
-REMAP_ITER_TO_STEP = REMAP_ITER(400)  # dynamic step size
-# TODO move steps from utils
 #
 # FIXME check if works
-#
+
+
+def remap_iter(total=400):
+    """ Remapping steps depending on used budget - on first iters step=1, on last it grows ~x^2
+    """
+    step_budget = 0
+    remap_iter_to_step = {}
+    for i in range(total):  # for budget less than 100 mln nodes
+        remap = int(max(1, step_budget / 20))
+        remap_iter_to_step[step_budget] = remap
+        step_budget += remap
+    return remap_iter_to_step
 
 
 def make_gif(crawler_name, duration=1):
@@ -58,7 +67,8 @@ class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
         :param budget: maximal number of nodes to be crawled, by default the whole graph
         :param step: compute metrics each `step` steps
         :param batches_per_pic: save picture every batches_per_pic batches. more -> faster
-        tqdm_info - description of tqdm progressbar
+        :param layout_pos:
+        :param tqdm_info: description of tqdm progressbar
         :return:
         """
         self.graph = graph
@@ -163,10 +173,12 @@ class CrawlerRunner:  # take budget=int(graph.nodes() / 10)
         pbar = tqdm(total=self.budget, desc=self.tqdm_info)  # drawing crawling progress bar
         # print('self metrics', [(metric._callback, metric.name + '\n') for metric in self.metrics])
 
+        remap_iter_to_step = remap_iter(400)  # dynamic step size
+
         while i < self.budget:
             # batch =self.budget - i)
-            if i in REMAP_ITER_TO_STEP:
-                batch = min(self.budget - i, REMAP_ITER_TO_STEP[i])
+            if i in remap_iter_to_step:
+                batch = min(self.budget - i, remap_iter_to_step[i])
             # else: batch =
             i += batch
             step_seq.append(i)

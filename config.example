@@ -1,0 +1,4 @@
+{
+ SNAP_DIR: "/home/misha/Snap-5.0",
+ USE_CYTHON_CRAWLERS: True,
+}

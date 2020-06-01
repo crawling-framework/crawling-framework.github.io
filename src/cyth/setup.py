@@ -6,15 +6,13 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 # from Cython.Build import cythonize
 
-SNAP_DIR = "/home/misha/Snap-5.0/"  # directory with snap built
 
-
-def build_cython(rel_dir):
+def build_cython(rel_dir, snap_dir):
     logging.info("Building cyth...")
 
     src_dir = os.path.join(rel_dir, 'src')
     os.chdir(src_dir)
-    command = "python3 '%s' build_ext --inplace" % os.path.join(src_dir, os.path.realpath(__file__))
+    command = "python3 '%s' build_ext --inplace -S'%s'" % (os.path.join(src_dir, os.path.realpath(__file__)), snap_dir)
     exit_code = os.system(command)
 
     if exit_code != 0:
@@ -23,6 +21,12 @@ def build_cython(rel_dir):
 
 
 if __name__ == '__main__':
+    import sys
+    for arg in sys.argv:
+        if arg.startswith('-S'):
+            snap_dir = arg[2:]
+            sys.argv.remove(arg)
+
     # Compiling Cython modules
     ext_modules = [
         # Extension("base.test_cython",
@@ -42,40 +46,40 @@ if __name__ == '__main__':
                   language='c++',
                   extra_compile_args=["-std=c++98", "-Wall", "-DNDEBUG", "-O3", "-fopenmp", "-ffast-math", "-march=native"],
                   extra_link_args=['-fopenmp', '-lrt'],  # '-lrt'
-                  extra_objects=[os.path.join(SNAP_DIR, "snap-core/Snap.o")],
-                  include_dirs=[os.path.join(SNAP_DIR, "snap-core/"), os.path.join(SNAP_DIR, "glib-core")],
+                  extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
+                  include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
                   ),
         Extension("base.cbasic",
                   ["base/cbasic.pyx"],
                   language='c++',
                   extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
                   extra_link_args=['-fopenmp'],
-                  extra_objects=[os.path.join(SNAP_DIR, "snap-core/Snap.o")],
-                  include_dirs=[os.path.join(SNAP_DIR, "snap-core/"), os.path.join(SNAP_DIR, "glib-core")],
+                  extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
+                  include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
                   ),
         Extension("base.cmultiseed",
                   ["base/cmultiseed.pyx"],
                   language='c++',
                   extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
                   extra_link_args=['-fopenmp'],
-                  extra_objects=[os.path.join(SNAP_DIR, "snap-core/Snap.o")],
-                  include_dirs=[os.path.join(SNAP_DIR, "snap-core/"), os.path.join(SNAP_DIR, "glib-core")],
+                  extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
+                  include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
                   ),
         Extension("base.cadvanced",
                   ["base/cadvanced.pyx"],
                   language='c++',
                   extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
                   extra_link_args=['-fopenmp'],
-                  extra_objects=[os.path.join(SNAP_DIR, "snap-core/Snap.o")],
-                  include_dirs=[os.path.join(SNAP_DIR, "snap-core/"), os.path.join(SNAP_DIR, "glib-core")],
+                  extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
+                  include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
                   ),
         Extension("cyth.cstatistics",
                   ["cyth/cstatistics.pyx"],
                   language='c++',
                   extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
                   extra_link_args=['-fopenmp', '-lrt'],
-                  extra_objects=[os.path.join(SNAP_DIR, "snap-core/Snap.o")],
-                  include_dirs=[os.path.join(SNAP_DIR, "snap-core/"), os.path.join(SNAP_DIR, "glib-core")],
+                  extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
+                  include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
                   ),
     ]
 
