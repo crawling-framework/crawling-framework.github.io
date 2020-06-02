@@ -27,9 +27,6 @@ def start_runner(graph, animated=False, statistics: list = None, top_k_percent=0
     initial_seed = graph.random_nodes(1000)
     ranges = [2, 3, 4, 5, 10, 30, 100, 1000]
     crawlers = [  ## ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
-                   RandomWalkCrawler(graph, initial_seed=initial_seed[0]),
-                   RandomCrawler(graph, initial_seed=initial_seed[0]),
-
                    DepthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),
                    SnowBallCrawler(graph, p=0.1, initial_seed=initial_seed[0]),
                    SnowBallCrawler(graph, p=0.25, initial_seed=initial_seed[0]),
@@ -38,17 +35,20 @@ def start_runner(graph, animated=False, statistics: list = None, top_k_percent=0
                    SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed[0]),
                    BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),  # is like take SBS with p=1
 
-                   MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-                   MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-                   MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-                   MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
-                   MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+                   # RandomWalkCrawler(graph, initial_seed=initial_seed[0]),
+                   # RandomCrawler(graph, initial_seed=initial_seed[0]),
+                   #
+                   # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   # MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   # MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   # MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
 
-                   PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-                   PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-                   PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-                   PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
-                   PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
                ] \
                + [
                    MultiCrawler(graph, crawlers=[
@@ -124,17 +124,17 @@ def big_run():
         # 'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06
 
         # 'flixster',                 # with 2523386 nodes and  7918801 edges, davg= 6.28     no ecc
-        # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27     no ecc
-        # 'munmun_twitter_social',    # with  465017 nodes and   833540 edges, davg= 3.58  8/10
+        # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  2/10, w/o POD     no ecc
+        # 'munmun_twitter_social',    # with  465017 nodes and   833540 edges, davg= 3.58  10/10
 
-        'petster-friendships-cat',  # with  148826 nodes and  5447464 edges, davg=73.21 6/10
+        # 'petster-friendships-cat',  # with  148826 nodes and  5447464 edges, davg=73.21 10/10
         # 'digg-friends',           # with  261489 nodes and  1536577 edges, davg=11.75
         # 'douban',                 # with  154908 nodes and   327162 edges, davg= 4.22
         # 'facebook-wosn-links',    # with   63392 nodes and   816831 edges, davg=25.77
         # 'slashdot-threads',       # with   51083 nodes and   116573 edges, davg= 4.56
         # 'ego-gplus',              # with   23613 nodes and    39182 edges, davg= 3.32
         # 'mipt',                   # with   14313 nodes and   488852 edges, davg=68.31
-        # 'petster-hamster',        # with    2000 nodes and    16098 edges, davg=16.10
+        'petster-hamster',        # with    2000 nodes and    16098 edges, davg=16.10
     ]
     big_graphs = ['youtube-u-growth', 'flixster', 'soc-pokec-relationships', 'com-youtube', ]
 
@@ -154,7 +154,7 @@ def big_run():
         msg = "Did not finish"
         iterations = 4
         # iterations = multiprocessing.cpu_count() - 2
-        for iter in range(int(4 // iterations)):
+        for iter in range(int(8 // iterations)):
             start_time = time.time()
             processes = []
             # making parallel itarations. Number of processes
@@ -179,7 +179,9 @@ def big_run():
 
         # send to my vk
         import os
-        command = "python3 /home/misha/workspace/utils/src/vk_bot.py -m '%s'" % (msg)
+        from utils import rel_dir
+        bot_path = os.path.join(rel_dir, "src", "experiments", "vk_signal.py")
+        command = "python3 %s -m '%s'" % (bot_path, msg)
         exit_code = os.system(command)
 
     # from experiments.merger import merge
