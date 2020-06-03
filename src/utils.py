@@ -11,10 +11,8 @@ RESULT_DIR = os.path.join(rel_dir, 'results')  # directory to store pictures
 
 COLLECTIONS = ['other', 'konect', 'netrepo']
 
-USE_CYTHON_CRAWLERS = True  # python/cython mode switcher
-SNAP_DIR = "/home/misha/Snap-5.0"  # directory with snap built
-
-config = eval(open(CONFIG_PATH, 'r').read())  # updates the above VARIABLES from config file
+SNAP_DIR = None; USE_CYTHON_CRAWLERS = None; USE_NETWORKIT = None  # defined in config
+config = exec(open(CONFIG_PATH, 'r').read())  # updates the above VARIABLES from config file
 
 
 if USE_CYTHON_CRAWLERS:
