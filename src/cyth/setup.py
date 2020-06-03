@@ -22,10 +22,13 @@ def build_cython(rel_dir, snap_dir):
 
 if __name__ == '__main__':
     import sys
+    snap_dir = None
     for arg in sys.argv:
         if arg.startswith('-S'):
             snap_dir = arg[2:]
             sys.argv.remove(arg)
+    if snap_dir is None:
+        raise ValueError("snap directory path is not specified. Use '-S' flag with this script")
 
     # Compiling Cython modules
     ext_modules = [
@@ -45,7 +48,7 @@ if __name__ == '__main__':
                   ["base/cgraph.pyx"],
                   language='c++',
                   extra_compile_args=["-std=c++98", "-Wall", "-DNDEBUG", "-O3", "-fopenmp", "-ffast-math", "-march=native"],
-                  extra_link_args=['-fopenmp', '-lrt'],  # '-lrt'
+                  extra_link_args=['-fopenmp'],  # '-lrt'
                   extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
                   include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
                   ),
@@ -77,7 +80,7 @@ if __name__ == '__main__':
                   ["cyth/cstatistics.pyx"],
                   language='c++',
                   extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
-                  extra_link_args=['-fopenmp', '-lrt'],
+                  extra_link_args=['-fopenmp'],
                   extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
                   include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
                   ),

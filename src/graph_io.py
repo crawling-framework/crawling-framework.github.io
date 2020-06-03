@@ -46,6 +46,8 @@ def parse_konect_page():
         name_ref_dict[name] = ref
         name_ref_dict[ref] = ref
 
+    if not os.path.exists(os.path.dirname(konect_metadata_path)):
+        os.makedirs(os.path.dirname(konect_metadata_path))
     with open(konect_metadata_path, 'w') as f:
         f.write(str(name_ref_dict))
     logging.info("Konect metadata saved to %s" % konect_metadata_path)
@@ -67,6 +69,8 @@ def parse_netrepo_page():
         ref = row.contents[-1].contents[2]['href']
         name_ref_dict[name] = ref
 
+    if not os.path.exists(os.path.dirname(netrepo_metadata_path)):
+        os.makedirs(os.path.dirname(netrepo_metadata_path))
     with open(netrepo_metadata_path, 'w') as f:
         f.write(str(name_ref_dict))
     logging.info("networkrepository metadata saved to %s" % netrepo_metadata_path)

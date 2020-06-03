@@ -10,3 +10,7 @@ jupyter
 scikit-learn
 Cython
 bs4
+cmake
+networkit
+imageio
+vk

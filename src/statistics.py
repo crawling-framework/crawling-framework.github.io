@@ -1,7 +1,7 @@
 from argparse import ArgumentError
 
 from graph_io import GraphCollections
-from utils import rel_dir, USE_CYTHON_CRAWLERS
+from utils import USE_CYTHON_CRAWLERS, USE_NETWORKIT
 
 import logging
 from enum import Enum
@@ -15,10 +15,8 @@ if USE_CYTHON_CRAWLERS:
 else:
     from base.graph import MyGraph
 
-USE_NETWORKIT = True  # Use networkit library for approximate centrality calculation
-
-if USE_NETWORKIT:
-    from networkit._NetworKit import Betweenness, ApproxBetweenness, EstimateBetweenness, ApproxCloseness
+if USE_NETWORKIT:  # Use networkit library for approximate centrality calculation
+    from networkit._NetworKit import EstimateBetweenness, ApproxCloseness
 
 
 class Stat(Enum):
