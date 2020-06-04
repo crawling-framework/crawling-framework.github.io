@@ -35,19 +35,17 @@ if __name__ == '__main__':
     plt = platform.system()
     if plt == 'Linux':
         snap_extra_compile_flags = ["-std=c++98", "-Wall", "-O3", "-DNDEBUG", "-fopenmp"]
+        extra_compile_flags = ["-O3", "-ffast-math", "-march=native"]
         snap_extra_link_args = ["-fopenmp", "-lrt"]
 
     elif plt == 'Darwin':
         snap_extra_compile_flags = ["-std=c++98", "-Wall", "-Wno-unknown-pragmas", "-DNDEBUG", "-O3"]
+        extra_compile_flags = ["-std=c++11", "-O3", "-ffast-math", "-march=native"]
         import subprocess
         result = subprocess.Popen('g++ -v 2>&1 | grep clang | cut -d " " -f 2', shell=True,
                                   stdout=subprocess.PIPE).stdout.read().decode('utf-8')
         snap_extra_compile_flags.append("-fopenmp" if result == 'LLVM' else "-DNOMP")
         snap_extra_link_args = []
-
-        # TODO
-        # os.environ["CC"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
-        # os.environ["CXX"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
 
     elif plt == 'Cygwin':
         snap_extra_compile_flags = ["-Wall", "-D__STDC_LIMIT_MACROS", "-DNDEBUG", "-O3"]
@@ -66,7 +64,7 @@ if __name__ == '__main__':
         Extension("base.node_deg_set",
                   ["base/node_deg_set.pyx"],
                   language='c++',
-                  extra_compile_args=["-O3", "-ffast-math", "-march=native"],
+                  extra_compile_args=extra_compile_flags,
                   ),
         Extension("base.cgraph",
                   ["base/cgraph.pyx"],
@@ -79,7 +77,7 @@ if __name__ == '__main__':
         Extension("base.cbasic",
                   ["base/cbasic.pyx"],
                   language='c++',
-                  extra_compile_args=["-O3", "-ffast-math", "-march=native"],
+                  extra_compile_args=extra_compile_flags,
                   extra_link_args=snap_extra_link_args,
                   extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
                   include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
@@ -87,7 +85,7 @@ if __name__ == '__main__':
         Extension("base.cmultiseed",
                   ["base/cmultiseed.pyx"],
                   language='c++',
-                  extra_compile_args=["-O3", "-ffast-math", "-march=native"],
+                  extra_compile_args=extra_compile_flags,
                   extra_link_args=snap_extra_link_args,
                   extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
                   include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
@@ -95,7 +93,7 @@ if __name__ == '__main__':
         Extension("base.cadvanced",
                   ["base/cadvanced.pyx"],
                   language='c++',
-                  extra_compile_args=["-O3", "-ffast-math", "-march=native"],
+                  extra_compile_args=extra_compile_flags,
                   extra_link_args=snap_extra_link_args,
                   extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
                   include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
@@ -103,7 +101,7 @@ if __name__ == '__main__':
         Extension("cyth.cstatistics",
                   ["cyth/cstatistics.pyx"],
                   language='c++',
-                  extra_compile_args=["-O3", "-ffast-math", "-march=native"],
+                  extra_compile_args=extra_compile_flags,
                   extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
                   include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
                   ),

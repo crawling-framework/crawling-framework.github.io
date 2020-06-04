@@ -40,7 +40,7 @@ def parse_konect_page():
         name = cols[1].contents[0].contents[0]
         ref = cols[1].contents[0]['href']
         if code in name_ref_dict:
-            logging.warning("Konect repeating code", code)
+            logging.warning("Konect repeating code %s" % code)
             pass  # FIXME codes are not unique, some repeat!
         name_ref_dict[code] = ref
         name_ref_dict[name] = ref
