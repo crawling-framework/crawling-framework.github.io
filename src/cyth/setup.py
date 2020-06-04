@@ -30,6 +30,37 @@ if __name__ == '__main__':
     if snap_dir is None:
         raise ValueError("snap directory path is not specified. Use '-S' flag with this script")
 
+    # import subprocess
+    # command = 'g++ -v 2>&1 | grep linux | cut -d " " -f 2'
+    # # command = 'ls -l -a'
+    # result = subprocess.Popen(command.split(), stdout=subprocess.PIPE).stdout.read().decode('utf-8')
+    # print(result)
+
+    # Defining GCC flags depending on operating system
+    import platform
+    plt = platform.system()
+    if plt == 'Linux':
+        snap_extra_compile_flags = ["-std=c++98", "-Wall", "-O3", "-DNDEBUG", "-fopenmp"]
+        snap_extra_link_args = ["-lrt"]
+
+    elif plt == 'Darwin':
+        snap_extra_compile_flags = ["-std=c++98", "-Wall", "-Wno-unknown-pragmas", "-DNDEBUG", "-O3"]
+        import subprocess
+        result = subprocess.Popen('g++ -v 2>&1 | grep clang | cut -d " " -f 2', shell=True,
+                                  stdout=subprocess.PIPE).stdout.read().decode('utf-8')
+        snap_extra_compile_flags.append("-fopenmp" if result == 'LLVM' else "-DNOMP")
+        snap_extra_link_args = []
+
+        # TODO
+        # os.environ["CC"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
+        # os.environ["CXX"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
+
+    elif plt == 'Cygwin':
+        snap_extra_compile_flags = ["-Wall", "-D__STDC_LIMIT_MACROS", "-DNDEBUG", "-O3"]
+        snap_extra_link_args = []
+    else:
+        raise OSError("Sorry, your OS (%s) is not supported" % plt)
+
     # Compiling Cython modules
     ext_modules = [
         # Extension("base.test_cython",

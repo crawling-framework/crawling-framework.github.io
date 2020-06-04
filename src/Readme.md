@@ -23,13 +23,19 @@ Planning:
 * python version 3
 * GCC compiler
 
-For MacOS: ??? 
+For MacOS additional:
+
+* brew
 
 ## Install
 
 * Install all needed python libraries (from project folder):
 ```
 pip3 install -r requirements.txt
+```
+For MacOs:
+```
+brew install -r requirements.txt
 ```
 * Install [SNAP](https://snap.stanford.edu/snap/index.html) (in any directory):
 
@@ -38,7 +44,8 @@ git clone https://github.com/snap-stanford/snap.git
 cd snap
 ```
 
-Add '-fPIC' compiler parameter. In `Makefile.config` replace string
+In `Makefile.config` add `-fPIC` compiler option: find a string starting with `CXXFLAGS` 
+in a section corresponding to your operation system. E.g. for ubuntu replace
 
 `CXXFLAGS += -O3 -DNDEBUG -fopenmp` 
 with
@@ -56,6 +63,16 @@ Find line `SNAP_DIR: "/home/ubuntu/Snap-5.0/"`, and put your path to the install
 directory.
 
 (NOTE: don't start the path from '~' or it will fail with the g++ option '-I')
+
+For MacOs additional:
+
+*  In file `cyth/setup.py` add strings with location your gcc
+
+Example:
+```
+os.environ["CC"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
+os.environ["CXX"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
+```
 
 ## Usage
 
