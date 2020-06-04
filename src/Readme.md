@@ -23,13 +23,19 @@ Planning:
 * python version 3
 * GCC compiler
 
-For MacOS: ??? 
+For MacOS additional:
+
+* brew
 
 ## Install
 
 * Install all needed python libraries (from project folder):
 ```
 pip3 install -r requirements.txt
+```
+For MacOs:
+```
+brew install -r requirements.txt
 ```
 * Install [SNAP](https://snap.stanford.edu/snap/index.html) (in any directory):
 
@@ -68,6 +74,15 @@ to use cython-optimized version.
 to use [Networkit](https://networkit.github.io/) library to compute centralities for large graphs
 approximately (currently betweenness and closeness):
 
+For MacOs additional:
+
+*  In file `cyth/setup.py` add strings with location your gcc
+
+Example:
+```
+os.environ["CC"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
+os.environ["CXX"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
+```
 
 #### Examples
 
