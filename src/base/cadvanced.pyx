@@ -142,7 +142,7 @@ cdef class ThreeStageCrawler(CrawlerWithAnswer):
         self.s = s
         self.n = n
         self.pN = int(p * self._orig_graph.nodes())
-        assert s <= n <= self.pN
+        # assert s <= n <= self.pN
 
         self.e1s = new cset[int]()  # E1*
         self.e2s = new cset[int]()  # E2*
@@ -162,8 +162,9 @@ cdef class ThreeStageCrawler(CrawlerWithAnswer):
 
         # Check that e1 size is more than (n-s)
         if self.n - self.s > self.e1.size():
-            raise CrawlerException("E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." %
-                                   (self.e1.size(), self.n - self.s))
+            msg = "E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." % (self.e1.size(), self.n - self.s)
+            logging.error(msg)
+            raise CrawlerException(msg)
 
         # 2) detect MOD
         self._get_mod_nodes(self._observed_set, self.e1s, self.n - self.s)
@@ -222,8 +223,9 @@ cdef class ThreeStageCrawlerSeedsAreHubs(ThreeStageCrawler):
 
         # Check that e1 size is more than (n-s)
         if self.n - self.s > self.e1.size():
-            raise CrawlerException("E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." %
-                                   (self.e1.size(), self.n - self.s))
+            msg = "E1 too small: |E1|=%s < (n-s)=%s. Increase s or decrease n." % (self.e1.size(), self.n - self.s)
+            logging.error(msg)
+            raise CrawlerException(msg)
 
         # 2) detect MOD
         self._get_mod_nodes(self._observed_set, self.e1s, self.n - self.s)
@@ -276,7 +278,7 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
         self.s = s
         self.n = n
         self.pN = int(p * self._orig_graph.nodes())
-        assert s <= n <= self.pN
+        # assert s <= n <= self.pN
         self.b = b
 
         self.e1s = new cset[int]()  # E1*
@@ -331,11 +333,11 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
         self._answer.insert(self.e1s.begin(), self.e1s.end())
         self._answer.insert(self.e2s.begin(), self.e2s.end())
         logging.debug("|E*|=%s" % self._answer.size())
-        assert self._answer.size() <= self.pN
+        # assert self._answer.size() <= self.pN
         return 0
 
 
-# cdef class ThreeStageFlexMODCrawler(CrawlerWithAnswer):
+# cdef class ThreeStageCustomCrawler(CrawlerWithAnswer):
 #     raise NotImplementedError()
 
 

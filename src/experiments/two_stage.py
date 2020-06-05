@@ -100,13 +100,14 @@ if not USE_CYTHON_CRAWLERS:
 
 
 def test_target_set_coverage():
-    # name, budget, start_seeds = 'soc-pokec-relationships', 50000, 5000
-    # name, budget, start_seeds = 'digg-friends', 5000, 1000
+    # name, budget, start_seeds = 'flixster', 50000, 10000
+    name, budget, start_seeds = 'soc-pokec-relationships', 30000, 3000
+    # name, budget, start_seeds = 'digg-friends', 1000, 100
     # name, budget, start_seeds = 'loc-brightkite_edges', 2500, 500
-    name, budget, start_seeds = 'petster-hamster', 150, 50
+    # name, budget, start_seeds = 'petster-hamster', 150, 50
 
     graph = GraphCollections.get(name, giant_only=True)
-    p = 0.1
+    p = 0.01
     target_list = get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(p * graph[Stat.NODES]))
     thr_degree = graph.deg(target_list[-1])
     target_set = set(target_list)
@@ -128,8 +129,9 @@ def test_target_set_coverage():
         # RandomWalkCrawler(graph, initial_seed=None),
         # AvrachenkovCrawler(graph, n=budget, n1=start_seeds, k=int(p * graph.nodes())),
         ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
-        ThreeStageCrawlerSeedsAreHubs(graph, s=start_seeds, n=budget, p=p),
-        # ThreeStageMODCrawler(graph, s=start_seeds, n=budget, p=p, b=10),
+        # ThreeStageCrawlerSeedsAreHubs(graph, s=start_seeds, n=budget, p=p),
+        ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=1),
+        ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=1),
         # MultiCrawler(graph, crawlers=[
         #     MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=i+1) for i in range(100)
         # ])
@@ -243,7 +245,7 @@ def test_detection_quality():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s:%(message)s')
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.DEBUG)
 
