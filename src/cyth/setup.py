@@ -34,8 +34,8 @@ if __name__ == '__main__':
     import platform
     plt = platform.system()
     if plt == 'Linux':
-        snap_extra_compile_flags = ["-std=c++98", "-Wall", "-O3", "-DNDEBUG", "-fopenmp"]
         extra_compile_flags = ["-O3", "-ffast-math", "-march=native"]
+        snap_extra_compile_flags = ["-std=c++98", "-Wall", "-O3", "-DNDEBUG", "-fopenmp"]
         snap_extra_link_args = ["-fopenmp", "-lrt"]
 
     elif plt == 'Darwin':
@@ -47,20 +47,14 @@ if __name__ == '__main__':
         snap_extra_compile_flags.append("-fopenmp" if result == 'LLVM' else "-DNOMP")
         snap_extra_link_args = []
 
-    elif plt == 'Cygwin':
-        snap_extra_compile_flags = ["-Wall", "-D__STDC_LIMIT_MACROS", "-DNDEBUG", "-O3"]
-        snap_extra_link_args = []
+    # elif plt == 'Cygwin':  # TODO test on Windows
+    #     snap_extra_compile_flags = ["-Wall", "-D__STDC_LIMIT_MACROS", "-DNDEBUG", "-O3"]
+    #     snap_extra_link_args = []
     else:
         raise OSError("Sorry, your OS (%s) is not supported" % plt)
 
     # Compiling Cython modules
     ext_modules = [
-        # Extension("base.test_cython",
-        #           ["base/test_cython.pyx"],
-        #           language='c++',
-        #           extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
-        #           extra_link_args=['-fopenmp']
-        #           ),
         Extension("base.node_deg_set",
                   ["base/node_deg_set.pyx"],
                   language='c++',

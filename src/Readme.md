@@ -1,6 +1,6 @@
 # Network crawling framework
 
-description
+_description_
 
 **Features**:
 * Automatic graphs downloading from [Konect](http://konect.uni-koblenz.de/networks/) and 
@@ -15,7 +15,7 @@ description
 * Run crawlers on given graphs, calculating quality measures, saving the history, and drawing 
 plots.
 
-Planning:
+**Planning**:
 * graph models: controlled assortativity, ERGG.
 
 ## Requirements
@@ -29,26 +29,20 @@ For MacOS additional:
 
 ## Install
 
+#### For Linux
+
 * Install all needed python libraries (from project folder):
 ```
 pip3 install -r requirements.txt
 ```
-For MacOs:
-```
-brew install -r requirements.txt
-```
 * Install [SNAP](https://snap.stanford.edu/snap/index.html) (in any directory):
-
 ```
 git clone https://github.com/snap-stanford/snap.git
 cd snap
 ```
-
-In `Makefile.config` add `-fPIC` compiler option: find a string starting with `CXXFLAGS` 
-in a section corresponding to your operation system. E.g. for ubuntu replace
-
+In `Makefile.config` add `-fPIC` compiler option: find a string 
 `CXXFLAGS += -O3 -DNDEBUG -fopenmp` 
-with
+and replace it with
 `CXXFLAGS += -O3 -DNDEBUG -fopenmp -fPIC`
 
 Now build it:
@@ -56,23 +50,28 @@ Now build it:
 make all
 ```
 
-* Final preparations 
+#### For MacOS
 
-Rename file `config.exmaple` to `config` - this file will contain your specific flags and paths.
-Find line `SNAP_DIR: "/home/ubuntu/Snap-5.0/"`, and put your path to the installed snap root 
-directory.
+* Install all needed python libraries (from project folder):
+```
+brew install -r requirements.txt
+```
+* Install [SNAP](https://snap.stanford.edu/snap/index.html) (in any directory):
+```
+git clone https://github.com/snap-stanford/snap.git
+cd snap
+make all
+```
 
+### Final preparations 
+
+Copy the file `config.exmaple` to `config` - this file will contain your specific flags and paths.
+Find the line
+
+`SNAP_DIR = "/path/to/snap"         # directory with snap built`
+
+Put there your path to the installed snap root directory.
 (NOTE: don't start the path from '~' or it will fail with the g++ option '-I')
-
-For MacOs additional:
-
-*  In file `cyth/setup.py` add strings with location your gcc
-
-Example:
-```
-os.environ["CC"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
-os.environ["CXX"] = "/usr/local/Cellar/gcc/9.3.0_1/bin/gcc-9"
-```
 
 ## Usage
 
@@ -88,7 +87,7 @@ approximately (currently betweenness and closeness):
 
 #### Examples
 
-Calculate betweenness centrality for [Pokec graph](
+1. Calculate betweenness centrality for [Pokec graph](
 http://konect.uni-koblenz.de/networks/soc-pokec-relationships). The graph will be downloaded and 
 giant component extracted.
 ```
