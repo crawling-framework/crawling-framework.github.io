@@ -6,7 +6,7 @@ import sys
 from tqdm import tqdm
 
 from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
-from statistics import Stat
+from statistics import Stat, plm
 from base.cgraph cimport CGraph, GetClustCf, GetMxWccSz, PUNGraph, TUNGraph, GetBfsEffDiam, \
     GetMxWcc, TIntFltH, GetBetweennessCentr, THashKeyDatI, TInt, TFlt, GetPageRank, \
     GetClosenessCentr, GetNodeEcc, GetNodeClustCf, GetKCore
@@ -32,6 +32,9 @@ stat_computer = {
     Stat.PAGERANK_DISTR: lambda graph: compute_nodes_centrality(graph, 'pagerank'),
     # Stat.CLUSTERING_DISTR: lambda graph: compute_nodes_centrality(graph, 'clustering'),
     Stat.K_CORENESS_DISTR: lambda graph: compute_nodes_centrality(graph, 'k-coreness'),
+
+    Stat.PLM_COMMUNITIES: (lambda graph: plm(graph)[0]),
+    Stat.PLM_MODULARITY: (lambda graph: plm(graph)[1]),
 }
 
 

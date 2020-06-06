@@ -168,6 +168,7 @@ class MyGraph(object):
                 from statistics import stat_computer
                 # value = stat.computer(self)
                 value = stat_computer[stat](self)
+                self._stats_dict[stat] = value
 
                 # Save stats to file
                 if not os.path.exists(os.path.dirname(stat_path)):
@@ -180,6 +181,21 @@ class MyGraph(object):
 
             # raise KeyError("Unknown item type: %s" % type(item))
         return value
+
+    def __setitem__(self, stat, value):
+        self._check_consistency()
+        if isinstance(stat, str):
+            from statistics import Stat
+            stat = Stat[stat]
+        self._stats_dict[stat] = value
+
+        # Save stats to file
+        stat_path = os.path.join(os.path.dirname(self.path), os.path.basename(self.path) + '_stats', stat.short)
+        if not os.path.exists(stat_path):
+            if not os.path.exists(os.path.dirname(stat_path)):
+                os.makedirs(os.path.dirname(stat_path))
+        with open(stat_path, 'w') as f:
+            f.write(str(value))
 
     def save(self, new_path=None):
         """ Write current edge list of snap graph into file. """

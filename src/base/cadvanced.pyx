@@ -138,7 +138,7 @@ cdef class ThreeStageCrawler(CrawlerWithAnswer):
         :param n: number of nodes to be crawled, must be >= seeds
         :param p: fraction of graph nodes to be returned
         """
-        super().__init__(graph, limit=n, name=name if name else '3-Stage_s=%s_n=%s_p=%s' % (s, n, p))
+        super().__init__(graph, limit=n, name=name if name else '3-Stage_s=%s_n=%s_p=%.3f' % (s, n, p))
         self.s = s
         self.n = n
         self.pN = int(p * self._orig_graph.nodes())
@@ -207,7 +207,7 @@ cdef class ThreeStageCrawlerSeedsAreHubs(ThreeStageCrawler):
         :param n: number of nodes to be crawled, must be >= seeds
         :param p: fraction of graph nodes to be returned
         """
-        super().__init__(graph, s=s, n=n, p=p, name=name if name else'3-StageHubs_s=%s_n=%s_p=%s' % (s, n, p))
+        super().__init__(graph, s=s, n=n, p=p, name=name if name else'3-StageHubs_s=%s_n=%s_p=%.3f' % (s, n, p))
         self.h = new cset[int]()
 
     def seeds_generator(self):
@@ -274,7 +274,7 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
         :param b: batch size
         """
         assert 1 <= b <= n-s
-        super().__init__(graph, limit=n, name=name if name else '3-StageMOD_s=%s_n=%s_p=%.1f_b=%s' % (s, n, p, b))
+        super().__init__(graph, limit=n, name=name if name else '3-StageMOD_s=%s_n=%s_p=%.3f_b=%s' % (s, n, p, b))
         self.s = s
         self.n = n
         self.pN = int(p * self._orig_graph.nodes())
