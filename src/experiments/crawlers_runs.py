@@ -28,44 +28,44 @@ def start_runner(graph, animated=False, statistics: list = None, top_k_percent=0
     initial_seed = graph.random_nodes(1000)
     ranges = [2, 3, 4, 5, 10, 30, 100, 1000]
     crawlers = [  ## ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
-                   # DepthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.1, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.25, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.5, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.75, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed[0]),
-                   # BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),  # is like take SBS with p=1
+                   DepthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.1, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.25, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.5, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.75, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed[0]),
+                   BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),  # is like take SBS with p=1
 
-                   RandomWalkCrawler(graph, initial_seed=initial_seed[0]),
-                   RandomCrawler(graph, initial_seed=initial_seed[0]),
-
-                   MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-                   MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-                   MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-                   MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
-                   MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
-
-                   PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-                   PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-                   PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-                   PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
-                   PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
-        #        ] \
-        #        + [
-        #            MultiCrawler(graph, crawlers=[
-        #                PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
-        #                range(range_i)])
-        #            for range_i in ranges \
-        #            #
-        #        ] + [MultiCrawler(graph, crawlers=[
-        # BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[i]) for i in range(range_i)])
-        #             for range_i in ranges \
-        #             #
-        #             ] + [
-        #            MultiCrawler(graph, crawlers=[
-        #                MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
-        #                range(range_i)])
-        #            for range_i in ranges \
+                   # RandomWalkCrawler(graph, initial_seed=initial_seed[0]),
+                   # RandomCrawler(graph, initial_seed=initial_seed[0]),
+                   #
+                   # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   # MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   # MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   # MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+                   #
+                   # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   # PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+               ] \
+               + [
+                   MultiCrawler(graph, crawlers=[
+                       PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
+                       range(range_i)])
+                   for range_i in ranges \
+                   #
+               ] + [MultiCrawler(graph, crawlers=[
+        BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[i]) for i in range(range_i)])
+                    for range_i in ranges \
+                    #
+                    ] + [
+                   MultiCrawler(graph, crawlers=[
+                       MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in
+                       range(range_i)])
+                   for range_i in ranges \
                    ]
     logging.info([c.name for c in crawlers])
     metrics = []
@@ -119,14 +119,14 @@ def big_run():
 
     graphs = [
         # # # # 'livejournal-links', toooo large need all metrics
-        # 'soc-pokec-relationships',  # with 1632803 nodes and 22301964 edges, davg=27.32     no ecc
-        # 10x all but POD,Multi - cloud1
+        # 'soc-pokec-relationships',  # with 1632803 nodes and 22301964 edges, davg=27.32  4/10 all but POD,Multi    no ecc
+        # 6x all but POD,Multi - cloud1
 
         # 'youtube-u-growth',         # with 3216075 nodes and  9369874 edges, davg= 5.83     no ecc
         # 'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06  10/10
 
         # 'flixster',                 # with 2523386 nodes and  7918801 edges, davg= 6.28  fails   no ecc
-        # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  2/10 - RW,RC,MOD, 0/10 - POD, 9/10 - others     no ecc
+        'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  2/10 - RW,RC,MOD, 0/10 - POD, 9/10 - others     no ecc
         # 8x RW,RC,MOD,POD - local
         # 2x POD - cloud2
         # 1x others - ?
@@ -143,46 +143,37 @@ def big_run():
         # 'petster-hamster',        # with    2000 nodes and    16098 edges, davg=16.10
 
 
-        # netrepo from Guidelines
+        # # netrepo from Guidelines
+        # #
+        # 'socfb-Bingham82',         # N=10004, E=362894, d_avg=72.55
+        # 'soc-brightkite',          # N=56739, E=212945, d_avg=7.51
+        # 'ca-citeseer',             # N=227320, E=814134, d_avg=7.16
+        # 'ca-dblp-2010',            # N=226413, E=716460, d_avg=6.33
+        # 'rec-amazon',              # N=91813, E=125704, d_avg=2.74
+        # 'rec-github',              # N=121706, E=439849, d_avg=7.23
+        # 'socfb-OR',                # N=63392, E=816886, d_avg=25.77
+        # 'socfb-Penn94',            # N=41536, E=1362220, d_avg=65.59
+        # 'socfb-wosn-friends',      # N=63731, E=817090, d_avg=25.64
+        # 'tech-p2p-gnutella',       # N=62561, E=147878, d_avg=4.73
+        # 'tech-RL-caida',           # N=190914, E=607610, d_avg=6.37
+        # 'web-arabic-2005',         # N=163598, E=1747269, d_avg=21.36
+        # 'soc-slashdot',            # N=70068, E=358647, d_avg=10.24
+        # 'soc-themarker',           # ? N=69413, E=1644843, d_avg=47.39
+        # 'soc-BlogCatalog',         # N=88784, E=2093195, d_avg=47.15
+        # 'sc-pkustk13',             # N=94893, E=3260967, d_avg=68.73
+        # # 10x all - cloud2
         #
-        'socfb-Bingham82',         # N=10004, E=362894, d_avg=72.55
-        'soc-brightkite',          # N=56739, E=212945, d_avg=7.51
-
-        # Collaboration
-        'ca-citeseer',             # N=227320, E=814134, d_avg=7.16
-        'ca-dblp-2010',            # N=226413, E=716460, d_avg=6.33
-        # 'ca-dblp-2012',            # N=317080, E=1049866, d_avg=6.62
-        # 'ca-MathSciNet',           # N=332689, E=820644, d_avg=4.93
-
-        # Recommendation
-        'rec-amazon',              # N=91813, E=125704, d_avg=2.74
-        'rec-github',              # N=121706, E=439849, d_avg=7.23
-
-        # FB
-        'socfb-OR',                # N=63392, E=816886, d_avg=25.77
-        'socfb-Penn94',            # N=41536, E=1362220, d_avg=65.59
-        'socfb-wosn-friends',      # N=63731, E=817090, d_avg=25.64
-
-        # Tech
-        'tech-p2p-gnutella',       # N=62561, E=147878, d_avg=4.73
-        'tech-RL-caida',           # N=190914, E=607610, d_avg=6.37
-
-        # Web
-        'web-arabic-2005',         # N=163598, E=1747269, d_avg=21.36
-        # 'web-italycnr-2000',       # N=325557, E=2738969, d_avg=16.83
-        # 'web-sk-2005',             # N=121422, E=334419, d_avg=5.51
         # 'web-uk-2005',             # N=129632, E=11744049, d_avg=181.19
-
-        # OSNs
-        'soc-slashdot',            # N=70068, E=358647, d_avg=10.24
-        'soc-themarker',           # ? N=69413, E=1644843, d_avg=47.39
-        'soc-BlogCatalog',         # N=88784, E=2093195, d_avg=47.15
-
-        # Scientific
-        'sc-pkustk13',             # N=94893, E=3260967, d_avg=68.73
+        # 'web-italycnr-2000',       # N=325557, E=2738969, d_avg=16.83
+        # 'ca-dblp-2012',            # N=317080, E=1049866, d_avg=6.62
         # 'sc-pwtk',                 # N=217891, E=5653221, d_avg=51.89
+        # # local
+        #
+        # 'web-sk-2005',             # N=121422, E=334419, d_avg=5.51
         # 'sc-shipsec1',             # N=140385, E=1707759, d_avg=24.33
-        # 'sc-shipsec5',             # N=179104, E=2200076, d_avg=24.57
+        # # 'ca-MathSciNet',           # N=332689, E=820644, d_avg=4.93
+        # # 'sc-shipsec5',             # N=179104, E=2200076, d_avg=24.57
+        # # waiting for ecc - cloud2
     ]
     big_graphs = ['youtube-u-growth', 'flixster', 'soc-pokec-relationships', 'com-youtube', ]
 
@@ -200,9 +191,9 @@ def big_run():
 
         # TODO: to check and download graph before multiprocessing
         msg = "Did not finish"
-        iterations = 5
+        iterations = 1
         # iterations = multiprocessing.cpu_count() - 2
-        for iter in range(int(10 // iterations)):
+        for iter in range(int(1 // iterations)):
             start_time = time.time()
             processes = []
             # making parallel itarations. Number of processes
@@ -310,12 +301,16 @@ def cloud_manager():
              'socfb-Penn94', 'socfb-wosn-friends', 'tech-RL-caida', 'tech-p2p-gnutella', 'web-arabic-2005']
     cloud = cloud2
     collection = 'netrepo'
-    for name in netrepo_names:
-        if not os.path.exists('%s/data/%s/%s.ij_stats/EccDistr' % (local_dir, collection, name)):
-            continue
+    for name in ['ca-MathSciNet', 'sc-shipsec5']:
+    # for name in ['web-uk-2005', 'web-italycnr-2000', 'ca-dblp-2012', 'sc-pwtk']:
+        # if not os.path.exists('%s/data/%s/%s.ij_stats/EccDistr' % (local_dir, collection, name)):
+        #     continue
 
-        copy_command = 'scp -i %s -r %s/data/%s/%s.ij_stats/ %s:%s/data/%s/' % (
-            ssh_key, local_dir, collection, name, cloud, remote_dir, collection)
+        # copy_command = 'scp -i %s -r %s/data/%s/%s.ij_stats/ %s:%s/data/%s/' % (
+        #     ssh_key, local_dir, collection, name, cloud, remote_dir, collection)
+
+        copy_command = 'scp -i %s -r %s:%s/data/%s/%s.ij_stats/EccDistr %s/data/%s/%s.ij_stats/' % (
+            ssh_key, cloud, remote_dir, collection, name, local_dir, collection, name)
 
         command = copy_command
 
@@ -340,7 +335,7 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    big_run()
+    # big_run()
     # test_runner()
     # prepare_netrepo_graphs()
     # cloud_manager()
