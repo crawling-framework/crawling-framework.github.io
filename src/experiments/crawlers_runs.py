@@ -1,4 +1,5 @@
 import logging
+import os
 
 from utils import USE_CYTHON_CRAWLERS
 import time
@@ -125,7 +126,7 @@ def big_run():
         # 'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06  10/10
 
         # 'flixster',                 # with 2523386 nodes and  7918801 edges, davg= 6.28  fails   no ecc
-        'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  2/10 - RW,RC,MOD, 0/10 - POD, 9/10 - others     no ecc
+        # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  2/10 - RW,RC,MOD, 0/10 - POD, 9/10 - others     no ecc
         # 8x RW,RC,MOD,POD - local
         # 2x POD - cloud2
         # 1x others - ?
@@ -140,6 +141,48 @@ def big_run():
         # 'ego-gplus',              # with   23613 nodes and    39182 edges, davg= 3.32
         # 'mipt',                   # with   14313 nodes and   488852 edges, davg=68.31
         # 'petster-hamster',        # with    2000 nodes and    16098 edges, davg=16.10
+
+
+        # netrepo from Guidelines
+        #
+        'socfb-Bingham82',         # N=10004, E=362894, d_avg=72.55
+        'soc-brightkite',          # N=56739, E=212945, d_avg=7.51
+
+        # Collaboration
+        'ca-citeseer',             # N=227320, E=814134, d_avg=7.16
+        'ca-dblp-2010',            # N=226413, E=716460, d_avg=6.33
+        # 'ca-dblp-2012',            # N=317080, E=1049866, d_avg=6.62
+        # 'ca-MathSciNet',           # N=332689, E=820644, d_avg=4.93
+
+        # Recommendation
+        'rec-amazon',              # N=91813, E=125704, d_avg=2.74
+        'rec-github',              # N=121706, E=439849, d_avg=7.23
+
+        # FB
+        'socfb-OR',                # N=63392, E=816886, d_avg=25.77
+        'socfb-Penn94',            # N=41536, E=1362220, d_avg=65.59
+        'socfb-wosn-friends',      # N=63731, E=817090, d_avg=25.64
+
+        # Tech
+        'tech-p2p-gnutella',       # N=62561, E=147878, d_avg=4.73
+        'tech-RL-caida',           # N=190914, E=607610, d_avg=6.37
+
+        # Web
+        'web-arabic-2005',         # N=163598, E=1747269, d_avg=21.36
+        # 'web-italycnr-2000',       # N=325557, E=2738969, d_avg=16.83
+        # 'web-sk-2005',             # N=121422, E=334419, d_avg=5.51
+        # 'web-uk-2005',             # N=129632, E=11744049, d_avg=181.19
+
+        # OSNs
+        'soc-slashdot',            # N=70068, E=358647, d_avg=10.24
+        'soc-themarker',           # ? N=69413, E=1644843, d_avg=47.39
+        'soc-BlogCatalog',         # N=88784, E=2093195, d_avg=47.15
+
+        # Scientific
+        'sc-pkustk13',             # N=94893, E=3260967, d_avg=68.73
+        # 'sc-pwtk',                 # N=217891, E=5653221, d_avg=51.89
+        # 'sc-shipsec1',             # N=140385, E=1707759, d_avg=24.33
+        # 'sc-shipsec5',             # N=179104, E=2200076, d_avg=24.57
     ]
     big_graphs = ['youtube-u-growth', 'flixster', 'soc-pokec-relationships', 'com-youtube', ]
 
@@ -157,9 +200,9 @@ def big_run():
 
         # TODO: to check and download graph before multiprocessing
         msg = "Did not finish"
-        iterations = 4
+        iterations = 5
         # iterations = multiprocessing.cpu_count() - 2
-        for iter in range(int(8 // iterations)):
+        for iter in range(int(10 // iterations)):
             start_time = time.time()
             processes = []
             # making parallel itarations. Number of processes
@@ -204,49 +247,91 @@ def test_runner():
     start_runner(g, **kwargs)
 
 
-def prepare_graphs():
+netrepo_names = [
+    # Graphs used in https://dl.acm.org/doi/pdf/10.1145/3201064.3201066
+    # Guidelines for Online Network Crawling: A Study of DataCollection Approaches and Network Properties
 
-    name = 'socfb-Bingham82'  # N=10004, E=362894, d_avg=72.55
-    name = 'soc-brightkite'  # N=56739, E=212945, d_avg=7.51
+    'socfb-Bingham82',  # N=10004, E=362894, d_avg=72.55
+    'soc-brightkite',  # N=56739, E=212945, d_avg=7.51
 
     # Collaboration
-    name = 'ca-citeseer'  # N=227320, E=814134, d_avg=7.16
-    name = 'ca-dblp-2010'  # N=226413, E=716460, d_avg=6.33
-    name = 'ca-dblp-2012'  # N=317080, E=1049866, d_avg=6.62
-    name = 'ca-MathSciNet'  # N=332689, E=820644, d_avg=4.93
+    'ca-citeseer',  # N=227320, E=814134, d_avg=7.16
+    'ca-dblp-2010',  # N=226413, E=716460, d_avg=6.33
+    'ca-dblp-2012',  # N=317080, E=1049866, d_avg=6.62
+    'ca-MathSciNet',  # N=332689, E=820644, d_avg=4.93
 
     # Recommendation
-    name = 'rec-amazon'  # N=91813, E=125704, d_avg=2.74
-    name = 'rec-github'  # N=121706, E=439849, d_avg=7.23
+    'rec-amazon',  # N=91813, E=125704, d_avg=2.74
+    'rec-github',  # N=121706, E=439849, d_avg=7.23
 
     # FB
-    name = 'socfb-OR'  # N=63392, E=816886, d_avg=25.77
-    name = 'socfb-Penn94'  # N=41536, E=1362220, d_avg=65.59
-    name = 'socfb-wosn-friends'  # N=63731, E=817090, d_avg=25.64
+    'socfb-OR',  # N=63392, E=816886, d_avg=25.77
+    'socfb-Penn94',  # N=41536, E=1362220, d_avg=65.59
+    'socfb-wosn-friends',  # N=63731, E=817090, d_avg=25.64
 
     # Tech
-    name = 'tech-p2p-gnutella'  # N=62561, E=147878, d_avg=4.73
-    name = 'tech-RL-caida'  # N=190914, E=607610, d_avg=6.37
+    'tech-p2p-gnutella',  # N=62561, E=147878, d_avg=4.73
+    'tech-RL-caida',  # N=190914, E=607610, d_avg=6.37
 
     # Web
-    name = 'web-arabic-2005'  # N=163598, E=1747269, d_avg=21.36
-    name = 'web-italycnr-2000'  # N=325557, E=2738969, d_avg=16.83
-    name = 'web-sk-2005'  # N=121422, E=334419, d_avg=5.51
-    name = 'web-uk-2005'  # N=129632, E=11744049, d_avg=181.19
+    'web-arabic-2005',  # N=163598, E=1747269, d_avg=21.36
+    'web-italycnr-2000',  # N=325557, E=2738969, d_avg=16.83
+    'web-sk-2005',  # N=121422, E=334419, d_avg=5.51
+    'web-uk-2005',  # N=129632, E=11744049, d_avg=181.19
 
     # OSNs
-    name = 'soc-slashdot'  # N=70068, E=358647, d_avg=10.24
-    name = 'soc-themarker'  # ? N=69413, E=1644843, d_avg=47.39
-    name = 'soc-BlogCatalog'  # N=88784, E=2093195, d_avg=47.15
+    'soc-slashdot',  # N=70068, E=358647, d_avg=10.24
+    'soc-themarker',  # ? N=69413, E=1644843, d_avg=47.39
+    'soc-BlogCatalog',  # N=88784, E=2093195, d_avg=47.15
 
     # Scientific
-    name = 'sc-pkustk13'  # N=94893, E=3260967, d_avg=68.73
-    name = 'sc-pwtk'  # N=217891, E=5653221, d_avg=51.89
-    name = 'sc-shipsec1'  # N=140385, E=1707759, d_avg=24.33
-    name = 'sc-shipsec5'  # N=179104, E=2200076, d_avg=24.57
+    'sc-pkustk13',  # N=94893, E=3260967, d_avg=68.73
+    'sc-pwtk',  # N=217891, E=5653221, d_avg=51.89
+    'sc-shipsec1',  # N=140385, E=1707759, d_avg=24.33
+    'sc-shipsec5',  # N=179104, E=2200076, d_avg=24.57
+]
 
-    g = GraphCollections.get(name, 'netrepo')
-    print("N=%s, E=%s, d_avg=%.2f" % (g['NODES'], g['EDGES'], g[Stat.AVG_DEGREE]))
+
+def cloud_manager():
+    import subprocess, sys
+
+    cloud1 = 'ubuntu@83.149.198.220'
+    cloud2 = 'ubuntu@83.149.198.231'
+
+    local_dir = '/home/misha/workspace/crawling'
+    remote_dir = '/home/ubuntu/workspace/crawling'
+    ssh_key = '~/.ssh/drobyshevsky_home_key.pem'
+
+    # Copy stats to remote
+
+    # with ecc
+    names = ['ca-citeseer', 'ca-dblp-2010', 'rec-amazon', 'rec-github', 'sc-pkustk13', 'soc-BlogCatalog',
+             'soc-brightkite', 'soc-slashdot', 'soc-themarker', 'socfb-Bingham82', 'socfb-OR',
+             'socfb-Penn94', 'socfb-wosn-friends', 'tech-RL-caida', 'tech-p2p-gnutella', 'web-arabic-2005']
+    cloud = cloud2
+    collection = 'netrepo'
+    for name in netrepo_names:
+        if not os.path.exists('%s/data/%s/%s.ij_stats/EccDistr' % (local_dir, collection, name)):
+            continue
+
+        copy_command = 'scp -i %s -r %s/data/%s/%s.ij_stats/ %s:%s/data/%s/' % (
+            ssh_key, local_dir, collection, name, cloud, remote_dir, collection)
+
+        command = copy_command
+
+        logging.info("Executing command: '%s' ..." % command)
+        retcode = subprocess.Popen(command, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
+        if retcode != 0:
+            logging.error("returned code =", retcode)
+            raise RuntimeError("unsuccessful: '%s'" % command)
+        else:
+            logging.info("OK")
+
+
+def prepare_netrepo_graphs():
+    for name in netrepo_names:
+        g = GraphCollections.get(name, 'netrepo')
+        print("N=%s, E=%s, d_avg=%.2f" % (g['NODES'], g['EDGES'], g[Stat.AVG_DEGREE]))
 
 
 if __name__ == '__main__':
@@ -255,6 +340,7 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    prepare_graphs()
-    # big_run()
+    big_run()
     # test_runner()
+    # prepare_netrepo_graphs()
+    # cloud_manager()
