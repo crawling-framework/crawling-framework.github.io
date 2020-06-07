@@ -116,6 +116,12 @@ class MyGraph(object):
     def add_edge(self, i: int, j: int):
         return self._snap_graph.AddEdge(i, j)
 
+    def has_node(self, node: int):
+        return self._snap_graph.IsNode(node)
+
+    def has_edge(self, i: int, j: int):
+        return self._snap_graph.IsEdge(i, j)
+
     def deg(self, node: int):
         return self._snap_graph.GetNI(node).GetDeg()
 

@@ -1,8 +1,10 @@
+import subprocess
 from argparse import ArgumentError
 
 from graph_io import GraphCollections
-from utils import USE_CYTHON_CRAWLERS, USE_NETWORKIT
+from utils import USE_CYTHON_CRAWLERS, USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
 
+import os
 import logging
 from enum import Enum
 from operator import itemgetter
@@ -174,7 +176,49 @@ if not USE_CYTHON_CRAWLERS:
                     del node_cent[None]
 
         elif centrality == 'eccentricity':
-            node_cent = {n.GetId(): snap.GetNodeEcc(s, n.GetId(), graph.directed) for n in tqdm(s.Nodes())}
+            if not USE_LIGRA or s.GetNodes() < 1000:
+                node_cent = {n.GetId(): snap.GetNodeEcc(s, n.GetId(), graph.directed) for n in tqdm(s.Nodes())}
+
+            else:  # Ligra
+                # duplicate edges
+                path = graph.path
+                path_dup = path + '_dup'
+                with open(path_dup, 'w') as out_file:
+                    for line in open(path, 'r'):
+                        if len(line) < 3:
+                            break
+                        i, j = line.split()
+                        out_file.write('%s %s\n' % (i, j))
+                        out_file.write('%s %s\n' % (j, i))
+
+                # convert to Adj
+                path_lig = path + '_ligra'
+                ligra_converter_command = "./utils/SNAPtoAdj '%s' '%s'" % (path_dup, path_lig)
+                retcode = subprocess.Popen(ligra_converter_command, cwd=LIGRA_DIR, shell=True,
+                                           stderr=sys.stderr).wait()
+                if retcode != 0:
+                    raise RuntimeError("Ligra converter failed: '%s'" % ligra_converter_command)
+
+                # Run Ligra kBFS
+                path_lig_ecc = path + '_ecc'
+                ligra_ecc_command = "./apps/eccentricity/kBFS-Ecc -s -rounds 0 -out '%s' '%s'" % (
+                path_lig_ecc, path_lig)
+                # ligra_ecc_command = "./apps/eccentricity/kBFS-Exact -s -rounds 0 -out '%s' '%s'" % (path_lig_ecc, path_lig)
+                retcode = subprocess.Popen(ligra_ecc_command, cwd=LIGRA_DIR, shell=True,
+                                           stdout=subprocess.DEVNULL, stderr=sys.stderr).wait()
+                if retcode != 0:
+                    raise RuntimeError("Ligra kBFS-Ecc failed: %s" % ligra_ecc_command)
+
+                # read and convert ecc
+                node_cent = {}
+                for n, line in enumerate(open(path_lig_ecc)):
+                    if graph.has_node(n):
+                        node_cent[n] = int(line)
+                assert len(node_cent) == graph.nodes()
+
+                os.remove(path_dup)
+                os.remove(path_lig)
+                os.remove(path_lig_ecc)
 
         elif centrality == 'clustering':
             NIdCCfH = snap.TIntFltH()
@@ -245,13 +289,17 @@ def test():
     # 2.
     from graph_io import GraphCollections
     # graph = GraphCollections.get('test', 'other', giant_only=True)
+    # graph = GraphCollections.get('petster-hamster', giant_only=True)
+    # graph = GraphCollections.get('advogato', giant_only=True)
+    # graph = GraphCollections.get('loc-brightkite_edges', giant_only=True)
     # graph = GraphCollections.get('dolphins', giant_only=True)
+    graph = GraphCollections.get('digg-friends', giant_only=True)
     # graph = GraphCollections.get('douban', giant_only=True)
-    graph = GraphCollections.get('GP', giant_only=True)
+    # graph = GraphCollections.get('GP', giant_only=True)
     # graph = GraphCollections.get('Lj', giant_only=True)
     # graph = GraphCollections.get('com-youtube', giant_only=True)
 
-    stat = Stat.CLOSENESS_DISTR
+    stat = Stat.ECCENTRICITY_DISTR
 
     print(graph.name, graph.nodes(), graph.edges(), stat)
     node_prop = graph[stat]
@@ -271,34 +319,88 @@ def test_stats():
 def test_approx_stat(graph: MyGraph, stat: Stat):
     """ Measure the intersection of top-set centrality nodes found by snap vs networkit
     """
-    import networkit as nk
-    node_map = {}
-    g = graph.networkit(node_map)
-    # centrality = Betweenness(g, normalized=False)
-    # centrality = DegreeCentrality(g, normalized=False)
-    # centrality = ApproxBetweenness(g, epsilon=0.01, delta=0.1)
-    # centrality = EstimateBetweenness(g, nSamples=1000, normalized=False, parallel=True)
-    # centrality.run()
+    if stat in [Stat.CLOSENESS_DISTR, Stat.BETWEENNESS_DISTR]:
+        import networkit as nk
+        node_map = {}
+        g = graph.networkit(node_map)
+        # centrality = Betweenness(g, normalized=False)
+        # centrality = DegreeCentrality(g, normalized=False)
+        # centrality = ApproxBetweenness(g, epsilon=0.01, delta=0.1)
+        # centrality = EstimateBetweenness(g, nSamples=1000, normalized=False, parallel=True)
+        # centrality.run()
 
-    # print(g.nodes())
-    # print(node_map)
-    # print(centrality.scores())
-    count = int(0.1*graph.nodes())
-    snap = sorted(list(eval(open(graph.path + '_stats/%s (snap)' % stat.short, 'r').read()).items()), key=itemgetter(1), reverse=True)
-    top_snap = set([n for (n, d) in snap[:count]])
-    nk = sorted(list(eval(open(graph.path + '_stats/%s' % stat.short, 'r').read()).items()), key=itemgetter(1), reverse=True)
-    top_nk = set([n for (n, d) in nk[:count]])
+        # print(g.nodes())
+        # print(node_map)
+        # print(centrality.scores())
+        count = int(0.1*graph.nodes())
+        snap = sorted(list(eval(open(graph.path + '_stats/%s (snap)' % stat.short, 'r').read()).items()), key=itemgetter(1), reverse=True)
+        top_snap = set([n for (n, d) in snap[:count]])
+        nk = sorted(list(eval(open(graph.path + '_stats/%s' % stat.short, 'r').read()).items()), key=itemgetter(1), reverse=True)
+        top_nk = set([n for (n, d) in nk[:count]])
 
-    # scores = centrality.scores()
-    # print(scores)
-    # node_cent = {node_map[i+1]: score for i, score in enumerate(scores)}
-    # sorted_node_cent = sorted(list(node_cent.items()), key=itemgetter(1), reverse=True)
-    # print(node_cent)
-    # top = set([n for (n, d) in sorted_node_cent[:count]])
-    print("counted")
-    print(len(top_snap.intersection(top_nk))/count)
+        # scores = centrality.scores()
+        # print(scores)
+        # node_cent = {node_map[i+1]: score for i, score in enumerate(scores)}
+        # sorted_node_cent = sorted(list(node_cent.items()), key=itemgetter(1), reverse=True)
+        # print(node_cent)
+        # top = set([n for (n, d) in sorted_node_cent[:count]])
+        print("counted")
+        print(len(top_snap.intersection(top_nk))/count)
 
-    # print({i+1: val for i, val in enumerate(centrality.scores())})
+        # print({i+1: val for i, val in enumerate(centrality.scores())})
+
+    elif stat == Stat.ECCENTRICITY_DISTR:
+        assert USE_LIGRA
+
+        # duplicate edges
+        path = graph.path
+        path_dup = path + '_dup'
+        with open(path_dup, 'w') as out_file:
+            for line in open(path, 'r'):
+                if len(line) < 3:
+                    break
+                i, j = line.split()
+                out_file.write('%s %s\n' % (i, j))
+                out_file.write('%s %s\n' % (j, i))
+
+        # convert to Adj
+        path_lig = path + '_ligra'
+        ligra_converter_command = "./utils/SNAPtoAdj '%s' '%s'" % (path_dup, path_lig)
+        retcode = subprocess.Popen(ligra_converter_command, cwd=LIGRA_DIR, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
+        if retcode != 0:
+            raise RuntimeError("Ligra converter failed: '%s'" % ligra_converter_command)
+
+        # Run Ligra kBFS
+        path_lig_ecc = path + '_ecc'
+        ligra_ecc_command = "./apps/eccentricity/kBFS-Ecc -s -rounds 0 -out '%s' '%s'" % (path_lig_ecc, path_lig)
+        # ligra_ecc_command = "./apps/eccentricity/kBFS-Exact -s -rounds 0 -out '%s' '%s'" % (path_lig_ecc, path_lig)
+        retcode = subprocess.Popen(ligra_ecc_command, cwd=LIGRA_DIR, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
+        if retcode != 0:
+            raise RuntimeError("Ligra kBFS-Ecc failed: %s" % ligra_ecc_command)
+
+        # read and convert ecc
+        node_ecc = {}
+        for n, line in enumerate(open(path_lig_ecc)):
+            if graph.has_node(n):
+                node_ecc[n] = int(line)
+        assert len(node_ecc) == graph.nodes()
+        with open(graph.path + '_stats/%s' % stat.short, 'w') as f:
+            f.write(str(node_ecc))
+
+        # print(node_ecc)
+        os.remove(path_dup)
+        os.remove(path_lig)
+        os.remove(path_lig_ecc)
+
+        # compare
+        count = int(0.35*graph.nodes())
+        snap = sorted(list(eval(open(graph.path + '_stats/%s (snap)' % stat.short, 'r').read()).items()), key=itemgetter(1), reverse=True)
+        top_snap = set([n for (n, d) in snap[:count]])
+        lig = sorted(list(eval(open(graph.path + '_stats/%s' % stat.short, 'r').read()).items()), key=itemgetter(1), reverse=True)
+        top_lig = set([n for (n, d) in lig[:count]])
+
+        print("counted")
+        print(len(top_snap.intersection(top_lig))/count)
 
 
 def main():

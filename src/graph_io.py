@@ -334,14 +334,15 @@ def test_netrepo():
 
 
 def test_graph_manipulations():
-    path = '/home/misha/workspace/crawling/data/mipt.ij'
+    assert USE_CYTHON_CRAWLERS == False
+    path = '/home/misha/workspace/crawling/data/snap/email-Enron.txt'
 
     # # # nodes renumerating
     # reformat_graph_file(path, path+'_', renumerate=True)
 
     # giant extraction
     print("Giant component extraction")
-    graph = MyGraph(path + '_', 'mipt', False)
+    graph = MyGraph(path + '_', 'enron', False)
     s = graph.snap
     s = snap.GetMxWcc(s)
     graph._snap_graph = s
@@ -378,9 +379,9 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
 
     # test_konect()
-    test_netrepo()
+    # test_netrepo()
     # test_graph()
-    # test_graph_manipulations()
+    test_graph_manipulations()
     # parse_konect_page()
     # parse_netrepo_page()
 

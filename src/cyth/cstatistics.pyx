@@ -1,7 +1,12 @@
 import logging
+import os
+import subprocess
+import sys
+
 from tqdm import tqdm
 
-from statistics import Stat, USE_NETWORKIT
+from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
+from statistics import Stat
 from base.cgraph cimport CGraph, GetClustCf, GetMxWccSz, PUNGraph, TUNGraph, GetBfsEffDiam, \
     GetMxWcc, TIntFltH, GetBetweennessCentr, THashKeyDatI, TInt, TFlt, GetPageRank, \
     GetClosenessCentr, GetNodeEcc, GetNodeClustCf, GetKCore
@@ -150,10 +155,53 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
                 del node_cent[None]
 
     elif centrality == 'eccentricity':
-        ni = g.BegNI()
-        for i in tqdm(range(n)):
-            node_cent[ni.GetId()] = GetNodeEcc[PUNGraph](p, ni.GetId(), graph.directed)
-            pinc(ni)
+        if not USE_LIGRA or n < 1000:
+            ni = g.BegNI()
+            for i in tqdm(range(n)):
+                node_cent[ni.GetId()] = GetNodeEcc[PUNGraph](p, ni.GetId(), graph.directed)
+                pinc(ni)
+
+        else:  # Ligra
+            # duplicate edges
+            path = graph.path
+            path_dup = path + '_dup'
+            with open(path_dup, 'w') as out_file:
+                for line in open(path, 'r'):
+                    if len(line) < 3:
+                        break
+                    x, y = line.split()
+                    out_file.write('%s %s\n' % (x, y))
+                    out_file.write('%s %s\n' % (y, x))
+
+            # convert to Adj
+            path_lig = path + '_ligra'
+            ligra_converter_command = "./utils/SNAPtoAdj '%s' '%s'" % (path_dup, path_lig)
+            retcode = subprocess.Popen(ligra_converter_command, cwd=LIGRA_DIR, shell=True,
+                                       stderr=sys.stderr).wait()
+            if retcode != 0:
+                raise RuntimeError("Ligra converter failed: '%s'" % ligra_converter_command)
+
+            # Run Ligra kBFS
+            path_lig_ecc = path + '_ecc'
+            ligra_ecc_command = "./apps/eccentricity/kBFS-Ecc -s -rounds 0 -out '%s' '%s'" % (
+            path_lig_ecc, path_lig)
+            # ligra_ecc_command = "./apps/eccentricity/kBFS-Exact -s -rounds 0 -out '%s' '%s'" % (path_lig_ecc, path_lig)
+            retcode = subprocess.Popen(ligra_ecc_command, cwd=LIGRA_DIR, shell=True,
+                                       stdout=subprocess.DEVNULL, stderr=sys.stderr).wait()
+            if retcode != 0:
+                raise RuntimeError("Ligra kBFS-Ecc failed: %s" % ligra_ecc_command)
+
+            # read and convert ecc
+            node_cent = {}
+            for n, line in enumerate(open(path_lig_ecc)):
+                if graph.has_node(n):
+                    node_cent[n] = int(line)
+            assert len(node_cent) == graph.nodes()
+
+            os.remove(path_dup)
+            os.remove(path_lig)
+            os.remove(path_lig_ecc)
+
 
     elif centrality == 'clustering':
         Nodes = TIntFltH()
