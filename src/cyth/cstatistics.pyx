@@ -150,7 +150,7 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
             centr = ApproxCloseness(nk_graph, nSamples=min(nk_graph.numberOfNodes(), 300), epsilon=0.1, normalized=False)
             centr.run()
             scores = centr.scores()
-            node_cent = {node_map[i]: score for i, score in enumerate(scores)}
+            node_cent = {node_map[i]: score for i, score in enumerate(scores)} # FIXME some of them are nan
             if None in node_cent:
                 del node_cent[None]
 

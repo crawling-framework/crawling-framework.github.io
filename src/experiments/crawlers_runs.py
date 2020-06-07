@@ -36,20 +36,20 @@ def start_runner(graph, animated=False, statistics: list = None, top_k_percent=0
                    SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed[0]),
                    BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),  # is like take SBS with p=1
 
-                   # RandomWalkCrawler(graph, initial_seed=initial_seed[0]),
-                   # RandomCrawler(graph, initial_seed=initial_seed[0]),
-                   #
-                   # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-                   # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-                   # MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-                   # MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
-                   # MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
-                   #
-                   # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-                   # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-                   # PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-                   # PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
-                   # PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+                   RandomWalkCrawler(graph, initial_seed=initial_seed[0]),
+                   RandomCrawler(graph, initial_seed=initial_seed[0]),
+
+                   MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+
+                   PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
                ] \
                + [
                    MultiCrawler(graph, crawlers=[
@@ -143,8 +143,8 @@ def big_run():
         # 'petster-hamster',        # with    2000 nodes and    16098 edges, davg=16.10
 
 
-        # # netrepo from Guidelines
-        # #
+        # netrepo from Guidelines
+        #
         # 'socfb-Bingham82',         # N=10004, E=362894, d_avg=72.55
         # 'soc-brightkite',          # N=56739, E=212945, d_avg=7.51
         # 'ca-citeseer',             # N=227320, E=814134, d_avg=7.16
@@ -162,18 +162,15 @@ def big_run():
         # 'soc-BlogCatalog',         # N=88784, E=2093195, d_avg=47.15
         # 'sc-pkustk13',             # N=94893, E=3260967, d_avg=68.73
         # # 10x all - cloud2
-        #
+
         # 'web-uk-2005',             # N=129632, E=11744049, d_avg=181.19
         # 'web-italycnr-2000',       # N=325557, E=2738969, d_avg=16.83
         # 'ca-dblp-2012',            # N=317080, E=1049866, d_avg=6.62
         # 'sc-pwtk',                 # N=217891, E=5653221, d_avg=51.89
-        # # local
-        #
         # 'web-sk-2005',             # N=121422, E=334419, d_avg=5.51
         # 'sc-shipsec1',             # N=140385, E=1707759, d_avg=24.33
-        # # 'ca-MathSciNet',           # N=332689, E=820644, d_avg=4.93
-        # # 'sc-shipsec5',             # N=179104, E=2200076, d_avg=24.57
-        # # waiting for ecc - cloud2
+        # 'ca-MathSciNet',           # N=332689, E=820644, d_avg=4.93
+        # 'sc-shipsec5',             # N=179104, E=2200076, d_avg=24.57
     ]
     big_graphs = ['youtube-u-growth', 'flixster', 'soc-pokec-relationships', 'com-youtube', ]
 
@@ -181,7 +178,7 @@ def big_run():
         if graph_name == 'mipt':
             g = GraphCollections.get(graph_name, 'other', giant_only=True)
         else:
-            g = GraphCollections.get(graph_name, giant_only=True)
+            g = GraphCollections.get(graph_name, 'netrepo', giant_only=True)
         print('Graph {} with {} nodes and {} edges, davg={:02.2f}'.format(graph_name, g.nodes(), g.edges(),
                                                                           2.0 * g.edges() / g.nodes()))
         if graph_name in big_graphs:
@@ -191,9 +188,9 @@ def big_run():
 
         # TODO: to check and download graph before multiprocessing
         msg = "Did not finish"
-        iterations = 1
+        iterations = 4
         # iterations = multiprocessing.cpu_count() - 2
-        for iter in range(int(1 // iterations)):
+        for iter in range(int(12 // iterations)):
             start_time = time.time()
             processes = []
             # making parallel itarations. Number of processes
@@ -212,8 +209,12 @@ def big_run():
                 p.start()
 
             p.join()
-            msg = "Completed graph {} with {} nodes and {} edges. time elapsed: {:.2f}s, {}".\
+
+            msg = "Completed graph {} with {} nodes and {} edges. time elapsed: {:.2f}s, {}". \
                 format(graph_name, g.nodes(), g.edges(), time.time() - start_time, processes)
+            # except Exception as e:
+            #     msg = "Failed graph %s after %.2fs with error %s" % (graph_name, time.time() - start_time, e)
+
             print(msg)
 
         # send to my vk
@@ -335,7 +336,7 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    # big_run()
+    big_run()
     # test_runner()
     # prepare_netrepo_graphs()
     # cloud_manager()
