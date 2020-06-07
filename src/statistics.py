@@ -410,6 +410,7 @@ def main():
         description='Compute statistics for graphs. Graph is specified via path (-p) or name in Konect (-n).')
     parser.add_argument('-p', '--path', required=False, nargs='+', help='path to input graphs as edgelist')
     parser.add_argument('-n', '--name', required=False, nargs='+', help='names/codes of input graphs in Konect')
+    parser.add_argument('-c', '--collection', required=False, help="graphs collection: 'konect' or 'netrepo'")
     # parser.add_argument('-d', action='store_true', help='specify if graph is directed')
     parser.add_argument('-f', '--full', action='store_true', help='print full statistics value')
     parser.add_argument('-s', '--stats', required=True, nargs='+', choices=stats,
@@ -426,7 +427,8 @@ def main():
     if args.path:
         graphs = [MyGraph(path=p, name='', directed=args.d) for p in args.path]
     else:
-        graphs = [GraphCollections.get(n, giant_only=True) for n in args.name]
+        collection = args.collection if args.collection else 'konect'
+        graphs = [GraphCollections.get(n, collection, giant_only=True) for n in args.name]
 
     for graph in graphs:
         for s in args.stats:
@@ -438,7 +440,9 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s')
+    logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
+    logging.getLogger('matplotlib').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.DEBUG)
 
     # # imports workaround https://stackoverflow.com/questions/26589805/python-enums-across-modules

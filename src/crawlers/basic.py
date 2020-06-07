@@ -234,7 +234,7 @@ class SnowBallCrawler(Crawler):
          node. If None is given, a random node of original graph will be used.
         :param p: probability of taking neighbor into queue
         """
-        super().__init__(graph, name='SB_%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
+        super().__init__(graph, name='SBS%s' % (int(p * 100) if p != 0.5 else ''), **kwargs)
         if len(self.observed_set) == 0:
             if initial_seed is None:
                 initial_seed = random.choice([n.GetId() for n in self.orig_graph.snap.Nodes()])
@@ -382,7 +382,7 @@ class MaximumObservedDegreeCrawler(CrawlerUpdatable):
 
 class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
     def __init__(self, graph: MyGraph, batch=10, initial_seed=None, **kwargs):
-        super().__init__(graph, name='POD-%s' % (batch if batch > 1 else ''), **kwargs)
+        super().__init__(graph, name='POD%s' % (batch if batch > 1 else ''), **kwargs)
 
         if len(self._observed_set) == 0:
             if initial_seed is None:  # fixme duplicate code in all basic crawlers?
