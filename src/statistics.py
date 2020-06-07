@@ -171,7 +171,7 @@ if not USE_CYTHON_CRAWLERS:
                 centr = ApproxCloseness(g, nSamples=min(g.numberOfNodes(), 300), epsilon=0.1, normalized=False)
                 centr.run()
                 scores = centr.scores()
-                node_cent = {node_map[i]: score for i, score in enumerate(scores)}  # FIXME some of them are nan
+                node_cent = {node_map[i]: score for i, score in enumerate(scores)}
                 if None in node_cent:
                     del node_cent[None]
 
@@ -293,27 +293,17 @@ def test():
     # graph = GraphCollections.get('advogato', giant_only=True)
     # graph = GraphCollections.get('loc-brightkite_edges', giant_only=True)
     # graph = GraphCollections.get('dolphins', giant_only=True)
-    # graph = GraphCollections.get('digg-friends', giant_only=True)
+    graph = GraphCollections.get('digg-friends', giant_only=True)
     # graph = GraphCollections.get('douban', giant_only=True)
     # graph = GraphCollections.get('GP', giant_only=True)
     # graph = GraphCollections.get('Lj', giant_only=True)
     # graph = GraphCollections.get('com-youtube', giant_only=True)
 
-    name = 'sc-shipsec5'
-    graph = GraphCollections.get(name, 'netrepo')
-    s = graph.snap
-    print(snap.GetClosenessCentr(s, 13, graph.directed))
-    print(snap.GetClosenessCentr(s, 14, graph.directed))
-    print(snap.GetClosenessCentr(s, 15, graph.directed))
-    print(snap.GetClosenessCentr(s, 17, graph.directed))
-    print(snap.GetClosenessCentr(s, 18, graph.directed))
-    print(snap.GetClosenessCentr(s, 19, graph.directed))
+    stat = Stat.ECCENTRICITY_DISTR
 
-    # stat = Stat.ECCENTRICITY_DISTR
-    #
-    # print(graph.name, graph.nodes(), graph.edges(), stat)
-    # node_prop = graph[stat]
-    # print(str(node_prop)[:100])
+    print(graph.name, graph.nodes(), graph.edges(), stat)
+    node_prop = graph[stat]
+    print(str(node_prop)[:100])
 
     # test_approx_stat(graph, stat)
 
@@ -460,5 +450,5 @@ if __name__ == '__main__':
     sys.modules['statistics'] = sys.modules['__main__']
 
     # test_stats()
-    test()
-    # main()
+    # test()
+    main()
