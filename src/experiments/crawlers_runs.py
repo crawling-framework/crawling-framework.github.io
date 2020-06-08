@@ -103,9 +103,6 @@ def big_run():
     # graph_name = 'slashdot-threads'   # with  51083 nodes and  116573 edges
     # graph_name = 'ego-gplus'          # with  23613 nodes and   39182 edges
     # graph_name = 'petster-hamster'    # with   2000 nodes and   16098 edges
-    for graph_name in ['petster-friendships-dog', 'munmun_twitter_social', 'com-youtube',
-                       'soc-pokec-relationships', 'flixster', 'youtube-u-growth', 'petster-friendships-cat', ]:
-        g = GraphCollections.get(graph_name, giant_only=True)
 
     graphs = [
         # # # # 'livejournal-links', toooo large need all metrics
@@ -116,10 +113,10 @@ def big_run():
         # 'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06  10/10
 
         # 'flixster',                 # with 2523386 nodes and  7918801 edges, davg= 6.28  fails   no ecc
-        # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  6/10 - RW,RC,MOD, 4/10 - POD, 9/10 - others     no ecc
-        # 12x all but Multi +ecc - cloud2
-        #  - local
-        # 1x others - ?
+        'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  7/10 - POD no ecc, 9/10 - Multi no ecc, 10/10 - others
+        # Done: 7x POD no ecc, 9x Multi no ecc, 10x others
+        # 10x POD ecc - local
+        # 12x Multi - local
 
         # 'munmun_twitter_social',    # with  465017 nodes and   833540 edges, davg= 3.58  10/10
 
@@ -133,44 +130,51 @@ def big_run():
         # 'petster-hamster',        # with    2000 nodes and    16098 edges, davg=16.10
 
 
-        # netrepo from Guidelines
+        # # netrepo from Guidelines
+        # #
+        # 10x all - cloud1, in reverse direction
+        # 'socfb-Bingham82',     # N=10001,  E=362892,   d_avg=72.57  10/10
+        # 'soc-brightkite',      # N=56739,  E=212945,   d_avg=7.51  10/10
+        # 'ca-citeseer',         # N=227320, E=814134,   d_avg=7.16  5/10 ..
+        # 'ca-dblp-2010',        # N=226413, E=716460,   d_avg=6.33
+        # 'ca-dblp-2012',        # N=317080, E=1049866,  d_avg=6.62
+        # 'ca-MathSciNet',       # N=332689, E=820644,   d_avg=4.93
+        # 'rec-amazon',          # N=91813,  E=125704,   d_avg=2.74
+        # 'rec-github',          # N=121331, E=439642,   d_avg=7.25
+        # 'socfb-OR',            # N=63392,  E=816886,   d_avg=25.77
+        # 'socfb-Penn94',        # N=41536,  E=1362220,  d_avg=65.59
+        # 'socfb-wosn-friends',  # N=63392,  E=816886,   d_avg=25.77
+        # 'tech-p2p-gnutella',   # N=62561,  E=147878,   d_avg=4.73
+        # 'tech-RL-caida',       # N=190914, E=607610,   d_avg=6.37
+        # 'web-arabic-2005',     # N=163598, E=1747269,  d_avg=21.36
+        # 'web-italycnr-2000',   # N=325557, E=2738969,  d_avg=16.83
+        # 'web-sk-2005',         # N=121422, E=334419,   d_avg=5.51
         #
-        'socfb-Bingham82',     # N=10001,  E=362892,   d_avg=72.57
-        'soc-brightkite',      # N=56739,  E=212945,   d_avg=7.51
-        'ca-citeseer',         # N=227320, E=814134,   d_avg=7.16
-        'ca-dblp-2010',        # N=226413, E=716460,   d_avg=6.33
-        'ca-dblp-2012',        # N=317080, E=1049866,  d_avg=6.62
-        'ca-MathSciNet',       # N=332689, E=820644,   d_avg=4.93
-        'rec-amazon',          # N=91813,  E=125704,   d_avg=2.74
-        'rec-github',          # N=121331, E=439642,   d_avg=7.25
-        'socfb-OR',            # N=63392,  E=816886,   d_avg=25.77
-        'socfb-Penn94',        # N=41536,  E=1362220,  d_avg=65.59
-        'socfb-wosn-friends',  # N=63392,  E=816886,   d_avg=25.77
-        'tech-p2p-gnutella',   # N=62561,  E=147878,   d_avg=4.73
-        'tech-RL-caida',       # N=190914, E=607610,   d_avg=6.37
-        'web-arabic-2005',     # N=163598, E=1747269,  d_avg=21.36
-        'web-italycnr-2000',   # N=325557, E=2738969,  d_avg=16.83
-        'web-sk-2005',         # N=121422, E=334419,   d_avg=5.51
-        'web-uk-2005',         # N=129632, E=11744049, d_avg=181.19
-        'soc-slashdot',        # N=70068,  E=358647,   d_avg=10.24
-        'soc-themarker',       #?N=69317,  E=1644794,  d_avg=47.46
-        'soc-BlogCatalog',     # N=88784,  E=2093195,  d_avg=47.15
-        'sc-pkustk13',         # N=94893,  E=3260967,  d_avg=68.73
-        'sc-pwtk',             # N=217883, E=5653217,  d_avg=51.89
-        'sc-shipsec1',         # N=139995, E=1705212,  d_avg=24.36
-        'sc-shipsec5',         # N=178573, E=2197367,  d_avg=24.61
+
+        # 'web-uk-2005',         # N=129632, E=11744049, d_avg=181.19  10/10 POD ..
+        # 'soc-slashdot',        # N=70068,  E=358647,   d_avg=10.24  10/10
+        # 2 graphs, 12x all except POD - cloud2
+
+        # 'soc-themarker',       #?N=69317,  E=1644794,  d_avg=47.46  10/10 POD
+        # 'soc-BlogCatalog',     # N=88784,  E=2093195,  d_avg=47.15  10/10 POD  F
+        # 2 graphs, 10x all except POD - cloud2
+
+        # 'sc-pkustk13',         # N=94893,  E=3260967,  d_avg=68.73  10/10
+        # 'sc-pwtk',             # N=217883, E=5653217,  d_avg=51.89  10/10
+        # 'sc-shipsec1',         # N=139995, E=1705212,  d_avg=24.36  10/10
+        # 'sc-shipsec5',         # N=178573, E=2197367,  d_avg=24.61  10/10
     ]
 
     for graph_name in graphs[::-1]:
         if graph_name == 'mipt':
             g = GraphCollections.get(graph_name, 'other', giant_only=True)
         else:
-            g = GraphCollections.get(graph_name, 'netrepo', giant_only=True)
+            g = GraphCollections.get(graph_name, 'konect', giant_only=True)
         print('Graph {} with {} nodes and {} edges, davg={:02.2f}'.format(graph_name, g.nodes(), g.edges(),
                                                                           2.0 * g.edges() / g.nodes()))
         # TODO: to check and download graph before multiprocessing
         msg = "Did not finish"
-        iterations = 5
+        iterations = 2
         # iterations = multiprocessing.cpu_count() - 2
         for iter in range(int(10 // iterations)):
             start_time = time.time()
@@ -181,7 +185,8 @@ def big_run():
                 # little multiprocessing magic, that calculates several iterations in parallel
                 p = multiprocessing.Process(target=start_runner, args=(g,),
                                             kwargs={'animated': False,
-                                                    'statistics': [s for s in Stat if 'DISTR' in s.name],
+                                                    # 'statistics': [s for s in Stat if 'DISTR' in s.name],
+                                                    'statistics': [Stat.ECCENTRICITY_DISTR],
                                                     'top_k_percent': 0.01,
                                                     # 'layout_pos':layout_pos,
                                                     'tqdm_info': 'core-' + str(exp + 1)
@@ -280,9 +285,9 @@ def cloud_manager():
     names = ['ca-citeseer', 'ca-dblp-2010', 'rec-amazon', 'rec-github', 'sc-pkustk13', 'soc-BlogCatalog',
              'soc-brightkite', 'soc-slashdot', 'soc-themarker', 'socfb-Bingham82', 'socfb-OR',
              'socfb-Penn94', 'socfb-wosn-friends', 'tech-RL-caida', 'tech-p2p-gnutella', 'web-arabic-2005']
-    cloud = cloud2
+    cloud = cloud1
     collection = 'netrepo'
-    for name in []:
+    for name in netrepo_names:
     # for name in ['web-uk-2005', 'web-italycnr-2000', 'ca-dblp-2012', 'sc-pwtk']:
         # if not os.path.exists('%s/data/%s/%s.ij_stats/EccDistr' % (local_dir, collection, name)):
         #     continue
@@ -304,15 +309,15 @@ def cloud_manager():
             logging.info("OK")
 
 
-    # Run script
-    cloud = cloud2
-    connect_command = 'ssh %s -i %s' % (cloud2, ssh_key)
-    logging.info("Executing command: '%s' ..." % connect_command)
-    retcode = subprocess.Popen(connect_command, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
-
-    run_command = 'cd workspace/crawling/; PYTHONPATH=/home/ubuntu/workspace/crawling/src python3 src/experiments/crawlers_runs.py'
-    logging.info("Executing command: '%s' ..." % run_command)
-    retcode = subprocess.Popen(run_command, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
+    # # Run script
+    # cloud = cloud2
+    # connect_command = 'ssh %s -i %s' % (cloud2, ssh_key)
+    # logging.info("Executing command: '%s' ..." % connect_command)
+    # retcode = subprocess.Popen(connect_command, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
+    #
+    # run_command = 'cd workspace/crawling/; PYTHONPATH=/home/ubuntu/workspace/crawling/src python3 src/experiments/crawlers_runs.py'
+    # logging.info("Executing command: '%s' ..." % run_command)
+    # retcode = subprocess.Popen(run_command, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
 
 
 def prepare_netrepo_graphs():
@@ -326,6 +331,18 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s')
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.DEBUG)
+
+    # # Write logs to file
+    # from datetime import datetime
+    # fh_info = logging.FileHandler("%s.log" % (datetime.now()))
+    # fh_info.setLevel(logging.DEBUG)
+    # fh_info.setFormatter(logging.Formatter('%(levelname)s:%(asctime)s:%(message)s'))
+    # logger = logging.getLogger('__main__')
+    # logger.addHandler(fh_info)
+
+    import sys
+    sys.stdout = open('logs', 'w')
+    sys.stderr = open('logs', 'w')
 
     big_run()
     # test_runner()

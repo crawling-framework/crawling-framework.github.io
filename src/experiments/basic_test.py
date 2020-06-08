@@ -20,17 +20,18 @@ from runners.animated_runner import AnimatedCrawlerRunner, Metric
 
 def test_basic(graph):
     crawlers = [
-        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=1),
+        # RandomCrawler(graph, initial_seed=1),
+        # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=1),
         # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=1),
         # BreadthFirstSearchCrawler(graph, initial_seed=10),
-        # RandomCrawler(graph),
+        RandomCrawler(graph),
     ]
 
     metrics = [
         Metric('observed_set', lambda crawler: len(crawler.observed_set)),
         Metric('nodes_set', lambda crawler: len(crawler.nodes_set)),
     ]
-    acr = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=1e3, step=1e2)
+    acr = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=1e7, step=1e4)
     acr.run()
 
     # iterations = []
@@ -268,10 +269,11 @@ if __name__ == '__main__':
     # name = 'flickr-links'
     # name = 'soc-pokec-relationships'
     # name = 'digg-friends'
+    name = 'com-youtube'
     # name = 'Lj'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
-    name = 'petster-hamster'
+    # name = 'petster-hamster'
     # name = 'dolphins'
     # g = test_carpet_graph(8, 8)[0]
     g = GraphCollections.get(name, giant_only=True)

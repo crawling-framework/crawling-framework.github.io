@@ -119,6 +119,9 @@ cdef extern from "Snap.h" namespace "TSnap":
     PGraph GetKCore[PGraph](const PGraph& Graph, const int& K)
 
 
+cdef TRnd t_random
+t_random.Randomize()
+
 cdef class CGraph:
     cdef TUNGraph _snap_graph  # TODO extend for directed
     cdef PUNGraph _snap_graph_ptr

@@ -11,9 +11,6 @@ cimport cgraph  # pxd import DON'T DELETE
 
 logger = logging.getLogger(__name__)
 
-cdef TRnd t_random
-t_random.Randomize()
-
 cdef inline fingerprint(const TUNGraph* snap_graph):  # FIXME duplicate
     """ Graph fingerprint to make sure briefly if it has changed.
 
