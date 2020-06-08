@@ -8,14 +8,16 @@ from utils import USE_CYTHON_CRAWLERS
 if USE_CYTHON_CRAWLERS:
     from base.cgraph import CGraph as MyGraph
     from base.cadvanced import AvrachenkovCrawler, CrawlerWithAnswer, ThreeStageCrawler, \
-        ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs
-    from base.cbasic import CrawlerException, MaximumObservedDegreeCrawler
+    ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs, DE_Crawler
+    from base.cbasic import CrawlerException, MaximumObservedDegreeCrawler, RandomWalkCrawler, \
+        BreadthFirstSearchCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler, MaximumExcessDegreeCrawler
     from base.cmultiseed import MultiCrawler
 else:
     from base.graph import MyGraph
     from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer, AvrachenkovCrawler, \
         ThreeStageMODCrawler
-    from crawlers.basic import CrawlerException, MaximumObservedDegreeCrawler
+    from crawlers.basic import CrawlerException, MaximumObservedDegreeCrawler, \
+        BreadthFirstSearchCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler
     from crawlers.multiseed import MultiCrawler
 
 from runners.animated_runner import AnimatedCrawlerRunner, Metric
@@ -101,22 +103,38 @@ if not USE_CYTHON_CRAWLERS:
 
 def test_target_set_coverage():
     # name, budget, start_seeds = 'flixster', 50000, 10000
-    # name, budget, start_seeds = 'soc-pokec-relationships', 30000, 3000
-    # name, budget, start_seeds = 'digg-friends', 1000, 200
+    # name, budget, start_seeds = 'soc-pokec-relationships', 3000, 3000
+    # name, budget, start_seeds = 'digg-friends', 5000, 200
     # name, budget, start_seeds = 'loc-brightkite_edges', 2500, 500
-    # name, budget, start_seeds = 'petster-hamster', 150, 50
+    # name, budget, start_seeds = 'petster-hamster', 200, 50
     # graph = GraphCollections.get(name, giant_only=True)
 
-    name, budget, start_seeds = 'ca-MathSciNet', 10000, 2000
+    # name, budget, start_seeds = 'ca-CondMat', 1000, 2000
+    # name, budget, start_seeds = 'soc-hamsterster', 1000, 2000
+    name, budget, start_seeds = 'tech-WHOIS', 1000, 2000
+    # name, budget, start_seeds = 'ca-AstroPh', 1000, 2000
+    # name, budget, start_seeds = 'tech-pgp', 1000, 2000
+    # name, budget, start_seeds = 'tech-routers-rf', 1000, 2000
+    # name, budget, start_seeds = 'web-indochina-2004', 1000, 2000
+    # name, budget, start_seeds = 'soc-anybeat', 1000, 2000
+
+    # name, budget, start_seeds = 'socfb-Bingham82', 1000, 2000
     graph = GraphCollections.get(name, 'netrepo', giant_only=True)
 
-    p = 0.1
+    p = 1
     target_list = get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(p * graph[Stat.NODES]))
     thr_degree = graph.deg(target_list[-1])
     target_set = set(target_list)
 
+    budget = int(0.1 * graph.nodes())
+
     crawlers = [
-        # MaximumObservedDegreeCrawler(graph, batch=1),
+        DE_Crawler(graph, initial_bacth=int(0.15*budget)),
+        BreadthFirstSearchCrawler(graph),
+        RandomWalkCrawler(graph),
+        MaximumObservedDegreeCrawler(graph, batch=1),
+        # PreferentialObservedDegreeCrawler(graph, batch=1),
+        MaximumExcessDegreeCrawler(graph),
         # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
@@ -125,16 +143,13 @@ def test_target_set_coverage():
         # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageMODCrawler(graph, s=start_seeds, n=budget, p=p, b=100),
         # ThreeStageFlexMODCrawler(graph, s=start_seeds, n=budget, p=p, b=1, thr_degree=thr_degree),
-        # PreferentialObservedDegreeCrawler(graph, batch=1),
-        # BreadthFirstSearchCrawler(graph, initial_seed=None),
-        # DepthFirstSearchCrawler(graph, initial_seed=None),
+        # DepthFirstSearchCrawler(graph, initial_seed=1),
         # RandomCrawler(graph, initial_seed=1),
-        # RandomWalkCrawler(graph, initial_seed=None),
-        AvrachenkovCrawler(graph, n=budget, n1=start_seeds, k=int(p * graph.nodes())),
-        ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
+        # AvrachenkovCrawler(graph, n=budget, n1=start_seeds, k=int(p * graph.nodes())),
+        # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageCrawlerSeedsAreHubs(graph, s=start_seeds, n=budget, p=p),
-        ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=1),
-        ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=1),
+        # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=1),
+        # ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=1),
         # MultiCrawler(graph, crawlers=[
         #     MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=i+1) for i in range(100)
         # ])
@@ -165,9 +180,9 @@ def test_target_set_coverage():
     metrics = [
         # Metric(r'$|V_o|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
         # Metric(r'$|V_o \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
-        Metric(r'$F_1$', f1_measure),
+        # Metric(r'$F_1$', f1_measure),
         # Metric(r'Pr', precision),
-        # Metric(r'Re', recall),
+        Metric(r'Re', recall),
         # Metric(r'Re - all nodes', recall_all),
         # Metric(r'Pr - E1*', lambda crawler: pr(crawler.e1s)),
         # Metric(r'Pr - E2*', lambda crawler: pr(crawler.e2s)),
@@ -175,8 +190,15 @@ def test_target_set_coverage():
         # Metric(r'Re - E2*', lambda crawler: re(crawler.e2s)),
     ]
 
+    from time import time
+    t = time()
     ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=int(budget/30))
     ci.run(ylims=(0, 1))
+    print(time()-t)
+
+    print("time_top", crawlers[0].time_top)
+    print("time_clust", crawlers[0].time_clust)
+    print("time_next", crawlers[0].time_next)
 
 
 def test_detection_quality():

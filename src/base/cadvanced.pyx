@@ -1,10 +1,12 @@
 import logging
 
-from base.cbasic import NoNextSeedError, CrawlerException, MaximumObservedDegreeCrawler
-from cbasic cimport CCrawler
-from cgraph cimport CGraph, str_to_chars
+from base.cbasic import NoNextSeedError, CrawlerException, MaximumObservedDegreeCrawler, RandomWalkCrawler
+from cbasic cimport CCrawler, CCrawlerUpdatable
+from cgraph cimport CGraph, str_to_chars, t_random
+from node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 
 from libcpp.set cimport set as cset
+from libcpp.map cimport map as cmap
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
@@ -288,7 +290,7 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
 
         self.mod_on = False
 
-    cdef vector[int] crawl(self, int seed) except *:
+    cpdef vector[int] crawl(self, int seed) except *:
         """ Apply MOD when time comes
         """
         # FIXME res is set now
@@ -307,6 +309,7 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
             yield random_seeds[i]
 
         # 2) run MOD
+        # TODO should we cimport it to avoid pythonizing?
         self.mod = MaximumObservedDegreeCrawler(self._orig_graph, batch=self.b)  # FIXME initial seed will be randomly chosen - useless
         self.mod.set_observed_graph(self._observed_graph)
         self.mod.set_observed_set(self._observed_set)
@@ -341,10 +344,180 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
 #     raise NotImplementedError()
 
 
+# time_top = 0
+# time_clust = 0
+from time import time
+t = time()
+
+cdef class DE_Crawler(CCrawlerUpdatable):
+    """
+    DE Crawler from http://kareekij.github.io/papers/de_crawler_asonam18.pdf
+    DE-Crawler: A Densification-Expansion Algorithm for Online Data Collection
+    """
+    cdef int initial_budget, prev_seed, initial_seed
+    cdef float s_d, s_e
+    cdef float a1, a2, b1, b2
+    cdef cmap[int, float] node_clust
+
+    cdef public float time_top
+    cdef public float time_clust
+    cdef public float time_next
+
+    # cdef class ND_Set_2(ND_Set):
+    #     cdef int pop_from_bottom(self, int count):
+    #         pass
+
+    cdef ND_Set nd_set
+
+    def __init__(self, CGraph graph, int initial_budget=10, int initial_seed=-1, name=None, **kwargs):
+        super().__init__(graph, name=name if name else "DE", **kwargs)
+
+        if self._observed_set.size() == 0:
+            if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
+                initial_seed = self._orig_graph.random_node()
+            self.observe(initial_seed)
+
+        self.s_d = 0
+        self.s_e = 0
+        self.a1 = 1  # varying
+        self.a2 = 1  # 64
+        self.b1 = 0.5
+        self.b2 = 0.5
+
+        self.initial_seed = initial_seed
+        self.prev_seed = -1
+        self.initial_budget = initial_budget
+
+        self.nd_set = ND_Set()
+        for n in deref(self._observed_set):
+            self.nd_set.add(n, self._observed_graph.deg(n))
+            self.node_clust[n] = self._observed_graph.clustering(n)
+
+    cpdef void update(self, vector[int] nodes):  # FIXME maybe ref faster?
+        """ Update priority structures with specified nodes (suggested their degrees have changed).
+        """
+        cdef int d, n, neigh, conn_neigs
+        cdef float cc, cc_new
+        for n in nodes:
+            d = self._observed_graph.deg(n)
+            # logger.debug("%s.ND_Set.updating(%s, %s)" % (self.name, n, d))
+            self.nd_set.update_1(n, d - 1)
+
+            # Update clustering
+            t = time()
+            conn_neigs = 0
+            for neigh in self._observed_graph.neighbors(n):
+                if self._observed_graph.has_edge(self.prev_seed, neigh):
+                    conn_neigs += 1
+            self.node_clust[n] = (self.node_clust[n] * (d-1) * (d-1) / 2 + conn_neigs) / d / d * 2
+            # self.node_clust[n] = self._observed_graph.clustering(n)
+            self.time_clust += time()-t
+
+    cpdef vector[int] crawl(self, int seed):
+        """ Crawl specified node and update observed ND_Set
+        """
+        cdef int d_seen, d_ex, d_new
+        d_seen = self._observed_graph.deg(seed)
+
+        cdef vector[int] res = CCrawler.crawl(self, seed)
+        self.prev_seed = seed
+
+        d_ex = self._observed_graph.deg(seed) - d_seen
+        d_new = len(res)
+        # logging.debug("seed %s: d_seen %s, d_ex %s, d_new %s" % (seed, d_seen, d_ex, d_new))
+
+        # Update stats
+        if self._crawled_set.size() >= self.initial_budget:
+            self.s_d = self.a1 * (1. * d_new / d_ex if d_ex > 0 else 1) + self.b1 * self.s_d
+            self.s_e = self.a2 * (1. * d_seen / d_ex if d_ex > 0 else 1) + self.b2 * self.s_e
+
+        cdef vector[int] upd
+        cdef int n
+        for n in self._observed_graph.neighbors(seed):
+            # if n in self._observed_set:
+            if self._observed_set.find(n) != self._observed_set.end():
+                upd.push_back(n)
+        self.node_clust[seed] = self._observed_graph.clustering(seed)
+        self.update(upd)
+
+        return res
+
+    cpdef int next_seed(self) except -1:
+        cdef int n
+        if self._crawled_set.size() < self.initial_budget:  # RW step
+            # return RandomWalkCrawler.next_seed(self)
+            if self.prev_seed == -1:  # first step
+                self.prev_seed = self.initial_seed
+                return self.initial_seed
+
+            if self._observed_set.size() == 0:
+                raise NoNextSeedError()
+
+            # for walking we need to step on already crawled nodes too
+            if self._observed_graph.deg(self.prev_seed) == 0:
+                raise NoNextSeedError("No neighbours to go next.")
+
+            # Go to a neighbor until encounter not crawled node
+            while True:
+                n = self._observed_graph.random_neighbor(self.prev_seed)
+                self.prev_seed = n
+                if self._observed_set.find(n) != self._observed_set.end():
+                    break
+
+            self.nd_set.remove(n, self._observed_graph.deg(n))
+            return n
+
+        if self._crawled_set.size() == self.initial_budget:  # Define a1
+            # self.a1 = self._observed_graph['MAX_DEGREE'] / self._observed_graph['AVG_DEGREE']
+            self.a1 = 1. * self._observed_graph.max_deg() * self._observed_graph.nodes() / (1. if self._observed_graph.directed else 2.) / self._observed_graph.edges()
+            logging.debug("a1=%s" % (self.a1))
+
+        if self._observed_set.size() == 0:
+            assert self.nd_set.empty()
+            raise NoNextSeedError()
+
+        cdef vector[int] part
+        cdef int count, deg, i, max_score_ix
+        cdef float score, max_score
+
+        tn = time()
+        # logging.debug("s_d=%s, s_e=%s" % (self.s_d, self.s_e))
+        if self.s_d < self.s_e:  # Expansion. Random from the bottom 80% by observed degree
+            logging.debug("Expansion")
+            t = time()
+            count = int(0.8 * self.nd_set.size())
+            part = self.nd_set.bottom(count)
+            n = part[t_random.GetUniDevInt(count)]
+            self.time_top += time()-t
+            # deg = self._observed_graph.deg(n)
+            # self.nd_set.remove(n, deg)
+            # return n
+
+        else:  # Densification.
+            logging.debug("Densification")
+            count = int(0.2 * self.nd_set.size())
+            part = self.nd_set.top(count)
+
+            # Find argmax d*(1-CC)
+            max_score = max_score_ix = 0
+            for ix in range(count):
+                n = part[ix]
+                score = self._observed_graph.deg(n) * (1 - self.node_clust[n])
+                # score = self._observed_graph.deg(n) * (1 - self._observed_graph.clustering(n))
+                if score > max_score:
+                    max_score = score
+                    max_score_ix = ix
+            n = part[max_score_ix]
+
+        deg = self._observed_graph.deg(n)
+        self.nd_set.remove(n, deg)
+        self.time_next += time()-tn
+        return n
+
+
 cpdef test_cadvanced():
     print("cadv")
 
     from graph_io import GraphCollections
     g = GraphCollections.get('petster-hamster')
     ac = AvrachenkovCrawler(g)
-

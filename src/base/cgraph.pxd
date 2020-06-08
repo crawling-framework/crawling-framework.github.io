@@ -18,7 +18,9 @@ cdef extern from "Snap.h":
 
     cdef cppclass TRnd:
         TRnd()
+        TRnd(const int& _Seed, const int& Steps)
         void Randomize()
+        void PutSeed(const int& _Seed)
         int GetUniDevInt(const int&)
 
     cdef cppclass TInt:
@@ -48,11 +50,20 @@ cdef extern from "Snap.h":
         TStr()
         TStr(const char*)
 
+    # cdef cppclass TCRef:
+    #     TCRef()
+    #     int GetRefs() const
+
     cdef cppclass TPt[T]:
+        @staticmethod
+        TPt New()
         TPt()
         TPt(T*)
         void Clr()
         T operator*()
+        bint operator==(const TPt& Pt) const
+        T& operator[](const int& RecN) const
+        int GetRefs() const
 
     cdef cppclass THashKeyDatI[TKey, TDat]:
         THashKeyDatI& operator++ ()
@@ -86,8 +97,8 @@ cdef extern from "Snap.h":
             # int GetNbrNId(int)
 
         TUNGraph()
-        # @staticmethod
-        # static PUNGraph New()
+        @staticmethod
+        PUNGraph New()
         int AddNode(int)
         int AddEdge(int, int)
         int GetNodes()
@@ -114,23 +125,26 @@ cdef extern from "Snap.h" namespace "TSnap":
     void GetPageRank[PGraph](const PGraph& Graph, TIntFltH& PRankH, const double& C, const double& Eps, const int& MaxIter)
     double GetClosenessCentr[PGraph](const PGraph& Graph, const int& NId, const bint& Normalized, const bint& IsDir)
     int GetNodeEcc[PGraph](const PGraph& Graph, const int& NId, const bint& IsDir)
-    double GetNodeClustCf[PGraph](const PGraph& Graph, const int& NId)
-    void GetNodeClustCf[PGraph](const PGraph& Graph, TIntFltH& NIdCCfH)
+    double GetANodeClustCf "TSnap::GetNodeClustCf"[PGraph](const PGraph& Graph, const int& NId)
+    void GetNodesClustCf "TSnap::GetNodeClustCf"[PGraph](const PGraph& Graph, TIntFltH& NIdCCfH)
     PGraph GetKCore[PGraph](const PGraph& Graph, const int& K)
 
 
+# from time import time
+cdef TRnd t_random
+# t_random.Randomize()
+# t_random.PutSeed(2)
+
+
 cdef class CGraph:
-    cdef TUNGraph _snap_graph  # TODO extend for directed
-    cdef PUNGraph _snap_graph_ptr
+    # cdef TUNGraph _snap_graph
+    cdef PUNGraph _snap_graph_ptr  # TODO extend for directed
     cdef char* _path
     cdef char* _name
     cdef bint _directed
     cdef bint _weighted
     cdef _fingerprint
     cdef _stats_dict
-
-    # cdef inline TUNGraph _snap(self):
-    #     return deref(self._snap_graph)
 
     cdef PUNGraph snap_graph_ptr(self)
 
@@ -149,6 +163,8 @@ cdef class CGraph:
     cpdef bint has_edge(self, int i, int j)
 
     cpdef int deg(self, int node)
+
+    cpdef double clustering(self, int node)
 
     cpdef int max_deg(self)
 

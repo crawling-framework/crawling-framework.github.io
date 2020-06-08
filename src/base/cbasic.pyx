@@ -70,11 +70,11 @@ cdef class CCrawler:
         return already
 
     # FIXME may be reference to vector?
-    cdef vector[int] crawl(self, int seed) except *:
+    cpdef vector[int] crawl(self, int seed) except *:
         """ Crawl specified node. The observed graph is updated, also crawled and observed set.
 
         :param seed: node id to crawl
-        :return: pointer to a set of updated nodes
+        :return: vector of updated nodes
         """
         # seed = int(seed)  # convert possible int64 to int, since snap functions would get error
         cdef vector[int] res
@@ -168,7 +168,7 @@ cdef class RandomCrawler(CCrawler):
         return random_from_iterable(self._observed_set)
         # return random.choice([n for n in self._observed_set])
 
-    cdef vector[int] crawl(self, int seed):
+    cpdef vector[int] crawl(self, int seed):
         return CCrawler.crawl(self, seed)
 
 
@@ -407,10 +407,10 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
         cdef int n
         cdef vector[int] vec
         if self.mod_set.size() == 0:  # making array of top-k degrees
-            if len(self.nd_set) == 0:
+            if self.nd_set.empty():
                 assert self._observed_set.size() == 0
                 raise NoNextSeedError()
-            vec = self.nd_set.top(self.batch)
+            vec = self.nd_set.pop_top(self.batch)
             for n in vec:
                 self.mod_set.insert(n)  # TODO could be simplified if nd_set and self.mod_set the same type
             # logger.debug("%s.queue: %s" % (self.name, self.mod_set))
@@ -420,8 +420,6 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
         self.mod_set.erase(it)
         return n
 
-from time import time
-timer = 0
 
 cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
     cdef int batch
@@ -480,6 +478,50 @@ cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
         n = deref(it)
         self.pod_set.erase(it)
         return n
+
+
+cdef class MaximumExcessDegreeCrawler(CCrawler):
+    """ Benchmark Crawler - greedy selection of next node with maximal excess (real - observed) degree
+    """
+    # cdef int batch
+    cdef ND_Set nd_set
+
+    def __init__(self, CGraph graph, int initial_seed=-1, name=None, **kwargs):
+        """
+        :param batch: batch size
+        :param initial_seed: if observed set is empty, the crawler will start from the given initial
+         node (if -1 is given, a random node of original graph will be used).
+        """
+        super().__init__(graph, name=name if name else "MED", **kwargs)
+
+        if self._observed_set.size() == 0:
+            if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
+                initial_seed = self._orig_graph.random_node()
+            self.observe(initial_seed)
+
+        # self.batch = batch
+        cdef int n, d
+        self.nd_set = ND_Set()
+        for n in deref(self._observed_set):
+            self.nd_set.add(n, self._orig_graph.deg(n))
+
+    cpdef vector[int] crawl(self, int seed):
+        """ Crawl specified node and update newly observed in ND_Set
+        """
+        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef int n
+        for n in res:
+            self.nd_set.add(n, self._orig_graph.deg(n))  # some elems will be re-written
+        return res
+
+    cpdef int next_seed(self) except -1:
+        """ Next node with highest real (unknown) degree
+        """
+        cdef int n
+        if self.nd_set.empty():
+            assert self._observed_set.size() == 0
+            raise NoNextSeedError()
+        return self.nd_set.pop_top(1)[0]
 
 
 # --------------------------------------

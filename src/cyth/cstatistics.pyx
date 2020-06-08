@@ -9,7 +9,7 @@ from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
 from statistics import Stat, plm
 from base.cgraph cimport CGraph, GetClustCf, GetMxWccSz, PUNGraph, TUNGraph, GetBfsEffDiam, \
     GetMxWcc, TIntFltH, GetBetweennessCentr, THashKeyDatI, TInt, TFlt, GetPageRank, \
-    GetClosenessCentr, GetNodeEcc, GetNodeClustCf, GetKCore
+    GetClosenessCentr, GetNodeEcc, GetNodesClustCf, GetKCore
 from cython.operator cimport dereference as deref, postincrement as pinc
 
 if USE_NETWORKIT:
@@ -39,21 +39,16 @@ stat_computer = {
 
 
 cdef double avg_cc(CGraph graph):
-    # cdef PUNGraph p = PUNGraph(&graph._snap_graph)
-    cdef PUNGraph p = graph.snap_graph_ptr()
-    cdef double res = GetClustCf[PUNGraph](p, -1)
-    return res
+    return GetClustCf[PUNGraph](graph.snap_graph_ptr(), -1)
 
 
 cdef double max_wcc_size(CGraph graph):
-    cdef PUNGraph p = graph.snap_graph_ptr()
-    return GetMxWccSz[PUNGraph](p)
+    return GetMxWccSz[PUNGraph](graph.snap_graph_ptr())
 
 
 cdef double diam_90(CGraph graph):
     cdef int n_approx = 1000
-    cdef PUNGraph p = graph.snap_graph_ptr()
-    return GetBfsEffDiam[PUNGraph](GetMxWcc[PUNGraph](p), min(n_approx, graph.nodes()), False)
+    return GetBfsEffDiam[PUNGraph](GetMxWcc[PUNGraph](graph.snap_graph_ptr()), min(n_approx, graph.nodes()), False)
 
 
 cdef float assortativity(CGraph graph):
@@ -88,8 +83,7 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
 
     cdef TUNGraph.TNodeI ni
     cdef PUNGraph p = graph.snap_graph_ptr()
-    cdef TUNGraph g = deref(p)
-    cdef int n = g.GetNodes(), node, k, i
+    cdef int n = graph.nodes(), node, k, i
     cdef TIntFltH Nodes
     cdef THashKeyDatI[TInt, TFlt] if_iter
     cdef TUNGraph KCore
@@ -99,7 +93,7 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
 
     node_cent = {}
     if centrality == 'degree':
-        ni = g.BegNI()
+        ni = deref(p).BegNI()
         for i in tqdm(range(n)):
             node_cent[ni.GetId()] = ni.GetDeg()
             pinc(ni)
@@ -140,7 +134,7 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
     elif centrality == 'closeness':
         if not USE_NETWORKIT:  # snap
             # FIXME seems to not distinguish edge directions
-            ni = g.BegNI()
+            ni = deref(p).BegNI()
             for i in tqdm(range(n)):
                 node_cent[ni.GetId()] = GetClosenessCentr[PUNGraph](p, ni.GetId(), graph.directed)
                 pinc(ni)
@@ -159,7 +153,7 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
 
     elif centrality == 'eccentricity':
         if not USE_LIGRA or n < 1000:
-            ni = g.BegNI()
+            ni = deref(p).BegNI()
             for i in tqdm(range(n)):
                 node_cent[ni.GetId()] = GetNodeEcc[PUNGraph](p, ni.GetId(), graph.directed)
                 pinc(ni)
@@ -208,7 +202,7 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
 
     elif centrality == 'clustering':
         Nodes = TIntFltH()
-        GetNodeClustCf[PUNGraph](p, Nodes)
+        GetNodesClustCf[PUNGraph](p, Nodes)
         if_iter = Nodes.BegI()
         while not if_iter == Nodes.EndI():
             node_cent[if_iter.GetKey()()] = if_iter.GetDat()()

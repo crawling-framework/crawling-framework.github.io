@@ -39,6 +39,12 @@ class IntPair_Set : public set<pair<int, int>>
             return r > 0;
         }
 
+        void remove(int node, int deg) {
+//            bool f = find(pair<int, int>(deg, node)) != end();
+//            std::cout << 'r' << f << '\n';
+            erase(pair<int, int>(deg, node));
+        }
+
         pair<int, int> pop() {
             auto r = --end();
             pair<int, int> res = *r;

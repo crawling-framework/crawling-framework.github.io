@@ -43,9 +43,9 @@ cdef class ND_Set:
     #     """
     #     return self.ipset.update(node, deg)
     #
-    # cpdef bint remove(self, int node, int deg):
-    #     return self.ipset.remove(node, deg)
-    #
+    cpdef remove(self, int node, int deg):
+        self.ipset.remove(node, deg)
+
     cpdef (int, int) pop(self):
         """ Pop (degree, node) with max degree.
         """
@@ -60,6 +60,9 @@ cdef class ND_Set:
 
     cpdef bint empty(self):
         return self.ipset.empty()
+
+    cpdef int size(self):
+        return self.ipset.size()
 
     def __len__(self):
         return self.ipset.size()
@@ -79,12 +82,35 @@ cdef class ND_Set:
             yield deref(it)
             inc(it)
 
-    cpdef vector[int] top(self, int size):
+    cpdef vector[int] pop_top(self, int size):
+        """ Get top-size removing from set"""
         cpdef vector[int] res
         while size > 0 and not self.ipset.empty():
             # res.append(self.ipset.pop().second)
             res.push_back(self.ipset.pop().second)
             size -= 1
+        return res
+
+    cpdef vector[int] top(self, int count):
+        """ Get top-count not removing from set"""
+        cpdef vector[int] res
+        cdef IntPair_Set.reverse_iterator it = self.ipset.rbegin()
+        count = min(count, self.ipset.size())
+        while count > 0:
+            res.push_back(deref(it).second)
+            inc(it)
+            count -= 1
+        return res
+
+    cpdef vector[int] bottom(self, int count):
+        """ Get bottom-count not removing from set"""
+        cpdef vector[int] res
+        cdef IntPair_Set.iterator it = self.ipset.begin()
+        count = min(count, self.ipset.size())
+        while count > 0:
+            res.push_back(deref(it).second)
+            inc(it)
+            count -= 1
         return res
 
     # def __getitem__(self, item):

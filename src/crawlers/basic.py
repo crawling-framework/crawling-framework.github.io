@@ -359,7 +359,7 @@ class MaximumObservedDegreeCrawler(CrawlerUpdatable):
             if len(self.nd_set) == 0:
                 assert len(self._observed_set) == 0
                 raise NoNextSeedError()
-            self.mod_queue = deque(self.nd_set.top(self.batch))  # for ND_Set
+            self.mod_queue = deque(self.nd_set.pop_top(self.batch))  # for ND_Set
             logger.debug("%s.queue: %s" % (self.name, self.mod_queue))
         return self.mod_queue.pop()
 

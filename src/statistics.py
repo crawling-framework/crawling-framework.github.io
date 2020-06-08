@@ -488,6 +488,6 @@ if __name__ == '__main__':
     import sys
     sys.modules['statistics'] = sys.modules['__main__']
 
-    # test_stats()
-    test()
+    test_stats()
+    # test()
     # main()
