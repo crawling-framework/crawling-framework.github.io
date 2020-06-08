@@ -113,7 +113,7 @@ def big_run():
         # 'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06  10/10
 
         # 'flixster',                 # with 2523386 nodes and  7918801 edges, davg= 6.28  fails   no ecc
-        'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  7/10 - POD no ecc, 9/10 - Multi no ecc, 10/10 - others
+        # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  7/10 - POD no ecc, 9/10 - Multi no ecc, 10/10 - others
         # Done: 7x POD no ecc, 9x Multi no ecc, 10x others
         # 10x POD ecc - local
         # 12x Multi - local
@@ -138,25 +138,26 @@ def big_run():
         # 'ca-citeseer',         # N=227320, E=814134,   d_avg=7.16  5/10 ..
         # 'ca-dblp-2010',        # N=226413, E=716460,   d_avg=6.33
         # 'ca-dblp-2012',        # N=317080, E=1049866,  d_avg=6.62
-        # 'ca-MathSciNet',       # N=332689, E=820644,   d_avg=4.93
-        # 'rec-amazon',          # N=91813,  E=125704,   d_avg=2.74
-        # 'rec-github',          # N=121331, E=439642,   d_avg=7.25
-        # 'socfb-OR',            # N=63392,  E=816886,   d_avg=25.77
-        # 'socfb-Penn94',        # N=41536,  E=1362220,  d_avg=65.59
-        # 'socfb-wosn-friends',  # N=63392,  E=816886,   d_avg=25.77
-        # 'tech-p2p-gnutella',   # N=62561,  E=147878,   d_avg=4.73
-        # 'tech-RL-caida',       # N=190914, E=607610,   d_avg=6.37
         # 'web-arabic-2005',     # N=163598, E=1747269,  d_avg=21.36
-        # 'web-italycnr-2000',   # N=325557, E=2738969,  d_avg=16.83
-        # 'web-sk-2005',         # N=121422, E=334419,   d_avg=5.51
-        #
+
+        'web-italycnr-2000',   # N=325557, E=2738969,  d_avg=16.83
+        'socfb-Penn94',        # N=41536,  E=1362220,  d_avg=65.59
+        'ca-MathSciNet',       # N=332689, E=820644,   d_avg=4.93
+        'socfb-OR',            # N=63392,  E=816886,   d_avg=25.77
+        'socfb-wosn-friends',  # N=63392,  E=816886,   d_avg=25.77
+        'tech-RL-caida',       # N=190914, E=607610,   d_avg=6.37
+        'rec-github',          # N=121331, E=439642,   d_avg=7.25
+        'web-sk-2005',         # N=121422, E=334419,   d_avg=5.51
+        'tech-p2p-gnutella',   # N=62561,  E=147878,   d_avg=4.73
+        'rec-amazon',          # N=91813,  E=125704,   d_avg=2.74
+        # 10x all - cloud2
 
         # 'web-uk-2005',         # N=129632, E=11744049, d_avg=181.19  10/10 POD ..
-        # 'soc-slashdot',        # N=70068,  E=358647,   d_avg=10.24  10/10
+        # 'soc-slashdot',        # N=70068,  E=358647,   d_avg=10.24  9/10
         # 2 graphs, 12x all except POD - cloud2
 
         # 'soc-themarker',       #?N=69317,  E=1644794,  d_avg=47.46  10/10 POD
-        # 'soc-BlogCatalog',     # N=88784,  E=2093195,  d_avg=47.15  10/10 POD  F
+        # 'soc-BlogCatalog',     # N=88784,  E=2093195,  d_avg=47.15  10/10 POD  F, F
         # 2 graphs, 10x all except POD - cloud2
 
         # 'sc-pkustk13',         # N=94893,  E=3260967,  d_avg=68.73  10/10
@@ -169,12 +170,12 @@ def big_run():
         if graph_name == 'mipt':
             g = GraphCollections.get(graph_name, 'other', giant_only=True)
         else:
-            g = GraphCollections.get(graph_name, 'konect', giant_only=True)
+            g = GraphCollections.get(graph_name, 'netrepo', giant_only=True)
         print('Graph {} with {} nodes and {} edges, davg={:02.2f}'.format(graph_name, g.nodes(), g.edges(),
                                                                           2.0 * g.edges() / g.nodes()))
         # TODO: to check and download graph before multiprocessing
         msg = "Did not finish"
-        iterations = 2
+        iterations = 5
         # iterations = multiprocessing.cpu_count() - 2
         for iter in range(int(10 // iterations)):
             start_time = time.time()
