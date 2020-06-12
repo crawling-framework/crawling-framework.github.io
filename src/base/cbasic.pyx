@@ -7,7 +7,7 @@ from libcpp.queue cimport queue
 from libcpp.deque cimport deque
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec, address as addr
 
-from cgraph cimport CGraph, str_to_chars
+from cgraph cimport CGraph, str_to_chars, t_random
 cimport cbasic
 from node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 
@@ -150,6 +150,8 @@ cdef inline int random_from_iterable(const cset[int]* an_iterable):
 
 
 cdef class RandomCrawler(CCrawler):
+    cdef vector[int] next_seeds
+
     def __init__(self, CGraph graph, int initial_seed=-1, name=None, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
@@ -162,14 +164,29 @@ cdef class RandomCrawler(CCrawler):
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
 
+        cdef int n
+        for n in deref(self._observed_set):
+            self.next_seeds.push_back(n)
+        # TODO shuffle next_seeds
+
     cpdef int next_seed(self) except -1:
         if self._observed_set.size() == 0:
             raise NoNextSeedError()
-        return random_from_iterable(self._observed_set)
+        cdef int n = self.next_seeds.back()
+        self.next_seeds.pop_back()
+        return n
+        # return random_from_iterable(self._observed_set)
         # return random.choice([n for n in self._observed_set])
 
     cpdef vector[int] crawl(self, int seed):
-        return CCrawler.crawl(self, seed)
+        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef int n, size, r
+        size = self.next_seeds.size()
+        # insert to next_seeds in random order
+        for n in res:
+            self.next_seeds.insert(self.next_seeds.begin() + t_random.GetUniDevInt(size+1), n)
+            size += 1
+        return res
 
 
 cdef class RandomWalkCrawler(CCrawler):
@@ -540,7 +557,21 @@ cdef cset[int]* f(int a):
 
 
 cpdef cbasic_test():
-    # print("cbasic")
+    print("cbasic")
+    cdef vector[int] s
+    s.push_back(1)
+    cdef vector[int].iterator it = s.begin()
+    print("s.insert(it, 2)")
+    s.insert(it, 2)
+    it = s.begin()
+    print("s.insert(it+1, 3)")
+    s.insert(it+1, 3)
+    it = s.begin()
+    print("s.insert(it+2, 4)")
+    s.insert(it+2, 4)
+    it = s.begin()
+    for n in s:
+        print(n)
 
     # cgraph = GraphCollections.cget('dolphins')
     # # cgraph = GraphCollections.cget('petster-hamster')

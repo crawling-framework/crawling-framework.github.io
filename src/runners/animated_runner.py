@@ -4,7 +4,7 @@ from utils import USE_CYTHON_CRAWLERS
 
 if USE_CYTHON_CRAWLERS:
     from base.cgraph import CGraph as MyGraph
-    from base.cbasic import CCrawler as Crawler
+    from base.cbasic import CCrawler as Crawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
 else:
     from base.graph import MyGraph
     from crawlers.basic import Crawler, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
@@ -122,7 +122,7 @@ def test_runner(graph):
         # ])
     ]
 
-    target_set = set(get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(0.1 * graph[Stat.NODES])))
+    target_set = set(get_top_centrality_nodes(graph, Stat.CLOSENESS_DISTR, count=int(0.1 * graph[Stat.NODES])))
     metrics = [
         Metric(r'$|V_{all}|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
         Metric(r'$|V_{all} \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
@@ -145,6 +145,9 @@ if __name__ == '__main__':
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
     # name = 'petster-hamster'
-    g = GraphCollections.get(name)
+    # g = GraphCollections.get(name)
+
+    name = 'sc-shipsec5'
+    g = GraphCollections.get(name, 'netrepo')
 
     test_runner(g)
