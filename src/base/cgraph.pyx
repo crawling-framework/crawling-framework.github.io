@@ -21,7 +21,10 @@ cdef inline fingerprint(const PUNGraph snap_graph_ptr):  # FIXME duplicate
 
 
 from time import time
-cdef TRnd t_random = TRnd(int(time()*1e6 % 1e9), 0)
+cdef TRnd t_random = TRnd(int(time()*1e7 % 1e9), 0)
+
+cpdef void seed_random(int seed):
+    t_random.PutSeed(seed)
 
 cdef class CGraph:
     def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij'):

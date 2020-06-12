@@ -4,7 +4,7 @@ import os
 from utils import USE_CYTHON_CRAWLERS
 import time
 if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph
+    from base.cgraph import CGraph as MyGraph, seed_random
     from base.cbasic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler, DepthFirstSearchCrawler, \
         SnowBallCrawler, PreferentialObservedDegreeCrawler, RandomCrawler, RandomWalkCrawler
     from base.cmultiseed import MultiCrawler
@@ -25,31 +25,34 @@ def start_runner(graph, animated=False, statistics: list = None, top_k_percent=0
     import random
     # initial_seed = random.sample([n.GetId() for n in graph.snap.Nodes()], 1)[0]
     print([stat_name.name for stat_name in statistics])
+    seed_random(int(time.time() * 1e7 % 1e9))  # to randomize t_random in parallel processes
+
     initial_seed = graph.random_nodes(1000)
+    print(initial_seed[:10])
     ranges = [2, 3, 4, 5, 10, 30, 100, 1000]
     crawlers = [  ## ForestFireCrawler(graph, initial_seed=initial_seed), # FIXME fix and rewrite
-                   # DepthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.1, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.25, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.5, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.75, initial_seed=initial_seed[0]),
-                   # SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed[0]),
-                   # BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),  # is like take SBS with p=1
-                   #
-                   # RandomWalkCrawler(graph, initial_seed=initial_seed[0]),
-                   # RandomCrawler(graph, initial_seed=initial_seed[0]),
-                   #
-                   # MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-                   # MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-                   # MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-                   # MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
-                   # MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+                   DepthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.1, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.25, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.5, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.75, initial_seed=initial_seed[0]),
+                   SnowBallCrawler(graph, p=0.9, initial_seed=initial_seed[0]),
+                   BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[0]),  # is like take SBS with p=1
 
-                   # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-                   # PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-                   # PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-                   # PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
-                   # PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+                   RandomWalkCrawler(graph, initial_seed=initial_seed[0]),
+                   RandomCrawler(graph, initial_seed=initial_seed[0]),
+
+                   MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   MaximumObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
+
+                   PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
+                   PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
+                   PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
+                   PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
+                   PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
                ] + [
         MultiCrawler(graph, crawlers=[PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(range_i)]) for range_i in ranges
     ] + [
@@ -106,9 +109,7 @@ def big_run():
 
     graphs = [
         # # # # 'livejournal-links', toooo large need all metrics
-        # 'soc-pokec-relationships',  # with 1632803 nodes and 22301964 edges, davg=27.32  7/10 all but POD,Multi    no ecc
-        # 3x3x Multi - cloud2
-        # 4x all but POD,Multi ecc - cloud1
+        # 'soc-pokec-relationships',  # with 1632803 nodes and 22301964 edges, davg=27.32  1-2 all but POD,Multi
         # 6x all but POD,Multi - cloud1.  F after 30+ hours
 
         # 'youtube-u-growth',         # with 3216075 nodes and  9369874 edges, davg= 5.83     no ecc
@@ -132,31 +133,31 @@ def big_run():
 
         # # netrepo from Guidelines
         # #
-        'socfb-Bingham82',     # N=10001,  E=362892,   d_avg=72.57  10/10
-        'soc-brightkite',      # N=56739,  E=212945,   d_avg=7.51  10/10
-        'ca-citeseer',         # N=227320, E=814134,   d_avg=7.16  10/10
-        'ca-dblp-2010',        # N=226413, E=716460,   d_avg=6.33  10/10
-        'ca-dblp-2012',        # N=317080, E=1049866,  d_avg=6.62  10/10
-        'web-arabic-2005',     # N=163598, E=1747269,  d_avg=21.36  10/10
-        'web-italycnr-2000',   # N=325557, E=2738969,  d_avg=16.83  10/10
-        'socfb-Penn94',        # N=41536,  E=1362220,  d_avg=65.59  8
-        'ca-MathSciNet',       # N=332689, E=820644,   d_avg=4.93  10
-        'socfb-OR',            # N=63392,  E=816886,   d_avg=25.77  10
-        'socfb-wosn-friends',  # N=63392,  E=816886,   d_avg=25.77  10
-        'tech-RL-caida',       # N=190914, E=607610,   d_avg=6.37  10
-        'rec-github',          # N=121331, E=439642,   d_avg=7.25  10
-        'web-sk-2005',         # N=121422, E=334419,   d_avg=5.51  10
-        'tech-p2p-gnutella',   # N=62561,  E=147878,   d_avg=4.73  10
-        'sc-pkustk13',         # N=94893,  E=3260967,  d_avg=68.73  20 x 6
-        'sc-pwtk',             # N=217883, E=5653217,  d_avg=51.89  10 x 6
-        'sc-shipsec1',         # N=139995, E=1705212,  d_avg=24.36  10 x 6
-        'sc-shipsec5',         # N=178573, E=2197367,  d_avg=24.61  10 x 6
-        'rec-amazon',          # N=91813,  E=125704,   d_avg=2.74  10
-        'soc-slashdot',        # N=70068,  E=358647,   d_avg=10.24  9/10
-        'soc-BlogCatalog',  # N=88784,  E=2093195,  d_avg=47.15  10/10
-        'web-uk-2005',         # N=129632, E=11744049, d_avg=181.19  10/10
-        'soc-themarker',       #?N=69317,  E=1644794,  d_avg=47.46  10/10
-        # 2 graphs, 10x all except POD - cloud1
+        # 'socfb-Bingham82',     # N=10001,  E=362892,   d_avg=72.57  6
+        # 'soc-brightkite',      # N=56739,  E=212945,   d_avg=7.51
+        # 'ca-citeseer',         # N=227320, E=814134,   d_avg=7.16
+        # 'ca-dblp-2010',        # N=226413, E=716460,   d_avg=6.33
+        # 'ca-dblp-2012',        # N=317080, E=1049866,  d_avg=6.62
+        # 'web-arabic-2005',     # N=163598, E=1747269,  d_avg=21.36
+        # 'web-italycnr-2000',   # N=325557, E=2738969,  d_avg=16.83
+        # 'socfb-Penn94',        # N=41536,  E=1362220,  d_avg=65.59
+        # 'ca-MathSciNet',       # N=332689, E=820644,   d_avg=4.93
+        # 'socfb-OR',            # N=63392,  E=816886,   d_avg=25.77
+        # 'socfb-wosn-friends',  # N=63392,  E=816886,   d_avg=25.77
+        # 'tech-RL-caida',       # N=190914, E=607610,   d_avg=6.37
+        # 'rec-github',          # N=121331, E=439642,   d_avg=7.25
+        # 'web-sk-2005',         # N=121422, E=334419,   d_avg=5.51
+        # 'tech-p2p-gnutella',   # N=62561,  E=147878,   d_avg=4.73
+        # 'sc-pkustk13',         # N=94893,  E=3260967,  d_avg=68.73
+        # 'sc-pwtk',             # N=217883, E=5653217,  d_avg=51.89
+        # 'sc-shipsec1',         # N=139995, E=1705212,  d_avg=24.36
+        # 'sc-shipsec5',         # N=178573, E=2197367,  d_avg=24.61
+        # 'rec-amazon',          # N=91813,  E=125704,   d_avg=2.74
+        # 'soc-slashdot',        # N=70068,  E=358647,   d_avg=10.24
+        # 'soc-BlogCatalog',     # N=88784,  E=2093195,  d_avg=47.15
+        # 'web-uk-2005',         # N=129632, E=11744049, d_avg=181.19  6
+        # 'soc-themarker',       #?N=69317,  E=1644794,  d_avg=47.46  6
+        # 6x all - cloud2
 
     ]
 
@@ -287,8 +288,10 @@ def cloud_manager():
         # if not os.path.exists('%s/data/%s/%s.ij_stats/EccDistr' % (local_dir, collection, name)):
         #     continue
 
-        loc2rem_copy_command = 'scp -i %s -r %s/data/%s/%s.ij_stats/ %s:%s/data/%s/' % (
-            ssh_key, local_dir, collection, name, cloud, remote_dir, collection)
+        # loc2rem_copy_command = 'scp -i %s -r %s/data/%s/%s.ij_stats/ %s:%s/data/%s/' % (
+        #     ssh_key, local_dir, collection, name, cloud, remote_dir, collection)
+        loc2rem_copy_command = 'scp -i %s -r %s/results/k=0.01/%s/ %s:%s/results/k=0.01/' % (
+            ssh_key, local_dir, name, cloud, remote_dir, )
 
         # rem2loc_copy_command = 'scp -i %s -r %s:%s/data/%s/%s.ij_stats/EccDistr %s/data/%s/%s.ij_stats/' % (
         #     ssh_key, cloud, remote_dir, collection, name, local_dir, collection, name)
