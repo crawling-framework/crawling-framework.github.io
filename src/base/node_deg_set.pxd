@@ -18,7 +18,7 @@ cdef extern from "nd_set.cpp":
             bint operator!=(reverse_iterator)
         IntPair_Set()
         bint add(int node, int deg)
-        # bint remove(int node, int deg)
+        void remove(int node, int deg)
         # bint update(int node, int deg)
         bint update_1(int node, int deg)
         # int pop()
@@ -37,6 +37,8 @@ cdef class ND_Set:
 
     cpdef bint add(self, int node, int deg)
 
+    cpdef remove(self, int node, int deg)
+
     cpdef bint update_1(self, int node, int deg)
 
     cpdef (int, int) pop(self)
@@ -45,4 +47,10 @@ cdef class ND_Set:
 
     cpdef bint empty(self)
 
-    cpdef vector[int] top(self, int size)
+    cpdef int size(self)
+
+    cpdef vector[int] pop_top(self, int size)
+
+    cpdef vector[int] top(self, int count)
+
+    cpdef vector[int] bottom(self, int count)

@@ -18,7 +18,7 @@ else:
     from base.graph import MyGraph
 
 if USE_NETWORKIT:  # Use networkit library for approximate centrality calculation
-    from networkit._NetworKit import EstimateBetweenness, ApproxCloseness
+    from networkit._NetworKit import EstimateBetweenness, ApproxCloseness, PLM, Modularity
 
 
 class Stat(Enum):
@@ -69,6 +69,9 @@ class Stat(Enum):
     # CLUSTERING_DISTR = 'ClustDistr', 'clustering centrality'
     K_CORENESS_DISTR = 'KCorDistr', 'k-coreness centrality'
 
+    PLM_COMMUNITIES = 'PLM-comms', 'PLM communities'
+    PLM_MODULARITY = 'PLM-modularity', 'PLM communities modularity'
+
 
 if not USE_CYTHON_CRAWLERS:
     stat_computer = {
@@ -87,6 +90,8 @@ if not USE_CYTHON_CRAWLERS:
         Stat.PAGERANK_DISTR: (lambda graph: compute_nodes_centrality(graph, 'pagerank')),
         # Stat.CLUSTERING_DISTR: (lambda graph: compute_nodes_centrality(graph, 'clustering')),
         Stat.K_CORENESS_DISTR: (lambda graph: compute_nodes_centrality(graph, 'k-coreness')),
+        Stat.PLM_COMMUNITIES: (lambda graph: plm(graph)[0]),
+        Stat.PLM_MODULARITY: (lambda graph: plm(graph)[1]),
     }
 
 
@@ -267,6 +272,36 @@ def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=F
     return [n for (n, d) in sorted_node_cent[:count]]
 
 
+# For both values of USE_CYTHON_CRAWLERS
+def plm(graph: MyGraph):
+    """
+    Detect communities via PLM - Parallel Louvain Method and compute modularity.
+    Set both the stats of the graph via setter.
+    """
+    node_map = {}
+    nk = graph.networkit(node_map)
+    plm = PLM(nk, refine=False, gamma=1)
+    plm.run()
+    partition = plm.getPartition()
+    # for p in partition:
+    comms_list = []
+    for i in range(partition.numberOfSubsets()):
+        nk_comm = partition.getMembers(i)
+        comm = []
+        for nk_i in nk_comm:
+            i = node_map[nk_i]
+            if i is not None:
+                comm.append(i)
+        if len(comm) > 0:
+            comms_list.append(comm)
+
+    mod = Modularity().getQuality(partition, nk)
+    graph[Stat.PLM_COMMUNITIES] = comms_list
+    graph[Stat.PLM_MODULARITY] = mod
+
+    return comms_list, mod
+
+
 def test():
     # # 1.
     # g = MyGraph(name='test', directed=False)
@@ -293,17 +328,21 @@ def test():
     # graph = GraphCollections.get('advogato', giant_only=True)
     # graph = GraphCollections.get('loc-brightkite_edges', giant_only=True)
     # graph = GraphCollections.get('dolphins', giant_only=True)
-    graph = GraphCollections.get('digg-friends', giant_only=True)
+    # graph = GraphCollections.get('digg-friends', giant_only=True)
     # graph = GraphCollections.get('douban', giant_only=True)
+    graph = GraphCollections.get('Pokec', giant_only=True)
     # graph = GraphCollections.get('GP', giant_only=True)
     # graph = GraphCollections.get('Lj', giant_only=True)
     # graph = GraphCollections.get('com-youtube', giant_only=True)
 
-    stat = Stat.ECCENTRICITY_DISTR
+    # graph = GraphCollections.get('karate', 'netrepo', giant_only=True)
+    # graph = GraphCollections.get('ca-MathSciNet', 'netrepo', giant_only=True)
+
+    stat = Stat.PLM_MODULARITY
 
     print(graph.name, graph.nodes(), graph.edges(), stat)
     node_prop = graph[stat]
-    print(str(node_prop)[:100])
+    print(str(node_prop))
 
     # test_approx_stat(graph, stat)
 
@@ -449,6 +488,6 @@ if __name__ == '__main__':
     import sys
     sys.modules['statistics'] = sys.modules['__main__']
 
-    # test_stats()
+    test_stats()
     # test()
-    main()
+    # main()

@@ -76,7 +76,7 @@ cdef class MultiCrawler(CCrawler):
     def observed_set(self) -> set:
         return self._observed_set[0]
 
-    cdef vector[int] crawl(self, int seed) except *:
+    cpdef vector[int] crawl(self, int seed) except *:
         """ Run the next crawler.
         """
         cdef CCrawler c = self.crawlers[self.next_crawler]  # FIXME ref better?

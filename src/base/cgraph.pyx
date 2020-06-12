@@ -11,17 +11,17 @@ cimport cgraph  # pxd import DON'T DELETE
 
 logger = logging.getLogger(__name__)
 
-cdef TRnd t_random
-t_random.Randomize()
-
-cdef inline fingerprint(const TUNGraph* snap_graph):  # FIXME duplicate
+cdef inline fingerprint(const PUNGraph snap_graph_ptr):  # FIXME duplicate
     """ Graph fingerprint to make sure briefly if it has changed.
 
     :param snap_graph:
     :return: (|V|, |E|)
     """
-    return deref(snap_graph).GetNodes(), deref(snap_graph).GetEdges()
+    return deref(snap_graph_ptr).GetNodes(), deref(snap_graph_ptr).GetEdges()
 
+
+from time import time
+cdef TRnd t_random = TRnd(int(time()*1e6 % 1e9), 0)
 
 cdef class CGraph:
     def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij'):
@@ -40,13 +40,12 @@ cdef class CGraph:
             from datetime import datetime
             path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
             self._path = str_to_chars(path)
-            self._snap_graph_ptr = <PUNGraph> new TUNGraph()
-            self._snap_graph = deref(self._snap_graph_ptr)
-            # NOTE: If we define a pointer as address of object, segfault occurs
+            self._snap_graph_ptr = PUNGraph.New()
+            # NOTE: If we define a pointer as address of object, segfault occurs ?
         else:
             self._path = str_to_chars(path)
             self._snap_graph_ptr = LoadEdgeList[PUNGraph](TStr(self._path), 0, 1)
-            self._snap_graph = deref(self._snap_graph_ptr)
+            # self._snap_graph = deref(self._snap_graph_ptr)
             # self.load()
 
         self._name = str_to_chars(name)
@@ -54,15 +53,15 @@ cdef class CGraph:
         self._weighted = weighted
         # self._format = format  # unused
 
-        self._fingerprint = fingerprint(addr(self._snap_graph))
+        self._fingerprint = fingerprint(self._snap_graph_ptr)
         self._stats_dict = {}
 
     def __dealloc__(self):
-        # self._snap_graph_ptr.Clr()
+        # print("dealloc", self.name)
         pass
 
     cdef CGraph load(self):
-        self._snap_graph = deref(LoadEdgeList[PUNGraph](TStr(self._path), 0, 1))
+        self._snap_graph_ptr = LoadEdgeList[PUNGraph](TStr(self._path), 0, 1)
 
     @property
     def path(self):
@@ -81,37 +80,43 @@ cdef class CGraph:
         return self._weighted
 
     cdef PUNGraph snap_graph_ptr(self):
+        # self._snap_graph_ptr = TPt[TUNGraph](&self._snap_graph)
         return self._snap_graph_ptr
+        # return TPt[TUNGraph](&self._snap_graph)
 
     cpdef int nodes(self):
         """ Number of nodes """
-        return self._snap_graph.GetNodes()
+        return deref(self._snap_graph_ptr).GetNodes()
 
     cpdef int edges(self):
         """ Number of edges """
-        return self._snap_graph.GetEdges()
+        return deref(self._snap_graph_ptr).GetEdges()
 
     cpdef bint add_node(self, int node):
-        return self._snap_graph.AddNode(node)
+        return deref(self._snap_graph_ptr).AddNode(node)
 
     cpdef bint add_edge(self, int i, int j):
-        return self._snap_graph.AddEdge(i, j)
+        return deref(self._snap_graph_ptr).AddEdge(i, j)
 
     cpdef bint has_node(self, int node):
-        return self._snap_graph.IsNode(node)
+        return deref(self._snap_graph_ptr).IsNode(node)
 
     cpdef bint has_edge(self, int i, int j):
-        return self._snap_graph.IsEdge(i, j)
+        return deref(self._snap_graph_ptr).IsEdge(i, j)
 
     cpdef int deg(self, int node):
         """ Get node degree. """
-        return self._snap_graph.GetNI(node).GetDeg()
+        return deref(self._snap_graph_ptr).GetNI(node).GetDeg()
+
+    cpdef double clustering(self, int node):
+        """ Get clustering of a node. """
+        return GetANodeClustCf[PUNGraph](self._snap_graph_ptr, node)
 
     cpdef int max_deg(self):
         """ Get maximal node degree. """
         cdef int res = -1, d
-        cdef TUNGraph.TNodeI ni = self._snap_graph.BegNI()
-        cdef int count = self._snap_graph.GetNodes()
+        cdef TUNGraph.TNodeI ni = deref(self._snap_graph_ptr).BegNI()
+        cdef int count = deref(self._snap_graph_ptr).GetNodes()
         for i in range(count):
             d = ni.GetDeg()
             if d > res:
@@ -122,38 +127,38 @@ cdef class CGraph:
     def neighbors(self, int node):
         """ Generator of neighbors of the given node in this graph.
         """
-        cdef TUNGraph.TNodeI n_iter = self._snap_graph.GetNI(node)
+        cdef TUNGraph.TNodeI n_iter = deref(self._snap_graph_ptr).GetNI(node)
         # cdef TUNGraph.TNode dat = n.NodeHI.GetDat()  TODO could be optimized if have access to private NodeHI
         for i in range(0, n_iter.GetDeg()):
             # yield dat.GetNbrNId(i)
             yield n_iter.GetNbrNId(i)
 
     def iter_nodes(self):
-        cdef TUNGraph.TNodeI ni = self._snap_graph.BegNI()
-        cdef int count = self._snap_graph.GetNodes()
+        cdef TUNGraph.TNodeI ni = deref(self._snap_graph_ptr).BegNI()
+        cdef int count = deref(self._snap_graph_ptr).GetNodes()
         for i in range(count):
             yield ni.GetId()
             pinc(ni)
 
     def iter_edges(self):
-        cdef TUNGraph.TEdgeI ei = self._snap_graph.BegEI()
-        cdef int count = self._snap_graph.GetEdges()
+        cdef TUNGraph.TEdgeI ei = deref(self._snap_graph_ptr).BegEI()
+        cdef int count = deref(self._snap_graph_ptr).GetEdges()
         for i in range(count):
             yield ei.GetSrcNId(), ei.GetDstNId()
             pinc(ei)
 
     cpdef int random_node(self):
         """ Return a random node. O(1) """
-        return self._snap_graph.GetRndNId(t_random)
+        return deref(self._snap_graph_ptr).GetRndNId(t_random)
 
     cpdef vector[int] random_nodes(self, int count=1):
         """ Return a vector of random nodes without repetition. O(N) """
-        cdef int size = self._snap_graph.GetNodes(), i, n
+        cdef int size = deref(self._snap_graph_ptr).GetNodes(), i, n
         assert count <= size
         cdef TInt* it
         cdef vector[int] res
         cdef TIntV NIdV
-        self._snap_graph.GetNIdV(NIdV)
+        deref(self._snap_graph_ptr).GetNIdV(NIdV)
         NIdV.Shuffle(t_random)
         it = NIdV.BegI()
         for i in range(count):
@@ -164,7 +169,7 @@ cdef class CGraph:
     cpdef int random_neighbor(self, int node):
         """ Return a random neighbor of the given node in this graph.
         """
-        cdef TUNGraph.TNodeI n_iter = self._snap_graph.GetNI(node)
+        cdef TUNGraph.TNodeI n_iter = deref(self._snap_graph_ptr).GetNI(node)
         cdef int r = t_random.GetUniDevInt(n_iter.GetDeg())
         return n_iter.GetNbrNId(r)
 
@@ -199,8 +204,8 @@ cdef class CGraph:
     #
     def _check_consistency(self):
         """ Raise exception if graph has changed. """
-        f = fingerprint(&self._snap_graph)
-        if fingerprint(&self._snap_graph) != self._fingerprint:
+        f = fingerprint(self._snap_graph_ptr)
+        if fingerprint(self._snap_graph_ptr) != self._fingerprint:
             raise Exception("snap graph has changed from the one saved in %s" % self._path)
 
     def __getitem__(self, stat):
@@ -223,6 +228,7 @@ cdef class CGraph:
                 from cyth.cstatistics import stat_computer
                 # value = stat.computer(self)
                 value = stat_computer[stat](self)
+                self._stats_dict[stat] = value
 
                 # Save stats to file
                 if not os.path.exists(os.path.dirname(stat_path)):
@@ -234,6 +240,21 @@ cdef class CGraph:
                 value = eval(open(stat_path, 'r').read())
 
         return value
+
+    def __setitem__(self, stat, value):
+        self._check_consistency()
+        if isinstance(stat, str):
+            from statistics import Stat
+            stat = Stat[stat]
+        self._stats_dict[stat] = value
+
+        # Save stats to file
+        stat_path = os.path.join(os.path.dirname(self.path), os.path.basename(self.path) + '_stats', stat.short)
+        if not os.path.exists(stat_path):
+            if not os.path.exists(os.path.dirname(stat_path)):
+                os.makedirs(os.path.dirname(stat_path))
+        with open(stat_path, 'w') as f:
+            f.write(str(value))
 
     def save(self, new_path=None):
         """ Write current edge list of snap graph into file. """
@@ -251,7 +272,7 @@ cdef class CGraph:
 
     def networkit(self, node_map: dict = None):
         """ Get networkit graph, create node ids mapping (neworkit_node_id -> snap_node_id) if
-        node_map is specified.
+        node_map is specified. Some neworkit_node_id -> None (those ids not present in snap graph).
         """
         import networkit as nk
         tab_or_space = '\t' in open(self.path).readline()
@@ -288,7 +309,6 @@ cdef class CGraph:
 
 def cgraph_test():
     # print("cgraph")
-    from time import time
     import numpy as np
 
     # cdef TUNGraph g
@@ -314,12 +334,14 @@ def cgraph_test():
 
     # cdef char* name = 'douban'
     # cdef char* path = '/home/misha/workspace/crawling/data/konect/dolphins.ij'
-    empty = CGraph()
-    graph = CGraph(path='/home/misha/workspace/crawling/data/konect/digg-friends.ij', name='d')
+
+    graph = CGraph(path='/home/misha/workspace/crawling/data/konect/petster-hamster.ij', name='d')
     cdef TUNGraph g = deref(LoadEdgeList[PUNGraph](TStr('/home/misha/workspace/crawling/data/konect/dolphins.ij'), 0, 1))
+    empty = CGraph(name='empty')
+
     # graph = CGraph.CLoad(path)
     # graph = CGraph.Empty('')
-    # print(graph.add_node(10))
+    # print(empty.add_node(10))
     # print("path=%s" % 'abc' + graph.path)
     # print("N=%s" % graph.nodes())
     # print("E=%s" % graph.edges())
@@ -339,21 +361,61 @@ def cgraph_test():
     #     print(n)
     #
     # print("Rand neighs")
-    # for _ in range(5):
-    #     # print(graph.random_node())
+
+    # cdef TRnd t_random = TRnd(int(time()*1e6 % 1e9), 0)
+    # t_random.PutSeed(3)
+    for _ in range(5):
+        print(t_random.GetUniDevInt(10))
+        # print(graph.random_node())
     #     print(graph.random_neighbor(1))
 
-    print("Rand nodes")
-    cdef vector[int] rnodes
-    cdef int n
+    # print("Rand nodes")
+    # cdef vector[int] rnodes
+    # cdef int n
+    #
+    # t = time()
+    # for _ in range(100):
+    #     n = graph.random_node()
+    #     # rnodes = graph.random_nodes(1000)
+    #     # np.random.choice(range(250000), 1000, replace=False)
+    # # for n in rnodes:
+    # #     print(n)
+    # print(time()-t)
 
-    t = time()
-    for _ in range(100):
-        n = graph.random_node()
-        # rnodes = graph.random_nodes(1000)
-        # np.random.choice(range(250000), 1000, replace=False)
-    # for n in rnodes:
-    #     print(n)
-    print(time()-t)
+    # cdef PUNGraph ptr = PUNGraph.New()
+    # cdef TUNGraph g = deref(ptr)
+    # cdef TUNGraph g2 = g
+    # cdef TUNGraph g = TUNGraph()
+    # cdef PUNGraph ptr2 = TPt[TUNGraph](&g)
 
+    # print(ptr == TPt[TUNGraph](&g))
+    # print(g.GetNodes())
+    # print(deref(ptr).GetNodes())
+    # print(deref(ptr2).GetNodes())
+
+    # g.AddNode(1)
+    # print(g.GetNodes())
+    # print(g2.GetNodes())
+    # print(deref(ptr).GetNodes())
+    # print(deref(ptr2).GetNodes())
+
+    # deref(ptr).AddNode(1)
+    # print(g.GetNodes())
+    # print(deref(ptr).GetNodes())
+    # print(deref(ptr2).GetNodes())
+
+    # cdef int i, n = 10000000
+    # t = time()
+    # for i in range(n):
+    #     deref(ptr).AddNode(i)
+    # print(time()-t)
+    #
+    # t = time()
+    # for i in range(n):
+    #     g.AddNode(i)
+    # print(time()-t)
+
+    empty.add_node(1)
+    cdef double cc = GetANodeClustCf[PUNGraph](empty.snap_graph_ptr(), 1)
+    # print("cc", cc)
     print("End")

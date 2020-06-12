@@ -45,15 +45,18 @@ class AnimatedCrawlerRunner:
         self.step = step
         self.nrows = 1
         self.ncols = 1
-        scale = 5
+        scale = 9
         self.title = "Graph %s:  N=%d, E=%d, d_max=%d" % (
             self.graph.name, self.graph[Stat.NODES], self.graph[Stat.EDGES], self.graph[Stat.MAX_DEGREE])
 
         plt.figure(self.title, figsize=(1 + scale * self.ncols, scale * self.nrows))
 
-    def run(self, ylims=None, xlabel='iteration, n', ylabel='metric value'):
-        linestyles = ['-', '--', ':']
-        colors = ['b', 'g', 'r', 'c', 'm', 'y']
+    def run(self, ylims=None, xlabel='iteration, n', ylabel='metric value', swap_coloring_scheme=False, save_to_file=None):
+        linestyles = ['-', '--', ':', '.-']
+        # colors = ['b', 'g', 'r', 'c', 'm', 'y',  'orange']
+        colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
+                  'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
+                  'pink', 'lime', 'wheat', 'lightsteelblue']
 
         step_seq = []
         crawler_metric_seq = dict([(c, dict([(m, []) for m in self.metrics])) for c in self.crawlers])
@@ -72,9 +75,10 @@ class AnimatedCrawlerRunner:
                 for m, metric in enumerate(self.metrics):
                     metric_seq = crawler_metric_seq[crawler][metric]
                     metric_seq.append(metric(crawler))
+                    ls, col = (c, m) if swap_coloring_scheme else (m, c)
                     plt.plot(step_seq, metric_seq, marker='.',
-                             linestyle=linestyles[m % len(linestyles)],
-                             color=colors[c % len(colors)],
+                             linestyle=linestyles[ls % len(linestyles)],
+                             color=colors[col % len(colors)],
                              label=r'%s, %s' % (crawler.name, metric.name))
 
             plt.legend()
@@ -94,6 +98,8 @@ class AnimatedCrawlerRunner:
         #                              ','.join([crawler.name for crawler in self.crawlers]) + 'animated.png')
         #     logging.info('Saved pic ' + file_name)
         #     plt.savefig(file_name)
+        if save_to_file is not None:
+            plt.savefig(save_to_file)
         plt.show()
 
 

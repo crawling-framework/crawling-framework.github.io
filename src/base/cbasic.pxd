@@ -24,7 +24,7 @@ cdef class CCrawler:
 
     cpdef bint observe(self, int node)
 
-    cdef vector[int] crawl(self, int seed) except *
+    cpdef vector[int] crawl(self, int seed) except *
     cpdef int next_seed(self) except -1
     cpdef int crawl_budget(self, int budget) except -1
 

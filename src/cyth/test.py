@@ -12,8 +12,8 @@ if __name__ == '__main__':
     # test_class()
     # test_ndset()
 
-    # cgraph_test()
+    cgraph_test()
     # cbasic_test()
     # test_multiseed()
     # test_cstats()
-    test_cadvanced()
+    # test_cadvanced()

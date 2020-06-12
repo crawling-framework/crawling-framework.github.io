@@ -95,7 +95,7 @@ if __name__ == '__main__':
         Extension("cyth.cstatistics",
                   ["cyth/cstatistics.pyx"],
                   language='c++',
-                  extra_compile_args=extra_compile_flags,
+                  extra_compile_args=extra_compile_flags + ["-lrt"],
                   extra_link_args=snap_extra_link_args,
                   extra_objects=[os.path.join(snap_dir, "snap-core/Snap.o")],
                   include_dirs=[os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")],
