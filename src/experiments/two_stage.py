@@ -106,12 +106,12 @@ def test_target_set_coverage():
     # name, budget, start_seeds = 'soc-pokec-relationships', 3000, 3000
     # name, budget, start_seeds = 'digg-friends', 5000, 200
     # name, budget, start_seeds = 'loc-brightkite_edges', 2500, 500
-    # name, budget, start_seeds = 'petster-hamster', 200, 50
-    # graph = GraphCollections.get(name, giant_only=True)
+    name, budget, start_seeds = 'petster-hamster', 200, 50
+    graph = GraphCollections.get(name, giant_only=True)
 
     # name, budget, start_seeds = 'ca-CondMat', 1000, 2000
     # name, budget, start_seeds = 'soc-hamsterster', 1000, 2000
-    name, budget, start_seeds = 'tech-WHOIS', 1000, 2000
+    # name, budget, start_seeds = 'tech-WHOIS', 1000, 2000
     # name, budget, start_seeds = 'ca-AstroPh', 1000, 2000
     # name, budget, start_seeds = 'tech-pgp', 1000, 2000
     # name, budget, start_seeds = 'tech-routers-rf', 1000, 2000
@@ -119,14 +119,14 @@ def test_target_set_coverage():
     # name, budget, start_seeds = 'soc-anybeat', 1000, 2000
 
     # name, budget, start_seeds = 'socfb-Bingham82', 1000, 2000
-    graph = GraphCollections.get(name, 'netrepo', giant_only=True)
+    # graph = GraphCollections.get(name, 'netrepo', giant_only=True)
 
     p = 1
     target_list = get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(p * graph[Stat.NODES]))
     thr_degree = graph.deg(target_list[-1])
     target_set = set(target_list)
 
-    budget = int(0.1 * graph.nodes())
+    budget = int(1 * graph.nodes())
 
     crawlers = [
         DE_Crawler(graph, initial_bacth=int(0.15*budget)),

@@ -140,7 +140,7 @@ class GraphCollections:
     networkrepository_url_pattern = 'http://nrvis.com/download/data/%s/%s.zip'
 
     @staticmethod
-    def get(name, collection='konect', directed=False, format='ij', giant_only=False, self_loops=False):
+    def get(name, collection='konect', directed=False, format='ij', giant_only=False, self_loops=False, not_load=False):
         """
         Read graph from storage or download it from the specified collection. In order to apply
         giant_only and self_loops, you need to remove the file manually.
@@ -153,6 +153,8 @@ class GraphCollections:
          only once when the graph is downloaded.
         :param self_loops: self loops are removed by default. Applied only once when the graph is
          downloaded.
+        :param not_load: if True do not load the graph (useful for stats exploring). Note: any graph
+         modification will lead to segfault
         :return: MyGraph with snap graph
         """
         assert collection in COLLECTIONS
@@ -192,7 +194,7 @@ class GraphCollections:
                         f.write("%s %s\n" % (e.GetSrcNId(), e.GetDstNId()))
                 logging.info("done.")
 
-        return MyGraph(path, name, directed, format=format)
+        return MyGraph(path, name, directed, format=format, not_load=not_load)
 
     @staticmethod
     def _download_konect(graph_path, url_konect):

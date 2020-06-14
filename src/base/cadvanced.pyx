@@ -448,6 +448,7 @@ cdef class DE_Crawler(CCrawlerUpdatable):
             # return RandomWalkCrawler.next_seed(self)
             if self.prev_seed == -1:  # first step
                 self.prev_seed = self.initial_seed
+                self.nd_set.remove(self.initial_seed, self._observed_graph.deg(n))
                 return self.initial_seed
 
             if self._observed_set.size() == 0:

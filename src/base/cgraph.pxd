@@ -59,6 +59,7 @@ cdef extern from "Snap.h":
         TPt New()
         TPt()
         TPt(T*)
+        bint Empty() const
         void Clr()
         T operator*()
         bint operator==(const TPt& Pt) const
@@ -148,7 +149,7 @@ cdef class CGraph:
 
     cdef PUNGraph snap_graph_ptr(self)
 
-    cdef CGraph load(self)
+    cpdef void load(self)
 
     cpdef int nodes(self)
 

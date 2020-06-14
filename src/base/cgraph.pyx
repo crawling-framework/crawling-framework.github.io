@@ -17,6 +17,8 @@ cdef inline fingerprint(const PUNGraph snap_graph_ptr):  # FIXME duplicate
     :param snap_graph:
     :return: (|V|, |E|)
     """
+    # if snap_graph_ptr is NULL:
+    #     return 0, 0
     return deref(snap_graph_ptr).GetNodes(), deref(snap_graph_ptr).GetEdges()
 
 
@@ -27,7 +29,7 @@ cpdef void seed_random(int seed):
     t_random.PutSeed(seed)
 
 cdef class CGraph:
-    def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij'):
+    def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij', not_load: bool=False):
         """
 
         :param path: load from path. If None, create empty graph
@@ -35,36 +37,40 @@ cdef class CGraph:
         :param directed: ignored: undirected only
         :param weighted: ignored: unweighted only
         :param format: ignored: 'ij' only
+        :param not_load: if True do not load the graph (useful for stats exploring). Note: any graph
+         modification will lead to segfault
         """
         assert directed == False
         assert weighted == False
+        self._name = str_to_chars(name)
+        self._directed = directed
+        self._weighted = weighted
+        # self._format = format  # unused
+
         cdef TUNGraph g
         if path is None:
             from datetime import datetime
             path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
             self._path = str_to_chars(path)
             self._snap_graph_ptr = PUNGraph.New()
+            self._fingerprint = fingerprint(self._snap_graph_ptr)
             # NOTE: If we define a pointer as address of object, segfault occurs ?
         else:
             self._path = str_to_chars(path)
-            self._snap_graph_ptr = LoadEdgeList[PUNGraph](TStr(self._path), 0, 1)
-            # self._snap_graph = deref(self._snap_graph_ptr)
-            # self.load()
+            if not not_load:
+                self.load()
 
-        self._name = str_to_chars(name)
-        self._directed = directed
-        self._weighted = weighted
-        # self._format = format  # unused
-
-        self._fingerprint = fingerprint(self._snap_graph_ptr)
         self._stats_dict = {}
 
     def __dealloc__(self):
         # print("dealloc", self.name)
         pass
 
-    cdef CGraph load(self):
+    cpdef void load(self):
+        logger.debug("Loading graph '%s' from '%s'..." % (self.name, self.path))
         self._snap_graph_ptr = LoadEdgeList[PUNGraph](TStr(self._path), 0, 1)
+        self._fingerprint = fingerprint(self._snap_graph_ptr)
+        logger.debug("done.")
 
     @property
     def path(self):
@@ -117,7 +123,7 @@ cdef class CGraph:
 
     cpdef int max_deg(self):
         """ Get maximal node degree. """
-        cdef int res = -1, d
+        cdef int res = -1, d, i
         cdef TUNGraph.TNodeI ni = deref(self._snap_graph_ptr).BegNI()
         cdef int count = deref(self._snap_graph_ptr).GetNodes()
         for i in range(count):
@@ -207,9 +213,10 @@ cdef class CGraph:
     #
     def _check_consistency(self):
         """ Raise exception if graph has changed. """
-        f = fingerprint(self._snap_graph_ptr)
-        if fingerprint(self._snap_graph_ptr) != self._fingerprint:
-            raise Exception("snap graph has changed from the one saved in %s" % self._path)
+        if not self._snap_graph_ptr.Empty():
+            f = fingerprint(self._snap_graph_ptr)
+            if fingerprint(self._snap_graph_ptr) != self._fingerprint:
+                raise Exception("snap graph has changed from the one saved in %s" % self._path)
 
     def __getitem__(self, stat):
         """ Get graph statistics. Index by str or Stat. Works only if snap graph is immutable. """
@@ -226,8 +233,9 @@ cdef class CGraph:
                 os.path.dirname(self.path), os.path.basename(self.path) + '_stats', stat.short)
             if not os.path.exists(stat_path):
                 # Compute and save stats
-                logger.info("Could not find stats '%s' at '%s'. Will be computed." %
-                             (stat, stat_path))
+                logger.info("Could not find stats '%s' at '%s'. Will be computed." % (stat, stat_path))
+                if self._snap_graph_ptr.Empty():
+                    self.load()
                 from cyth.cstatistics import stat_computer
                 # value = stat.computer(self)
                 value = stat_computer[stat](self)
