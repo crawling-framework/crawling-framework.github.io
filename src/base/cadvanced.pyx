@@ -448,7 +448,7 @@ cdef class DE_Crawler(CCrawlerUpdatable):
             # return RandomWalkCrawler.next_seed(self)
             if self.prev_seed == -1:  # first step
                 self.prev_seed = self.initial_seed
-                self.nd_set.remove(self.initial_seed, self._observed_graph.deg(n))
+                self.nd_set.remove(self.initial_seed, self._observed_graph.deg(self.initial_seed))
                 return self.initial_seed
 
             if self._observed_set.size() == 0:
@@ -486,7 +486,7 @@ cdef class DE_Crawler(CCrawlerUpdatable):
         if self.s_d < self.s_e:  # Expansion. Random from the bottom 80% by observed degree
             logging.debug("Expansion")
             t = time()
-            count = int(0.8 * self.nd_set.size())
+            count = max(1, int(0.8 * self.nd_set.size()))
             part = self.nd_set.bottom(count)
             n = part[t_random.GetUniDevInt(count)]
             self.time_top += time()-t
@@ -496,7 +496,7 @@ cdef class DE_Crawler(CCrawlerUpdatable):
 
         else:  # Densification.
             logging.debug("Densification")
-            count = int(0.2 * self.nd_set.size())
+            count = max(1, int(0.2 * self.nd_set.size()))
             part = self.nd_set.top(count)
 
             # Find argmax d*(1-CC)

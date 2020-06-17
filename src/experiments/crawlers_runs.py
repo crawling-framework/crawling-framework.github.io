@@ -54,9 +54,9 @@ def start_runner(graph, animated=False, statistics: list = None, top_k_percent=0
                    # PreferentialObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
                    # PreferentialObservedDegreeCrawler(graph, batch=1000, initial_seed=initial_seed[0]),
                    # PreferentialObservedDegreeCrawler(graph, batch=10000, initial_seed=initial_seed[0]),
-                   DE_Crawler(graph, initial_seed=initial_seed[0]),
-    #            ] + [
-    #     MultiCrawler(graph, crawlers=[PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(range_i)]) for range_i in ranges
+                   # DE_Crawler(graph, initial_seed=initial_seed[0]),
+               ] + [
+        MultiCrawler(graph, crawlers=[PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[i]) for i in range(range_i)]) for range_i in ranges
     # ] + [
     #     MultiCrawler(graph, crawlers=[BreadthFirstSearchCrawler(graph, initial_seed=initial_seed[i]) for i in range(range_i)]) for range_i in ranges
     # ] + [
@@ -118,48 +118,47 @@ def big_run():
         # 'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06  10/10
 
         # 'flixster',                 # with 2523386 nodes and  7918801 edges, davg= 6.28  fails   no ecc
-        # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  2x POD, 7x Multi, 10x others
-        # 5x2 POD no ecc - local
+        # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  2+ all
 
         # 'munmun_twitter_social',    # with  465017 nodes and   833540 edges, davg= 3.58  10/10
-
         # 'petster-friendships-cat',  # with  148826 nodes and  5447464 edges, davg=73.21 10/10
-        # 'digg-friends',           # with  261489 nodes and  1536577 edges, davg=11.75
-        # 'douban',                 # with  154908 nodes and   327162 edges, davg= 4.22
-        # 'facebook-wosn-links',    # with   63392 nodes and   816831 edges, davg=25.77
-        # 'slashdot-threads',       # with   51083 nodes and   116573 edges, davg= 4.56
-        # 'ego-gplus',              # with   23613 nodes and    39182 edges, davg= 3.32
+        'digg-friends',           # with  261489 nodes and  1536577 edges, davg=11.75
+        'douban',                 # with  154908 nodes and   327162 edges, davg= 4.22
+        'facebook-wosn-links',    # with   63392 nodes and   816831 edges, davg=25.77
+        'slashdot-threads',       # with   51083 nodes and   116573 edges, davg= 4.56
+        'ego-gplus',              # with   23613 nodes and    39182 edges, davg= 3.32
         # 'mipt',                   # with   14313 nodes and   488852 edges, davg=68.31
         # 'petster-hamster',        # with    2000 nodes and    16098 edges, davg=16.10
+        # 4x DE - cloud1
 
 
         # # netrepo from Guidelines
         # #
-        'socfb-Bingham82',     # N=10001,  E=362892,   d_avg=72.57  6
-        'soc-brightkite',      # N=56739,  E=212945,   d_avg=7.51  6
-        'ca-citeseer',         # N=227320, E=814134,   d_avg=7.16  6
-        'ca-dblp-2010',        # N=226413, E=716460,   d_avg=6.33  6
-        'ca-dblp-2012',        # N=317080, E=1049866,  d_avg=6.62  6
-        'web-arabic-2005',     # N=163598, E=1747269,  d_avg=21.36  6
-        'web-italycnr-2000',   # N=325557, E=2738969,  d_avg=16.83  6
-        'socfb-Penn94',        # N=41536,  E=1362220,  d_avg=65.59  6
-        'ca-MathSciNet',       # N=332689, E=820644,   d_avg=4.93  6
-        'socfb-OR',            # N=63392,  E=816886,   d_avg=25.77  6
-        'socfb-wosn-friends',  # N=63392,  E=816886,   d_avg=25.77  6
-        'tech-RL-caida',       # N=190914, E=607610,   d_avg=6.37  6
-        'rec-github',          # N=121331, E=439642,   d_avg=7.25  6
-        'web-sk-2005',         # N=121422, E=334419,   d_avg=5.51  6
-        'tech-p2p-gnutella',   # N=62561,  E=147878,   d_avg=4.73  6
-        'sc-pkustk13',         # N=94893,  E=3260967,  d_avg=68.73  6
-        'sc-pwtk',             # N=217883, E=5653217,  d_avg=51.89  6
-        'sc-shipsec1',         # N=139995, E=1705212,  d_avg=24.36  6
-        'sc-shipsec5',         # N=178573, E=2197367,  d_avg=24.61  6
-        'rec-amazon',          # N=91813,  E=125704,   d_avg=2.74  6
-        'soc-slashdot',        # N=70068,  E=358647,   d_avg=10.24  6
-        'soc-BlogCatalog',     # N=88784,  E=2093195,  d_avg=47.15  6
-        'web-uk-2005',         # N=129632, E=11744049, d_avg=181.19  6
-        'soc-themarker',       #?N=69317,  E=1644794,  d_avg=47.46  6
-        # 6x DE - cloud2
+        # 'socfb-Bingham82',     # N=10001,  E=362892,   d_avg=72.57
+        # 'soc-brightkite',      # N=56739,  E=212945,   d_avg=7.51
+        # 'ca-citeseer',         # N=227320, E=814134,   d_avg=7.16
+        # 'ca-dblp-2010',        # N=226413, E=716460,   d_avg=6.33
+        # 'ca-dblp-2012',        # N=317080, E=1049866,  d_avg=6.62
+        # 'web-arabic-2005',     # N=163598, E=1747269,  d_avg=21.36
+        # 'web-italycnr-2000',   # N=325557, E=2738969,  d_avg=16.83
+        # 'socfb-Penn94',        # N=41536,  E=1362220,  d_avg=65.59
+        # 'ca-MathSciNet',       # N=332689, E=820644,   d_avg=4.93
+        # 'socfb-OR',            # N=63392,  E=816886,   d_avg=25.77
+        # 'socfb-wosn-friends',  # N=63392,  E=816886,   d_avg=25.77
+        # 'tech-RL-caida',       # N=190914, E=607610,   d_avg=6.37
+        # 'rec-github',          # N=121331, E=439642,   d_avg=7.25
+        # 'web-sk-2005',         # N=121422, E=334419,   d_avg=5.51
+        # 'tech-p2p-gnutella',   # N=62561,  E=147878,   d_avg=4.73
+        # 'sc-pkustk13',         # N=94893,  E=3260967,  d_avg=68.73
+        # 'sc-pwtk',             # N=217883, E=5653217,  d_avg=51.89
+        # 'sc-shipsec1',         # N=139995, E=1705212,  d_avg=24.36
+        # 'sc-shipsec5',         # N=178573, E=2197367,  d_avg=24.61
+        # 'rec-amazon',          # N=91813,  E=125704,   d_avg=2.74
+        # 'soc-slashdot',        # N=70068,  E=358647,   d_avg=10.24
+        # 'soc-BlogCatalog',     # N=88784,  E=2093195,  d_avg=47.15
+        # 'web-uk-2005',         # N=129632, E=11744049, d_avg=181.19
+        # 'soc-themarker',       #?N=69317,  E=1644794,  d_avg=47.46
+        #
 
     ]
 
@@ -167,14 +166,14 @@ def big_run():
         if graph_name == 'mipt':
             g = GraphCollections.get(graph_name, 'other', giant_only=True)
         else:
-            g = GraphCollections.get(graph_name, 'netrepo', giant_only=True)
+            g = GraphCollections.get(graph_name, 'konect', giant_only=True)
         print('Graph {} with {} nodes and {} edges, davg={:02.2f}'.format(graph_name, g.nodes(), g.edges(),
                                                                           2.0 * g.edges() / g.nodes()))
         # TODO: to check and download graph before multiprocessing
         msg = "Did not finish"
-        iterations = 6
+        iterations = 4
         # iterations = multiprocessing.cpu_count() - 2
-        for iter in range(int(6 // iterations)):
+        for iter in range(int(4 // iterations)):
             start_time = time.time()
             processes = []
             # making parallel itarations. Number of processes
@@ -183,8 +182,8 @@ def big_run():
                 # little multiprocessing magic, that calculates several iterations in parallel
                 p = multiprocessing.Process(target=start_runner, args=(g,),
                                             kwargs={'animated': False,
-                                                    'statistics': [s for s in Stat if 'DISTR' in s.name],
-                                                    # 'statistics': [Stat.ECCENTRICITY_DISTR],
+                                                    # 'statistics': [s for s in Stat if 'DISTR' in s.name],
+                                                    'statistics': [Stat.ECCENTRICITY_DISTR],
                                                     'top_k_percent': 0.01,
                                                     # 'layout_pos':layout_pos,
                                                     'tqdm_info': 'core-' + str(exp + 1)
@@ -284,8 +283,8 @@ def cloud_manager():
              'soc-brightkite', 'soc-slashdot', 'soc-themarker', 'socfb-Bingham82', 'socfb-OR',
              'socfb-Penn94', 'socfb-wosn-friends', 'tech-RL-caida', 'tech-p2p-gnutella', 'web-arabic-2005']
     cloud = cloud2
-    collection = 'konect'
-    for name in ['soc-pokec-relationships']:
+    collection = 'other'
+    for name in ['mipt']:
     # for name in ['web-uk-2005', 'web-italycnr-2000', 'ca-dblp-2012', 'sc-pwtk']:
         # if not os.path.exists('%s/data/%s/%s.ij_stats/EccDistr' % (local_dir, collection, name)):
         #     continue
@@ -297,7 +296,7 @@ def cloud_manager():
 
         # rem2loc_copy_command = 'scp -i %s -r %s:%s/data/%s/%s.ij_stats/EccDistr %s/data/%s/%s.ij_stats/' % (
         #     ssh_key, cloud, remote_dir, collection, name, local_dir, collection, name)
-        rem2loc_copy_command = 'scp -i %s -r %s:%s/results/ %s/cloud2/' % (
+        rem2loc_copy_command = 'scp -i %s -r %s:%s/results/k=0.01/ %s/cloud2/' % (
             ssh_key, cloud, remote_dir, local_dir)
 
         command = rem2loc_copy_command
@@ -346,7 +345,7 @@ if __name__ == '__main__':
     # sys.stdout = open('logs', 'w')
     # sys.stderr = open('logs', 'w')
 
-    big_run()
+    # big_run()
     # test_runner()
     # prepare_netrepo_graphs()
-    # cloud_manager()
+    cloud_manager()

@@ -106,7 +106,8 @@ def test_target_set_coverage():
     # name, budget, start_seeds = 'soc-pokec-relationships', 3000, 3000
     # name, budget, start_seeds = 'digg-friends', 5000, 200
     # name, budget, start_seeds = 'loc-brightkite_edges', 2500, 500
-    name, budget, start_seeds = 'petster-hamster', 200, 50
+    # name, budget, start_seeds = 'petster-hamster', 200, 50
+    name, budget, start_seeds = 'dolphins', 200, 50
     graph = GraphCollections.get(name, giant_only=True)
 
     # name, budget, start_seeds = 'ca-CondMat', 1000, 2000
@@ -130,11 +131,11 @@ def test_target_set_coverage():
 
     crawlers = [
         DE_Crawler(graph, initial_bacth=int(0.15*budget)),
-        BreadthFirstSearchCrawler(graph),
-        RandomWalkCrawler(graph),
-        MaximumObservedDegreeCrawler(graph, batch=1),
-        # PreferentialObservedDegreeCrawler(graph, batch=1),
-        MaximumExcessDegreeCrawler(graph),
+        # BreadthFirstSearchCrawler(graph),
+        # RandomWalkCrawler(graph),
+        # MaximumObservedDegreeCrawler(graph, batch=1),
+        # # PreferentialObservedDegreeCrawler(graph, batch=1),
+        # MaximumExcessDegreeCrawler(graph),
         # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
