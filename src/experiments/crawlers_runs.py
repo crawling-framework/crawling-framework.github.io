@@ -111,29 +111,26 @@ def big_run():
 
     graphs = [
         # # # # 'livejournal-links', toooo large need all metrics
-        # 'soc-pokec-relationships',  # with 1632803 nodes and 22301964 edges, davg=27.32  1-2 all but POD,Multi
-        # 6x all but POD,Multi - cloud1.  F after 30+ hours
-
         # 'youtube-u-growth',         # with 3216075 nodes and  9369874 edges, davg= 5.83     no ecc
-        # 'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06  10/10
-
         # 'flixster',                 # with 2523386 nodes and  7918801 edges, davg= 6.28  fails   no ecc
         # 'com-youtube',              # with 1134890 nodes and  2987624 edges, davg= 5.27  2+ all
 
-        # 'munmun_twitter_social',    # with  465017 nodes and   833540 edges, davg= 3.58  10/10
-        # 'petster-friendships-cat',  # with  148826 nodes and  5447464 edges, davg=73.21 10/10
-        'digg-friends',           # with  261489 nodes and  1536577 edges, davg=11.75
-        'douban',                 # with  154908 nodes and   327162 edges, davg= 4.22
-        'facebook-wosn-links',    # with   63392 nodes and   816831 edges, davg=25.77
-        'slashdot-threads',       # with   51083 nodes and   116573 edges, davg= 4.56
-        'ego-gplus',              # with   23613 nodes and    39182 edges, davg= 3.32
+        # 'soc-pokec-relationships',  # with 1632803 nodes and 22301964 edges, davg=27.32  1-2 all but POD,Multi
+        # 6x all but POD,Multi - cloud1.  F after 30+ hours
+
+        # 'petster-friendships-dog',  # with  426485 nodes and  8543321 edges, davg=40.06  10/10
+        # 'munmun_twitter_social',    # with  465017 nodes and   833540 edges, davg= 3.58
+        # 'petster-friendships-cat',  # with  148826 nodes and  5447464 edges, davg=73.21
+        # 'digg-friends',           # with  261489 nodes and  1536577 edges, davg=11.75
+        # 'douban',                 # with  154908 nodes and   327162 edges, davg= 4.22
+        # 'facebook-wosn-links',    # with   63392 nodes and   816831 edges, davg=25.77
+        # 'slashdot-threads',       # with   51083 nodes and   116573 edges, davg= 4.56
+        # 'ego-gplus',              # with   23613 nodes and    39182 edges, davg= 3.32
         # 'mipt',                   # with   14313 nodes and   488852 edges, davg=68.31
-        # 'petster-hamster',        # with    2000 nodes and    16098 edges, davg=16.10
-        # 4x DE - cloud1
+        'petster-hamster',        # with    2000 nodes and    16098 edges, davg=16.10
 
 
         # # netrepo from Guidelines
-        # #
         # 'socfb-Bingham82',     # N=10001,  E=362892,   d_avg=72.57
         # 'soc-brightkite',      # N=56739,  E=212945,   d_avg=7.51
         # 'ca-citeseer',         # N=227320, E=814134,   d_avg=7.16
@@ -282,7 +279,7 @@ def cloud_manager():
     names = ['ca-citeseer', 'ca-dblp-2010', 'rec-amazon', 'rec-github', 'sc-pkustk13', 'soc-BlogCatalog',
              'soc-brightkite', 'soc-slashdot', 'soc-themarker', 'socfb-Bingham82', 'socfb-OR',
              'socfb-Penn94', 'socfb-wosn-friends', 'tech-RL-caida', 'tech-p2p-gnutella', 'web-arabic-2005']
-    cloud = cloud2
+    cloud = cloud1
     collection = 'other'
     for name in ['mipt']:
     # for name in ['web-uk-2005', 'web-italycnr-2000', 'ca-dblp-2012', 'sc-pwtk']:
@@ -296,7 +293,7 @@ def cloud_manager():
 
         # rem2loc_copy_command = 'scp -i %s -r %s:%s/data/%s/%s.ij_stats/EccDistr %s/data/%s/%s.ij_stats/' % (
         #     ssh_key, cloud, remote_dir, collection, name, local_dir, collection, name)
-        rem2loc_copy_command = 'scp -i %s -r %s:%s/results/k=0.01/ %s/cloud2/' % (
+        rem2loc_copy_command = 'scp -i %s -r %s:%s/results/k=0.01/ %s/cloud1/' % (
             ssh_key, cloud, remote_dir, local_dir)
 
         command = rem2loc_copy_command

@@ -133,14 +133,14 @@ cdef class ThreeStageCrawler(CrawlerWithAnswer):
     cdef cset[int]* e2
     cdef cset[int]* e2s
 
-    def __init__(self, CGraph graph, int s=500, int n=1000, float p=0.1, name=None):
+    def __init__(self, CGraph graph, int s=500, int n=1000, p: float=0.1, name=None):
         """
         :param graph: original graph
         :param s: number of initial random seed
         :param n: number of nodes to be crawled, must be >= seeds
         :param p: fraction of graph nodes to be returned
         """
-        super().__init__(graph, limit=n, name=name if name else '3-Stage_s=%s_n=%s_p=%.3f' % (s, n, p))
+        super().__init__(graph, limit=n, name=name if name else '3-Stage_s=%s_n=%s_p=%s' % (s, n, p))
         self.s = s
         self.n = n
         self.pN = int(p * self._orig_graph.nodes())
@@ -202,14 +202,14 @@ cdef class ThreeStageCrawlerSeedsAreHubs(ThreeStageCrawler):
     """
     cdef cset[int]* h   # S
 
-    def __init__(self, CGraph graph, int s=500, int n=1000, float p=0.1, name=None):
+    def __init__(self, CGraph graph, int s=500, int n=1000, p: float=0.1, name=None):
         """
         :param graph: original graph
         :param s: number of initial random seed
         :param n: number of nodes to be crawled, must be >= seeds
         :param p: fraction of graph nodes to be returned
         """
-        super().__init__(graph, s=s, n=n, p=p, name=name if name else'3-StageHubs_s=%s_n=%s_p=%.3f' % (s, n, p))
+        super().__init__(graph, s=s, n=n, p=p, name=name if name else'3-StageHubs_s=%s_n=%s_p=%s' % (s, n, p))
         self.h = new cset[int]()
 
     def seeds_generator(self):
@@ -267,7 +267,7 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
     cdef CCrawler mod
     cdef bint mod_on
 
-    def __init__(self, CGraph graph, int s=500, int n=1000, float p=0.1, int b=10, name=None):
+    def __init__(self, CGraph graph, int s=500, int n=1000, p: float=0.1, int b=10, name=None):
         """
         :param graph: original graph
         :param s: number of initial random seed
@@ -276,7 +276,7 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
         :param b: batch size
         """
         assert 1 <= b <= n-s
-        super().__init__(graph, limit=n, name=name if name else '3-StageMOD_s=%s_n=%s_p=%.3f_b=%s' % (s, n, p, b))
+        super().__init__(graph, limit=n, name=name if name else '3-StageMOD_s=%s_n=%s_p=%s_b=%s' % (s, n, p, b))
         self.s = s
         self.n = n
         self.pN = int(p * self._orig_graph.nodes())
@@ -294,7 +294,7 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
         """ Apply MOD when time comes
         """
         # FIXME res is set now
-        if not self.mod:
+        if not self.mod_on:
             return CCrawler.crawl(self, seed)
 
         cdef vector[int] res = self.mod.crawl(seed)
@@ -326,15 +326,20 @@ cdef class ThreeStageMODCrawler(CrawlerWithAnswer):
         # self.e2 = new cset[int](deref(self._observed_set))  # FIXME copying and updating ref
         # logging.debug("|E2|=%s" % self.e2.size())
 
-        # Get v=(pN-n+s) max degree observed nodes
-        self.e2s.clear()
-        self._get_mod_nodes(self._observed_set, self.e2s, self.pN - self.n + self.s)
-        logging.debug("|E2*|=%s" % self.e2s.size())
-
-        # Final answer - E* = E1* + E2*
         self._answer.clear()
-        self._answer.insert(self.e1s.begin(), self.e1s.end())
-        self._answer.insert(self.e2s.begin(), self.e2s.end())
+        if self.e1s.size() < self.pN:
+            self.e2s.clear()
+            # Get v=(pN-n+s) max degree observed nodes
+            self._get_mod_nodes(self._observed_set, self.e2s, self.pN - self.e1s.size())
+            logging.debug("|E2*|=%s" % self.e2s.size())
+
+            # Final answer - E* = E1* + E2*
+            self._answer.insert(self.e1s.begin(), self.e1s.end())
+            self._answer.insert(self.e2s.begin(), self.e2s.end())
+        else:
+            # Top-pN from e1s
+            self._get_mod_nodes(self._crawled_set, &self._answer, self.pN)
+
         logging.debug("|E*|=%s" % self._answer.size())
         # assert self._answer.size() <= self.pN
         return 0
