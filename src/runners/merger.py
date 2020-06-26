@@ -63,6 +63,14 @@ class CrawlerRunsMerger:
         self.auccs = {}  # auccs[graph][crawler][metric]: 'AUCC' -> [AUCC], 'wAUCC' -> [wAUCC]
         self.read()
 
+        self.labels = {}  # pretty short names to draw in plots
+        g = GraphCollections.get('petster-hamster')
+        for md in metric_defs:
+            self.labels[definition_to_filename(md)] = Metric.from_definition(g, md).name
+        for cd in crawler_defs:
+            self.labels[definition_to_filename(cd)] = Crawler.from_definition(g, cd).name
+        # print(self.labels)
+
     # @staticmethod
     # def to_path(graph: MyGraph, crawler: Crawler, metric: Metric):
     #     budget = graph[Stat.NODES]  # TODO as param?
@@ -181,7 +189,7 @@ class CrawlerRunsMerger:
                 elif nrows * ncols > 1:
                     plt.sca(axs[aix])
                 if aix % G == 0:
-                    plt.ylabel(m)
+                    plt.ylabel(self.labels[m])
                 if i == 0:
                     plt.title(g)
                 if aix // ncols == nrows-1:
@@ -202,7 +210,7 @@ class CrawlerRunsMerger:
                     if len(xs) > 0:
                         error = np.var(contents['ys'], axis=0) ** 0.5
                         plt.fill_between(xs, contents['avy'] - error, contents['avy'] + error, color=colors[k % len(colors)], alpha=0.2)
-                    plt.plot(xs, contents['avy'], color=colors[k % len(colors)], linewidth=1, label=c)
+                    plt.plot(xs, contents['avy'], color=colors[k % len(colors)], linewidth=1, label=self.labels[c])
                     pbar.update(1)
         pbar.close()
         plt.legend()
@@ -271,9 +279,9 @@ class CrawlerRunsMerger:
             for i, m in enumerate(self.metric_names):
                 errors = [np.var(self.auccs[g][c][m][aggregator]) for c in self.crawler_names]
                 ys = [np.mean(self.auccs[g][c][m][aggregator]) for c in self.crawler_names]
-                plt.errorbar(xs, ys, errors, label=m, marker='.', capsize=5, color=colors[i % len(colors)])
+                plt.errorbar(xs, ys, errors, label=self.labels[m], marker='.', capsize=5, color=colors[i % len(colors)])
                 pbar.update(1)
-            plt.xticks(xs, self.crawler_names, rotation=90)
+            plt.xticks(xs, [self.labels[c] for c in self.crawler_names], rotation=90)
             aix += 1
         pbar.close()
         plt.legend()
@@ -314,11 +322,11 @@ class CrawlerRunsMerger:
         prev_bottom = np.zeros(C)
         for i, m in enumerate(self.metric_names):
             h = [winners[c][m] for c in self.crawler_names]
-            plt.bar(xs, h, width=0.8, bottom=prev_bottom, color=colors[i % len(colors)], label=m)
+            plt.bar(xs, h, width=0.8, bottom=prev_bottom, color=colors[i % len(colors)], label=self.labels[m])
             prev_bottom += h
 
         plt.ylabel('%s value' % aggregator)
-        plt.xticks(xs, self.crawler_names, rotation=90)
+        plt.xticks(xs, [self.labels[c] for c in self.crawler_names], rotation=90)
         plt.legend()
         plt.tight_layout()
         plt.show()
@@ -406,9 +414,9 @@ def test_merger():
     ]
     crm = CrawlerRunsMerger(graphs, crawler_defs, metric_defs, n_instances=6)
     # crm.missing_instances()
-    crm.draw_by_crawler()
+    # crm.draw_by_crawler()
     # crm.draw_aucc('AUCC')
-    # crm.draw_winners('AUCC')
+    crm.draw_winners('AUCC')
 
 
 def rename_results_old_to_new():

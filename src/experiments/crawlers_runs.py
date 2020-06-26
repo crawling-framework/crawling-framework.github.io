@@ -318,6 +318,125 @@ def run_missing(max_cpus: int=multiprocessing.cpu_count(), max_memory: float=6):
         print('\n\n')
 
 
+def big_run(max_cpus: int=multiprocessing.cpu_count(), max_memory: float=6):
+    """
+    :param max_cpus: max number of CPUs to use for computation, all by default
+    :param max_memory: max Mbytes of operative memory to use for computation, 6Gb by default
+    :return:
+    """
+    graphs = [
+        'socfb-Bingham82',
+        # 'web-sk-2005',
+        # 'digg-friends',
+        'petster-hamster',
+        'ego-gplus',
+        'slashdot-threads',
+        'facebook-wosn-links',
+    ]
+    p = 0.01
+    crawler_defs = [
+        # filename_to_definition('RW()'),
+        # filename_to_definition('RC()'),
+        # filename_to_definition('BFS()'),
+        # filename_to_definition('DFS()'),
+        # filename_to_definition('SBS(p=0.1)'),
+        # filename_to_definition('SBS(p=0.25)'),
+        # filename_to_definition('SBS(p=0.75)'),
+        # filename_to_definition('SBS(p=0.89)'),
+        # filename_to_definition('SBS(p=0.5)'),
+        # filename_to_definition('MOD(batch=10000)'),
+        # filename_to_definition('MOD(batch=1000)'),
+        # filename_to_definition('MOD(batch=100)'),
+        # filename_to_definition('MOD(batch=10)'),
+        # filename_to_definition('MOD(batch=1)'),
+        # filename_to_definition('POD(batch=10000)'),
+        # filename_to_definition('POD(batch=1000)'),
+        # filename_to_definition('POD(batch=100)'),
+        # filename_to_definition('POD(batch=10)'),
+        # filename_to_definition('POD(batch=1)'),
+        (DE_Crawler, {}),
+        (DE_Crawler, {'initial_budget': 10}),
+        # (DE_Crawler, {'initial_budget': 30}),
+        # (DE_Crawler, {'initial_budget': 100}),
+        # filename_to_definition('MultiInstance(count=2,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=2,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=2,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=2,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=3,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=3,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=3,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=3,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=4,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=4,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=4,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=4,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=5,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=5,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=5,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=5,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=10,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=10,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=10,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=10,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=30,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=30,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=30,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=30,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=100,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=100,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=100,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=100,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=1000,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=1000,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=1000,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=1000,crawler_def=DE(initial_budget=10))'),
+    ]
+    metric_defs = [
+        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
+        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.PAGERANK_DISTR.short}),
+        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.BETWEENNESS_DISTR.short}),
+        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.ECCENTRICITY_DISTR.short}),
+        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.CLOSENESS_DISTR.short}),
+        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
+    ]
+
+    # Get missing combinations
+    crm = CrawlerRunsMerger(graphs, crawler_defs, metric_defs, n_instances=6)
+    missing = crm.missing_instances()
+    import json
+    print(json.dumps(missing, indent=2))
+
+    for graph_name, cmi in missing.items():
+        crawler_defs = [filename_to_definition(c) for c in cmi.keys()]
+        max_count = 0
+        for crawler_name, mi in cmi.items():
+            max_count = max(max_count, max(mi.values()))
+
+        print("Will run x%s missing crawlers for %s graph: %s" % (max_count, graph_name, list(cmi.keys())))
+        g = GraphCollections.get(graph_name)
+
+        cr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
+        # [cr.run() for _ in range(max_count)]
+
+        # Parallel run with adaptive number of CPUs
+        memory = (0.25 * g['NODES']/1000 + 2.5)/1024 * len(crawler_defs)  # Gbytes of operative memory per instance
+        max_cpus = min(max_cpus, max_memory // memory)
+        while max_count > 0:
+            num = min(max_cpus, max_count)
+            max_count -= num
+            msg = cr.run_parallel(num)
+
+            # send to my vk
+            import os
+            from utils import rel_dir
+            bot_path = os.path.join(rel_dir, "src", "experiments", "vk_signal.py")
+            os.system("python3 %s -m '%s'" % (bot_path, msg))
+        print('\n\n')
+
+    # crm.draw_by_crawler()
+    crm.draw_winners('AUCC')
+
+
 def cloud_manager():
     import subprocess, sys
 
@@ -396,7 +515,7 @@ if __name__ == '__main__':
     # sys.stdout = open('logs', 'w')
     # sys.stderr = open('logs', 'w')
 
-    run_missing(max_cpus=6, max_memory=24)
-    # big_run()
+    # run_missing(max_cpus=6, max_memory=24)
+    big_run()
     # prepare_graphs()
     # cloud_manager()

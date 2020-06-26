@@ -114,8 +114,6 @@ class MultiInstanceCrawler(MultiCrawler):
         assert crawler_def is not None
         assert count < graph.nodes()
 
-        # short name for pics
-        name = name if name else 'Multi(%sx%s)' % (count, definition_to_filename(crawler_def))
         super().__init__(graph, name=name, count=count, crawler_def=crawler_def)
 
         self.crawler_def = crawler_def  # FIXME can we speed it up?
@@ -140,6 +138,8 @@ class MultiInstanceCrawler(MultiCrawler):
                 self.node_owner[n] = crawler
                 self.keep_node_owners = True
 
+        if not name:
+            self.name = 'Multi%s%s' % (count, self.crawlers[0].name)  # short name for pics
         self.next_crawler = 0  # next crawler index to run
 
     def crawl(self, seed: int) -> list:

@@ -92,8 +92,7 @@ cdef class CCrawler:
         # self.seed_sequence_ = []  # D: sequence of tries to add nodes to draw history and debug
         self._definition = type(self), kwargs
 
-        name = name if name else definition_to_filename(self._definition)
-        self._name = str_to_chars(name)
+        self.name = name if name else definition_to_filename(self._definition)
 
     @staticmethod
     def from_definition(CGraph graph, definition) -> CCrawler:
@@ -126,10 +125,6 @@ cdef class CCrawler:
     @property
     def orig_graph(self):
         return self._orig_graph
-
-    @property
-    def name(self):
-        return bytes.decode(self._name)
 
     cpdef bint observe(self, int node):
         """ Add the node to observed set and observed graph. """
@@ -230,7 +225,10 @@ cdef class RandomCrawler(CCrawler):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
-        super().__init__(graph, **kwargs)
+        if initial_seed != -1:
+            kwargs['initial_seed'] = initial_seed
+
+        super().__init__(graph, name=self.short, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -271,7 +269,10 @@ cdef class RandomWalkCrawler(CCrawler):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
-        super().__init__(graph, **kwargs)
+        if initial_seed != -1:
+            kwargs['initial_seed'] = initial_seed
+
+        super().__init__(graph, name=self.short, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -313,7 +314,10 @@ cdef class BreadthFirstSearchCrawler(CCrawler):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
-        super().__init__(graph, **kwargs)
+        if initial_seed != -1:
+            kwargs['initial_seed'] = initial_seed
+
+        super().__init__(graph, name=self.short, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -351,7 +355,10 @@ cdef class DepthFirstSearchCrawler(CCrawler):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
-        super().__init__(graph, **kwargs)
+        if initial_seed != -1:
+            kwargs['initial_seed'] = initial_seed
+
+        super().__init__(graph, name=self.short, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -395,7 +402,10 @@ cdef class SnowBallCrawler(CCrawler):
          node (if -1 is given, a random node of original graph will be used).
         :param p: probability of taking neighbor into queue
         """
-        super().__init__(graph, p=p, **kwargs)
+        if initial_seed != -1:
+            kwargs['initial_seed'] = initial_seed
+
+        super().__init__(graph, name="%s%2.f" % (self.short, 100*p), p=p, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -457,7 +467,10 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
-        super().__init__(graph, batch=batch, **kwargs)
+        if initial_seed != -1:
+            kwargs['initial_seed'] = initial_seed
+
+        super().__init__(graph, name="%s%s" % (self.short, '' if batch == 1 else batch), batch=batch, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -524,7 +537,10 @@ cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
     # cdef cset[int] pod_set  # FIXME python set would be faster, but how to?
 
     def __init__(self, CGraph graph, int initial_seed=-1, int batch=1, **kwargs):
-        super().__init__(graph, batch=batch, **kwargs)
+        if initial_seed != -1:
+            kwargs['initial_seed'] = initial_seed
+
+        super().__init__(graph, name="%s%s" % (self.short, '' if batch == 1 else batch), batch=batch, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -591,6 +607,9 @@ cdef class MaximumExcessDegreeCrawler(CCrawler):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
+        if initial_seed != -1:
+            kwargs['initial_seed'] = initial_seed
+
         super().__init__(graph, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:

@@ -64,7 +64,7 @@ class TopCentralityMetric(Metric):
             'F1': lambda crawler, **kwargs:  2*len(get_part(crawler).intersection(target_set)) / (target_set_size + len(get_part(crawler))),
         }[measure]
 
-        name = name if name else "%s_%s_%s_%s" % (measure, part, centrality, top)
+        name = name if name else "%s %s %s %s" % (measure, part, centrality, top)
         super().__init__(name, callback, top=top, centrality=centrality, measure=measure, part=part)
 
     # @staticmethod

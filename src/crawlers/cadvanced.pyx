@@ -366,13 +366,24 @@ cdef class DE_Crawler(CCrawlerUpdatable):
     cdef cmap[int, float] node_clust
     cdef ND_Set nd_set
 
-    def __init__(self, CGraph graph, int initial_seed=-1, int initial_budget=10, **kwargs):
-        super().__init__(graph, initial_budget=initial_budget, **kwargs)
+    def __init__(self, CGraph graph, int initial_seed=-1, int initial_budget=-1, **kwargs):
+        if initial_budget == -1:
+            initial_budget = int(0.015 * graph.nodes())  # Default in paper: 15% of total budget (which is 10%)
+        else:
+            kwargs['initial_budget'] = initial_budget
+        self.initial_budget = initial_budget
+
+        if initial_seed != -1:
+            kwargs['initial_seed'] = initial_seed
+
+        super().__init__(graph, **kwargs)
 
         if len(self._observed_set) == 0:
             if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
+        self.initial_seed = initial_seed
+        self.prev_seed = -1
 
         self.s_d = 0
         self.s_e = 0
@@ -380,11 +391,6 @@ cdef class DE_Crawler(CCrawlerUpdatable):
         self.a2 = 1  # 64
         self.b1 = 0.5
         self.b2 = 0.5
-
-        self.initial_seed = initial_seed
-        self.prev_seed = -1
-        self.initial_budget = initial_budget
-        # self.node_clust = {}
 
         self.nd_set = ND_Set()
         for n in self._observed_set:

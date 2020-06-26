@@ -12,7 +12,6 @@ from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set 
 
 
 cdef class CCrawler:
-    cdef char* _name
     cdef readonly CGraph _orig_graph
     cdef readonly CGraph _observed_graph
     cdef dict __dict__  # for pythonic fields, makes it slower
