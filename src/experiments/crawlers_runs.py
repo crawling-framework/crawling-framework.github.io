@@ -1,6 +1,3 @@
-from crawlers.cbasic import filename_to_definition
-from runners.merger import CrawlerRunsMerger
-from runners.metric_runner import TopCentralityMetric
 from utils import USE_CYTHON_CRAWLERS
 import time
 if USE_CYTHON_CRAWLERS:
@@ -9,6 +6,9 @@ if USE_CYTHON_CRAWLERS:
 else:
     pass
 
+from crawlers.cbasic import filename_to_definition
+from runners.merger import CrawlerRunsMerger
+from runners.metric_runner import TopCentralityMetric
 from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections, konect_names, netrepo_names
 from runners.animated_runner import Metric
