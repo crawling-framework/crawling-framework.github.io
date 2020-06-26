@@ -7,15 +7,15 @@ from utils import USE_CYTHON_CRAWLERS
 
 if USE_CYTHON_CRAWLERS:
     from base.cgraph import CGraph as MyGraph
-    from base.cbasic import RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, \
+    from crawlers.cbasic import RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, \
         MaximumObservedDegreeCrawler, SnowBallCrawler, PreferentialObservedDegreeCrawler
-    from base.cmultiseed import MultiCrawler
 else:
     from base.graph import MyGraph
     from crawlers.advanced import CrawlerWithAnswer
     from crawlers.basic import RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, \
         MaximumObservedDegreeCrawler, SnowBallCrawler, PreferentialObservedDegreeCrawler
-    from crawlers.multiseed import MultiCrawler
+
+from crawlers.multiseed import MultiInstanceCrawler
 
 
 def test_multi_mod(graph: MyGraph):
@@ -28,16 +28,11 @@ def test_multi_mod(graph: MyGraph):
         # SnowBallCrawler(graph, initial_seed=int(init_nodes[3])),
         MaximumObservedDegreeCrawler(graph, batch=1),
         MaximumObservedDegreeCrawler(graph, batch=10),
-        MultiCrawler(graph, [
-            MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=init_nodes[i]) for i in range(100)
-        ]),
-        MultiCrawler(graph, [
-            MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=init_nodes[i]) for i in range(100)
-        ]),
-        # MultiCrawler(graph, [
+        MultiInstanceCrawler(graph, count=100, crawler_def=(MaximumObservedDegreeCrawler, {'batch': 1})),
+        # MultiInstanceCrawler(graph, [
         #     PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=int(init_nodes[i+10])) for i in range(100)
         # ]),
-        # MultiCrawler(graph, [
+        # MultiInstanceCrawler(graph, [
         #     PreferentialObservedDegreeCrawler(graph, batch=10, initial_seed=int(init_nodes[i+10])) for i in range(100)
         # ]),
     ]

@@ -8,11 +8,10 @@ if USE_NETWORKIT:
 
 # from base.cbasic import MaximumObservedDegreeCrawler
 if USE_CYTHON_CRAWLERS:
-    from base.cbasic import MaximumObservedDegreeCrawler, CCrawler as Crawler, BreadthFirstSearchCrawler, RandomCrawler, PreferentialObservedDegreeCrawler
-    from base.cmultiseed import MultiCrawler
+    from crawlers.cbasic import MaximumObservedDegreeCrawler, CCrawler as Crawler, BreadthFirstSearchCrawler, RandomCrawler, PreferentialObservedDegreeCrawler
 else:
     from crawlers.basic import MaximumObservedDegreeCrawler, Crawler, BreadthFirstSearchCrawler, RandomCrawler, PreferentialObservedDegreeCrawler
-    from crawlers.multiseed import MultiCrawler
+from crawlers.multiseed import MultiInstanceCrawler
 
 
 def test_plm(g):
@@ -106,7 +105,7 @@ def test_crawler_comms(g):
     crawlers = [
         CrawlerWithComms(g, num, clas=PreferentialObservedDegreeCrawler, batch=1, initial_seed=1),
 
-        CrawlerWithComms(g, num, clas=MultiCrawler, crawlers=[
+        CrawlerWithComms(g, num, clas=MultiInstanceCrawler, crawlers=[
             MaximumObservedDegreeCrawler(g, initial_seed=random_seeds[i]) for i in range(10)
         ]),
 

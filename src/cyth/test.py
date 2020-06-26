@@ -4,9 +4,8 @@ from base.cgraph import cgraph_test
 from base.cbasic import cbasic_test
 from base.cadvanced import test_cadvanced
 from cyth.cstatistics import test_cstats
-from base.cmetrics import test_metrics
 
-from base.cmultiseed import test_multiseed
+# from base.cmultiseed import test_multiseed
 
 if __name__ == '__main__':
 
@@ -17,5 +16,4 @@ if __name__ == '__main__':
     # cbasic_test()
     # test_multiseed()
     # test_cstats()
-    # test_cadvanced()
-    test_metrics()
+    test_cadvanced()

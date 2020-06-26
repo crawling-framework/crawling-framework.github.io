@@ -28,6 +28,9 @@ cdef TRnd t_random = TRnd(int(time()*1e7 % 1e9), 0)
 cpdef void seed_random(int seed):
     t_random.PutSeed(seed)
 
+cpdef int get_UniDevInt(int max):
+    return t_random.GetUniDevInt(max)
+
 cdef class CGraph:
     def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij', not_load: bool=False):
         """
@@ -67,10 +70,10 @@ cdef class CGraph:
         pass
 
     cpdef void load(self):
-        logger.debug("Loading graph '%s' from '%s'..." % (self.name, self.path))
+        logging.info("Loading graph '%s' from '%s'..." % (self.name, self.path))
         self._snap_graph_ptr = LoadEdgeList[PUNGraph](TStr(self._path), 0, 1)
         self._fingerprint = fingerprint(self._snap_graph_ptr)
-        logger.debug("done.")
+        logging.info("done.")
 
     @property
     def path(self):

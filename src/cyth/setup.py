@@ -54,7 +54,7 @@ if __name__ == '__main__':
         raise OSError("Sorry, your OS (%s) is not supported" % plt)
 
     extra_objects = [os.path.join(snap_dir, "snap-core/Snap.o")]
-    include_dirs = [os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core")]
+    include_dirs = [os.path.join(snap_dir, "snap-core/"), os.path.join(snap_dir, "glib-core"), 'base']  # append here all project directories with C/C++ code
 
     # Compiling Cython modules
     ext_modules = [
@@ -71,24 +71,16 @@ if __name__ == '__main__':
                   extra_objects=extra_objects,
                   include_dirs=include_dirs,
                   ),
-        Extension("base.cbasic",
-                  ["base/cbasic.pyx"],
+        Extension("crawlers.cbasic",
+                  ["crawlers/cbasic.pyx"],
                   language='c++',
                   extra_compile_args=extra_compile_flags,
                   extra_link_args=snap_extra_link_args,
                   extra_objects=extra_objects,
                   include_dirs=include_dirs,
                   ),
-        Extension("base.cmultiseed",
-                  ["base/cmultiseed.pyx"],
-                  language='c++',
-                  extra_compile_args=extra_compile_flags,
-                  extra_link_args=snap_extra_link_args,
-                  extra_objects=extra_objects,
-                  include_dirs=include_dirs,
-                  ),
-        Extension("base.cadvanced",
-                  ["base/cadvanced.pyx"],
+        Extension("crawlers.cadvanced",
+                  ["crawlers/cadvanced.pyx"],
                   language='c++',
                   extra_compile_args=extra_compile_flags,
                   extra_link_args=snap_extra_link_args,
@@ -99,14 +91,6 @@ if __name__ == '__main__':
                   ["cyth/cstatistics.pyx"],
                   language='c++',
                   extra_compile_args=extra_compile_flags + ["-lrt"],
-                  extra_link_args=snap_extra_link_args,
-                  extra_objects=extra_objects,
-                  include_dirs=include_dirs,
-                  ),
-        Extension("base.cmetrics",
-                  ["base/cmetrics.pyx"],
-                  language='c++',
-                  extra_compile_args=extra_compile_flags,
                   extra_link_args=snap_extra_link_args,
                   extra_objects=extra_objects,
                   include_dirs=include_dirs,

@@ -4,45 +4,33 @@ from utils import USE_CYTHON_CRAWLERS
 
 if USE_CYTHON_CRAWLERS:
     from base.cgraph import CGraph as MyGraph
-    from base.cbasic import CCrawler as Crawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
+    from crawlers.cbasic import CCrawler as Crawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
+    from crawlers.advanced import ThreeStageMODCrawler
 else:
     from base.graph import MyGraph
     from crawlers.basic import Crawler, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
 
+from crawlers.multiseed import MultiInstanceCrawler
+from runners.metric_runner import CrawlerRunner, TopCentralityMetric, Metric
 from graph_io import GraphCollections
-from statistics import Stat
-
-
-class Metric:
-    def __init__(self, name, callback, **kwargs):
-        self.name = name
-        self._callback = callback
-        self._kwargs = kwargs
-
-    def __call__(self, crawler: Crawler):
-        return self._callback(crawler, **self._kwargs)
+from statistics import Stat, get_top_centrality_nodes
 
 
 # TODO need to check several statistics / metrics
-class AnimatedCrawlerRunner:
-    def __init__(self, graph: MyGraph, crawlers, metrics, budget=-1, step=1):
+class AnimatedCrawlerRunner(CrawlerRunner):
+    def __init__(self, graph: MyGraph, crawlers, metrics, budget: int=-1, step: int=1):
         """
-        :param graph:
-        :param crawlers: list of crawlers to run
+        :param graph: graph to run
+        :param crawlers: list of crawlers or crawler definitions to run. Crawler definitions will be
+         initialized when run() is called
         :param metrics: list of metrics to compute at each step. Metric should be callable function
          crawler -> float, and have name
         :param budget: maximal number of nodes to be crawled, by default the whole graph
         :param step: compute metrics each `step` steps
         :return:
         """
-        self.graph = graph
-        # for crawler in crawlers:  FIXME
-        #     assert crawler.orig_graph == graph
-        self.crawlers = crawlers
-        self.metrics = metrics
-        self.budget = min(budget, graph[Stat.NODES]) if budget > 0 else graph[Stat.NODES]
-        assert step < self.budget
-        self.step = step
+        super().__init__(graph, crawlers=crawlers, metrics=metrics, budget=budget, step=step)
+
         self.nrows = 1
         self.ncols = 1
         scale = 9
@@ -51,15 +39,37 @@ class AnimatedCrawlerRunner:
 
         plt.figure(self.title, figsize=(1 + scale * self.ncols, scale * self.nrows))
 
-    def run(self, ylims=None, xlabel='iteration, n', ylabel='metric value', swap_coloring_scheme=False, save_to_file=None):
+    def run(self, same_initial_seed=False, ylims=None, xlabel='iteration, n', ylabel='metric value', swap_coloring_scheme=False, save_to_file=None):
+        """
+        :param same_initial_seed: use the same initial seed for all crawler instances
+        :param ylims: (low, up)
+        :param xlabel: by default 'iteration, n'
+        :param ylabel: by default 'metric value'
+        :param swap_coloring_scheme: by default metrics differ in linestyle, crawlers differ in color. Set True to swap
+        :param save_to_file: specify the full path here to save picture
+        :return:
+        """
         linestyles = ['-', '--', ':', '.-']
         # colors = ['b', 'g', 'r', 'c', 'm', 'y',  'orange']
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
                   'pink', 'lime', 'wheat', 'lightsteelblue']
 
+        # Initialize crawlers and metrics
+        # if same_initial_seed:
+        #     initial_seed = self.graph.random_node()
+        # crawlers = []
+        # for _class, kwargs in self.crawler_defs:
+        #     crawlers.append(
+        #         _class(self.graph, initial_seed=initial_seed, **kwargs) if same_initial_seed and isinstance(_class, CCrawlerWithInitialSeed) else
+        #         _class(self.graph, **kwargs)
+        #     )
+        # for _class, kwargs in self.crawler_defs:
+        #     print(_class, kwargs)
+        crawlers = self.crawlers + [Crawler.from_definition(self.graph, d) for d in self.crawler_defs]
+
         step_seq = []
-        crawler_metric_seq = dict([(c, dict([(m, []) for m in self.metrics])) for c in self.crawlers])
+        crawler_metric_seq = dict([(c, dict([(m, []) for m in self.metrics])) for c in crawlers])
 
         i = 0
         while i < self.budget:
@@ -69,7 +79,7 @@ class AnimatedCrawlerRunner:
 
             plt.cla()
             plt.title(self.title)
-            for c, crawler in enumerate(self.crawlers):
+            for c, crawler in enumerate(crawlers):
                 crawler.crawl_budget(int(batch))
 
                 for m, metric in enumerate(self.metrics):
@@ -107,28 +117,31 @@ def test_runner(graph):
     from crawlers.basic import Crawler, RandomWalkCrawler, RandomCrawler
     from statistics import Stat, get_top_centrality_nodes
 
+    p = 0.01
+    budget = int(0.05 * g.nodes())
+    s = int(budget / 2)
     crawlers = [
-        MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=1),
-        PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=1),
+        # MaximumObservedDegreeCrawler(graph, batch=1),
+        # (MaximumObservedDegreeCrawler, {'batch': 1, 'initial_seed': 1}),
+        # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=1).definition,
         # BreadthFirstSearchCrawler(graph, initial_seed=1),
         # RandomWalkCrawler(graph, initial_seed=1),
         # RandomCrawler(graph, initial_seed=1),
-        # MultiCrawler(graph, [
-        #     # RandomCrawler(graph, initial_seed=1),
-        #     BreadthFirstSearchCrawler(graph),
-        #     BreadthFirstSearchCrawler(graph),
-        #     BreadthFirstSearchCrawler(graph),
-        #     BreadthFirstSearchCrawler(graph),
-        # ])
+        # (MultiInstanceCrawler, {'count': 5, 'crawler_def': (MaximumObservedDegreeCrawler, {'batch': 10})}),
+        (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p, 'b': 1}),
+        # (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p, 'b': 10}),
+        # (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p, 'b': 30}),
+        # (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p, 'b': 100}),
     ]
 
-    target_set = set(get_top_centrality_nodes(graph, Stat.CLOSENESS_DISTR, count=int(0.1 * graph[Stat.NODES])))
     metrics = [
-        Metric(r'$|V_{all}|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
-        Metric(r'$|V_{all} \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
+        # TopCentralityMetric(graph, top=0.1, centrality=Stat.DEGREE_DISTR, measure='Pr', part='nodes'),
+        # Metric(r'$|V_{all}|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
+        # TopCentralityMetric(graph, top=0.1, centrality=Stat.DEGREE_DISTR, measure='Re', part='nodes'),
+        TopCentralityMetric(graph, top=p, centrality=Stat.DEGREE_DISTR, measure='F1', part='answer'),
     ]
 
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=50000, step=500)
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=int(budget/100))
     ci.run(ylims=(0, 1))
 
 
@@ -140,14 +153,13 @@ if __name__ == '__main__':
 
     # name = 'libimseti'
     # name = 'petster-friendships-cat'
-    # name = 'soc-pokec-relationships'
-    name = 'digg-friends'
+    name = 'soc-pokec-relationships'
+    # name = 'digg-friends'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
     # name = 'petster-hamster'
-    # g = GraphCollections.get(name)
 
-    name = 'sc-shipsec5'
-    g = GraphCollections.get(name, 'netrepo')
+    # name = 'sc-shipsec5'
+    g = GraphCollections.get(name)
 
     test_runner(g)

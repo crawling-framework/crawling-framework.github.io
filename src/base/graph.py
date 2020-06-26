@@ -19,7 +19,7 @@ def fingerprint(snap_graph):
 
 
 class MyGraph(object):
-    def __init__(self, path=None, name='noname', directed=False, weighted=False, format='ij'):
+    def __init__(self, path=None, name='noname', directed=False, weighted=False, format='ij', not_load=False):
         self._snap_graph = None
         self.path = path
         self.name = name
@@ -33,7 +33,7 @@ class MyGraph(object):
             from datetime import datetime
             self.path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
             self._snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
-        else:
+        elif not not_load:
             self.snap()
 
     # @classmethod
