@@ -18,7 +18,7 @@ if USE_NETWORKIT:  # Use networkit library for approximate centrality calculatio
 
 
 class Stat(Enum):
-    def __init__(self, short, description):
+    def __init__(self, short: str, description: str):
         self.short = short
         self.description = description
 

@@ -3,36 +3,30 @@ import glob
 import json
 import multiprocessing
 import os
-import re
 import logging
 import imageio
 import networkx as nx
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
+from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler
 from utils import PICS_DIR, RESULT_DIR
 
 from base.cgraph import MyGraph, seed_random
-from crawlers.cbasic import Crawler, CrawlerUpdatable as CrawlerUpdatable, \
-    MaximumObservedDegreeCrawler, definition_to_filename
-from crawlers.advanced import ThreeStageMODCrawler, ThreeStageCrawler, AvrachenkovCrawler
-from crawlers.multiseed import MultiInstanceCrawler
+from crawlers.cbasic import Crawler, definition_to_filename, filename_to_definition
 from graph_io import GraphCollections
-from runners.metric_runner import CrawlerRunner, TopCentralityMetric, Metric
-from runners.merger import CrawlerRunsMerger
-from statistics import Stat, get_top_centrality_nodes
+from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric, remap_iter
+from running.merger import CrawlerRunsMerger
+from statistics import Stat
 
 
-def remap_iter(total=400):
-    """ Remapping steps depending on used budget - on first iters step=1, on last it grows ~x^2
-    """
-    step_budget = 0
-    remap_iter_to_step = {}
-    for i in range(total):  # for budget less than 100 mln nodes
-        remap = int(max(1, step_budget / 20))
-        remap_iter_to_step[step_budget] = remap
-        step_budget += remap
-    return remap_iter_to_step
+def send_misha_vk(msg: str):
+    """ Try to send message to misha's VK """
+    try:
+        from utils import rel_dir
+        bot_path = os.path.join(rel_dir, "src", "experiments", "vk_signal.py")
+        os.system("python3 %s -m '%s'" % (bot_path, msg))
+    except: pass
 
 
 def make_gif(crawler_name, duration=1):
@@ -126,36 +120,6 @@ class CrawlerHistoryRunner(CrawlerRunner):
             for crawler in self.crawlers:
                 make_gif(crawler_name=crawler.name, duration=2)
                 logging.info('compiled +')
-
-    def run_parallel(self, num_processes=multiprocessing.cpu_count()):
-        """ Run in parallel crawlers and measure metrics. In the end, the measurements are saved.
-        """
-        from time import time
-
-        t = time()
-        jobs = []
-        for i in range(num_processes):
-            logging.info('Start parallel iteration %s of %s' % (i+1, num_processes))
-            seed_random(int(time() * 1e7 % 1e9))  # to randomize t_random in parallel processes
-            # little multiprocessing magic, that calculates several iterations in parallel
-            p = multiprocessing.Process(target=self.run, args=())
-            jobs.append(p)
-            p.start()
-            # FIXME it could be a problem when several runners try to create and write into one directory
-
-        for i, p in enumerate(jobs):
-            p.join()
-            logging.info('Completed job %s/%s' % (i+1, num_processes))
-
-        msg = 'Completed %s runs for graph %s with N=%s E=%s. Time elapsed %.1fs.' % (
-            num_processes, self.graph.name, self.graph.nodes(), self.graph.edges(), time() - t)
-        # TODO how to catch exceptions?
-
-        # except Exception as e:
-        #     msg = "Failed graph %s after %.2fs with error %s" % (graph_name, time.time() - start_time, e)
-
-        print(msg)
-        return msg
 
     def run(self, same_initial_seed=False, draw_networkx=False):
         """ Run crawlers and measure metrics. In the end, the measurements are saved.
@@ -253,71 +217,106 @@ class CrawlerHistoryRunner(CrawlerRunner):
         # if draw_networkx:
         #     plt.show()
 
+    def run_parallel(self, num_processes=multiprocessing.cpu_count()):
+        """ Run in parallel crawlers and measure metrics. In the end, the measurements are saved.
+        """
+        from time import time
 
-def test_crawler_runner():
-    # g = GraphCollections.get('socfb-Bingham82')
+        t = time()
+        jobs = []
+        for i in range(num_processes):
+            logging.info('Start parallel iteration %s of %s' % (i+1, num_processes))
+            seed_random(int(time() * 1e7 % 1e9))  # to randomize t_random in parallel processes
+            # little multiprocessing magic, that calculates several iterations in parallel
+            p = multiprocessing.Process(target=self.run, args=())
+            jobs.append(p)
+            p.start()
+            # FIXME it could be a problem when several running try to create and write into one directory
+
+        for i, p in enumerate(jobs):
+            p.join()
+            logging.info('Completed job %s/%s' % (i+1, num_processes))
+
+        msg = 'Completed %s runs for graph %s with N=%s E=%s. Time elapsed %.1fs.' % (
+            num_processes, self.graph.name, self.graph.nodes(), self.graph.edges(), time() - t)
+        # TODO how to catch exceptions?
+
+        # except Exception as e:
+        #     msg = "Failed graph %s after %.2fs with error %s" % (graph_name, time.time() - start_time, e)
+
+        print(msg)
+        return msg
+
+    def run_missing(self, n_instances, max_cpus: int = multiprocessing.cpu_count(), max_memory: float = 6):
+        """
+        Runs all missing experiments for the graph. All crawlers and metrics run simultaneously, the
+         number of instances is maximal among missing ones.
+
+        :param n_instances: minimal wanted number of instances
+        :param max_cpus: max number of CPUs to use for computation, all by default
+        :param max_memory: max Mbytes of operative memory to use for computation, 6Gb by default
+        :return:
+        """
+        crawler_defs = self.crawler_defs + [c.definition for c in self.crawlers]
+        metric_defs = self.metric_defs + [m.definition for m in self.metrics]
+
+        # Get missing combinations
+        crm = CrawlerRunsMerger([self.graph.name], crawler_defs, metric_defs, n_instances=n_instances)
+        missing = crm.missing_instances()
+        # import json
+        # print(json.dumps(missing, indent=2))
+
+        if len(missing) == 0:
+            logging.info("No missing experiments found")
+            return
+
+        cmi = missing[self.graph.name]
+        crawler_defs = [filename_to_definition(c) for c in cmi.keys()]  # only missing ones
+        max_count = 0
+        for crawler_name, mi in cmi.items():
+            max_count = max(max_count, max(mi.values()))
+
+        print("Will run %s missing iterations for graph %s: Crawlers %s\n Metrics: %s" % (
+            max_count, self.graph.name, list(cmi.keys()), list(map(definition_to_filename, metric_defs))))
+
+        # Parallel run with adaptive number of CPUs
+        memory = (0.25 * self.graph['NODES'] / 1000 + 2.5) / 1024 * len(crawler_defs)  # Gbytes of operative memory per instance
+        max_cpus = min(max_cpus, max_memory // memory)
+        while max_count > 0:
+            num = min(max_cpus, max_count)
+            max_count -= num
+            msg = self.run_parallel(num)
+
+            send_misha_vk(msg)
+
+
+def test_history_runner():
     g = GraphCollections.get('digg-friends')
 
     p = 0.01
-    # initial_seed = g.random_nodes(1)
-    crawler_defs = [
-        # (MaximumObservedDegreeCrawler, {'batch': 1}),
-        # (MaximumObservedDegreeCrawler, {'batch': 10}),
-        # (MaximumObservedDegreeCrawler, {'batch': 100}),
-        # (MultiInstanceCrawler, {'count': 5, 'crawler_def': (MaximumObservedDegreeCrawler, {'batch': 10})}),
-        # (ThreeStageCrawler, {'s': 699, 'n': 1398, 'p': p}),
-    ]
-    metrics = [
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.PAGERANK_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.BETWEENNESS_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.ECCENTRICITY_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.CLOSENESS_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
-    ]
-    cr = CrawlerHistoryRunner(g, crawler_defs, metrics)
-    # cr.run()
-    cr.run_parallel(4)
+    budget = int(0.005 * g.nodes())
+    s = int(budget / 2)
 
-    # # Run merger
-    # crm = CrawlerRunsMerger([g.name], crawler_defs, [metrics[0].name], n_instances=10)
-    # crm.draw_by_crawler(x_lims=(0, 1500), x_normalize=False)
+    crawler_defs = [
+        (ThreeStageCrawler, {'s': s, 'n': budget, 'p': p}),
+        (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p}),
+    ]
+    metric_defs = [
+        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
+        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'answer'}),
+    ]
+    n_instances = 10
+    # Run missing iterations
+    chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
+    chr.run_missing(n_instances, max_cpus=4, max_memory=2.5)
+
+    # Run merger
+    crm = CrawlerRunsMerger([g.name], crawler_defs, metric_defs, n_instances)
+    crm.draw_by_metric_crawler(x_lims=(0, budget), x_normalize=False, scale=8, swap_coloring_scheme=True, draw_error=False)
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
-    # # graph_name = 'digg-friends'
-    # # graph_name = 'douban'
-    # # graph_name = 'ego-gplus'
-    # # graph_name = 'slashdot-threads;'
-    # graph_name = 'facebook-wosn-links'
-    # # graph_name = 'petster-hamster'
-    # graph = GraphCollections.get(graph_name, giant_only=True)
-    #
-    # initial_seed = graph.random_node()
-    # crawlers = [
-    #     MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=initial_seed[0]),
-    #     MaximumObservedDegreeCrawler(graph, batch=10, initial_seed=initial_seed[0]),
-    #     MaximumObservedDegreeCrawler(graph, batch=100, initial_seed=initial_seed[0]),
-    # ]
-    # logging.info([c.name for c in crawlers])
-    # metrics = []
-    # target_set = {}  # {i.name: set() for i in statistics}
-    # for target_statistics in [s for s in Stat if 'DISTR' in s.name]:
-    #     target_set = set(get_top_centrality_nodes(graph, target_statistics, count=int(0.1 * graph[Stat.NODES])))
-    #     # creating metrics and giving callable function to it (here - total fraction of nodes)
-    #     # metrics.append(Metric(r'observed' + target_statistics.name, lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]))
-    #     metrics.append(Metric(r'crawled_' + target_statistics.name,  # TODO rename crawled to observed
-    #                           lambda crawler, t: len(t.intersection(crawler.crawled_set)) / len(t), t=target_set
-    #                           ))
-    #
-    # ci = CrawlerRunner(graph, crawlers, metrics, budget=0,
-    #                    # step=ceil(10 ** (len(str(graph.nodes())) - 3)),
-    #                    # if 5*10^5 then step = 10**2,if 10^7 => step=10^4
-    #                    # batches_per_pic=10,
-    #                    # draw_mod='traversal', layout_pos=layout_pos,
-    #                    )  # if you want gifs, draw_mod='traversal'. else: 'metric'
-    # ci.run()
 
-    test_crawler_runner()
+    test_history_runner()

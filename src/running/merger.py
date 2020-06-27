@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 from matplotlib import pyplot as plt
 
-from runners.metric_runner import TopCentralityMetric, Metric
+from running.metrics_and_runner import TopCentralityMetric, Metric
 from graph_io import GraphCollections, konect_names, netrepo_names
 from statistics import Stat
 
@@ -61,6 +61,9 @@ class CrawlerRunsMerger:
         self.contents = {}  # contents[graph][crawler][metric]: 'x' -> [], 'ys' -> [[]*n_instances], 'avy' -> []
         self.auccs = {}  # auccs[graph][crawler][metric]: 'AUCC' -> [AUCC], 'wAUCC' -> [wAUCC]
         self.read()
+        missing = self.missing_instances()
+        if len(missing) > 0:
+            logging.warning("Missing instances, will not be plotted:\n%s" % json.dumps(missing, indent=2))
 
         self.labels = {}  # pretty short names to draw in plots
         g = GraphCollections.get('petster-hamster')
@@ -147,10 +150,10 @@ class CrawlerRunsMerger:
             if len(missing[g]) == 0:
                 del missing[g]
 
-        print(json.dumps(missing, indent=2))
+        # print(json.dumps(missing, indent=2))
         return missing
 
-    def draw_by_crawler(self, x_lims=None, x_normalize=True, scale=3):
+    def draw_by_crawler(self, x_lims=None, x_normalize=True, draw_error=True, scale=3):
         """ Draw M x G table of plots with C lines each, where
         M - num of metrics, G - num of graphs, C - num of crawlers.
         Ox - crawling step, Oy - metric value.
@@ -168,12 +171,12 @@ class CrawlerRunsMerger:
         if G == 1:
             nrows = int(sqrt(M))
             ncols = ceil(M / nrows)
-        fig, axs = plt.subplots(nrows, ncols, sharex=True, sharey=True, figsize=(1 + scale * ncols, scale * nrows))
+        fig, axs = plt.subplots(nrows, ncols, sharex=x_normalize, sharey=True, figsize=(1 + scale * ncols, scale * nrows))
         # fig.text(0.5, 0.02, 'Число итераций краулинга', ha='center')
         # fig.text(0.02, 0.5, 'Доля собранных влиятельных вершин', va='center', rotation='vertical')
 
         total = len(self.graph_names) * len(self.crawler_names) * len(self.metric_names)
-        pbar = tqdm(total=total, desc='Plotting history')
+        pbar = tqdm(total=total, desc='Plotting by crawler')
         aix = 0
         for i, m in enumerate(self.metric_names):
             for j, g in enumerate(self.graph_names):
@@ -200,10 +203,65 @@ class CrawlerRunsMerger:
                     xs = contents['x']
                     if x_normalize and len(xs) > 0:
                         xs = xs / xs[-1]
-                    if len(xs) > 0:
+                    if len(xs) > 0 and draw_error:
                         error = np.var(contents['ys'], axis=0) ** 0.5
                         plt.fill_between(xs, contents['avy'] - error, contents['avy'] + error, color=colors[k % len(colors)], alpha=0.2)
                     plt.plot(xs, contents['avy'], color=colors[k % len(colors)], linewidth=1, label=self.labels[c])
+                    pbar.update(1)
+        pbar.close()
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+    def draw_by_metric_crawler(self, x_lims=None, x_normalize=True, swap_coloring_scheme=False, draw_error=True, scale=3):
+        """ Draw G plots with CxM lines each, where
+        M - num of metrics, G - num of graphs, C - num of crawlers.
+        Ox - crawling step, Oy - metric value.
+        """
+        linestyles = ['-', '--', ':', '.-']
+        colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
+                  'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
+                  'pink', 'lime', 'wheat', 'lightsteelblue']
+
+        G = len(self.graph_names)
+        M = len(self.metric_names)
+        nrows = int(sqrt(G))
+        ncols = ceil(G / nrows)
+        fig, axs = plt.subplots(nrows, ncols, sharex=x_normalize, sharey=True, figsize=(1 + scale * ncols, scale * nrows))
+
+        total = len(self.graph_names) * len(self.crawler_names) * len(self.metric_names)
+        pbar = tqdm(total=total, desc='Plotting by metric crawler')
+        aix = 0
+        for j, g in enumerate(self.graph_names):
+            if nrows > 1 and ncols > 1:
+                plt.sca(axs[aix // ncols, aix % ncols])
+            elif nrows * ncols > 1:
+                plt.sca(axs[aix])
+            if aix % ncols == 0:
+                plt.ylabel('Metrics value')
+            plt.title(g)
+            if aix // ncols == nrows-1:
+                plt.xlabel('Nodes fraction crawled' if x_normalize else 'Nodes crawled')
+            aix += 1
+
+            if x_lims:
+                plt.xlim(x_lims)
+            for k, c in enumerate(self.crawler_names):
+                for i, m in enumerate(self.metric_names):
+                    contents = self.contents[g][c][m]
+                    ls, col = (k, i) if swap_coloring_scheme else (i, k)
+                    # Draw variance
+                    xs = contents['x']
+                    if x_normalize and len(xs) > 0:
+                        xs = xs / xs[-1]
+                    if len(xs) > 0 and draw_error:
+                        error = np.var(contents['ys'], axis=0) ** 0.5
+                        plt.fill_between(xs, contents['avy'] - error, contents['avy'] + error, alpha=0.2,
+                                         color=colors[col % len(colors)])
+                    plt.plot(xs, contents['avy'], linewidth=1,
+                             linestyle=linestyles[ls % len(linestyles)],
+                             color=colors[col % len(colors)],
+                             label="[%s] %s, %s" % (self.n_instances, self.labels[c], self.labels[m]))
                     pbar.update(1)
         pbar.close()
         plt.legend()
@@ -258,7 +316,7 @@ class CrawlerRunsMerger:
         scale = 3
         fig, axs = plt.subplots(nrows, ncols, sharex=True, sharey=True, figsize=(1 + scale * ncols, scale * nrows))
         aix = 0
-        pbar = tqdm(total=G*M, desc='Plotting history')
+        pbar = tqdm(total=G*M, desc='Plotting AUCC')
         xs = list(range(1, 1 + C))
         for g in self.graph_names:
             if nrows > 1 and ncols > 1:

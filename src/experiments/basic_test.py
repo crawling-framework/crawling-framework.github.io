@@ -8,7 +8,7 @@ from crawlers.cbasic import Crawler, RandomCrawler, RandomWalkCrawler, BreadthFi
 from crawlers.cadvanced import DE_Crawler
 from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections
-from runners.animated_runner import AnimatedCrawlerRunner, Metric
+from running.animated_runner import AnimatedCrawlerRunner, Metric
 
 
 def test_basic(graph):

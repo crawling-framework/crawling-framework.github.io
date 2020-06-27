@@ -4,7 +4,7 @@ from base.cgraph import MyGraph
 from crawlers.cbasic import Crawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
 from crawlers.advanced import ThreeStageMODCrawler
 from crawlers.multiseed import MultiInstanceCrawler
-from runners.metric_runner import CrawlerRunner, TopCentralityMetric, Metric
+from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric
 from graph_io import GraphCollections
 from statistics import Stat, get_top_centrality_nodes
 
@@ -43,26 +43,16 @@ class AnimatedCrawlerRunner(CrawlerRunner):
         :return:
         """
         linestyles = ['-', '--', ':', '.-']
-        # colors = ['b', 'g', 'r', 'c', 'm', 'y',  'orange']
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
                   'pink', 'lime', 'wheat', 'lightsteelblue']
 
         # Initialize crawlers and metrics
-        # if same_initial_seed:
-        #     initial_seed = self.graph.random_node()
-        # crawlers = []
-        # for _class, kwargs in self.crawler_defs:
-        #     crawlers.append(
-        #         _class(self.graph, initial_seed=initial_seed, **kwargs) if same_initial_seed and isinstance(_class, CrawlerWithInitialSeed) else
-        #         _class(self.graph, **kwargs)
-        #     )
-        # for _class, kwargs in self.crawler_defs:
-        #     print(_class, kwargs)
         crawlers = self.crawlers + [Crawler.from_definition(self.graph, d) for d in self.crawler_defs]
+        metrics = self.metrics + [Metric.from_definition(self.graph, d) for d in self.metric_defs]
 
         step_seq = []
-        crawler_metric_seq = dict([(c, dict([(m, []) for m in self.metrics])) for c in crawlers])
+        crawler_metric_seq = dict([(c, dict([(m, []) for m in metrics])) for c in crawlers])
 
         i = 0
         while i < self.budget:
@@ -75,7 +65,7 @@ class AnimatedCrawlerRunner(CrawlerRunner):
             for c, crawler in enumerate(crawlers):
                 crawler.crawl_budget(int(batch))
 
-                for m, metric in enumerate(self.metrics):
+                for m, metric in enumerate(metrics):
                     metric_seq = crawler_metric_seq[crawler][metric]
                     metric_seq.append(metric(crawler))
                     ls, col = (c, m) if swap_coloring_scheme else (m, c)
@@ -96,7 +86,7 @@ class AnimatedCrawlerRunner(CrawlerRunner):
         # file_path = os.path.join(RESULT_DIR, self.graph.name, 'crawling_plot')
         # if not os.path.exists(file_path):
         #     os.makedirs(file_path)
-        # for metric in self.metrics:
+        # for metric in metrics:
         #     file_name = os.path.join(file_path, metric.name + ':' +
         #                              ','.join([crawler.name for crawler in self.crawlers]) + 'animated.png')
         #     logging.info('Saved pic ' + file_name)

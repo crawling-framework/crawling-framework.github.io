@@ -58,11 +58,24 @@ class TopCentralityMetric(Metric):
         super().__init__(name, callback, top=top, centrality=centrality, measure=measure, part=part)
 
 
+def remap_iter(total=400):
+    """ Remapping steps depending on used budget - on first iters step=1, on last it grows ~x^2
+    NOTE: this sequence is used in history and should not be changed
+    """
+    step_budget = 0
+    remap_iter_to_step = {}
+    for i in range(total):  # for budget less than 100 mln nodes
+        remap = int(max(1, step_budget / 20))
+        remap_iter_to_step[step_budget] = remap
+        step_budget += remap
+    return remap_iter_to_step
+
+
 class CrawlerRunner:
     """ Base class to run crawlers and measure metrics. Details in subclasses
     """
 
-    def __init__(self, graph: MyGraph, crawlers, metrics, budget: int=-1, step: int=1):
+    def __init__(self, graph: MyGraph, crawlers, metrics, budget: int=-1, step: int=-1):
         """
         :param graph: graph to run
         :param crawlers: list of crawlers or crawler definitions to run. Crawler definitions will be
@@ -92,11 +105,20 @@ class CrawlerRunner:
             else:
                 self.metric_defs.append(x)
 
-        self.budget = min(budget, graph[Stat.NODES]) if budget > 0 else graph[Stat.NODES]
+        self.budget = min(budget, graph[Stat.NODES]) if budget != -1 else graph[Stat.NODES]
         assert step < self.budget
-        self.step = step
+        self.step = max(1, step) if step != -1 else 1  # TODO use remap_iter
 
     def run(self):
         """ Run specified configurations on the given graph
         """
+        # TODO put here iteration and metrics calculation
         raise NotImplementedError()
+
+
+if __name__ == '__main__':
+    i_step = remap_iter(100)
+    n = 0
+    for i, step in i_step.items():
+        n += step
+        print(i, n)

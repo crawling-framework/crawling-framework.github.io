@@ -1,6 +1,5 @@
 import logging
 import random
-import importlib
 import re
 from random import shuffle
 
@@ -45,8 +44,8 @@ def eval_(string: str):
 def filename_to_definition(filename: str):
     """ Convert filename into crawler string definition. Uniqueness is maintained """
     if len(short_to_class) == 0:
-        import crawlers.multiseed  # NOTE: needed to include Crawlers defined in multiseed module
-        from runners.metric_runner import Metric
+        import crawlers.multiseed  # NOTE: needed to include Crawlers defined in multiseed module, add here any other modules with crawlers
+        from running.metrics_and_runner import Metric  # NOTE: same for metrics
         # Build short names dict
         for sb in set().union(all_subclasses(Crawler), all_subclasses(Metric)):
             if hasattr(sb, 'short'):

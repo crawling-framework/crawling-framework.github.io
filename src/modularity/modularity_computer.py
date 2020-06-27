@@ -1,5 +1,5 @@
 from graph_io import GraphCollections
-from runners.animated_runner import Metric, AnimatedCrawlerRunner
+from running.animated_runner import Metric, AnimatedCrawlerRunner
 from statistics import Stat, get_top_centrality_nodes
 from utils import USE_NETWORKIT, PICS_DIR
 

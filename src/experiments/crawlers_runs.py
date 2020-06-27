@@ -4,10 +4,10 @@ from crawlers.cadvanced import DE_Crawler
 from crawlers.cbasic import filename_to_definition
 from crawlers.multiseed import MultiInstanceCrawler
 
-from runners.merger import CrawlerRunsMerger
-from runners.metric_runner import TopCentralityMetric
-from runners.animated_runner import Metric
-from runners.history_runner import CrawlerHistoryRunner
+from running.merger import CrawlerRunsMerger
+from running.metrics_and_runner import TopCentralityMetric
+from running.animated_runner import Metric
+from running.history_runner import CrawlerHistoryRunner, send_misha_vk
 
 from graph_io import GraphCollections, konect_names, netrepo_names
 from statistics import get_top_centrality_nodes, Stat
@@ -198,7 +198,7 @@ import multiprocessing
 #     #       filter_only='MOD', )
 
 
-def run_missing(max_cpus: int=multiprocessing.cpu_count(), max_memory: float=6):
+def test_missing():
     """
     :param max_cpus: max number of CPUs to use for computation, all by default
     :param max_memory: max Mbytes of operative memory to use for computation, 6Gb by default
@@ -212,7 +212,6 @@ def run_missing(max_cpus: int=multiprocessing.cpu_count(), max_memory: float=6):
         # 'petster-hamster',
         # 'ego-gplus',
         # g for g in netrepo_names
-    # ] + [
         g for g in konect_names
     ]
     p = 0.01
@@ -281,37 +280,17 @@ def run_missing(max_cpus: int=multiprocessing.cpu_count(), max_memory: float=6):
         (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
     ]
 
+    n_instances = 6
     # Get missing combinations
-    crm = CrawlerRunsMerger(graphs, crawler_defs, metric_defs, n_instances=6)
+    crm = CrawlerRunsMerger(graphs, crawler_defs, metric_defs, n_instances=n_instances)
     missing = crm.missing_instances()
     import json
     print(json.dumps(missing, indent=2))
 
     for graph_name, cmi in missing.items():
-        crawler_defs = [filename_to_definition(c) for c in cmi.keys()]
-        max_count = 0
-        for crawler_name, mi in cmi.items():
-            max_count = max(max_count, max(mi.values()))
-
-        print("Will run x%s missing crawlers for %s graph: %s" % (max_count, graph_name, list(cmi.keys())))
         g = GraphCollections.get(graph_name)
-
         cr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        # [cr.run() for _ in range(max_count)]
-
-        # Parallel run with adaptive number of CPUs
-        memory = (0.25 * g['NODES']/1000 + 2.5)/1024 * len(crawler_defs)  # Gbytes of operative memory per instance
-        max_cpus = min(max_cpus, max_memory // memory)
-        while max_count > 0:
-            num = min(max_cpus, max_count)
-            max_count -= num
-            msg = cr.run_parallel(num)
-
-            # send to my vk
-            import os
-            from utils import rel_dir
-            bot_path = os.path.join(rel_dir, "src", "experiments", "vk_signal.py")
-            os.system("python3 %s -m '%s'" % (bot_path, msg))
+        cr.run_missing(n_instances, max_cpus=6, max_memory=6)
         print('\n\n')
 
 
@@ -500,19 +479,7 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     # logging.getLogger().setLevel(logging.DEBUG)
 
-    # # Write logs to file
-    # from datetime import datetime
-    # fh_info = logging.FileHandler("%s.log" % (datetime.now()))
-    # fh_info.setLevel(logging.DEBUG)
-    # fh_info.setFormatter(logging.Formatter('%(levelname)s:%(asctime)s:%(message)s'))
-    # logger = logging.getLogger('__main__')
-    # logger.addHandler(fh_info)
-
-    import sys
-    # sys.stdout = open('logs', 'w')
-    # sys.stderr = open('logs', 'w')
-
-    # run_missing(max_cpus=6, max_memory=24)
-    big_run()
+    test_missing()
+    # big_run()
     # prepare_graphs()
     # cloud_manager()

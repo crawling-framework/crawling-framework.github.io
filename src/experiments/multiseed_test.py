@@ -1,7 +1,7 @@
 import numpy as np
 
 from graph_io import GraphCollections
-from runners.animated_runner import Metric, AnimatedCrawlerRunner
+from running.animated_runner import Metric, AnimatedCrawlerRunner
 from statistics import get_top_centrality_nodes, Stat
 
 from base.cgraph import MyGraph
