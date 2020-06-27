@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
 from statistics import Stat, plm
-from base.cgraph cimport CGraph, GetClustCf, GetMxWccSz, PUNGraph, TUNGraph, GetBfsEffDiam, \
+from base.cgraph cimport MyGraph, GetClustCf, GetMxWccSz, PUNGraph, TUNGraph, GetBfsEffDiam, \
     GetMxWcc, TIntFltH, GetBetweennessCentr, THashKeyDatI, TInt, TFlt, GetPageRank, \
     GetClosenessCentr, GetNodeEcc, GetNodesClustCf, GetKCore
 from cython.operator cimport dereference as deref, postincrement as pinc
@@ -38,20 +38,20 @@ stat_computer = {
 }
 
 
-cdef double avg_cc(CGraph graph):
+cdef double avg_cc(MyGraph graph):
     return GetClustCf[PUNGraph](graph.snap_graph_ptr(), -1)
 
 
-cdef double max_wcc_size(CGraph graph):
+cdef double max_wcc_size(MyGraph graph):
     return GetMxWccSz[PUNGraph](graph.snap_graph_ptr())
 
 
-cdef double diam_90(CGraph graph):
+cdef double diam_90(MyGraph graph):
     cdef int n_approx = 1000
     return GetBfsEffDiam[PUNGraph](GetMxWcc[PUNGraph](graph.snap_graph_ptr()), min(n_approx, graph.nodes()), False)
 
 
-cdef float assortativity(CGraph graph):
+cdef float assortativity(MyGraph graph):
     """ Degree assortativity -1<=r<=1"""
     cdef double mul = 0
     cdef double sum2 = 0
@@ -68,10 +68,10 @@ cdef float assortativity(CGraph graph):
     return r
 
 
-cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_approximate=10000, only_giant=False):
+cdef dict compute_nodes_centrality(MyGraph graph, str centrality, nodes_fraction_approximate=10000, only_giant=False):
     """
     Compute centrality value for each node of the graph.
-    :param graph: CGraph
+    :param graph: MyGraph
     :param centrality: centrality name, one of utils.CENTRALITIES
     :param nodes_fraction_approximate: parameter for betweenness
     :param only_giant: compute for giant component only, note size of returned list will be less
@@ -229,9 +229,7 @@ cdef dict compute_nodes_centrality(CGraph graph, str centrality, nodes_fraction_
 
 cpdef int test_cstats() except -1:
     from graph_io import GraphCollections
-    from utils import USE_CYTHON_CRAWLERS
-    assert USE_CYTHON_CRAWLERS == True
-    cdef CGraph g = GraphCollections.get("petster-hamster")
+    cdef MyGraph g = GraphCollections.get("petster-hamster")
 
     for s in [Stat.ECCENTRICITY_DISTR]:
         v = stat_computer[s](g)

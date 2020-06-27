@@ -1,16 +1,6 @@
-from matplotlib import pyplot as plt
+from base.cgraph import MyGraph
+from crawlers.cbasic import Crawler, definition_to_filename
 
-from utils import USE_CYTHON_CRAWLERS
-
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph
-    from crawlers.cbasic import CCrawler as Crawler, MaximumObservedDegreeCrawler, \
-    PreferentialObservedDegreeCrawler, definition_to_filename
-else:
-    from base.graph import MyGraph
-    from crawlers.basic import Crawler, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
-
-from graph_io import GraphCollections
 from statistics import Stat, get_top_centrality_nodes
 
 
@@ -67,13 +57,9 @@ class TopCentralityMetric(Metric):
         name = name if name else "%s %s %s %s" % (measure, part, centrality, top)
         super().__init__(name, callback, top=top, centrality=centrality, measure=measure, part=part)
 
-    # @staticmethod
-    # def to_string(top: float, centrality: Stat, measure: str, part: str):
-    #     return "%s_%s_%s_%s" % (measure, part, centrality, top)
-
 
 class CrawlerRunner:
-    """ Base class to runs crawlers and measure metrics. Details in subclasses
+    """ Base class to run crawlers and measure metrics. Details in subclasses
     """
 
     def __init__(self, graph: MyGraph, crawlers, metrics, budget: int=-1, step: int=1):

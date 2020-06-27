@@ -31,7 +31,7 @@ cpdef void seed_random(int seed):
 cpdef int get_UniDevInt(int max):
     return t_random.GetUniDevInt(max)
 
-cdef class CGraph:
+cdef class MyGraph:
     def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij', not_load: bool=False):
         """
 
@@ -322,7 +322,7 @@ cdef class CGraph:
 
 
 def cgraph_test():
-    # print("cgraph")
+    # print("MyGraph")
     import numpy as np
 
     # cdef TUNGraph g
@@ -349,12 +349,12 @@ def cgraph_test():
     # cdef char* name = 'douban'
     # cdef char* path = '/home/misha/workspace/crawling/data/konect/dolphins.ij'
 
-    graph = CGraph(path='/home/misha/workspace/crawling/data/konect/petster-hamster.ij', name='d')
+    graph = MyGraph(path='/home/misha/workspace/crawling/data/konect/petster-hamster.ij', name='d')
     cdef TUNGraph g = deref(LoadEdgeList[PUNGraph](TStr('/home/misha/workspace/crawling/data/konect/dolphins.ij'), 0, 1))
-    empty = CGraph(name='empty')
+    empty = MyGraph(name='empty')
 
-    # graph = CGraph.CLoad(path)
-    # graph = CGraph.Empty('')
+    # graph = MyGraph.CLoad(path)
+    # graph = MyGraph.Empty('')
     # print(empty.add_node(10))
     # print("path=%s" % 'abc' + graph.path)
     # print("N=%s" % graph.nodes())

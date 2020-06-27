@@ -1,16 +1,12 @@
 from graph_io import GraphCollections
 from runners.animated_runner import Metric, AnimatedCrawlerRunner
 from statistics import Stat, get_top_centrality_nodes
-from utils import USE_NETWORKIT, USE_CYTHON_CRAWLERS, PICS_DIR
+from utils import USE_NETWORKIT, PICS_DIR
 
 if USE_NETWORKIT:
     from networkit.community import PLM, Modularity
 
-# from base.cbasic import MaximumObservedDegreeCrawler
-if USE_CYTHON_CRAWLERS:
-    from crawlers.cbasic import MaximumObservedDegreeCrawler, CCrawler as Crawler, BreadthFirstSearchCrawler, RandomCrawler, PreferentialObservedDegreeCrawler
-else:
-    from crawlers.basic import MaximumObservedDegreeCrawler, Crawler, BreadthFirstSearchCrawler, RandomCrawler, PreferentialObservedDegreeCrawler
+from crawlers.cbasic import MaximumObservedDegreeCrawler, Crawler, BreadthFirstSearchCrawler, RandomCrawler, PreferentialObservedDegreeCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 
 
@@ -159,6 +155,5 @@ if __name__ == '__main__':
     # g = GraphCollections.get(name, 'netrepo')
 
     # test_plm(g)
-    # assert USE_CYTHON_CRAWLERS
     test_crawler_comms(g)
 

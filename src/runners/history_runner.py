@@ -10,19 +10,14 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-from utils import PICS_DIR, RESULT_DIR, USE_CYTHON_CRAWLERS
+from utils import PICS_DIR, RESULT_DIR
 
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph, seed_random
-    from crawlers.cbasic import CCrawler as Crawler, CCrawlerUpdatable as CrawlerUpdatable, \
+from base.cgraph import MyGraph, seed_random
+from crawlers.cbasic import Crawler, CrawlerUpdatable as CrawlerUpdatable, \
     MaximumObservedDegreeCrawler, definition_to_filename
-    from crawlers.advanced import ThreeStageMODCrawler, ThreeStageCrawler, AvrachenkovCrawler
-else:
-    from base.graph import MyGraph
-    from crawlers.basic import Crawler, CrawlerUpdatable, MaximumObservedDegreeCrawler
-
-from graph_io import GraphCollections
+from crawlers.advanced import ThreeStageMODCrawler, ThreeStageCrawler, AvrachenkovCrawler
 from crawlers.multiseed import MultiInstanceCrawler
+from graph_io import GraphCollections
 from runners.metric_runner import CrawlerRunner, TopCentralityMetric, Metric
 from runners.merger import CrawlerRunsMerger
 from statistics import Stat, get_top_centrality_nodes

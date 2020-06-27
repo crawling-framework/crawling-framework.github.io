@@ -1,15 +1,8 @@
 from matplotlib import pyplot as plt
 
-from utils import USE_CYTHON_CRAWLERS
-
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph
-    from crawlers.cbasic import CCrawler as Crawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
-    from crawlers.advanced import ThreeStageMODCrawler
-else:
-    from base.graph import MyGraph
-    from crawlers.basic import Crawler, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
-
+from base.cgraph import MyGraph
+from crawlers.cbasic import Crawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
+from crawlers.advanced import ThreeStageMODCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from runners.metric_runner import CrawlerRunner, TopCentralityMetric, Metric
 from graph_io import GraphCollections
@@ -61,7 +54,7 @@ class AnimatedCrawlerRunner(CrawlerRunner):
         # crawlers = []
         # for _class, kwargs in self.crawler_defs:
         #     crawlers.append(
-        #         _class(self.graph, initial_seed=initial_seed, **kwargs) if same_initial_seed and isinstance(_class, CCrawlerWithInitialSeed) else
+        #         _class(self.graph, initial_seed=initial_seed, **kwargs) if same_initial_seed and isinstance(_class, CrawlerWithInitialSeed) else
         #         _class(self.graph, **kwargs)
         #     )
         # for _class, kwargs in self.crawler_defs:
@@ -114,7 +107,6 @@ class AnimatedCrawlerRunner(CrawlerRunner):
 
 
 def test_runner(graph):
-    from crawlers.basic import Crawler, RandomWalkCrawler, RandomCrawler
     from statistics import Stat, get_top_centrality_nodes
 
     p = 0.01
@@ -138,7 +130,7 @@ def test_runner(graph):
         # TopCentralityMetric(graph, top=0.1, centrality=Stat.DEGREE_DISTR, measure='Pr', part='nodes'),
         # Metric(r'$|V_{all}|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
         # TopCentralityMetric(graph, top=0.1, centrality=Stat.DEGREE_DISTR, measure='Re', part='nodes'),
-        TopCentralityMetric(graph, top=p, centrality=Stat.DEGREE_DISTR, measure='F1', part='answer'),
+        TopCentralityMetric(graph, top=p, centrality=Stat.DEGREE_DISTR.short, measure='F1', part='answer'),
     ]
 
     ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=int(budget/100))
@@ -153,11 +145,11 @@ if __name__ == '__main__':
 
     # name = 'libimseti'
     # name = 'petster-friendships-cat'
-    name = 'soc-pokec-relationships'
+    # name = 'soc-pokec-relationships'
     # name = 'digg-friends'
     # name = 'loc-brightkite_edges'
     # name = 'ego-gplus'
-    # name = 'petster-hamster'
+    name = 'petster-hamster'
 
     # name = 'sc-shipsec5'
     g = GraphCollections.get(name)

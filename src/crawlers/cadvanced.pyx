@@ -8,14 +8,14 @@ from libcpp.pair cimport pair
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec, address as addr
 
 from cbasic import NoNextSeedError, CrawlerException, MaximumObservedDegreeCrawler, RandomWalkCrawler
-from cbasic cimport CCrawler, CCrawlerUpdatable
-from base.cgraph cimport CGraph, str_to_chars, t_random
+from cbasic cimport Crawler, CrawlerUpdatable
+from base.cgraph cimport MyGraph, str_to_chars, t_random
 from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 
 from statistics import get_top_centrality_nodes, Stat
 
 
-cdef class CrawlerWithAnswer(CCrawler):
+cdef class CrawlerWithAnswer(Crawler):
     """
     Crawler which makes a limited number of iterations and generates an answer as its result.
     """
@@ -23,7 +23,7 @@ cdef class CrawlerWithAnswer(CCrawler):
     cdef readonly set _answer
     cdef public bint _actual_answer  # indicates whether to recompute answer. public is needed for python access
 
-    def __init__(self, CGraph graph, int limit=-1, **kwargs):
+    def __init__(self, MyGraph graph, int limit=-1, **kwargs):
         super().__init__(graph, **kwargs)
         self._limit = limit
         self._answer = set()
@@ -48,11 +48,11 @@ cdef class CrawlerWithAnswer(CCrawler):
         NOTE: don't forget to set _actual_answer=False when overwrite crawl(seed) in subclasses
         """
         self._actual_answer = False
-        return CCrawler.crawl(self, seed)
+        return Crawler.crawl(self, seed)
 
     cpdef int crawl_budget(self, int budget) except -1:
         try:
-            CCrawler.crawl_budget(self, budget)
+            Crawler.crawl_budget(self, budget)
         except CrawlerException:
             # Reached maximum number of iterations or any other Crawler exception
             if not self._actual_answer:
@@ -102,7 +102,7 @@ cdef class CrawlerWithAnswer(CCrawler):
 #     cdef int n, n1, k
 #     cdef set _top_observed_seeds  # nodes for 2nd step
 #
-#     def __init__(self, CGraph graph, int n=1000, int n1=500, int k=100, **kwargs):
+#     def __init__(self, MyGraph graph, int n=1000, int n1=500, int k=100, **kwargs):
 #         super().__init__(graph, limit=n, n=n, n1=n1, k=k, **kwargs)
 #         assert n1 <= n <= self._orig_graph.nodes()
 #         #assert k <= n-n1
@@ -141,7 +141,7 @@ cdef class CrawlerWithAnswer(CCrawler):
 #     cdef set e2
 #     cdef set e2s
 #
-#     def __init__(self, CGraph graph, int s=500, int n=1000, p: float=0.1, **kwargs):
+#     def __init__(self, MyGraph graph, int s=500, int n=1000, p: float=0.1, **kwargs):
 #         """
 #         :param graph: original graph
 #         :param s: number of initial random seed
@@ -209,7 +209,7 @@ cdef class CrawlerWithAnswer(CCrawler):
 #     short = '3-StageHubs'
 #     cdef set h   # S
 #
-#     def __init__(self, CGraph graph, int s=500, int n=1000, p: float=0.1, **kwargs):
+#     def __init__(self, MyGraph graph, int s=500, int n=1000, p: float=0.1, **kwargs):
 #         """
 #         :param graph: original graph
 #         :param s: number of initial random seed
@@ -269,10 +269,10 @@ cdef class CrawlerWithAnswer(CCrawler):
 #     cdef set e1s
 #     cdef set e2
 #     cdef set e2s
-#     cdef CCrawler mod
+#     cdef Crawler mod
 #     cdef bint mod_on
 #
-#     def __init__(self, CGraph graph, int s=500, int n=1000, p: float=0.1, int b=10, **kwargs):
+#     def __init__(self, MyGraph graph, int s=500, int n=1000, p: float=0.1, int b=10, **kwargs):
 #         """
 #         :param graph: original graph
 #         :param s: number of initial random seed
@@ -353,7 +353,7 @@ cdef class CrawlerWithAnswer(CCrawler):
 # from time import time
 # t = time()
 
-cdef class DE_Crawler(CCrawlerUpdatable):
+cdef class DE_Crawler(CrawlerUpdatable):
     """
     DE Crawler from http://kareekij.github.io/papers/de_crawler_asonam18.pdf
     DE-Crawler: A Densification-Expansion Algorithm for Online Data Collection
@@ -366,7 +366,7 @@ cdef class DE_Crawler(CCrawlerUpdatable):
     cdef cmap[int, float] node_clust
     cdef ND_Set nd_set
 
-    def __init__(self, CGraph graph, int initial_seed=-1, int initial_budget=-1, **kwargs):
+    def __init__(self, MyGraph graph, int initial_seed=-1, int initial_budget=-1, **kwargs):
         if initial_budget == -1:
             initial_budget = int(0.015 * graph.nodes())  # Default in paper: 15% of total budget (which is 10%)
         else:
@@ -426,7 +426,7 @@ cdef class DE_Crawler(CCrawlerUpdatable):
         cdef int d_seen, d_ex, d_new
         d_seen = self._observed_graph.deg(seed)
 
-        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] res = Crawler.crawl(self, seed)
         self.prev_seed = seed
 
         d_ex = self._observed_graph.deg(seed) - d_seen

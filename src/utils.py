@@ -11,12 +11,10 @@ RESULT_DIR = os.path.join(rel_dir, 'results')  # directory to store pictures
 
 COLLECTIONS = ['other', 'konect', 'netrepo']
 
-SNAP_DIR = None; LIGRA_DIR = None; USE_CYTHON_CRAWLERS = None; USE_NETWORKIT = None; USE_LIGRA = None  # defined in config
+SNAP_DIR = None; LIGRA_DIR = None; USE_NETWORKIT = None; USE_LIGRA = None  # defined in config
 config = exec(open(CONFIG_PATH, 'r').read())  # updates the above VARIABLES from config file
 
 
-if USE_CYTHON_CRAWLERS:
-    # Should go before any cython imports. By calling here it is run once
-    from cyth.setup import build_cython
-    build_cython(rel_dir, SNAP_DIR)
-
+# Should go before any cython imports. By calling here it is run once
+from cyth.setup import build_cython
+build_cython(rel_dir, SNAP_DIR)

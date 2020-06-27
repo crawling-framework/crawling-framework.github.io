@@ -1,17 +1,8 @@
 import logging
-from abc import ABC
 
-import numpy as np
-
-from utils import USE_CYTHON_CRAWLERS
-
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph
-    from crawlers.cbasic import CCrawler as Crawler, CCrawlerUpdatable as CrawlerUpdatable, NoNextSeedError,\
-        MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler, definition_to_filename
-else:
-    from base.graph import MyGraph
-    from crawlers.basic import Crawler, CrawlerUpdatable, NoNextSeedError, PreferentialObservedDegreeCrawler, MaximumObservedDegreeCrawler
+from base.cgraph import MyGraph
+from crawlers.cbasic import Crawler, CrawlerUpdatable as CrawlerUpdatable, NoNextSeedError,\
+    MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler, definition_to_filename
 
 logger = logging.getLogger(__name__)
 

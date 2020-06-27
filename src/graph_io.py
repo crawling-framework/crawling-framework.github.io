@@ -1,21 +1,13 @@
-from utils import rel_dir, USE_CYTHON_CRAWLERS
-
 import logging
 import os.path
 import shutil
 import urllib.request
 import re
-
 import patoolib
 import snap
 
+from base.cgraph import MyGraph
 from utils import GRAPHS_DIR, COLLECTIONS
-
-
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph
-else:
-    from base.graph import MyGraph
 
 
 konect_metadata_path = os.path.join(GRAPHS_DIR, 'konect', 'metadata')
@@ -410,54 +402,12 @@ def test_netrepo():
     # print("neigbours of %d: %s" % (2, graph.neighbors(2)))
 
 
-def test_graph_manipulations():
-    assert USE_CYTHON_CRAWLERS == False
-    path = '/home/misha/workspace/crawling/data/snap/email-Enron.txt'
-
-    # # # nodes renumerating
-    # reformat_graph_file(path, path+'_', renumerate=True)
-
-    # giant extraction
-    print("Giant component extraction")
-    graph = MyGraph(path + '_', 'enron', False)
-    s = graph.snap
-    s = snap.GetMxWcc(s)
-    graph._snap_graph = s
-    graph.save(path)
-
-
-def test_graph():
-    g = snap.TUNGraph.New()
-    g.AddNode(1)
-    g.AddNode(2)
-    g.AddNode(3)
-    g.AddNode(4)
-    g.AddNode(5)
-    g.AddEdge(1, 1)
-    g.AddEdge(1, 1)
-    g.AddEdge(1, 2)
-    g.AddEdge(1, 2)
-    g.AddEdge(2, 1)
-    g.AddEdge(2, 3)
-    g.AddEdge(4, 2)
-    g.AddEdge(4, 3)
-    g.AddEdge(5, 4)
-    print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-    for e in g.Edges():
-        print(e)  # Exception
-
-    graph = MyGraph.new_snap(g)
-    g.AddEdge(4, 1)
-    print(graph['EDGES'])  # Exception
-
-
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
     # test_konect()
-    # test_netrepo()
-    # test_graph()
-    test_graph_manipulations()
+    test_netrepo()
+    # test_graph_manipulations()
     # parse_konect_page()
     # parse_netrepo_page()

@@ -137,7 +137,7 @@ cdef TRnd t_random
 # t_random.PutSeed(2)
 
 
-cdef class CGraph:
+cdef class MyGraph:
     # cdef TUNGraph _snap_graph
     cdef PUNGraph _snap_graph_ptr  # TODO extend for directed
     cdef char* _path

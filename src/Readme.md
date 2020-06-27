@@ -72,14 +72,11 @@ paths.
 
 In the `config` file set variables
 ```
-USE_CYTHON_CRAWLERS = True         # python/cython mode switcher
 SNAP_DIR = "/path/to/snap"         # directory with snap built
 ```
 
 Put there your path to the installed snap root directory.
 NOTE: don't start the path from '~' or it will fail with the g++ option '-I'.
-
-If you want to use slow pythonic crawlers, set `USE_CYTHON_CRAWLERS = False`.
 
 The following steps are optional, they may be use to speed up computations.
 
@@ -104,7 +101,6 @@ LIGRA_DIR = "/path/to/ligra"         # directory with Ligra built
 ## Usage
 
 One may toggle several switchers described above:
-`USE_CYTHON_CRAWLERS` - to employ cythonic implementations,
 `USE_NETWORKIT` - to use [Networkit](https://networkit.github.io/) library to compute 
 centralities for large graphs approximately (currently betweenness and closeness), 
 `USE_LIGRA` - to [Ligra](https://github.com/jshun/ligra) framework to use approximate eccentricity

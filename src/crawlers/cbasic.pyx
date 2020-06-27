@@ -11,7 +11,7 @@ from libcpp.queue cimport queue
 from libcpp.deque cimport deque
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec, address as addr
 
-from base.cgraph cimport CGraph, str_to_chars, t_random
+from base.cgraph cimport MyGraph, str_to_chars, t_random
 # from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 cimport cbasic  # pxd import DON'T DELETE
 
@@ -27,7 +27,8 @@ def all_subclasses(cls):
 def definition_to_filename(definition) -> str:
     """ Convert crawler string definition into filename. Uniqueness is maintained """
     _class, kwargs = definition
-    args = ",".join("%s=%s" % (key, definition_to_filename(kwargs[key]) if key == 'crawler_def' else kwargs[key]) for key in sorted(kwargs.keys()))
+    args = ",".join("%s=%s" % (key, definition_to_filename(kwargs[key]) if key == 'crawler_def' else kwargs[key])
+                    for key in sorted(kwargs.keys()) if key != 'name')
     res = "%s(%s)" % (_class.short, args)
     return res
 
@@ -47,7 +48,7 @@ def filename_to_definition(filename: str):
         import crawlers.multiseed  # NOTE: needed to include Crawlers defined in multiseed module
         from runners.metric_runner import Metric
         # Build short names dict
-        for sb in set().union(all_subclasses(CCrawler), all_subclasses(Metric)):
+        for sb in set().union(all_subclasses(Crawler), all_subclasses(Metric)):
             if hasattr(sb, 'short'):
                 name = sb.short
                 assert name not in short_to_class
@@ -68,10 +69,10 @@ def filename_to_definition(filename: str):
     return _class, kwargs
 
 
-cdef class CCrawler:
+cdef class Crawler:
     # short = 'Crawler'  # Should be specified in all subclasses to distinguish them in filenames
-    def __init__(self, CGraph graph, name: str=None,
-                 observed_graph: CGraph=None, crawled_set: set=None, observed_set: set=None,
+    def __init__(self, MyGraph graph, name: str=None,
+                 observed_graph: MyGraph=None, crawled_set: set=None, observed_set: set=None,
                  **kwargs):
         """
         :param graph: original graph, must remain unchanged
@@ -83,7 +84,7 @@ cdef class CCrawler:
 
         # observed graph
         self._observed_graph = observed_graph if observed_graph is not None else \
-            CGraph(directed=self._orig_graph.directed, weighted=self._orig_graph.weighted)
+            MyGraph(directed=self._orig_graph.directed, weighted=self._orig_graph.weighted)
 
         # crawled set and observed set
         self._crawled_set = crawled_set if crawled_set is not None else set()
@@ -95,7 +96,7 @@ cdef class CCrawler:
         self.name = name if name else definition_to_filename(self._definition)
 
     @staticmethod
-    def from_definition(CGraph graph, definition) -> CCrawler:
+    def from_definition(MyGraph graph, definition) -> Crawler:
         """ Build a Crawler instance from its definition
         """
         _class, kwargs = definition
@@ -216,19 +217,21 @@ cdef inline int random_from_iterable(an_iterable):
     return next(it)
 
 
-cdef class RandomCrawler(CCrawler):
+cdef class RandomCrawler(Crawler):
     short = 'RC'
     cdef vector[int] next_seeds
 
-    def __init__(self, CGraph graph, int initial_seed=-1, **kwargs):
+    def __init__(self, MyGraph graph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
+        if 'name' not in kwargs:
+            kwargs['name'] = self.short
 
-        super().__init__(graph, name=self.short, **kwargs)
+        super().__init__(graph, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -250,7 +253,7 @@ cdef class RandomCrawler(CCrawler):
         # return random.choice([n for n in self._observed_set])
 
     cpdef vector[int] crawl(self, int seed):
-        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] res = Crawler.crawl(self, seed)
         cdef int n, size, r
         size = self.next_seeds.size()
         # insert to next_seeds in random order
@@ -260,19 +263,21 @@ cdef class RandomCrawler(CCrawler):
         return res
 
 
-cdef class RandomWalkCrawler(CCrawler):
+cdef class RandomWalkCrawler(Crawler):
     short = 'RW'
     cdef int prev_seed
 
-    def __init__(self, CGraph graph, int initial_seed=-1, **kwargs):
+    def __init__(self, MyGraph graph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
+        if 'name' not in kwargs:
+            kwargs['name'] = self.short
 
-        super().__init__(graph, name=self.short, **kwargs)
+        super().__init__(graph, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -305,19 +310,21 @@ cdef class RandomWalkCrawler(CCrawler):
                 return seed
 
 
-cdef class BreadthFirstSearchCrawler(CCrawler):
+cdef class BreadthFirstSearchCrawler(Crawler):
     short = 'BFS'
     cdef queue[int] bfs_queue
 
-    def __init__(self, CGraph graph, int initial_seed=-1, **kwargs):
+    def __init__(self, MyGraph graph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
+        if 'name' not in kwargs:
+            kwargs['name'] = self.short
 
-        super().__init__(graph, name=self.short, **kwargs)
+        super().__init__(graph, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -340,25 +347,27 @@ cdef class BreadthFirstSearchCrawler(CCrawler):
         raise NoNextSeedError()
 
     cpdef vector[int] crawl(self, int seed):
-        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] res = Crawler.crawl(self, seed)
         for n in res:
             self.bfs_queue.push(n)
         return res
 
 
-cdef class DepthFirstSearchCrawler(CCrawler):
+cdef class DepthFirstSearchCrawler(Crawler):
     short = 'DFS'
     cdef deque[int] dfs_queue
 
-    def __init__(self, graph: CGraph, int initial_seed=-1, **kwargs):
+    def __init__(self, graph: MyGraph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
+        if 'name' not in kwargs:
+            kwargs['name'] = self.short
 
-        super().__init__(graph, name=self.short, **kwargs)
+        super().__init__(graph, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -381,19 +390,19 @@ cdef class DepthFirstSearchCrawler(CCrawler):
         raise NoNextSeedError()
 
     cpdef vector[int] crawl(self, int seed):
-        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] res = Crawler.crawl(self, seed)
         for n in res:
             self.dfs_queue.push_back(n)
         return res
 
 
-cdef class SnowBallCrawler(CCrawler):
+cdef class SnowBallCrawler(Crawler):
     short = 'SBS'
     cdef float p
     cdef deque[int] sbs_queue
     cdef deque[int] sbs_backlog
 
-    def __init__(self, CGraph graph, int initial_seed=-1, p: float=0.5, **kwargs):
+    def __init__(self, MyGraph graph, int initial_seed=-1, p: float=0.5, **kwargs):
         """
         Every step of BFS taking neighbors with probability p.
         http://www.soundarajan.org/papers/CrawlingAnalysis.pdf
@@ -404,8 +413,10 @@ cdef class SnowBallCrawler(CCrawler):
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
+        if 'name' not in kwargs:
+            kwargs['name'] = "%s%2.f" % (self.short, 100*p)
 
-        super().__init__(graph, name="%s%2.f" % (self.short, 100*p), p=p, **kwargs)
+        super().__init__(graph, p=p, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -435,7 +446,7 @@ cdef class SnowBallCrawler(CCrawler):
         raise NoNextSeedError()
 
     cpdef vector[int] crawl(self, int seed):
-        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] res = Crawler.crawl(self, seed)
         for n in res:
             if random.random() < self.p:
                 self.sbs_queue.push_back(n)
@@ -444,9 +455,9 @@ cdef class SnowBallCrawler(CCrawler):
         return res
 
 
-cdef class CCrawlerUpdatable(CCrawler):
+cdef class CrawlerUpdatable(Crawler):
     # def __init__(self, g, n, b):
-    #     # print("CCrawlerUpdatable",kwargs)
+    #     # print("CrawlerUpdatable",kwargs)
     #     super().__init__(g, n, b)
 
     cpdef void update(self, vector[int] nodes):  # FIXME maybe ref?
@@ -455,13 +466,13 @@ cdef class CCrawlerUpdatable(CCrawler):
         raise NotImplementedError()
 
 
-cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
+cdef class MaximumObservedDegreeCrawler(CrawlerUpdatable):
     short = 'MOD'
     cdef int batch
     cdef ND_Set nd_set
     # cdef cset[int] mod_set  # FIXME python set would be faster, but how to?
 
-    def __init__(self, CGraph graph, int initial_seed=-1, int batch=1, **kwargs):
+    def __init__(self, MyGraph graph, int initial_seed=-1, int batch=1, **kwargs):
         """
         :param batch: batch size
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
@@ -469,8 +480,10 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
+        if 'name' not in kwargs:
+            kwargs['name'] = "%s%s" % (self.short, '' if batch == 1 else batch)
 
-        super().__init__(graph, name="%s%s" % (self.short, '' if batch == 1 else batch), batch=batch, **kwargs)
+        super().__init__(graph, batch=batch, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -500,7 +513,7 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
     cpdef vector[int] crawl(self, int seed):
         """ Crawl specified node and update observed ND_Set
         """
-        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] res = Crawler.crawl(self, seed)
         cdef vector[int] upd
         cdef int n
         for n in self._observed_graph.neighbors(seed):
@@ -530,17 +543,19 @@ cdef class MaximumObservedDegreeCrawler(CCrawlerUpdatable):
         # return n
 
 
-cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
+cdef class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
     short = 'POD'
     cdef int batch
     cdef ND_Set nd_set
     # cdef cset[int] pod_set  # FIXME python set would be faster, but how to?
 
-    def __init__(self, CGraph graph, int initial_seed=-1, int batch=1, **kwargs):
+    def __init__(self, MyGraph graph, int initial_seed=-1, int batch=1, **kwargs):
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
+        if 'name' not in kwargs:
+            kwargs['name'] = "%s%s" %  (self.short, '' if batch == 1 else batch)
 
-        super().__init__(graph, name="%s%s" % (self.short, '' if batch == 1 else batch), batch=batch, **kwargs)
+        super().__init__(graph, batch=batch, **kwargs)
         # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
@@ -569,7 +584,7 @@ cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
     cpdef vector[int] crawl(self, int seed):
         """ Crawl specified node and update observed ND_Set
         """
-        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] res = Crawler.crawl(self, seed)
         cdef vector[int] upd
         cdef int n
         for n in self._observed_graph.neighbors(seed):
@@ -595,14 +610,14 @@ cdef class PreferentialObservedDegreeCrawler(CCrawlerUpdatable):
         # return n
 
 
-cdef class MaximumExcessDegreeCrawler(CCrawler):
+cdef class MaximumExcessDegreeCrawler(Crawler):
     """ Benchmark Crawler - greedy selection of next node with maximal excess (real - observed) degree
     """
     short = 'MED'
     # cdef int batch
     cdef ND_Set nd_set
 
-    def __init__(self, CGraph graph, int initial_seed=-1, **kwargs):
+    def __init__(self, MyGraph graph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node (if -1 is given, a random node of original graph will be used).
@@ -626,7 +641,7 @@ cdef class MaximumExcessDegreeCrawler(CCrawler):
     cpdef vector[int] crawl(self, int seed):
         """ Crawl specified node and update newly observed in ND_Set
         """
-        cdef vector[int] res = CCrawler.crawl(self, seed)
+        cdef vector[int] res = Crawler.crawl(self, seed)
         cdef int n
         for n in res:
             self.nd_set.add(n, self._orig_graph.deg(n))  # some elems will be re-written
@@ -692,7 +707,7 @@ cpdef cbasic_test():
     # cgraph = GraphCollections.cget('dolphins')
     # # cgraph = GraphCollections.cget('petster-hamster')
     #
-    # crawler = CCrawler(cgraph)
+    # crawler = Crawler(cgraph)
     # for n in cgraph.iter_nodes():
     #     print(n)
     #     crawler.crawl(n)
@@ -786,4 +801,4 @@ cpdef cbasic_test():
 
     # cdef ND_Set nd = ND_Set()
     # print(nd)
-    # cdef CGraph g
+    # cdef MyGraph g

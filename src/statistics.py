@@ -1,9 +1,6 @@
 import subprocess
 from argparse import ArgumentError
 
-from graph_io import GraphCollections
-from utils import USE_CYTHON_CRAWLERS, USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
-
 import os
 import logging
 from enum import Enum
@@ -12,10 +9,9 @@ from operator import itemgetter
 import snap
 from tqdm import tqdm
 
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph
-else:
-    from base.graph import MyGraph
+from base.cgraph import MyGraph
+from graph_io import GraphCollections
+from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
 
 if USE_NETWORKIT:  # Use networkit library for approximate centrality calculation
     from networkit._NetworKit import EstimateBetweenness, ApproxCloseness, PLM, Modularity
@@ -73,183 +69,6 @@ class Stat(Enum):
     PLM_MODULARITY = 'PLM-modularity', 'PLM communities modularity'
 
 
-if not USE_CYTHON_CRAWLERS:
-    stat_computer = {
-        Stat.NODES: (lambda graph: graph.nodes()),
-        Stat.EDGES: (lambda graph: graph.edges()),
-        Stat.AVG_DEGREE: (lambda graph: (1 if graph.directed else 2) * graph.edges() / graph.nodes()),
-        Stat.MAX_DEGREE: (lambda graph: graph.snap.GetNI(snap.GetMxDegNId(graph.snap)).GetDeg()),
-        Stat.ASSORTATIVITY: (lambda graph: assortativity(graph=graph)),
-        Stat.AVG_CC: (lambda graph: snap.GetClustCf(graph.snap, -1)),
-        Stat.MAX_WCC: (lambda graph: snap.GetMxWccSz(graph.snap)),
-        Stat.DIAMETER_90: (lambda graph: snap.GetBfsEffDiam(snap.GetMxWcc(graph.snap), min(1000, graph.nodes()), False)),
-        Stat.DEGREE_DISTR: (lambda graph: compute_nodes_centrality(graph, 'degree')),
-        Stat.BETWEENNESS_DISTR: (lambda graph: compute_nodes_centrality(graph, 'betweenness')),
-        Stat.ECCENTRICITY_DISTR: (lambda graph: compute_nodes_centrality(graph, 'eccentricity')),
-        Stat.CLOSENESS_DISTR: (lambda graph: compute_nodes_centrality(graph, 'closeness')),
-        Stat.PAGERANK_DISTR: (lambda graph: compute_nodes_centrality(graph, 'pagerank')),
-        # Stat.CLUSTERING_DISTR: (lambda graph: compute_nodes_centrality(graph, 'clustering')),
-        Stat.K_CORENESS_DISTR: (lambda graph: compute_nodes_centrality(graph, 'k-coreness')),
-        Stat.PLM_COMMUNITIES: (lambda graph: plm(graph)[0]),
-        Stat.PLM_MODULARITY: (lambda graph: plm(graph)[1]),
-    }
-
-
-    def assortativity(graph):
-        """ Degree assortativity -1<=r<=1"""
-        g = graph.snap
-        mul, sum2, sum_sq2 = 0, 0, 0
-        m = g.GetEdges()
-        for e in g.Edges():
-            j, k = e.GetSrcNId(), e.GetDstNId()
-            dj, dk = g.GetNI(j).GetDeg(), g.GetNI(k).GetDeg()
-            mul += dj * dk
-            sum2 += dj + dk
-            sum_sq2 += dj*dj + dk*dk
-
-        # print(mul/m, sum2/2/m, sum_sq2/2/m)
-        r = (mul/m - (sum2/2/m) ** 2) / (sum_sq2/2/m - (sum2/2/m) ** 2)
-        return r
-
-
-    def compute_nodes_centrality(graph: MyGraph, centrality, nodes_fraction_approximate=10000, only_giant=False):
-        """
-        Compute centrality value for each node of the graph.
-        :param graph: MyGraph
-        :param centrality: centrality name, one of utils.CENTRALITIES
-        :param nodes_fraction_approximate: parameter for betweenness
-        :param only_giant: compute for giant component only, note size of returned list will be less
-        than the number of nodes
-        :return: dict (node id -> centrality)
-        """
-        # assert centrality in CENTRALITIES
-
-        s = graph.snap
-        logging.info("Computing '%s' for graph N=%d, E=%d. May take a while..." %
-                     (centrality, s.GetNodes(), s.GetEdges()))
-
-        if only_giant:
-            s = snap.GetMxWcc(s)
-
-        if centrality == 'degree':
-            node_cent = {n.GetId(): n.GetDeg() for n in tqdm(s.Nodes())}
-
-        elif centrality == 'betweenness':
-            if not USE_NETWORKIT:  # s.GetNodes() < 1e5:  # snap
-                Nodes = snap.TIntFltH()
-                Edges = snap.TIntPrFltH()
-                if nodes_fraction_approximate is None and s.GetNodes() > 10000:
-                    nodes_fraction_approximate = 10000 / s.GetNodes()
-                snap.GetBetweennessCentr(s, Nodes, Edges, nodes_fraction_approximate, graph.directed)
-                node_cent = {node: Nodes[node] for node in Nodes}
-
-            else:  # networkit
-                # Based on the paper:
-                # Sanders, Geisberger, Schultes: Better Approximation of Betweenness Centrality
-                node_map = {}
-                g = graph.networkit(node_map)
-                # centrality = ApproxBetweenness(g, epsilon=0.01, delta=0.1)
-                centr = EstimateBetweenness(g, nSamples=1000, normalized=False, parallel=True)
-                centr.run()
-                scores = centr.scores()
-                node_cent = {node_map[i]: score for i, score in enumerate(scores)}
-                if None in node_cent:
-                    del node_cent[None]
-
-        elif centrality == 'pagerank':
-            PRankH = snap.TIntFltH()
-            snap.GetPageRank(s, PRankH)
-            node_cent = {item: PRankH[item] for item in PRankH}
-
-        elif centrality == 'closeness':
-            if not USE_NETWORKIT:  # s.GetNodes() < 1e5:  # snap
-                # FIXME seems to not distinguish edge directions
-                # node_cent = []  # TODO :made it to see progrees, mb need to be optimized
-                node_cent = {n.GetId(): snap.GetClosenessCentr(s, n.GetId(), graph.directed) for n in tqdm(s.Nodes())}
-
-            else:  # networkit
-                # Based on the paper:
-                # Cohen et al., Computing Classic Closeness Centrality, at Scale.
-                node_map = {}
-                g = graph.networkit(node_map)
-                # TODO for directed graphs see documentation
-                centr = ApproxCloseness(g, nSamples=min(g.numberOfNodes(), 300), epsilon=0.1, normalized=False)
-                centr.run()
-                scores = centr.scores()
-                node_cent = {node_map[i]: score for i, score in enumerate(scores)}
-                if None in node_cent:
-                    del node_cent[None]
-
-        elif centrality == 'eccentricity':
-            if not USE_LIGRA or s.GetNodes() < 1000:
-                node_cent = {n.GetId(): snap.GetNodeEcc(s, n.GetId(), graph.directed) for n in tqdm(s.Nodes())}
-
-            else:  # Ligra
-                # duplicate edges
-                path = graph.path
-                path_dup = path + '_dup'
-                with open(path_dup, 'w') as out_file:
-                    for line in open(path, 'r'):
-                        if len(line) < 3:
-                            break
-                        i, j = line.split()
-                        out_file.write('%s %s\n' % (i, j))
-                        out_file.write('%s %s\n' % (j, i))
-
-                # convert to Adj
-                path_lig = path + '_ligra'
-                ligra_converter_command = "./utils/SNAPtoAdj '%s' '%s'" % (path_dup, path_lig)
-                retcode = subprocess.Popen(ligra_converter_command, cwd=LIGRA_DIR, shell=True,
-                                           stderr=sys.stderr).wait()
-                if retcode != 0:
-                    raise RuntimeError("Ligra converter failed: '%s'" % ligra_converter_command)
-
-                # Run Ligra kBFS
-                path_lig_ecc = path + '_ecc'
-                ligra_ecc_command = "./apps/eccentricity/kBFS-Ecc -s -rounds 0 -out '%s' '%s'" % (
-                path_lig_ecc, path_lig)
-                # ligra_ecc_command = "./apps/eccentricity/kBFS-Exact -s -rounds 0 -out '%s' '%s'" % (path_lig_ecc, path_lig)
-                retcode = subprocess.Popen(ligra_ecc_command, cwd=LIGRA_DIR, shell=True,
-                                           stdout=subprocess.DEVNULL, stderr=sys.stderr).wait()
-                if retcode != 0:
-                    raise RuntimeError("Ligra kBFS-Ecc failed: %s" % ligra_ecc_command)
-
-                # read and convert ecc
-                node_cent = {}
-                for n, line in enumerate(open(path_lig_ecc)):
-                    if graph.has_node(n):
-                        node_cent[n] = int(line)
-                assert len(node_cent) == graph.nodes()
-
-                os.remove(path_dup)
-                os.remove(path_lig)
-                os.remove(path_lig_ecc)
-
-        elif centrality == 'clustering':
-            NIdCCfH = snap.TIntFltH()
-            snap.GetNodeClustCf(s, NIdCCfH)
-            node_cent = {item: NIdCCfH[item] for item in NIdCCfH}
-
-        elif centrality == 'k-coreness':  # TODO could be computed in networkx
-            node_cent_dict = {}
-            k = 0
-            while True:
-                k += 1
-                KCore = snap.GetKCore(s, k)
-                if KCore.Empty():
-                    break
-                for node in KCore.Nodes():
-                    node_cent_dict[node.GetId()] = k
-            node_cent = {node: k for node, k in node_cent_dict.items()}
-
-        else:
-            raise NotImplementedError("")
-
-        logging.info(" done.")
-        return node_cent
-
-
-# For both values of USE_CYTHON_CRAWLERS
 def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=False):
     """
     Get top-count node ids of the graph sorted by centrality.
@@ -272,7 +91,6 @@ def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=F
     return [n for (n, d) in sorted_node_cent[:count]]
 
 
-# For both values of USE_CYTHON_CRAWLERS
 def plm(graph: MyGraph):
     """
     Detect communities via PLM - Parallel Louvain Method and compute modularity.

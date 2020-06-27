@@ -1,4 +1,3 @@
-USE_CYTHON_CRAWLERS = True           # python/cython mode switcher
 SNAP_DIR = "/path/to/snap"           # directory with snap built
 USE_NETWORKIT = True                 # Use networkit library for approximate centrality calculation
 USE_LIGRA = True                     # Use Ligra library for approximate centrality calculation

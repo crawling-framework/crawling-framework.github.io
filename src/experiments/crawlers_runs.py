@@ -1,18 +1,15 @@
-from utils import USE_CYTHON_CRAWLERS
 import time
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import seed_random
-    from crawlers.cadvanced import DE_Crawler
-else:
-    pass
-
+from base.cgraph import seed_random
+from crawlers.cadvanced import DE_Crawler
 from crawlers.cbasic import filename_to_definition
+from crawlers.multiseed import MultiInstanceCrawler
+
 from runners.merger import CrawlerRunsMerger
 from runners.metric_runner import TopCentralityMetric
-from crawlers.multiseed import MultiInstanceCrawler
-from graph_io import GraphCollections, konect_names, netrepo_names
 from runners.animated_runner import Metric
 from runners.history_runner import CrawlerHistoryRunner
+
+from graph_io import GraphCollections, konect_names, netrepo_names
 from statistics import get_top_centrality_nodes, Stat
 import multiprocessing
 

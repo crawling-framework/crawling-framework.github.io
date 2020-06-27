@@ -7,13 +7,13 @@ from libcpp.queue cimport queue
 from libcpp.deque cimport deque
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec
 
-from base.cgraph cimport CGraph, str_to_chars
+from base.cgraph cimport MyGraph, str_to_chars
 from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 
 
-cdef class CCrawler:
-    cdef readonly CGraph _orig_graph
-    cdef readonly CGraph _observed_graph
+cdef class Crawler:
+    cdef readonly MyGraph _orig_graph
+    cdef readonly MyGraph _observed_graph
     cdef dict __dict__  # for pythonic fields, makes it slower
     cdef readonly set _crawled_set
     cdef readonly set _observed_set
@@ -25,5 +25,5 @@ cdef class CCrawler:
     cpdef int crawl_budget(self, int budget) except -1
 
 
-cdef class CCrawlerUpdatable(CCrawler):
+cdef class CrawlerUpdatable(Crawler):
     cpdef void update(self, vector[int] nodes)

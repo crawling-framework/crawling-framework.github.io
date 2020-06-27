@@ -1,22 +1,11 @@
 import logging
-from math import ceil
-from operator import itemgetter
-
-import numpy as np
 
 from statistics import get_top_centrality_nodes, Stat
-from utils import USE_CYTHON_CRAWLERS
 
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph, seed_random, get_UniDevInt
-    from crawlers.cbasic import CCrawler as Crawler, CCrawlerUpdatable as CrawlerUpdatable, CrawlerException, MaximumObservedDegreeCrawler, NoNextSeedError, \
-    RandomWalkCrawler, DepthFirstSearchCrawler, RandomCrawler
-    from crawlers.cadvanced import CrawlerWithAnswer
-else:
-    raise Exception()
-
-from base.graph import MyGraph
-from base.node_deg_set import ND_Set
+from base.cgraph import MyGraph, seed_random, get_UniDevInt
+from crawlers.cbasic import Crawler, CrawlerUpdatable, CrawlerException, \
+    MaximumObservedDegreeCrawler, NoNextSeedError, RandomWalkCrawler, DepthFirstSearchCrawler, RandomCrawler
+from crawlers.cadvanced import CrawlerWithAnswer
 
 
 class AvrachenkovCrawler(CrawlerWithAnswer):
@@ -132,7 +121,7 @@ class ThreeStageCrawlerSeedsAreHubs(ThreeStageCrawler):
         :param n: number of nodes to be crawled, must be >= seeds
         :param p: fraction of graph nodes to be returned
         """
-        super().__init__(graph, limit=n, s=s, n=n, p=p, **kwargs)
+        super().__init__(graph, s=s, n=n, p=p, **kwargs)
         self.h = set()  # S
 
     def seeds_generator(self):

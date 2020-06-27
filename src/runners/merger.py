@@ -9,23 +9,16 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 
 from runners.metric_runner import TopCentralityMetric, Metric
-from utils import USE_CYTHON_CRAWLERS, RESULT_DIR
 from graph_io import GraphCollections, konect_names, netrepo_names
 from statistics import Stat
 
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph
-    from crawlers.cbasic import CCrawler as Crawler, CrawlerException, MaximumObservedDegreeCrawler, \
-    RandomWalkCrawler, RandomCrawler, SnowBallCrawler, \
-    BreadthFirstSearchCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler, \
+from crawlers.cbasic import Crawler, CrawlerException, MaximumObservedDegreeCrawler, \
+    RandomWalkCrawler, RandomCrawler, SnowBallCrawler, BreadthFirstSearchCrawler, \
+    DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler, \
     MaximumExcessDegreeCrawler, definition_to_filename, filename_to_definition
-else:
-    from base.graph import MyGraph
-    from crawlers.basic import CrawlerException, MaximumObservedDegreeCrawler, \
-        BreadthFirstSearchCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler
-
 from crawlers.advanced import ThreeStageCrawler, AvrachenkovCrawler, ThreeStageMODCrawler
 from crawlers.cadvanced import DE_Crawler
+from utils import RESULT_DIR
 
 
 def compute_aucc(xs, ys):
@@ -52,8 +45,14 @@ def compute_waucc(xs, ys):
 
 
 class CrawlerRunsMerger:
-    def __init__(self, graphs, crawler_defs, metric_defs, n_instances=1):
-        self.graphs = graphs
+    def __init__(self, graph_names, crawler_defs, metric_defs, n_instances=1):
+        """
+        :param graph_names: list of graphs names
+        :param crawler_defs: list of crawlers definitions
+        :param metric_defs: list of metrics definitions
+        :param n_instances: number of instances to average over
+        """
+        self.graph_names = graph_names
         self.crawler_names = list(map(definition_to_filename, crawler_defs))
         self.metric_names = list(map(definition_to_filename, metric_defs))
         self.n_instances = n_instances
@@ -71,26 +70,20 @@ class CrawlerRunsMerger:
             self.labels[definition_to_filename(cd)] = Crawler.from_definition(g, cd).name
         # print(self.labels)
 
-    # @staticmethod
-    # def to_path(graph: MyGraph, crawler: Crawler, metric: Metric):
-    #     budget = graph[Stat.NODES]  # TODO as param?
-    #     path = os.path.join(RESULT_DIR, graph.name, budget, crawler.name, metric.name)
-    #     return path
-
     @staticmethod
     def names_to_path(graph_name: str, crawler_name: str, metric_name: str):
         """ Returns file pattern e.g.
-        '/home/misha/workspace/crawling/results/netrepo/socfb-Bingham82/RW_/Coverage_crawled_DegDistr_0.01/*.json'
+        '/home/misha/workspace/crawling/results/ego-gplus/POD(batch=1)/TopK(centrality=BtwDistr,measure=Re,part=crawled,top=0.01)/*.json'
         """
         path = os.path.join(RESULT_DIR, graph_name, crawler_name, metric_name, "*.json")
         return path
 
     def read(self):
-        total = len(self.graphs) * len(self.crawler_names) * len(self.metric_names)
+        total = len(self.graph_names) * len(self.crawler_names) * len(self.metric_names)
         pbar = tqdm(total=total, desc='Reading history')
         self.instances.clear()
         # self.contents.clear()
-        for g in self.graphs:
+        for g in self.graph_names:
             self.instances[g] = {}
             self.contents[g] = {}
             for c in self.crawler_names:
@@ -139,7 +132,7 @@ class CrawlerRunsMerger:
         """ Return dict of instances where computed < n_instances: absent[graph][crawler][metric] -> missing count
         """
         missing = {}
-        for g in self.graphs:
+        for g in self.graph_names:
             missing[g] = {}
             for c in self.crawler_names:
                 missing[g][c] = {}
@@ -154,7 +147,7 @@ class CrawlerRunsMerger:
             if len(missing[g]) == 0:
                 del missing[g]
 
-        # print(json.dumps(missing, indent=2))
+        print(json.dumps(missing, indent=2))
         return missing
 
     def draw_by_crawler(self, x_lims=None, x_normalize=True, scale=3):
@@ -166,7 +159,7 @@ class CrawlerRunsMerger:
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
                   'pink', 'lime', 'wheat', 'lightsteelblue']
 
-        G = len(self.graphs)
+        G = len(self.graph_names)
         M = len(self.metric_names)
         nrows, ncols = M, G
         if M == 1:
@@ -179,11 +172,11 @@ class CrawlerRunsMerger:
         # fig.text(0.5, 0.02, 'Число итераций краулинга', ha='center')
         # fig.text(0.02, 0.5, 'Доля собранных влиятельных вершин', va='center', rotation='vertical')
 
-        total = len(self.graphs) * len(self.crawler_names) * len(self.metric_names)
+        total = len(self.graph_names) * len(self.crawler_names) * len(self.metric_names)
         pbar = tqdm(total=total, desc='Plotting history')
         aix = 0
         for i, m in enumerate(self.metric_names):
-            for j, g in enumerate(self.graphs):
+            for j, g in enumerate(self.graph_names):
                 if nrows > 1 and ncols > 1:
                     plt.sca(axs[aix // ncols, aix % ncols])
                 elif nrows * ncols > 1:
@@ -228,12 +221,12 @@ class CrawlerRunsMerger:
         if len(self.auccs) > 0:
             return
         # Compute AUCCs
-        G = len(self.graphs)
+        G = len(self.graph_names)
         C = len(self.crawler_names)
         M = len(self.metric_names)
         self.auccs.clear()
         pbar = tqdm(total=G*C*M, desc='Computing AUCCs')
-        for g in self.graphs:
+        for g in self.graph_names:
             self.auccs[g] = {}
             for c in self.crawler_names:
                 self.auccs[g][c] = {}
@@ -255,7 +248,7 @@ class CrawlerRunsMerger:
                   'pink', 'lime', 'wheat', 'lightsteelblue']
 
         self._compute_auccs()
-        G = len(self.graphs)
+        G = len(self.graph_names)
         C = len(self.crawler_names)
         M = len(self.metric_names)
 
@@ -267,7 +260,7 @@ class CrawlerRunsMerger:
         aix = 0
         pbar = tqdm(total=G*M, desc='Plotting history')
         xs = list(range(1, 1 + C))
-        for g in self.graphs:
+        for g in self.graph_names:
             if nrows > 1 and ncols > 1:
                 plt.sca(axs[aix // ncols, aix % ncols])
             elif nrows * ncols > 1:
@@ -295,7 +288,7 @@ class CrawlerRunsMerger:
                   'pink', 'lime', 'wheat', 'lightsteelblue']
 
         self._compute_auccs()
-        G = len(self.graphs)
+        G = len(self.graph_names)
         C = len(self.crawler_names)
         M = len(self.metric_names)
 
@@ -307,7 +300,7 @@ class CrawlerRunsMerger:
                 winners[c][m] = 0
 
         for m in self.metric_names:
-            for g in self.graphs:
+            for g in self.graph_names:
                 ca = [np.mean(self.auccs[g][c][m][aggregator]) for c in self.crawler_names]
                 if any(np.isnan(ca)):
                     continue
@@ -341,9 +334,9 @@ def test_merger():
         # 'ego-gplus',
         # 'web-sk-2005',
         # 'digg-friends',
-        # 'douban',
-        # 'ego-gplus',
-        g for g in netrepo_names
+        'douban',
+        'ego-gplus',
+        # g for g in netrepo_names
     # ] + [
     #     g for g in konect_names
     ]
@@ -358,51 +351,51 @@ def test_merger():
         filename_to_definition('SBS(p=0.1)'),
         filename_to_definition('SBS(p=0.25)'),
         filename_to_definition('SBS(p=0.5)'),
-        filename_to_definition('SBS(p=0.75)'),
-        filename_to_definition('SBS(p=0.89)'),
-        filename_to_definition('MOD(batch=1)'),
-        filename_to_definition('MOD(batch=10)'),
-        filename_to_definition('MOD(batch=100)'),
-        filename_to_definition('MOD(batch=1000)'),
-        filename_to_definition('MOD(batch=10000)'),
-        filename_to_definition('POD(batch=1)'),
-        filename_to_definition('POD(batch=10)'),
-        filename_to_definition('POD(batch=100)'),
-        filename_to_definition('POD(batch=1000)'),
-        filename_to_definition('POD(batch=10000)'),
-        filename_to_definition('DE(initial_budget=10)'),
-        filename_to_definition('MultiInstance(count=2,crawler_def=BFS())'),
-        filename_to_definition('MultiInstance(count=2,crawler_def=MOD(batch=1))'),
-        filename_to_definition('MultiInstance(count=2,crawler_def=POD(batch=1))'),
-        filename_to_definition('MultiInstance(count=2,crawler_def=DE(initial_budget=10))'),
-        filename_to_definition('MultiInstance(count=3,crawler_def=BFS())'),
-        filename_to_definition('MultiInstance(count=3,crawler_def=MOD(batch=1))'),
-        filename_to_definition('MultiInstance(count=3,crawler_def=POD(batch=1))'),
-        filename_to_definition('MultiInstance(count=3,crawler_def=DE(initial_budget=10))'),
-        filename_to_definition('MultiInstance(count=4,crawler_def=BFS())'),
-        filename_to_definition('MultiInstance(count=4,crawler_def=MOD(batch=1))'),
-        filename_to_definition('MultiInstance(count=4,crawler_def=POD(batch=1))'),
-        filename_to_definition('MultiInstance(count=4,crawler_def=DE(initial_budget=10))'),
-        filename_to_definition('MultiInstance(count=5,crawler_def=BFS())'),
-        filename_to_definition('MultiInstance(count=5,crawler_def=MOD(batch=1))'),
-        filename_to_definition('MultiInstance(count=5,crawler_def=POD(batch=1))'),
-        filename_to_definition('MultiInstance(count=5,crawler_def=DE(initial_budget=10))'),
-        filename_to_definition('MultiInstance(count=10,crawler_def=BFS())'),
-        filename_to_definition('MultiInstance(count=10,crawler_def=MOD(batch=1))'),
-        filename_to_definition('MultiInstance(count=10,crawler_def=POD(batch=1))'),
-        filename_to_definition('MultiInstance(count=10,crawler_def=DE(initial_budget=10))'),
-        filename_to_definition('MultiInstance(count=30,crawler_def=BFS())'),
-        filename_to_definition('MultiInstance(count=30,crawler_def=MOD(batch=1))'),
-        filename_to_definition('MultiInstance(count=30,crawler_def=POD(batch=1))'),
-        filename_to_definition('MultiInstance(count=30,crawler_def=DE(initial_budget=10))'),
-        filename_to_definition('MultiInstance(count=100,crawler_def=BFS())'),
-        filename_to_definition('MultiInstance(count=100,crawler_def=MOD(batch=1))'),
-        filename_to_definition('MultiInstance(count=100,crawler_def=POD(batch=1))'),
-        filename_to_definition('MultiInstance(count=100,crawler_def=DE(initial_budget=10))'),
-        filename_to_definition('MultiInstance(count=1000,crawler_def=BFS())'),
-        filename_to_definition('MultiInstance(count=1000,crawler_def=MOD(batch=1))'),
-        filename_to_definition('MultiInstance(count=1000,crawler_def=POD(batch=1))'),
-        filename_to_definition('MultiInstance(count=1000,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('SBS(p=0.75)'),
+        # filename_to_definition('SBS(p=0.89)'),
+        # filename_to_definition('MOD(batch=1)'),
+        # filename_to_definition('MOD(batch=10)'),
+        # filename_to_definition('MOD(batch=100)'),
+        # filename_to_definition('MOD(batch=1000)'),
+        # filename_to_definition('MOD(batch=10000)'),
+        # filename_to_definition('POD(batch=1)'),
+        # filename_to_definition('POD(batch=10)'),
+        # filename_to_definition('POD(batch=100)'),
+        # filename_to_definition('POD(batch=1000)'),
+        # filename_to_definition('POD(batch=10000)'),
+        # filename_to_definition('DE(initial_budget=10)'),
+        # filename_to_definition('MultiInstance(count=2,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=2,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=2,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=2,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=3,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=3,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=3,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=3,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=4,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=4,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=4,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=4,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=5,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=5,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=5,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=5,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=10,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=10,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=10,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=10,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=30,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=30,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=30,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=30,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=100,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=100,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=100,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=100,crawler_def=DE(initial_budget=10))'),
+        # filename_to_definition('MultiInstance(count=1000,crawler_def=BFS())'),
+        # filename_to_definition('MultiInstance(count=1000,crawler_def=MOD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=1000,crawler_def=POD(batch=1))'),
+        # filename_to_definition('MultiInstance(count=1000,crawler_def=DE(initial_budget=10))'),
     ]
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),

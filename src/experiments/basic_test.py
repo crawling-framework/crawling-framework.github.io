@@ -1,19 +1,10 @@
-from utils import rel_dir, USE_CYTHON_CRAWLERS
+from utils import rel_dir
 
 import logging
 import matplotlib.pyplot as plt
 
-if USE_CYTHON_CRAWLERS:
-    from crawlers.cbasic import CCrawler as Crawler, RandomCrawler, \
-        RandomWalkCrawler, BreadthFirstSearchCrawler, \
-        DepthFirstSearchCrawler, SnowBallCrawler, \
-        MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
-else:
-    from crawlers.basic import RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
-        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, \
-        PreferentialObservedDegreeCrawler
-
-from crawlers.advanced import ThreeStageMODCrawler, ThreeStageCrawler, AvrachenkovCrawler
+from crawlers.cbasic import Crawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+    DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
 from crawlers.cadvanced import DE_Crawler
 from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections
@@ -65,11 +56,6 @@ def test_multi():
     name = 'digg-friends'
     # name = 'soc-pokec-relationships'
     graph = GraphCollections.get(name)
-
-    if USE_CYTHON_CRAWLERS:
-        print("After cython crawlers. Graph %s, n=%s steps" % (name, n))
-    else:
-        print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
 
     crawler = MultiInstanceCrawler(graph, count=100, crawler_def=
         # RandomCrawler(graph) for i in range(10)
@@ -147,10 +133,6 @@ def test_crawler_times():
     name = 'digg-friends'
     # name = 'soc-pokec-relationships'
     g = GraphCollections.get(name)
-    if USE_CYTHON_CRAWLERS:
-        print("After cython crawlers. Graph %s, n=%s steps" % (name, n))
-    else:
-        print("Before cython crawlers. Graph %s, n=%s steps" % (name, n))
 
     import numpy as np
     for crawler_def in [
@@ -254,6 +236,6 @@ if __name__ == '__main__':
     # g = test_carpet_graph(8, 8)[0]
     g = GraphCollections.get(name, giant_only=True)
 
-    # test_basic(g)
+    test_basic(g)
     # test_multi()
-    test_crawler_times()
+    # test_crawler_times()

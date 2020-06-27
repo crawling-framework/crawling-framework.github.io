@@ -5,9 +5,10 @@ from numpy import random
 import scipy.stats as stats
 import snap
 
-from base.graph import MyGraph
+from base.cgraph import MyGraph
 from statistics import Stat
 
+raise Exception("OLD, NEED TO UPDATE")
 
 def truncated_power_law(count, gamma, maximal):
     """

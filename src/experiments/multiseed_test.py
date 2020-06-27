@@ -3,17 +3,10 @@ import numpy as np
 from graph_io import GraphCollections
 from runners.animated_runner import Metric, AnimatedCrawlerRunner
 from statistics import get_top_centrality_nodes, Stat
-from utils import USE_CYTHON_CRAWLERS
 
-if USE_CYTHON_CRAWLERS:
-    from base.cgraph import CGraph as MyGraph
-    from crawlers.cbasic import RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, \
-        MaximumObservedDegreeCrawler, SnowBallCrawler, PreferentialObservedDegreeCrawler
-else:
-    from base.graph import MyGraph
-    from crawlers.advanced import CrawlerWithAnswer
-    from crawlers.basic import RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, \
-        MaximumObservedDegreeCrawler, SnowBallCrawler, PreferentialObservedDegreeCrawler
+from base.cgraph import MyGraph
+from crawlers.cbasic import RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, \
+    MaximumObservedDegreeCrawler, SnowBallCrawler, PreferentialObservedDegreeCrawler
 
 from crawlers.multiseed import MultiInstanceCrawler
 

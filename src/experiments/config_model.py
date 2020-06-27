@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
 from graph_io import GraphCollections
-from base.graph import MyGraph
-from statistics import assortativity
+from base.cgraph import MyGraph
+from cyth.cstatistics import assortativity
 from models import truncated_power_law, configuration_model, ba_model
 
+raise Exception("OLD, NEED TO UPDATE")
 
 # def assortativity_of_edge_list(jk_iter):
 #     m = 0
