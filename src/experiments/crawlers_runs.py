@@ -1,16 +1,12 @@
-import time
-from base.cgraph import seed_random
 from crawlers.cadvanced import DE_Crawler
 from crawlers.cbasic import filename_to_definition
-from crawlers.multiseed import MultiInstanceCrawler
 
 from running.merger import CrawlerRunsMerger
 from running.metrics_and_runner import TopCentralityMetric
-from running.animated_runner import Metric
-from running.history_runner import CrawlerHistoryRunner, send_misha_vk
+from running.history_runner import CrawlerHistoryRunner
 
 from graph_io import GraphCollections, konect_names, netrepo_names
-from statistics import get_top_centrality_nodes, Stat
+from statistics import Stat
 import multiprocessing
 
 
@@ -413,60 +409,6 @@ def big_run(max_cpus: int=multiprocessing.cpu_count(), max_memory: float=6):
     crm.draw_winners('AUCC')
 
 
-def cloud_manager():
-    import subprocess, sys
-
-    cloud1 = 'ubuntu@83.149.198.220'
-    cloud2 = 'ubuntu@83.149.198.231'
-
-    local_dir = '/home/misha/workspace/crawling'
-    remote_dir = '/home/ubuntu/workspace/crawling'
-    ssh_key = '~/.ssh/drobyshevsky_home_key.pem'
-
-    # Copy stats to remote
-
-    names = ['ca-citeseer', 'ca-dblp-2010', 'rec-amazon', 'rec-github', 'sc-pkustk13', 'soc-BlogCatalog',
-             'soc-brightkite', 'soc-slashdot', 'soc-themarker', 'socfb-Bingham82', 'socfb-OR',
-             'socfb-Penn94', 'socfb-wosn-friends', 'tech-RL-caida', 'tech-p2p-gnutella', 'web-arabic-2005']
-    cloud = cloud1
-    collection = 'konect'
-    for name in ['slashdot-threads']:
-    # for name in ['web-uk-2005', 'web-italycnr-2000', 'ca-dblp-2012', 'sc-pwtk']:
-        # if not os.path.exists('%s/data/%s/%s.ij_stats/EccDistr' % (local_dir, collection, name)):
-        #     continue
-
-        # loc2rem_copy_command = 'scp -i %s -r %s/data/%s/%s.ij_stats/ %s:%s/data/%s/' % (
-        #     ssh_key, local_dir, collection, name, cloud, remote_dir, collection)
-        # loc2rem_copy_command = 'scp -i %s -r %s/results/k=0.01/%s/ %s:%s/results/k=0.01/' % (
-        #     ssh_key, local_dir, name, cloud, remote_dir, )
-
-        # rem2loc_copy_command = 'scp -i %s -r %s:%s/data/%s/%s.ij_stats/EccDistr %s/data/%s/%s.ij_stats/' % (
-        #     ssh_key, cloud, remote_dir, collection, name, local_dir, collection, name)
-        rem2loc_copy_command = 'scp -i %s -r %s:%s/results/k=0.01/ %s/%s/' % (
-            ssh_key, cloud, remote_dir, local_dir, cloud)
-
-        command = rem2loc_copy_command
-
-        logging.info("Executing command: '%s' ..." % command)
-        retcode = subprocess.Popen(command, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
-        if retcode != 0:
-            logging.error("returned code = %s" % retcode)
-            raise RuntimeError("unsuccessful: '%s'" % command)
-        else:
-            logging.info("OK")
-
-
-    # # Run script
-    # cloud = cloud2
-    # connect_command = 'ssh %s -i %s' % (cloud2, ssh_key)
-    # logging.info("Executing command: '%s' ..." % connect_command)
-    # retcode = subprocess.Popen(connect_command, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
-    #
-    # run_command = 'cd workspace/crawling/; PYTHONPATH=/home/ubuntu/workspace/crawling/src python3 src/experiments/crawlers_runs.py'
-    # logging.info("Executing command: '%s' ..." % run_command)
-    # retcode = subprocess.Popen(run_command, shell=True, stdout=sys.stdout, stderr=sys.stderr).wait()
-
-
 def prepare_graphs():
     for name in konect_names + netrepo_names + ['mipt']:
         g = GraphCollections.get(name, giant_only=True, not_load=True)
@@ -479,7 +421,6 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     # logging.getLogger().setLevel(logging.DEBUG)
 
-    test_missing()
-    # big_run()
+    # test_missing()
+    big_run()
     # prepare_graphs()
-    # cloud_manager()

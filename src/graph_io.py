@@ -13,6 +13,66 @@ from utils import GRAPHS_DIR, COLLECTIONS
 konect_metadata_path = os.path.join(GRAPHS_DIR, 'konect', 'metadata')
 netrepo_metadata_path = os.path.join(GRAPHS_DIR, 'netrepo', 'metadata')
 
+
+def parse_konect_page():
+    """ Parse konect page and create name resolution dict. E.g. 'CL' -> 'actor-collaborations'.
+    Note several non-unique codes: DB, HY, OF, PL, WT.
+    """
+    from bs4 import BeautifulSoup
+    import lxml
+    logging.info("Parsing Konect metadata...")
+    name_ref_dict = {}
+    url = 'http://konect.uni-koblenz.de/networks/'
+    html = urllib.request.urlopen(url).read()
+
+    rows = BeautifulSoup(html, "lxml").table.find_all('tr')
+    for row in rows[1:]:
+        cols = row.find_all('td')
+        code = cols[0].contents[0].contents[0]
+        name = cols[1].contents[0].contents[0]
+        ref = cols[1].contents[0]['href']
+        if code in name_ref_dict:
+            logging.warning("Konect repeating code %s" % code)
+            pass  # FIXME codes are not unique, some repeat!
+        name_ref_dict[code] = ref
+        name_ref_dict[name] = ref
+        name_ref_dict[ref] = ref
+
+    if not os.path.exists(os.path.dirname(konect_metadata_path)):
+        os.makedirs(os.path.dirname(konect_metadata_path))
+    with open(konect_metadata_path, 'w') as f:
+        f.write(str(name_ref_dict))
+    logging.info("Konect metadata saved to %s" % konect_metadata_path)
+
+
+def parse_netrepo_page():
+    """ Parse networkrepository page and create name resolution dict: name -> url
+    """
+    from bs4 import BeautifulSoup
+
+    logging.info("Parsing networkrepository metadata...")
+    name_ref_dict = {}
+    url = 'http://networkrepository.com/networks.php'
+    html = urllib.request.urlopen(url).read()
+
+    rows = BeautifulSoup(html, "lxml").table.find_all('tr')
+    for row in rows[1:]:
+        name = row.contents[0].contents[0].text.strip()
+        ref = row.contents[-1].contents[2]['href']
+        name_ref_dict[name] = ref
+
+    if not os.path.exists(os.path.dirname(netrepo_metadata_path)):
+        os.makedirs(os.path.dirname(netrepo_metadata_path))
+    with open(netrepo_metadata_path, 'w') as f:
+        f.write(str(name_ref_dict))
+    logging.info("networkrepository metadata saved to %s" % netrepo_metadata_path)
+
+
+# Should be run before
+if not os.path.exists(konect_metadata_path): parse_konect_page()
+if not os.path.exists(netrepo_metadata_path): parse_netrepo_page()
+
+
 netrepo_name_ref_dict = eval(open(netrepo_metadata_path, 'r').read())
 konect_name_ref_dict = eval(open(konect_metadata_path, 'r').read())
 
@@ -78,65 +138,6 @@ netrepo_names = [
     'sc-shipsec1',  # N=139995, E=1705212, d_avg=24.36
     'sc-shipsec5',  # N=178573, E=2197367, d_avg=24.61
 ]
-
-
-def parse_konect_page():
-    """ Parse konect page and create name resolution dict. E.g. 'CL' -> 'actor-collaborations'.
-    Note several non-unique codes: DB, HY, OF, PL, WT.
-    """
-    from bs4 import BeautifulSoup
-    import lxml
-    logging.info("Parsing Konect metadata...")
-    name_ref_dict = {}
-    url = 'http://konect.uni-koblenz.de/networks/'
-    html = urllib.request.urlopen(url).read()
-
-    rows = BeautifulSoup(html, "lxml").table.find_all('tr')
-    for row in rows[1:]:
-        cols = row.find_all('td')
-        code = cols[0].contents[0].contents[0]
-        name = cols[1].contents[0].contents[0]
-        ref = cols[1].contents[0]['href']
-        if code in name_ref_dict:
-            logging.warning("Konect repeating code %s" % code)
-            pass  # FIXME codes are not unique, some repeat!
-        name_ref_dict[code] = ref
-        name_ref_dict[name] = ref
-        name_ref_dict[ref] = ref
-
-    if not os.path.exists(os.path.dirname(konect_metadata_path)):
-        os.makedirs(os.path.dirname(konect_metadata_path))
-    with open(konect_metadata_path, 'w') as f:
-        f.write(str(name_ref_dict))
-    logging.info("Konect metadata saved to %s" % konect_metadata_path)
-
-
-def parse_netrepo_page():
-    """ Parse networkrepository page and create name resolution dict: name -> url
-    """
-    from bs4 import BeautifulSoup
-
-    logging.info("Parsing networkrepository metadata...")
-    name_ref_dict = {}
-    url = 'http://networkrepository.com/networks.php'
-    html = urllib.request.urlopen(url).read()
-
-    rows = BeautifulSoup(html, "lxml").table.find_all('tr')
-    for row in rows[1:]:
-        name = row.contents[0].contents[0].text.strip()
-        ref = row.contents[-1].contents[2]['href']
-        name_ref_dict[name] = ref
-
-    if not os.path.exists(os.path.dirname(netrepo_metadata_path)):
-        os.makedirs(os.path.dirname(netrepo_metadata_path))
-    with open(netrepo_metadata_path, 'w') as f:
-        f.write(str(name_ref_dict))
-    logging.info("networkrepository metadata saved to %s" % netrepo_metadata_path)
-
-
-# Should be run anyways
-if not os.path.exists(konect_metadata_path): parse_konect_page()
-if not os.path.exists(netrepo_metadata_path): parse_netrepo_page()
 
 
 def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_with='#%',
