@@ -152,9 +152,9 @@ def copy_remote2local(host: str, src: str, dst: str, ignore_fails=False):
 
 
 def cloud_prepare(host: str):
-    pass
-    # # Pull from branch cloud
-    # do_remote(host, 'eval `ssh-agent -s`; ssh-add ~/.ssh/cloud_rsa; ssh -Tv git@gitlab.com; cd workspace/crawling; git checkout cloud; git pull')
+    # pass
+    # Pull from branch cloud
+    do_remote(host, 'eval `ssh-agent -s`; ssh-add ~/.ssh/cloud_rsa; cd workspace/crawling; git checkout cloud; git pull')
 
     # # Copy graphs and stats
     # do_remote(host, "cd workspace/crawling/data; mkdir konect; mkdir netrepo; mkdir other", ignore_fails=True)
@@ -235,6 +235,7 @@ def main():
 if __name__ == '__main__':
     import logging
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
 
     # cloud_io()
     # cloud_prepare(clouds[0])
