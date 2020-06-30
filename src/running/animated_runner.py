@@ -48,8 +48,8 @@ class AnimatedCrawlerRunner(CrawlerRunner):
                   'pink', 'lime', 'wheat', 'lightsteelblue']
 
         # Initialize crawlers and metrics
-        crawlers = self.crawlers + [Crawler.from_definition(self.graph, d) for d in self.crawler_defs]
-        metrics = self.metrics + [Metric.from_definition(self.graph, d) for d in self.metric_defs]
+        crawlers = [Crawler.from_definition(self.graph, d) for d in self.crawler_defs]
+        metrics = [Metric.from_definition(self.graph, d) for d in self.metric_defs]
 
         step_seq = []
         crawler_metric_seq = dict([(c, dict([(m, []) for m in metrics])) for c in crawlers])

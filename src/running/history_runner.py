@@ -136,8 +136,8 @@ class CrawlerHistoryRunner(CrawlerRunner):
         #     initial_seeds = self.graph.random_nodes(len(self.crawler_defs))
         # crawlers = [_class(self.graph, initial_seed=initial_seeds[i], **kwargs)
         #             for i, (_class, kwargs) in enumerate(self.crawler_defs)]
-        crawlers = self.crawlers + [Crawler.from_definition(self.graph, d) for d in self.crawler_defs]
-        metrics = self.metrics + [Metric.from_definition(self.graph, d) for d in self.metric_defs]
+        crawlers = [Crawler.from_definition(self.graph, d) for d in self.crawler_defs]
+        metrics = [Metric.from_definition(self.graph, d) for d in self.metric_defs]
 
         if draw_networkx:  # if it is traversal
             for crawler in crawlers:  # TODO test this one
@@ -217,6 +217,28 @@ class CrawlerHistoryRunner(CrawlerRunner):
         # if draw_networkx:
         #     plt.show()
 
+    def run_parallel_adaptive(self, n_instances, max_cpus: int = multiprocessing.cpu_count(), max_memory: float = 6):
+        """
+        Runs in parallel crawlers and measure metrics. Number of processes is chosen adaptively.
+        Using magic coefficients: Mbytes of memory = A*n + B,
+        where A = 0.25, B = 2.5,  n - thousands of nodes in graph.
+
+        :param n_instances: total wanted number of instances to be performed
+        :param max_cpus: max number of CPUs to use for computation, all available by default
+        :param max_memory: max Mbytes of operative memory to use for computation, 6Gb by default
+        :return:
+        """
+        # Gbytes of operative memory per instance
+        memory = (0.25 * self.graph['NODES'] / 1000 + 2.5) / 1024 * len(self.crawler_defs)
+        max_cpus = min(max_cpus, max_memory // memory)
+
+        while n_instances > 0:
+            num = min(max_cpus, n_instances)
+            n_instances -= num
+            msg = self.run_parallel(num)
+
+            send_misha_vk(msg)
+
     def run_parallel(self, num_processes=multiprocessing.cpu_count()):
         """ Run in parallel crawlers and measure metrics. In the end, the measurements are saved.
         """
@@ -250,18 +272,15 @@ class CrawlerHistoryRunner(CrawlerRunner):
     def run_missing(self, n_instances, max_cpus: int = multiprocessing.cpu_count(), max_memory: float = 6):
         """
         Runs all missing experiments for the graph. All crawlers and metrics run simultaneously, the
-         number of instances is maximal among missing ones.
+        number of instances is maximal among missing ones.
 
         :param n_instances: minimal wanted number of instances
         :param max_cpus: max number of CPUs to use for computation, all by default
         :param max_memory: max Mbytes of operative memory to use for computation, 6Gb by default
         :return:
         """
-        crawler_defs = self.crawler_defs + [c.definition for c in self.crawlers]
-        metric_defs = self.metric_defs + [m.definition for m in self.metrics]
-
         # Get missing combinations
-        crm = CrawlerRunsMerger([self.graph.name], crawler_defs, metric_defs, n_instances=n_instances)
+        crm = CrawlerRunsMerger([self.graph.name], self.crawler_defs, self.metric_defs, n_instances=n_instances)
         missing = crm.missing_instances()
         # import json
         # print(json.dumps(missing, indent=2))
@@ -271,23 +290,16 @@ class CrawlerHistoryRunner(CrawlerRunner):
             return
 
         cmi = missing[self.graph.name]
-        crawler_defs = [filename_to_definition(c) for c in cmi.keys()]  # only missing ones
+        self.crawler_defs = [filename_to_definition(c) for c in cmi.keys()]  # only missing ones
         max_count = 0
         for crawler_name, mi in cmi.items():
             max_count = max(max_count, max(mi.values()))
 
         print("Will run %s missing iterations for graph %s: Crawlers %s\n Metrics: %s" % (
-            max_count, self.graph.name, list(cmi.keys()), list(map(definition_to_filename, metric_defs))))
+            max_count, self.graph.name, list(cmi.keys()), list(map(definition_to_filename, self.metric_defs))))
 
         # Parallel run with adaptive number of CPUs
-        memory = (0.25 * self.graph['NODES'] / 1000 + 2.5) / 1024 * len(crawler_defs)  # Gbytes of operative memory per instance
-        max_cpus = min(max_cpus, max_memory // memory)
-        while max_count > 0:
-            num = min(max_cpus, max_count)
-            max_count -= num
-            msg = self.run_parallel(num)
-
-            send_misha_vk(msg)
+        self.run_parallel_adaptive(max_count, max_cpus, max_memory)
 
 
 def test_history_runner():

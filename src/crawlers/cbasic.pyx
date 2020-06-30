@@ -45,6 +45,7 @@ def filename_to_definition(filename: str):
     """ Convert filename into crawler string definition. Uniqueness is maintained """
     if len(short_to_class) == 0:
         import crawlers.multiseed  # NOTE: needed to include Crawlers defined in multiseed module, add here any other modules with crawlers
+        import crawlers.advanced  # NOTE: needed to include Crawlers defined in multiseed module, add here any other modules with crawlers
         from running.metrics_and_runner import Metric  # NOTE: same for metrics
         # Build short names dict
         for sb in set().union(all_subclasses(Crawler), all_subclasses(Metric)):

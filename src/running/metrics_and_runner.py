@@ -77,31 +77,30 @@ class CrawlerRunner:
 
     def __init__(self, graph: MyGraph, crawlers, metrics, budget: int=-1, step: int=-1):
         """
+        Setup configuration - crawler definitions and metric definitions.
+
         :param graph: graph to run
-        :param crawlers: list of crawlers or crawler definitions to run. Crawler definitions will be
-         initialized when run() is called
-        :param metrics: list of metrics or metric definitions to compute at each step. Metric should
-         be callable function crawler -> float, and have name
+        :param crawlers: list of crawlers (only their definition will be used) or crawler
+         definitions to run. Crawler definitions will be initialized when run() is called
+        :param metrics: list of metrics (only their definition will be used) or metric definitions
+         to compute at each step. Metric should be callable function crawler -> float, and have name
         :param budget: maximal number of nodes to be crawled, by default the whole graph
         :param step: compute metrics each `step` steps
         :return:
         """
         self.graph = graph
-        self.crawlers = []
         self.crawler_defs = []
         for x in crawlers:
             if isinstance(x, Crawler):
-                assert x._orig_graph == self.graph
-                self.crawlers.append(x)
+                # assert x._orig_graph == self.graph
+                self.crawler_defs.append(x.definition)
             else:
                 self.crawler_defs.append(x)
 
-        self.metrics = []
         self.metric_defs = []
         for x in metrics:
             if isinstance(x, Metric):
-                # XXX Hope metric was created for the same graph
-                self.metrics.append(x)
+                self.metric_defs.append(x.definition)
             else:
                 self.metric_defs.append(x)
 

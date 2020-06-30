@@ -140,6 +140,11 @@ netrepo_names = [
 ]
 
 
+other_names = [
+    'mipt',  # N=14313, E=488852, d_avg=68.31
+]
+
+
 def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_with='#%',
                         remove_original=False, self_loops=False, renumerate=False):
     """
