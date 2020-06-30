@@ -229,7 +229,7 @@ def main():
     for graph_name in netrepo_names:
         g = GraphCollections.get(graph_name)
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        chr.run_parallel_adaptive(n_instances, max_cpus=8, max_memory=30)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=30)
 
 
 if __name__ == '__main__':
