@@ -230,6 +230,7 @@ def main():
         g = GraphCollections.get(graph_name)
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
         chr.run_missing(n_instances, max_cpus=8, max_memory=30)
+        print('\n\n')
 
 
 if __name__ == '__main__':
@@ -238,7 +239,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     # cloud_io()
-    # cloud_prepare(clouds[0])
-    # cloud_run(clouds[0])
+    cloud_prepare(clouds[0])
+    cloud_run(clouds[0])
 
-    main()  # to be run from cloud
+    # main()  # to be run from cloud

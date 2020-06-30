@@ -81,7 +81,7 @@ konect_names = [
     'petster-hamster',          # N=2000,    E=16098,    d_avg=16.10
     'ego-gplus',                # N=23613,   E=39182,    d_avg=3.32
     'slashdot-threads',         # N=51083,   E=116573,   d_avg=4.56
-    'facebook-wosn-links',      # N=63392,   E=816831,   d_avg=25.77
+    # 'facebook-wosn-links',      # N=63392,   E=816831,   d_avg=25.77
     'petster-friendships-cat',  # N=148826,  E=5447464,  d_avg=73.21
     'petster-friendships-dog',  # N=426485,  E=8543321,  d_avg=40.06
     'douban',                   # N=154908,  E=327162,   d_avg=4.22
