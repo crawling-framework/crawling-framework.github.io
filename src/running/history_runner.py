@@ -109,9 +109,6 @@ class CrawlerHistoryRunner(CrawlerRunner):
         crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
         pbar = tqdm(total=self.budget, desc='Running iterations')  # drawing crawling progress bar
 
-        if int(10000*time()) % 2 == 0:
-            raise Exception("test exception")
-
         step = 0
         step_seq = [0]  # starting for point 0
         crawler_metric_seq = dict([(c, dict([(m, [0]) for m in metrics])) for c in crawlers])
@@ -177,7 +174,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         """
         # Gbytes of operative memory per instance
         memory = (0.25 * self.graph['NODES'] / 1000 + 2.5) / 1024 * len(self.crawler_defs)
-        max_cpus = min(max_cpus, max_memory // memory)
+        max_cpus = min(max_cpus, int(max_memory // memory))
 
         while n_instances > 0:
             num = min(max_cpus, n_instances)
