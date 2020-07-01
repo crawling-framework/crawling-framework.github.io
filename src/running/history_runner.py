@@ -177,7 +177,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         """
         # Gbytes of operative memory per instance
         memory = (0.25 * self.graph['NODES'] / 1000 + 2.5) / 1024 * len(self.crawler_defs)
-        max_cpus = min(max_cpus, max_memory // memory)
+        max_cpus = min(max_cpus, int(max_memory // memory))
 
         while n_instances > 0:
             num = min(max_cpus, n_instances)
