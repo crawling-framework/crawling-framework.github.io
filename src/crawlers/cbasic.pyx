@@ -249,8 +249,6 @@ cdef class RandomCrawler(Crawler):
         cdef int n = self.next_seeds.back()
         self.next_seeds.pop_back()
         return n
-        # return random_from_iterable(self._observed_set)
-        # return random.choice([n for n in self._observed_set])
 
     cpdef vector[int] crawl(self, int seed):
         cdef vector[int] res = Crawler.crawl(self, seed)
@@ -298,14 +296,12 @@ cdef class RandomWalkCrawler(Crawler):
         # for walking we need to step on already crawled nodes too
         if self._observed_graph.deg(self.prev_seed) == 0:
             raise NoNextSeedError("No neighbours to go next.")
-            # node_neighbours = tuple(self.observed_set)
 
         # Go to a neighbor until encounter not crawled node
         cdef int seed
         while True:
             seed = self._observed_graph.random_neighbor(self.prev_seed)
             self.prev_seed = seed
-            # if self._observed_set.find(seed) != self._observed_set.end():
             if seed in self._observed_set:
                 return seed
 
@@ -456,10 +452,6 @@ cdef class SnowBallCrawler(Crawler):
 
 
 cdef class CrawlerUpdatable(Crawler):
-    # def __init__(self, g, n, b):
-    #     # print("CrawlerUpdatable",kwargs)
-    #     super().__init__(g, n, b)
-
     cpdef void update(self, vector[int] nodes):  # FIXME maybe ref?
         """ Update inner structures, knowing that the specified nodes have changed their degrees.
         """
@@ -470,7 +462,6 @@ cdef class MaximumObservedDegreeCrawler(CrawlerUpdatable):
     short = 'MOD'
     cdef int batch
     cdef ND_Set nd_set
-    # cdef cset[int] mod_set  # FIXME python set would be faster, but how to?
 
     def __init__(self, MyGraph graph, int initial_seed=-1, int batch=1, **kwargs):
         """
@@ -504,7 +495,6 @@ cdef class MaximumObservedDegreeCrawler(CrawlerUpdatable):
         for n in nodes:
             # assert n in self._observed_set and n not in self.mod_queue  # Just for debugging
             if n in self.mod_set:  # already in batch
-            # if self.mod_set.find(n) != self.mod_set.end():  # already in batch
                 continue
             d = self._observed_graph.deg(n)
             # logger.debug("%s.ND_Set.updating(%s, %s)" % (self.name, n, d))
@@ -518,7 +508,6 @@ cdef class MaximumObservedDegreeCrawler(CrawlerUpdatable):
         cdef int n
         for n in self._observed_graph.neighbors(seed):
             if n in self._observed_set:
-            # if self._observed_set.find(n) != self._observed_set.end():
                 upd.push_back(n)
         self.update(upd)
         return res
@@ -534,20 +523,14 @@ cdef class MaximumObservedDegreeCrawler(CrawlerUpdatable):
                 raise NoNextSeedError()
             vec = self.nd_set.pop_top(self.batch)
             for n in vec:
-                # self.mod_set.insert(n)  # TODO could be simplified if nd_set and self.mod_set the same type
                 self.mod_set.add(n)
         return self.mod_set.pop()
-        # cdef cset[int].iterator it = dec(self.mod_set.end())  # TODO simplify?
-        # n = deref(it)
-        # self.mod_set.erase(it)
-        # return n
 
 
 cdef class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
     short = 'POD'
     cdef int batch
     cdef ND_Set nd_set
-    # cdef cset[int] pod_set  # FIXME python set would be faster, but how to?
 
     def __init__(self, MyGraph graph, int initial_seed=-1, int batch=1, **kwargs):
         if initial_seed != -1:
@@ -595,7 +578,6 @@ cdef class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
 
     cpdef int next_seed(self) except -1:
         cdef int n
-        # if self.pod_set.size() == 0:  # when batch ends, we create another one
         if len(self.pod_set) == 0:  # when batch ends, we create another one
             if len(self._observed_set) == 0:
                 raise NoNextSeedError()
@@ -604,10 +586,6 @@ cdef class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
                 # self.pod_set.insert(n)
                 self.pod_set.add(n)
         return self.pod_set.pop()
-        # cdef cset[int].iterator it = dec(self.pod_set.end())  # TODO simplify?
-        # n = deref(it)
-        # self.pod_set.erase(it)
-        # return n
 
 
 cdef class MaximumExcessDegreeCrawler(Crawler):

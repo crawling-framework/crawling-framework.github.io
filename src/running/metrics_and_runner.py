@@ -58,66 +58,83 @@ class TopCentralityMetric(Metric):
         super().__init__(name, callback, top=top, centrality=centrality, measure=measure, part=part)
 
 
-def remap_iter(total=400):
-    """ Remapping steps depending on used budget - on first iters step=1, on last it grows ~x^2
-    NOTE: this sequence is used in history and should not be changed
+def exponential_batch_generator(budget: int = 1e9):
+    """ Generator for exponentially growing batches. Yields batches until their sum < budget; the
+    last one fills it up to budget exactly.
+    NOTE: magic constant 20 is used in history and should not be changed.
     """
-    step_budget = 0
-    remap_iter_to_step = {}
-    for i in range(total):  # for budget less than 100 mln nodes
-        remap = int(max(1, step_budget / 20))
-        remap_iter_to_step[step_budget] = remap
-        step_budget += remap
-    return remap_iter_to_step
+    total = 0
+    while True:
+        batch = max(1, int(total / 20))
+        total += batch
+        if total < budget:
+            yield batch
+        else:
+            yield budget - total + batch
+            break
+        # print(total, batch)
+
+
+def uniform_batch_generator(budget: int, step: int):
+    """ Generator for uniform batches. Yields batches until their sum < budget; the last one
+    fills it up to budget exactly"""
+    assert 1 <= step <= budget
+    batch = step
+    total = 0
+    while True:
+        total += batch
+        if total < budget:
+            yield batch
+        else:
+            yield budget - total + batch
+            break
+        # print(total, batch)
 
 
 class CrawlerRunner:
     """ Base class to run crawlers and measure metrics. Details in subclasses
     """
 
-    def __init__(self, graph: MyGraph, crawlers, metrics, budget: int=-1, step: int=-1):
+    def __init__(self, graph: MyGraph, crawler_defs, metric_defs, budget: int = -1, step: int = -1):
         """
-        Setup configuration - crawler definitions and metric definitions.
+        Setup configuration for the graph: crawler definitions, metric definitions, budget, and step.
 
         :param graph: graph to run
-        :param crawlers: list of crawlers (only their definition will be used) or crawler
-         definitions to run. Crawler definitions will be initialized when run() is called
-        :param metrics: list of metrics (only their definition will be used) or metric definitions
-         to compute at each step. Metric should be callable function crawler -> float, and have name
+        :param crawler_defs: list of crawler definitions to run. Crawler definitions will be
+         initialized when run() is called
+        :param metric_defs: list of metric definitions to compute at each step. Metric should be
+         callable function crawler -> float, and have name
         :param budget: maximal number of nodes to be crawled, by default the whole graph
-        :param step: compute metrics each `step` steps
+        :param step: compute metrics each `step` steps, by default exponential step
         :return:
         """
         self.graph = graph
-        self.crawler_defs = []
-        for x in crawlers:
-            if isinstance(x, Crawler):
-                # assert x._orig_graph == self.graph
-                self.crawler_defs.append(x.definition)
-            else:
-                self.crawler_defs.append(x)
+        self.crawler_defs = crawler_defs
+        self.metric_defs = metric_defs
 
-        self.metric_defs = []
-        for x in metrics:
-            if isinstance(x, Metric):
-                self.metric_defs.append(x.definition)
-            else:
-                self.metric_defs.append(x)
-
+        # Initialize step sequence
         self.budget = min(budget, graph[Stat.NODES]) if budget != -1 else graph[Stat.NODES]
-        assert step < self.budget
-        self.step = max(1, step) if step != -1 else 1  # TODO use remap_iter
+        self.batch_generator_getter = lambda: exponential_batch_generator(self.budget) \
+            if step == -1 else uniform_batch_generator(self.budget, step)
+
+    def _init_runner(self, same_initial_seed=False):
+        """ Initialize crawlers, metrics, and batch generator.
+        """
+        # TODO implement same_initial_seed
+        crawlers = [Crawler.from_definition(self.graph, d) for d in self.crawler_defs]
+        metrics = [Metric.from_definition(self.graph, d) for d in self.metric_defs]
+
+        return crawlers, metrics, self.batch_generator_getter()
 
     def run(self):
         """ Run specified configurations on the given graph
         """
-        # TODO put here iteration and metrics calculation
-        raise NotImplementedError()
+        raise NotImplementedError("defined in subclasses")
 
 
 if __name__ == '__main__':
-    i_step = remap_iter(100)
-    n = 0
-    for i, step in i_step.items():
-        n += step
-        print(i, n)
+    t = 0
+    # for b in exponential_batch_generator(9949):
+    for b in uniform_batch_generator(9949, 9949):
+        t += b
+        print(t, b)

@@ -1,7 +1,7 @@
 from crawlers.cadvanced import DE_Crawler
 from crawlers.cbasic import filename_to_definition
 
-from running.merger import CrawlerRunsMerger
+from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric
 from running.history_runner import CrawlerHistoryRunner
 
@@ -278,7 +278,7 @@ def test_missing():
 
     n_instances = 6
     # Get missing combinations
-    crm = CrawlerRunsMerger(graphs, crawler_defs, metric_defs, n_instances=n_instances)
+    crm = ResultsMerger(graphs, crawler_defs, metric_defs, n_instances=n_instances)
     missing = crm.missing_instances()
     import json
     print(json.dumps(missing, indent=2))
@@ -373,7 +373,7 @@ def big_run(max_cpus: int=multiprocessing.cpu_count(), max_memory: float=6):
     ]
 
     # Get missing combinations
-    crm = CrawlerRunsMerger(graphs, crawler_defs, metric_defs, n_instances=6)
+    crm = ResultsMerger(graphs, crawler_defs, metric_defs, n_instances=6)
     missing = crm.missing_instances()
     import json
     print(json.dumps(missing, indent=2))

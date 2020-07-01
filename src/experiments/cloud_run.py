@@ -239,7 +239,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     # cloud_io()
-    cloud_prepare(clouds[0])
-    cloud_run(clouds[0])
+    # cloud_prepare(clouds[0])
+    # cloud_run(clouds[0])
 
-    # main()  # to be run from cloud
+    main()  # to be run from cloud

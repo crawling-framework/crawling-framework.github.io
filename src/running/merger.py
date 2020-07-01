@@ -44,7 +44,7 @@ def compute_waucc(xs, ys):
     return res / norm
 
 
-class CrawlerRunsMerger:
+class ResultsMerger:
     def __init__(self, graph_names, crawler_defs, metric_defs, n_instances=1):
         """
         :param graph_names: list of graphs names
@@ -53,25 +53,32 @@ class CrawlerRunsMerger:
         :param n_instances: number of instances to average over
         """
         self.graph_names = graph_names
-        self.crawler_names = list(map(definition_to_filename, crawler_defs))
-        self.metric_names = list(map(definition_to_filename, metric_defs))
-        self.n_instances = n_instances
+        self.crawler_names = []  # list(map(definition_to_filename, crawler_defs))
+        self.metric_names = []  # list(map(definition_to_filename, metric_defs))
+        self.labels = {}  # pretty short names to draw in plots
 
+        g = GraphCollections.get('petster-hamster')  # some sample graph. FIXME what if Multi with count > g.nodes()?
+        for md in metric_defs:
+            m = Metric.from_definition(g, md)
+            f = definition_to_filename(m.definition)
+            self.metric_names.append(f)
+            self.labels[f] = m.name
+        for cd in crawler_defs:
+            c = Crawler.from_definition(g, cd)
+            f = definition_to_filename(c.definition)
+            self.crawler_names.append(f)
+            self.labels[f] = c.name
+        # print(self.labels)
+
+        self.n_instances = n_instances
         self.instances = {}  # instances[graph][crawler][metric] -> count
         self.contents = {}  # contents[graph][crawler][metric]: 'x' -> [], 'ys' -> [[]*n_instances], 'avy' -> []
         self.auccs = {}  # auccs[graph][crawler][metric]: 'AUCC' -> [AUCC], 'wAUCC' -> [wAUCC]
         self.read()
         missing = self.missing_instances()
-        if len(missing) > 0:
-            logging.warning("Missing instances, will not be plotted:\n%s" % json.dumps(missing, indent=2))
+        # if len(missing) > 0:
+        #     logging.warning("Missing instances, will not be plotted:\n%s" % json.dumps(missing, indent=2))
 
-        self.labels = {}  # pretty short names to draw in plots
-        g = GraphCollections.get('petster-hamster')
-        for md in metric_defs:
-            self.labels[definition_to_filename(md)] = Metric.from_definition(g, md).name
-        for cd in crawler_defs:
-            self.labels[definition_to_filename(cd)] = Crawler.from_definition(g, cd).name
-        # print(self.labels)
 
     @staticmethod
     def names_to_path(graph_name: str, crawler_name: str, metric_name: str):
@@ -105,7 +112,7 @@ class CrawlerRunsMerger:
                     #         os.makedirs(os.path.dirname(new_p))
                     #     os.rename(p, new_p)
 
-                    paths = glob.glob(CrawlerRunsMerger.names_to_path(g, c, m))
+                    paths = glob.glob(ResultsMerger.names_to_path(g, c, m))
                     self.instances[g][c][m] = len(paths)
                     self.contents[g][c][m] = contents = {}
 
@@ -463,7 +470,7 @@ def test_merger():
         (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.CLOSENESS_DISTR.short}),
         (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
     ]
-    crm = CrawlerRunsMerger(graphs, crawler_defs, metric_defs, n_instances=6)
+    crm = ResultsMerger(graphs, crawler_defs, metric_defs, n_instances=6)
     # crm.missing_instances()
     # crm.draw_by_crawler()
     # crm.draw_aucc('AUCC')

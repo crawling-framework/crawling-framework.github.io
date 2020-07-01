@@ -4,7 +4,7 @@ import snap
 from matplotlib import pyplot as plt
 
 from running.history_runner import CrawlerHistoryRunner
-from running.merger import CrawlerRunsMerger
+from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric
 
 from base.cgraph import MyGraph
@@ -176,7 +176,7 @@ def target_set_coverage_bigruns():
     chr.run_missing(n_instances)
 
     # Run merger
-    crm = CrawlerRunsMerger([g.name], crawler_defs, metric_defs, n_instances)
+    crm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
     crm.draw_by_metric_crawler(x_lims=(0, budget), x_normalize=False, scale=8, swap_coloring_scheme=True, draw_error=False)
     # crm.missing_instances()
 

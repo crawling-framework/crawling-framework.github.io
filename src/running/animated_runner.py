@@ -11,18 +11,18 @@ from statistics import Stat, get_top_centrality_nodes
 
 # TODO need to check several statistics / metrics
 class AnimatedCrawlerRunner(CrawlerRunner):
-    def __init__(self, graph: MyGraph, crawlers, metrics, budget: int=-1, step: int=1):
+    def __init__(self, graph: MyGraph, crawler_defs, metric_defs, budget: int = -1, step: int = -1):
         """
         :param graph: graph to run
-        :param crawlers: list of crawlers or crawler definitions to run. Crawler definitions will be
+        :param crawler_defs: list of crawler definitions to run. Crawler definitions will be
          initialized when run() is called
-        :param metrics: list of metrics to compute at each step. Metric should be callable function
-         crawler -> float, and have name
+        :param metric_defs: list of metric definitions to compute at each step. Metric should be
+         callable function crawler -> float, and have name
         :param budget: maximal number of nodes to be crawled, by default the whole graph
         :param step: compute metrics each `step` steps
         :return:
         """
-        super().__init__(graph, crawlers=crawlers, metrics=metrics, budget=budget, step=step)
+        super().__init__(graph, crawler_defs=crawler_defs, metric_defs=metric_defs, budget=budget, step=step)
 
         self.nrows = 1
         self.ncols = 1
@@ -42,23 +42,18 @@ class AnimatedCrawlerRunner(CrawlerRunner):
         :param save_to_file: specify the full path here to save picture
         :return:
         """
+        crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
         linestyles = ['-', '--', ':', '.-']
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
                   'pink', 'lime', 'wheat', 'lightsteelblue']
 
-        # Initialize crawlers and metrics
-        crawlers = [Crawler.from_definition(self.graph, d) for d in self.crawler_defs]
-        metrics = [Metric.from_definition(self.graph, d) for d in self.metric_defs]
-
-        step_seq = []
-        crawler_metric_seq = dict([(c, dict([(m, []) for m in metrics])) for c in crawlers])
-
-        i = 0
-        while i < self.budget:
-            batch = min(self.step, self.budget - i)
-            i += batch
-            step_seq.append(i)
+        step = 0
+        step_seq = [0]  # starting for point 0
+        crawler_metric_seq = dict([(c, dict([(m, [0]) for m in metrics])) for c in crawlers])
+        for batch in batch_generator:
+            step += batch
+            step_seq.append(step)
 
             plt.cla()
             plt.title(self.title)
@@ -102,7 +97,7 @@ def test_runner(graph):
     p = 0.01
     budget = int(0.05 * g.nodes())
     s = int(budget / 2)
-    crawlers = [
+    crawler_defs = [
         # MaximumObservedDegreeCrawler(graph, batch=1),
         # (MaximumObservedDegreeCrawler, {'batch': 1, 'initial_seed': 1}),
         # PreferentialObservedDegreeCrawler(graph, batch=1, initial_seed=1).definition,
@@ -116,14 +111,14 @@ def test_runner(graph):
         # (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p, 'b': 100}),
     ]
 
-    metrics = [
+    metric_defs = [
         # TopCentralityMetric(graph, top=0.1, centrality=Stat.DEGREE_DISTR, measure='Pr', part='nodes'),
         # Metric(r'$|V_{all}|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
         # TopCentralityMetric(graph, top=0.1, centrality=Stat.DEGREE_DISTR, measure='Re', part='nodes'),
-        TopCentralityMetric(graph, top=p, centrality=Stat.DEGREE_DISTR.short, measure='F1', part='answer'),
+        TopCentralityMetric(graph, top=p, centrality=Stat.DEGREE_DISTR.short, measure='F1', part='answer').definition,
     ]
 
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=int(budget/100))
+    ci = AnimatedCrawlerRunner(graph, crawler_defs, metric_defs)
     ci.run(ylims=(0, 1))
 
 
