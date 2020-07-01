@@ -109,9 +109,6 @@ class CrawlerHistoryRunner(CrawlerRunner):
         crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
         pbar = tqdm(total=self.budget, desc='Running iterations')  # drawing crawling progress bar
 
-        if int(10000*time()) % 2 == 0:
-            raise Exception("test exception")
-
         step = 0
         step_seq = [0]  # starting for point 0
         crawler_metric_seq = dict([(c, dict([(m, [0]) for m in metrics])) for c in crawlers])
