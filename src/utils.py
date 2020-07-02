@@ -11,7 +11,7 @@ RESULT_DIR = os.path.join(rel_dir, 'results')  # directory to store pictures
 
 COLLECTIONS = ['other', 'konect', 'netrepo']
 
-SNAP_DIR = None; LIGRA_DIR = None; USE_NETWORKIT = None; USE_LIGRA = None  # defined in config
+SNAP_DIR = None; LIGRA_DIR = None; USE_NETWORKIT = None; USE_LIGRA = None; VK_ID = None  # defined in config
 config = exec(open(CONFIG_PATH, 'r').read())  # updates the above VARIABLES from config file
 
 

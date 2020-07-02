@@ -1,30 +1,35 @@
 import datetime
 import glob
 import json
-import multiprocessing
 import os
 import logging
 from tqdm import tqdm
 import multiprocessing as mp
+
 import traceback
-from time import time
+from time import time, sleep
 
 from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler
 
 from base.cgraph import MyGraph, seed_random
-from crawlers.cbasic import Crawler, definition_to_filename, filename_to_definition
+from crawlers.cadvanced import DE_Crawler
+from crawlers.cbasic import Crawler, definition_to_filename, filename_to_definition, \
+    RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, DepthFirstSearchCrawler, \
+    SnowBallCrawler, MaximumObservedDegreeCrawler
+from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections
 from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric
 from running.merger import ResultsMerger
 from statistics import Stat
 
 
-def send_misha_vk(msg: str):
-    """ Try to send message to misha's VK """
+def send_vk(msg: str):
+    """ Try to send message to VK account """
     try:
-        from utils import rel_dir
-        bot_path = os.path.join(rel_dir, "src", "experiments", "vk_signal.py")
-        os.system("python3 %s -m '%s'" % (bot_path, msg))
+        from utils import rel_dir, VK_ID
+        if VK_ID != "00000000":  # default value from config.example which means to not send
+            bot_path = os.path.join(rel_dir, "src", "experiments", "vk_signal.py")
+            os.system("python3 %s -m '%s' --id '%s'" % (bot_path, msg, VK_ID))
     except: pass
 
 
@@ -44,8 +49,8 @@ class Process(mp.Process):
         except Exception as e:
             tb = traceback.format_exc()
             self._cconn.send((e, tb))
-            send_misha_vk(self._pconn.recv()[1])
-            raise e  # You can still rise this exception if you need to
+            send_vk(self._pconn.recv()[1])
+            raise e
 
     @property
     def exception(self):
@@ -70,6 +75,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :return:
         """
         super().__init__(graph, crawler_defs=crawler_defs, metric_defs=metric_defs, budget=budget, step=step)
+        self._semaphore = None
 
     def _save_history(self, crawler_metric_seq, step_seq):
         pbar = tqdm(total=len(crawler_metric_seq), desc='Saving history')
@@ -126,10 +132,16 @@ class CrawlerHistoryRunner(CrawlerRunner):
             pbar.update(batch)
 
         pbar.close()  # closing progress bar
+
+        if self._semaphore is not None:
+            with self._semaphore:
+                logging.debug('Sleeping to write history')
+                sleep(0.001)
         self._save_history(crawler_metric_seq, step_seq)  # saving ending history
+
         logging.info("Finished running at %s" % (datetime.datetime.now()))
 
-    def run_parallel(self, num_processes=multiprocessing.cpu_count()):
+    def run_parallel(self, num_processes=mp.cpu_count()):
         """
         Run in parallel crawlers and measure metrics. In the end, the measurements are saved.
 
@@ -137,6 +149,8 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :return:
         """
         t = time()
+        self._semaphore = mp.Semaphore(1)  # for history writing
+
         jobs = []
         for i in range(num_processes):
             logging.info('Start parallel job %s of %s' % (i+1, num_processes))
@@ -144,7 +158,6 @@ class CrawlerHistoryRunner(CrawlerRunner):
             p = Process(target=self.run)
             jobs.append(p)
             p.start()
-            # FIXME it could be a problem when several running try to read and write into one directory
 
         errors = 0
         for i, p in enumerate(jobs):
@@ -161,7 +174,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         return msg
 
     def run_parallel_adaptive(self, n_instances: int = 10,
-                              max_cpus: int = multiprocessing.cpu_count(), max_memory: float = 6):
+                              max_cpus: int = mp.cpu_count(), max_memory: float = 6):
         """
         Runs in parallel crawlers and measure metrics. Number of processes is chosen adaptively.
         Using magic coefficients: Mbytes of memory = A*n + B,
@@ -181,10 +194,10 @@ class CrawlerHistoryRunner(CrawlerRunner):
             n_instances -= num
             msg = self.run_parallel(num_processes=num)
 
-            send_misha_vk(msg)
+            send_vk(msg)
 
     def run_missing(self, n_instances=10,
-                    max_cpus: int = multiprocessing.cpu_count(), max_memory: float = 6):
+                    max_cpus: int = mp.cpu_count(), max_memory: float = 6):
         """
         Runs all missing experiments for the graph. All crawlers and metrics run simultaneously, the
         number of instances is maximal among missing ones.
@@ -217,35 +230,89 @@ class CrawlerHistoryRunner(CrawlerRunner):
 
 
 def test_history_runner():
-    g = GraphCollections.get('digg-friends')
+    g = GraphCollections.get('petster-hamster')
 
     p = 0.01
     budget = int(0.005 * g.nodes())
     s = int(budget / 2)
 
     crawler_defs = [
-        (ThreeStageCrawler, {'s': s, 'n': budget, 'p': p}),
-        (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p}),
+        # (ThreeStageCrawler, {'s': s, 'n': budget, 'p': p}),
+        # (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p}),
+        (RandomWalkCrawler, {}),
+        (RandomCrawler, {}),
+        (BreadthFirstSearchCrawler, {}),
+        (DepthFirstSearchCrawler, {}),
+        (SnowBallCrawler, {'p': 0.1}),
+        (MaximumObservedDegreeCrawler, {'batch': 1}),
+        (MaximumObservedDegreeCrawler, {'batch': 10}),
+        (DE_Crawler, {}),
+        (MultiInstanceCrawler, {'count': 5, 'crawler_def': (MaximumObservedDegreeCrawler, {})}),
     ]
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
-        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'answer'}),
+        # (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'answer'}),
         # (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'F1', 'part': 'answer'}),
     ]
     n_instances = 5
     # Run missing iterations
     chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
     # chr.run_missing(n_instances, max_cpus=4, max_memory=2.5)
-    chr.run_parallel(2)
-    # chr.run_parallel_adaptive(4, max_cpus=2, max_memory=2.5)
+    # chr.run_parallel(2)
+    chr.run_parallel_adaptive(4, max_cpus=2, max_memory=2.5)
 
     # # Run merger
     # crm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
     # crm.draw_by_metric_crawler(x_lims=(0, budget), x_normalize=False, scale=8, swap_coloring_scheme=True, draw_error=False)
 
 
+def test_ipy_runner():
+    crawler_defs = [
+        (RandomWalkCrawler, {}),
+        (RandomCrawler, {}),
+        (BreadthFirstSearchCrawler, {}),
+        (DepthFirstSearchCrawler, {}),
+        (SnowBallCrawler, {'p': 0.1}),
+        (MaximumObservedDegreeCrawler, {'batch': 1}),
+        (MaximumObservedDegreeCrawler, {'batch': 10}),
+        (DE_Crawler, {}),
+        (MultiInstanceCrawler, {'count': 5, 'crawler_def': (MaximumObservedDegreeCrawler, {})}),
+    ]
+
+    p = 0.01
+    # Define recall metrics corresponding 6 node centralities
+    metric_defs = [
+        (TopCentralityMetric,
+         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
+        (TopCentralityMetric,
+         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.PAGERANK_DISTR.short}),
+        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled',
+                               'centrality': Stat.BETWEENNESS_DISTR.short}),
+        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled',
+                               'centrality': Stat.ECCENTRICITY_DISTR.short}),
+        (TopCentralityMetric,
+         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.CLOSENESS_DISTR.short}),
+        (TopCentralityMetric,
+         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
+    ]
+
+    # Set the number of random seeds to start from
+    n_instances = 8
+    # Run crawling for several graphs
+    graph_names = ['petster-hamster', 'soc-wiki-Vote']
+    for graph_name in graph_names:
+        g = GraphCollections.get(graph_name)
+        # Create runner which will save measurements history to file
+        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
+        # Run with limitations on the number concurrent processes and the amount of memory
+        chr.run_parallel_adaptive(n_instances, max_cpus=8, max_memory=30)
+        print('\n\n')
+
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
 
-    test_history_runner()
+    # test_history_runner()
+
+    test_ipy_runner()

@@ -284,7 +284,7 @@ def main():
     if args.path:
         graphs = [MyGraph(path=p, name='', directed=args.d) for p in args.path]
     else:
-        collection = args.collection if args.collection else 'konect'
+        collection = args.collection if args.collection else None
         graphs = [GraphCollections.get(n, collection, giant_only=True) for n in args.name]
 
     for graph in graphs:

@@ -1,7 +1,7 @@
 import vk
 
 
-def send_message(text: str, vk_id='42049993'):
+def send_message(text: str, vk_id: str):
     token = "483dc0ad761894c153481dec6e2fe3f2af38634cab54767cc7dde8966c581151873ffbf2b5bb1cb70a775"
     session = vk.Session(access_token=token)
     python_bot = vk.API(session)
@@ -10,11 +10,12 @@ def send_message(text: str, vk_id='42049993'):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='Send message to vk id=42049993')
+    parser = argparse.ArgumentParser(description='Send message to specified vk id')
     parser.add_argument('-m', required=True, help='text')
+    parser.add_argument('--id', required=True, help='VK id')
 
     args = parser.parse_args()
-    send_message(text=args.m)
+    send_message(text=args.m, vk_id=args.id)
     # print('sent')
     return True
 

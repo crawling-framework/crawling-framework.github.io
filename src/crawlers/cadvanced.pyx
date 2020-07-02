@@ -368,7 +368,7 @@ cdef class DE_Crawler(CrawlerUpdatable):
 
     def __init__(self, MyGraph graph, int initial_seed=-1, int initial_budget=-1, **kwargs):
         if initial_budget == -1:
-            initial_budget = int(0.015 * graph.nodes())  # Default in paper: 15% of total budget (which is 10%)
+            initial_budget = max(1, int(0.015 * graph.nodes()))  # Default in paper: 15% of total budget (which is 10%)
         else:
             kwargs['initial_budget'] = initial_budget
         self.initial_budget = initial_budget
