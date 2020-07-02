@@ -66,7 +66,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :param metric_defs: list of metric definitions to compute at each step. Metric should be
          callable function crawler -> float, and have name
         :param budget: maximal number of nodes to be crawled, by default the whole graph
-        :param step: compute metrics each `step` steps
+        :param step: compute metrics each `step` steps, by default exponential step
         :return:
         """
         super().__init__(graph, crawler_defs=crawler_defs, metric_defs=metric_defs, budget=budget, step=step)

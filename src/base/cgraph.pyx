@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 
 from libcpp.vector cimport vector
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, address as addr
@@ -53,7 +54,7 @@ cdef class MyGraph:
         cdef TUNGraph g
         if path is None:
             from datetime import datetime
-            path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
+            path = os.path.join(TMP_GRAPHS_DIR, "%s_%s.ij" % (name, datetime.now()))
             self._path = str_to_chars(path)
             self._snap_graph_ptr = PUNGraph.New()
             self._fingerprint = fingerprint(self._snap_graph_ptr)
@@ -74,6 +75,16 @@ cdef class MyGraph:
         self._snap_graph_ptr = LoadEdgeList[PUNGraph](TStr(self._path), 0, 1)
         self._fingerprint = fingerprint(self._snap_graph_ptr)
         logging.info("done.")
+
+    cpdef void save(self):
+        """ Write current edge list of snap graph into file. """
+        # snap.SaveEdgeList writes commented section, we don't want it
+        cdef int i, j
+        if not os.path.exists(os.path.dirname(self.path)):
+            os.makedirs(os.path.dirname(self.path))
+        with open(self.path, 'w') as f:
+            for i, j in self.iter_edges():
+                f.write("%s %s\n" % (i, j))
 
     @property
     def path(self):
@@ -185,41 +196,32 @@ cdef class MyGraph:
         cdef int r = t_random.GetUniDevInt(n_iter.GetDeg())
         return n_iter.GetNbrNId(r)
 
-    # @classmethod TODO
-    # def new_snap(cls, snap_graph=None, name='tmp', directed=False, weighted=False, format='ij'):
-    #     """
-    #     Create a new instance of MyGraph with a given snap graph.
-    #     :param snap_graph: initial snap graph, or empty if None
-    #     :param name: name will be appended with current timestamp
-    #     :param directed: will be ignored if snap_graph is specified
-    #     :param weighted:
-    #     :param format:
-    #     :return: MyGraph
-    #     """
-    #     from datetime import datetime
-    #     path = os.path.join(TMP_GRAPHS_DIR, "%s_%s" % (name, datetime.now()))
-    #
-    #     if snap_graph:
-    #         if isinstance(snap_graph, snap.PNGraph):
-    #             directed = True
-    #         elif isinstance(snap_graph, snap.PUNGraph):
-    #             directed = False
-    #         else:
-    #             raise TypeError("Unknown snap graph type: %s" % type(snap_graph))
-    #     else:
-    #         snap_graph = snap.TNGraph.New() if directed else snap.TUNGraph.New()
-    #
-    #     graph = MyGraph(path=path, name=name, directed=directed, weighted=weighted, format=format)
-    #     graph._snap_graph = snap_graph
-    #     graph._fingerprint = fingerprint(snap_graph)
-    #     return graph
-    #
+    cdef new_snap(self, PUNGraph snap_graph_ptr, name=None):
+        """
+        Create a new instance of MyGraph with a given snap graph.
+        :param snap_graph_ptr: initial snap graph
+        :param name: name will be appended with current timestamp
+        :return: MyGraph with updated graph
+        """
+        if name is not None:
+            self._name = str_to_chars(name)
+        self._snap_graph_ptr = snap_graph_ptr
+        self._fingerprint = fingerprint(snap_graph_ptr)
+        # Remove all computed stats
+        self._stats_dict.clear()
+        if os.path.exists(self._stat_dir()):
+            shutil.rmtree(self._stat_dir())
+        return self
+
     def _check_consistency(self):
         """ Raise exception if graph has changed. """
         if not self._snap_graph_ptr.Empty():
             f = fingerprint(self._snap_graph_ptr)
             if fingerprint(self._snap_graph_ptr) != self._fingerprint:
                 raise Exception("snap graph has changed from the one saved in %s" % self._path)
+
+    def _stat_dir(self):
+        return os.path.join(os.path.dirname(self.path), os.path.basename(self.path) + '_stats')
 
     def __getitem__(self, stat):
         """ Get graph statistics. Index by str or Stat. Works only if snap graph is immutable. """
@@ -232,8 +234,7 @@ cdef class MyGraph:
             value = self._stats_dict[stat]
         else:
             # Try to load from file or compute
-            stat_path = os.path.join(
-                os.path.dirname(self.path), os.path.basename(self.path) + '_stats', stat.short)
+            stat_path = os.path.join(self._stat_dir(), stat.short)
             if not os.path.exists(stat_path):
                 # Compute and save stats
                 logger.info("Could not find stats '%s' at '%s'. Will be computed." % (stat, stat_path))
@@ -270,25 +271,13 @@ cdef class MyGraph:
         with open(stat_path, 'w') as f:
             f.write(str(value))
 
-    def save(self, new_path=None):
-        """ Write current edge list of snap graph into file. """
-        raise NotImplementedError()
-        # s = self._snap_graph TODO
-        # assert s
-        # if new_path is None:
-        #     new_path = self.path
-        # if new_path == self.path:
-        #     logging.warning("Graph file '%s' will be overwritten." % self.path)
-        # # snap.SaveEdgeList writes commented section, we don't want it
-        # with open(new_path, 'w') as f:
-        #     for e in s.Edges():
-        #         f.write("%s %s\n" % (e.GetSrcNId(), e.GetDstNId()))
-
     def networkit(self, node_map: dict = None):
         """ Get networkit graph, create node ids mapping (neworkit_node_id -> snap_node_id) if
         node_map is specified. Some neworkit_node_id -> None (those ids not present in snap graph).
         """
         import networkit as nk
+        if not os.path.exists(self.path):
+            self.save()
         tab_or_space = '\t' in open(self.path).readline()
         reader = nk.Format.EdgeListTabZero if tab_or_space else nk.Format.EdgeListSpaceZero
         networkit_graph = nk.readGraph(self.path, reader, directed=self.directed)
@@ -309,16 +298,16 @@ cdef class MyGraph:
 
         return networkit_graph
 
-    @property  # Denis:  could be useful to handle nx version of graph
     def snap_to_networkx(self):
-        raise NotImplementedError()
-        # nx_graph = nx.Graph() TODO
-        # for NI in self.nodes():
-        #     nx_graph.add_node(NI.GetId())
-        #     for Id in NI.GetOutEdges():
-        #         nx_graph.add_edge(NI.GetId(), Id)
-        #
-        # return nx_graph
+        import networkx as nx
+        nx_graph = nx.Graph()  # undirected
+        cdef int n, k
+        for n in self.iter_nodes():
+            nx_graph.add_node(n)
+            for k in self.neighbors(n):
+                nx_graph.add_edge(n, k)
+
+        return nx_graph
 
 
 def cgraph_test():

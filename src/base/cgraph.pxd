@@ -25,12 +25,14 @@ cdef extern from "Snap.h":
 
     cdef cppclass TInt:
         Tint()
+        TInt(const int& _Val)
         int operator() () const
         TRnd Rnd
 
     cdef cppclass TVec[T]:
         TVec()
         void Shuffle(TRnd& Rnd)
+        int Add(const T& Val)
         T* BegI() const
         T* EndI() const
 
@@ -130,6 +132,9 @@ cdef extern from "Snap.h" namespace "TSnap":
     void GetNodesClustCf "TSnap::GetNodeClustCf"[PGraph](const PGraph& Graph, TIntFltH& NIdCCfH)
     PGraph GetKCore[PGraph](const PGraph& Graph, const int& K)
 
+    # models
+    PUNGraph GenConfModel(const TIntV& DegSeqV, TRnd& Rnd)
+
 
 # from time import time
 cdef TRnd t_random
@@ -147,7 +152,11 @@ cdef class MyGraph:
     cdef _fingerprint
     cdef _stats_dict
 
+    cdef new_snap(self, PUNGraph snap_graph_ptr, name=?)
+
     cdef PUNGraph snap_graph_ptr(self)
+
+    cpdef void save(self)
 
     cpdef void load(self)
 

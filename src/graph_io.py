@@ -204,7 +204,7 @@ class GraphCollections:
     networkrepository_url_pattern = 'http://nrvis.com/download/data/%s/%s.zip'
 
     @staticmethod
-    def get(name, collection=None, directed=False, format='ij', giant_only=False, self_loops=False, not_load=False):
+    def get(name, collection=None, directed=False, format='ij', giant_only=True, self_loops=False, not_load=False):
         """
         Read graph from storage or download it from the specified collection. In order to apply
         giant_only and self_loops, you need to remove the file manually.
