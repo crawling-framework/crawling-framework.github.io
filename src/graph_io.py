@@ -142,6 +142,7 @@ netrepo_names = [
 
 other_names = [
     'mipt',  # N=14313, E=488852, d_avg=68.31
+    # 'example',  # N=2000, E=16098, d_avg=16.10
 ]
 
 

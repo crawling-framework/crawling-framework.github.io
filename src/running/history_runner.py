@@ -75,7 +75,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :return:
         """
         super().__init__(graph, crawler_defs=crawler_defs, metric_defs=metric_defs, budget=budget, step=step)
-        self._semaphore = None
+        self._semaphore = mp.Semaphore(1)
 
     def _save_history(self, crawler_metric_seq, step_seq):
         pbar = tqdm(total=len(crawler_metric_seq), desc='Saving history')
@@ -133,11 +133,8 @@ class CrawlerHistoryRunner(CrawlerRunner):
 
         pbar.close()  # closing progress bar
 
-        if self._semaphore is not None:
-            with self._semaphore:
-                logging.debug('Sleeping to write history')
-                sleep(0.001)
-        self._save_history(crawler_metric_seq, step_seq)  # saving ending history
+        with self._semaphore:
+            self._save_history(crawler_metric_seq, step_seq)  # saving ending history
 
         logging.info("Finished running at %s" % (datetime.datetime.now()))
 
@@ -149,7 +146,6 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :return:
         """
         t = time()
-        self._semaphore = mp.Semaphore(1)  # for history writing
 
         jobs = []
         for i in range(num_processes):
