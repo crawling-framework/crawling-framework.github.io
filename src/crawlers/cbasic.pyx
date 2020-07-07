@@ -137,10 +137,10 @@ cdef class Crawler:
 
     # FIXME may be reference to vector?
     cpdef vector[int] crawl(self, int seed) except *:
-        """ Crawl specified node. The observed graph is updated, also crawled and observed set.
+        """ Crawl specified node. The observed graph is updated, also are crawled and observed set.
 
         :param seed: node id to crawl
-        :return: vector of updated nodes
+        :return: vector (list) of newly seen nodes
         """
         # seed = int(seed)  # convert possible int64 to int, since snap functions would get error
         cdef vector[int] res
