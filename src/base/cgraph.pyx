@@ -82,6 +82,16 @@ cdef class MyGraph:
         cdef int i, j
         if not os.path.exists(os.path.dirname(self.path)):
             os.makedirs(os.path.dirname(self.path))
+
+        try:
+            self._check_consistency()
+        except Exception:
+            # Fingerprint changed - we remove graph file and all stats
+            # os.remove(self.path)
+            self._stats_dict.clear()
+            if os.path.exists(self._stat_dir()):
+                shutil.rmtree(self._stat_dir())
+
         with open(self.path, 'w') as f:
             for i, j in self.iter_edges():
                 f.write("%s %s\n" % (i, j))
@@ -216,9 +226,8 @@ cdef class MyGraph:
     def _check_consistency(self):
         """ Raise exception if graph has changed. """
         if not self._snap_graph_ptr.Empty():
-            f = fingerprint(self._snap_graph_ptr)
             if fingerprint(self._snap_graph_ptr) != self._fingerprint:
-                raise Exception("snap graph has changed from the one saved in %s" % self._path)
+                logger.warning("snap graph has changed from the one saved in %s" % self._path)
 
     def _stat_dir(self):
         return os.path.join(os.path.dirname(self.path), os.path.basename(self.path) + '_stats')
@@ -270,6 +279,10 @@ cdef class MyGraph:
                 os.makedirs(os.path.dirname(stat_path))
         with open(stat_path, 'w') as f:
             f.write(str(value))
+
+    cpdef giant_component(self):
+        """ Return a new graph containing the giant component. """
+        cdef PUNGraph p = GetMxWcc[PUNGraph](self._snap_graph_ptr)
 
     def networkit(self, node_map: dict = None):
         """ Get networkit graph, create node ids mapping (neworkit_node_id -> snap_node_id) if

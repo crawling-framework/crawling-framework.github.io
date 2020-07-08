@@ -13,7 +13,9 @@ from crawlers.advanced import ThreeStageMODCrawler
 from crawlers.cadvanced import CrawlerWithAnswer
 from crawlers.cbasic import filename_to_definition, Crawler, definition_to_filename, \
     MaximumObservedDegreeCrawler
+from crawlers.community_based import MaximumObservedCommunityDegreeCrawler
 from models.cmodels import grid2d
+from models.models import LFR
 from running.metrics_and_runner import CrawlerRunner, Metric, TopCentralityMetric
 from statistics import Stat, get_top_centrality_nodes
 from utils import PICS_DIR
@@ -168,6 +170,7 @@ class CrawlerVisualRunner(CrawlerRunner):
                             node_colors.append(observed_color)
 
                     nx.draw(nx_orig_graph, pos=self.layout_pos,
+                            with_labels=labels,
                             node_size=node_size, node_color=node_colors,
                             nodelist=list(nodes_set),
                             edgelist=list(crawler._observed_graph.iter_edges()), width=bold_width)
@@ -196,15 +199,19 @@ class CrawlerVisualRunner(CrawlerRunner):
 def test_visual_runner():
     from graph_io import GraphCollections
     # g = GraphCollections.get('dolphins')
-    g = GraphCollections.get('PDZBase')
+    # g = GraphCollections.get('PDZBase')
     # g = GraphCollections.get('Infectious')
     # g = GraphCollections.get('soc-wiki-Vote')
     # g = GraphCollections.get('Jazz musicians')
+    g = GraphCollections.get('LFR(N=400,k=10,maxk=40,mu=0.1,t1=2,t2=2)/0', 'synthetic')
     # g = grid2d(20, 10)
+    # g = LFR(400, 10, 40, mixing=0.1, t1=2, t2=2)
+    # print(g[Stat.PLM_MODULARITY])
 
     p = 0.1
 
-    crawler_def = (MaximumObservedDegreeCrawler, {'initial_seed': 1})
+    # crawler_def = (MaximumObservedDegreeCrawler, {'initial_seed': 1})
+    crawler_def = (MaximumObservedCommunityDegreeCrawler, {'initial_seed': 1})
     # crawler_def = (ThreeStageMODCrawler, {'s': 10, 'n': g.nodes(), 'p': p, 'b': 1})
 
     metric_def = (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'})

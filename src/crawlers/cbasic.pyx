@@ -471,8 +471,8 @@ cdef class MaximumObservedDegreeCrawler(CrawlerUpdatable):
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
-        if 'name' not in kwargs:
-            kwargs['name'] = "%s%s" % (self.short, '' if batch == 1 else batch)
+        # if 'name' not in kwargs:
+        #     kwargs['name'] = "%s%s" % (self.short, '' if batch == 1 else batch)
 
         super().__init__(graph, batch=batch, **kwargs)
         # pick a random seed from original graph

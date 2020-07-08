@@ -5,8 +5,8 @@ import networkit as nk
 from networkit._NetworKit import PLP, PLM
 
 
-class CommunityMODCrawler(Crawler):
-    short = 'ComMOD'
+class MaximumObservedCommunityDegreeCrawler(Crawler):
+    short = 'MOCD'
 
     def __init__(self, graph: MyGraph, initial_seed: int=-1, **kwargs):
         if initial_seed != -1:
@@ -24,13 +24,13 @@ class CommunityMODCrawler(Crawler):
             self.observe(initial_seed)
 
     def observe(self, node: int):
-        if not super(CommunityMODCrawler, self).observe(node):
+        if not super(MaximumObservedCommunityDegreeCrawler, self).observe(node):
             nk_id = self.nk_graph.addNode()
             self.node_map[nk_id] = node
             self.rev_node_map[node] = nk_id
 
     def crawl(self, seed: int):
-        new_seen = super(CommunityMODCrawler, self).crawl(seed)
+        new_seen = super(MaximumObservedCommunityDegreeCrawler, self).crawl(seed)
         # Add new nodes to nk graph and mapping
         for node in new_seen:
             nk_id = self.nk_graph.addNode()
@@ -59,7 +59,7 @@ class CommunityMODCrawler(Crawler):
             #     comms_list.append(comm)
 
         # Get MOCD nodes
-        id_cd = {} # nk_id -> comm degree
+        id_cd = {}  # nk_id -> comm degree
         max_comms = -1
         candidate = -1
         # for nk_id in self.nk_graph.iterNodes():
@@ -67,11 +67,16 @@ class CommunityMODCrawler(Crawler):
             nk_id = self.rev_node_map[node]
             comms = set()
             for neigh_id in self.nk_graph.neighbors(nk_id):
+                if not neigh_id in id_comm:
+                    id_comm[neigh_id] = len(id_comm)
                 comms.add(id_comm[neigh_id])
+
+            id_cd[node] = len(comms)
 
             if len(comms) > max_comms:
                 max_comms = len(comms)
                 candidate = nk_id
+        # print(len(self._crawled_set), "avg nodes per comm", [set([self.node_map[x] for x in partition.getMembers(i)]) for i in range(partition.numberOfSubsets())])
 
         assert candidate >= 0
         return self.node_map[candidate]

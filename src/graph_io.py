@@ -3,12 +3,13 @@ import os.path
 import shutil
 import urllib.request
 import re
+from time import time
+
 import patoolib
 import snap
 
 from base.cgraph import MyGraph
-from utils import GRAPHS_DIR, COLLECTIONS
-
+from utils import GRAPHS_DIR, COLLECTIONS, TMP_GRAPHS_DIR
 
 konect_metadata_path = os.path.join(GRAPHS_DIR, 'konect', 'metadata')
 netrepo_metadata_path = os.path.join(GRAPHS_DIR, 'netrepo', 'metadata')
@@ -252,7 +253,9 @@ class GraphCollections:
                 # url = name_ref_dict[name]
                 GraphCollections._download_netrepo(temp_path, netrepo_url)
 
-            elif collection == 'other':
+            # elif collection == 'other':
+            #     raise FileNotFoundError("File '%s' not found. Check graph name or file existence." % path)
+            else:
                 raise FileNotFoundError("File '%s' not found. Check graph name or file existence." % path)
 
             reformat_graph_file(temp_path, path, out_format=format, remove_original=True, self_loops=self_loops)
@@ -374,6 +377,24 @@ class GraphCollections:
         shutil.rmtree(os.path.join(graph_dir, archive_dir_name))
 
 
+class temp_dir(object):
+    """
+    Creates a temporary directory to store some files, which will be removed by exit.
+    Current working directory is also changed to this directory.
+    """
+    def __init__(self):
+        self.dir_name = os.path.join(TMP_GRAPHS_DIR, str(time()))
+        if not os.path.exists(self.dir_name):
+            os.makedirs(self.dir_name)
+
+    def __enter__(self):
+        os.chdir(self.dir_name)
+        return self.dir_name
+
+    def __exit__(self, type, value, traceback):
+        shutil.rmtree(self.dir_name)
+
+
 def test_konect():
     # name = 'soc-pokec-relationships'
     # name = 'petster-hamster'
@@ -414,7 +435,10 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
 
     # test_konect()
-    test_netrepo()
+    # test_netrepo()
     # test_graph_manipulations()
     # parse_konect_page()
     # parse_netrepo_page()
+
+    with temp_dir() as d:
+        print(d)

@@ -1,3 +1,6 @@
+import glob
+import os
+from os.path import join as opj
 from itertools import combinations
 
 import numpy as np
@@ -5,8 +8,12 @@ from numpy import random
 import scipy.stats as stats
 
 from base.cgraph import MyGraph
-from cmodels import configuration_model, grid2d
+from models.cmodels import configuration_model, grid2d
+from graph_io import temp_dir, GraphCollections
 from statistics import Stat
+from utils import LFR_DIR, GRAPHS_DIR
+
+LFR_PATH = opj(LFR_DIR, 'benchmark')
 
 
 def truncated_power_law(count, gamma, maximal):
@@ -81,6 +88,78 @@ def truncated_normal(count, mean, variance, min, max):
 #     return MyGraph.new_snap(g, name='BA_model')
 
 
+def LFR(nodes: int, avg_deg: float, max_deg: int, mixing: float, t1=None, t2=None, minc=None, maxc=None, on=None, om=None, C=None):
+    """
+    LFR benchmark. https://www.santofortunato.net/resources
+    Default parameters: t1=2, t2=1, on=0, om=0, minc and maxc will be chosen close to the degree sequence extremes.
+
+    :param nodes: number of nodes
+    :param avg_deg: average degree
+    :param max_deg: maximum degree
+    :param mixing: mixing parameter
+    :param t1: minus exponent for the degree sequence
+    :param t2: minus exponent for the community size distribution
+    :param minc: minimum for the community sizes
+    :param maxc: maximum for the community sizes
+    :param on: number of overlapping nodes
+    :param om: number of memberships of the overlapping nodes
+    :param C: [average clustering coefficient]
+    :return:
+    """
+    kwargs = {
+        'N': nodes,
+        'k': avg_deg,
+        'maxk': max_deg,
+        'mu': mixing,
+        't1': t1,
+        't2': t2,
+        'minc': minc,
+        'maxc': maxc,
+        'on': on,
+        'om': om,
+        'C': C,
+    }
+    commands = [LFR_PATH]
+    for key, value in kwargs.items():
+        if value is not None:
+            commands += ['-%s' % key, str(value)]
+
+    # Create path for a new graph
+    name = "LFR(%s)" % ",".join(
+        "%s=%s" % (key, value) for key, value in sorted(kwargs.items()) if value is not None)
+    path = opj(GRAPHS_DIR, 'synthetic', name, '*.ij')
+    ix = len(glob.glob(path))
+    path = path.replace('*', "%s" % ix)
+    if not os.path.isdir(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+
+    with temp_dir() as directory:
+        # Run LFR
+        retcode = os.system(" ".join(commands))
+        if retcode != 0:
+            raise RuntimeError("LFR benchmark failed with code %s" % retcode)
+
+        # Handle graph
+        os.rename(opj(directory, 'network.dat'), path)
+        # g = MyGraph(path=path, name=name)
+        # assert g[Stat.MAX_WCC] == 1  # TODO extract giant component
+        g = GraphCollections.get(name+'/'+str(ix), 'synthetic', giant_only=True)
+        g.save()
+
+        # Handle communities
+        comms = {}
+        with open(opj(directory, 'community.dat'), 'r') as f:
+            for line in f.readlines():
+                node, comm = line.split()
+                node = int(node)
+                comm = int(comm)
+                if comm not in comms:
+                    comms[comm] = []
+                comms[comm].append(node)
+        g[Stat.LFR_COMMUNITIES] = list(comms.values())
+    return g
+
+
 def test():
     import matplotlib.pyplot as plt
 
@@ -90,15 +169,18 @@ def test():
 
     # plt.hist(sample, bins=np.arange(100) + 0.5)
     # plt.show()
-    graph = configuration_model(deg_seq)
+    # graph = configuration_model(deg_seq)
     # g = ba_model(100, 10)
+
+    g = LFR(500, 10, 100, 0.3)
 
     # from graph_io import GraphCollections
     # graph = GraphCollections.get('petster-hamster')
-    for stat in Stat:
-        print(stat, graph[stat])
+    # for stat in Stat:
+    #     print(stat, g[stat])
     # print(graph[Stat.DIAMETER_90])
 
 
 if __name__ == '__main__':
     test()
+    # g = LFR(500, 10, 100, 0.3)
