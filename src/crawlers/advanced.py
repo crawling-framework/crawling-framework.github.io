@@ -57,9 +57,11 @@ class ThreeStageCrawler(CrawlerWithAnswer):
         super().__init__(graph, limit=n, s=s, n=n, p=p, **kwargs)
         self.s = s
         self.n = n
-        self.pN = int(p * self._orig_graph.nodes())
+        self.p = p
+        self.pN = int(self.p * self._orig_graph.nodes())
         # assert s <= n <= self.pN
 
+        self.h = set()  # Hubs from start seeds
         self.e1s = set()  # E1*
         self.e2s = set()  # E2*
         self.e1 = set()  # E1
@@ -70,6 +72,10 @@ class ThreeStageCrawler(CrawlerWithAnswer):
         random_seeds = self._orig_graph.random_nodes(self.s)
         for i in range(self.s):
             yield random_seeds[i]
+
+        # Get hubs from start seeds
+        self._get_mod_nodes(self._crawled_set, self.h, int(self.p * self.s))
+        assert len(self.h) <= (self.p * self.s)
 
         # memorize E1
         self.e1 = self._observed_set.copy()
@@ -93,18 +99,35 @@ class ThreeStageCrawler(CrawlerWithAnswer):
         # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
 
         # memorize E2
-        self.e2 = self._observed_set.copy()
-        logging.debug("|E2|=%s" % len(self.e2))
+        # self.e2 = self._observed_set.copy()
+        # logging.debug("|E2|=%s" % len(self.e2))
+        #
+        # # Get v=(pN-n+s) max degree observed nodes
+        # self.e2s.clear()
+        # self._get_mod_nodes(self.e2, self.e2s, self.pN - self.n + (int(1 - self.p) + 1) * self.s)
+        # logging.debug("|E2*|=%s" % len(self.e2s))
+        #
+        # # Final answer - E* = E1* + E2*
+        # self._answer.clear()
+        # self._answer.update(self.h, self.e1s, self.e2s)
+        # logging.debug("|E*|=%s" % len(self._answer))
+        # return 0
 
-        # Get v=(pN-n+s) max degree observed nodes
-        self.e2s.clear()
-        self._get_mod_nodes(self.e2, self.e2s, self.pN - self.n + self.s)
-        logging.debug("|E2*|=%s" % len(self.e2s))
+        if (len(self.e1s) + len(self.h)) < self.pN:
+            self.e2s.clear()
+            # Get v=(pN-n+s) max degree observed nodes
+            self._get_mod_nodes(self._observed_set, self.e2s, self.pN - len(self.e1s) - len(self.h))
+            logging.debug("|E2*|=%s" % len(self.e2s))
 
-        # Final answer - E* = E1* + E2*
-        self._answer.clear()
-        self._answer.update(self.e1s, self.e2s)
+            # Final answer - E* = E1* + E2*
+            self._answer.clear()
+            self._answer.update(self.h, self.e1s, self.e2s)
+        else:
+            # Top-pN from e1s
+            self._get_mod_nodes(self._crawled_set, self._answer, self.pN)
+
         logging.debug("|E*|=%s" % len(self._answer))
+        # assert len(self._answer) <= self.pN
         return 0
 
 
@@ -182,10 +205,12 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         super().__init__(graph, limit=n, s=s, n=n, p=p, b=b, **kwargs)
         self.s = s
         self.n = n
-        self.pN = int(p * self._orig_graph.nodes())
+        self.p = p
+        self.pN = int(self.p * self._orig_graph.nodes())
         # assert s <= n <= self.pN
         self.b = b
 
+        self.h = set()  # Hubs from start seeds
         self.e1s = set()  # E1*
         self.e2s = set()  # E2*
         self.e1 = set()  # E1
@@ -210,6 +235,10 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         for i in range(self.s):
             yield random_seeds[i]
 
+        # Get hubs from start seeds
+        self._get_mod_nodes(self._crawled_set, self.h, int(self.p * self.s))
+        assert len(self.h) <= (self.p * self.s)
+
         # 2) run MOD
         # TODO should we cimport it to avoid pythonizing?
         self.mod = MaximumObservedDegreeCrawler(
@@ -223,15 +252,15 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
     def _compute_answer(self):
         # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
 
-        if len(self.e1s) < self.pN:
+        if (len(self.e1s) + len(self.h)) < self.pN:
             self.e2s.clear()
             # Get v=(pN-n+s) max degree observed nodes
-            self._get_mod_nodes(self._observed_set, self.e2s, self.pN - len(self.e1s))
+            self._get_mod_nodes(self._observed_set, self.e2s, self.pN - len(self.e1s) - len(self.h))
             logging.debug("|E2*|=%s" % len(self.e2s))
 
             # Final answer - E* = E1* + E2*
             self._answer.clear()
-            self._answer.update(self.e1s, self.e2s)
+            self._answer.update(self.h, self.e1s, self.e2s)
         else:
             # Top-pN from e1s
             self._get_mod_nodes(self._crawled_set, self._answer, self.pN)
