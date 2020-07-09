@@ -472,7 +472,7 @@ def test_merger():
     ]
     crm = ResultsMerger(graphs, crawler_defs, metric_defs, n_instances=6)
     # crm.missing_instances()
-    # crm.draw_by_crawler()
+    crm.draw_by_crawler()
     # crm.draw_aucc('AUCC')
     crm.draw_winners('AUCC')
 

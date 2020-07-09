@@ -8,6 +8,7 @@ from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric
 from statistics import Stat
+from utils import RESULT_DIR
 
 clouds = [
     'ubuntu@83.149.198.220',
@@ -128,15 +129,16 @@ def copy_remote2local(host: str, src: str, dst: str, ignore_fails=False):
     Copy files from remote to local host via scp command.
 
     :param host: remote host
-    :param src: full source path
-    :param dst: full destination path
+    :param src: full source path at remote host
+    :param dst: full destination path at local host
     :param ignore_fails:
     :return:
     """
     commands = ['scp', '-i', ssh_key]
-    if os.path.isdir(src):
-        commands.append('-r')
-    commands += [src, "%s:%s" % (host, dst)]
+    # if os.path.isdir(src): FIXME what if file?
+    commands.append('-r')
+    commands += ["%s:%s" % (host, src)]
+    commands += [dst]
     command = ' '.join(commands)
 
     print(command)
@@ -155,7 +157,7 @@ def copy_remote2local(host: str, src: str, dst: str, ignore_fails=False):
 def cloud_prepare(host: str):
     # pass
     # Pull from branch cloud
-    do_remote(host, 'eval `ssh-agent -s`; ssh-add ~/.ssh/cloud_rsa; cd workspace/crawling; git checkout cloud; git pull')
+    # do_remote(host, 'eval `ssh-agent -s`; ssh-add ~/.ssh/cloud_rsa; cd workspace/crawling; git checkout cloud; git pull')
 
     # # Copy graphs and stats
     # do_remote(host, "cd workspace/crawling/data; mkdir konect; mkdir netrepo; mkdir other", ignore_fails=True)
@@ -169,6 +171,11 @@ def cloud_prepare(host: str):
     #     src = GraphCollections.get(name, not_load=True).path
     #     dst = os.path.dirname(src.replace('misha', 'ubuntu'))
     #     copy_local2remote(host, src=src, dst=dst)
+
+    # Copy results from cloud
+    dst = os.path.dirname(RESULT_DIR)
+    src = RESULT_DIR.replace('misha', 'ubuntu')  # will copy just in place
+    copy_remote2local(host, src=src, dst=dst)
 
     # pp = 'PYTHONPATH=~/workspace/crawling/src python3'
     # for name in netrepo_names:
@@ -251,11 +258,11 @@ def three_stage():
     seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
     metric_defs = [
-        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
+        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
     ]
 
     n_instances = 8
-    for graph_name in netrepo_names:
+    for graph_name in konect_names:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
         budgets = [int(b*n) for b in budget_coeff]
@@ -266,7 +273,41 @@ def three_stage():
         ]
 
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        chr.run_missing(n_instances, max_cpus=8, max_memory=60)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=12)
+        print('\n\n')
+
+        # rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
+        # rm.draw_by_metric_crawler(x_lims=(0, 0.1*n), x_normalize=False, scale=12, draw_error=False)
+
+
+def three_stage_mod():
+    from crawlers.cbasic import RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
+    from crawlers.cadvanced import DE_Crawler
+    from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler
+    from crawlers.multiseed import MultiInstanceCrawler
+
+    p = 0.01
+    budget_coeff = 0.03
+    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
+
+    metric_defs = [
+        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
+    ]
+
+    n_instances = 8
+    for graph_name in konect_names[10:]:
+        g = GraphCollections.get(graph_name)
+        n = g[Stat.NODES]
+        s = g[Stat.DEGREE_DISTR]  # just to pre-load stat to avoid loading it in every process
+        budget = int(budget_coeff * n)
+        crawler_defs = [
+           (ThreeStageMODCrawler, {'s': int(s*budget), 'n': budget, 'b': b, 'p': p}) for s in seed_coeff for b in batch
+        ]
+
+        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=28)
         print('\n\n')
 
         # rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
@@ -283,4 +324,5 @@ if __name__ == '__main__':
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
-    three_stage()
+    # three_stage()
+    three_stage_mod()

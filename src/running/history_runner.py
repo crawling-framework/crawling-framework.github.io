@@ -107,7 +107,9 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :param same_initial_seed: use the same initial seed for all crawler instances TODO
         :return:
         """
-        crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
+        with self._semaphore:  # to ensure stats reading/calculation only once
+            crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
+
         pbar = tqdm(total=self.budget, desc='Running iterations')  # drawing crawling progress bar
 
         step = 0
@@ -168,24 +170,54 @@ class CrawlerHistoryRunner(CrawlerRunner):
                               max_cpus: int = mp.cpu_count(), max_memory: float = 6):
         """
         Runs in parallel crawlers and measure metrics. Number of processes is chosen adaptively.
-        Using magic coefficients: Mbytes of memory = A*n + B,
-        where A = 0.25, B = 2.5,  n - thousands of nodes in graph.
+        Using magic coefficients: Mbytes of memory = A*n + B*e + C,
+        where A = 0.25, B = 0.01, C = 2.5,  n - thousands of nodes in graph.
 
         :param n_instances: total wanted number of instances to be performed
         :param max_cpus: max number of CPUs to use for computation, all available by default
         :param max_memory: max Mbytes of operative memory to use for computation, 6Gb by default
         :return:
         """
-        # Gbytes of operative memory per instance
-        memory = (0.25 * self.graph['NODES'] / 1000 + 2.5) / 1024 * len(self.crawler_defs)
-        max_cpus = min(max_cpus, int(max_memory // memory))
+        # GBytes of operative memory per 1 crawler
+        m = (0.25 * self.graph[Stat.NODES] / 1000 + 0.01 * self.graph[Stat.EDGES] / 1000 + 2.5) / 1024
+        if m > max_memory:
+            raise MemoryError(
+                "Not enough memory to even run 1 configuration: %s < %s needed" % (max_memory, m))
 
-        while n_instances > 0:
-            num = min(max_cpus, n_instances)
-            n_instances -= num
-            msg = self.run_parallel(num_processes=num)
+        if len(self.crawler_defs) > n_instances:  # split by crawler_defs
+            # Prefer to take max possible instances
+            max_cpus = min(max_cpus, int(max_memory // m))
+            while n_instances > 0:
+                num = min(max_cpus, n_instances)
+                n_instances -= num
 
-            send_vk(msg)
+                # Now split crawler_def into parts if needed
+                memory = m * num
+                max_cds = int(max_memory // memory)
+                assert max_cds >= 1
+                crawler_defs = self.crawler_defs
+                left = len(crawler_defs)
+                logging.info("Split %s crawler_defs into %s parts" % (left, left // max_cds))
+                last_ix = 0
+                while left > 0:
+                    batch = min(max_cds, left)
+                    self.crawler_defs = crawler_defs[last_ix: last_ix+batch]
+                    last_ix += batch
+                    left -= batch
+                    msg = self.run_parallel(num_processes=num) + ", %s of %s crawler_defs left" % (left, len(crawler_defs))
+                    send_vk(msg)
+
+        else:  # split by instances
+            memory = m * len(self.crawler_defs)
+            max_cpus = min(max_cpus, int(max_memory // memory))
+            assert max_cpus >= 1
+
+            while n_instances > 0:
+                num = min(max_cpus, n_instances)
+                n_instances -= num
+                msg = self.run_parallel(num_processes=num)
+
+                send_vk(msg)
 
     def run_missing(self, n_instances=10,
                     max_cpus: int = mp.cpu_count(), max_memory: float = 6):

@@ -265,7 +265,6 @@ cdef class MyGraph:
                 from cyth.cstatistics import stat_computer
                 # value = stat.computer(self)
                 value = stat_computer[stat](self)
-                self._stats_dict[stat] = value
 
                 # Save stats to file
                 if not os.path.exists(os.path.dirname(stat_path)):
@@ -274,7 +273,9 @@ cdef class MyGraph:
                     f.write(str(value))
             else:
                 # Read stats from file - value or dict
-                value = eval(open(stat_path, 'r').read())
+                value = eval(open(stat_path, 'r').read())  # FIXME very memory consuming for large graphs!
+
+            self._stats_dict[stat] = value
 
         return value
 
