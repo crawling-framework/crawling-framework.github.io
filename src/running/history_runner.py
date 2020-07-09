@@ -104,12 +104,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
     def run(self, same_initial_seed=False):
         """ Run crawlers and measure metrics. In the end, the measurements are saved.
 
-        :param graph: graph to run
-        :param same_initial_seed: use the same initial seed for all crawler instances
-        :param draw_networkx: if True draw graphs with colored nodes using networkx and save it as
-         gif. Use for small graphs only.
-        :param budget: maximal number of nodes to be crawled, by default the whole graph
-        :param step: compute metrics each `step` steps
+        :param same_initial_seed: use the same initial seed for all crawler instances TODO
         :return:
         """
         crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)

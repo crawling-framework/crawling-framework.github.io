@@ -5,6 +5,7 @@ import logging
 from crawlers.cbasic import filename_to_definition
 from graph_io import konect_names, GraphCollections, netrepo_names, other_names
 from running.history_runner import CrawlerHistoryRunner
+from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric
 from statistics import Stat
 
@@ -233,6 +234,45 @@ def main():
         print('\n\n')
 
 
+def three_stage():
+    from crawlers.cbasic import RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
+        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
+    from crawlers.cadvanced import DE_Crawler
+    from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler
+    from crawlers.multiseed import MultiInstanceCrawler
+
+    p = 0.01
+    budget_coeff = [
+        0.00001, 0.00003, 0.00005,
+        0.0001, 0.0003, 0.0005,
+        0.001, 0.003, 0.005,
+        0.01, 0.03, 0.05, 0.1, 0.3
+    ]
+    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    metric_defs = [
+        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
+    ]
+
+    n_instances = 8
+    for graph_name in netrepo_names:
+        g = GraphCollections.get(graph_name)
+        n = g[Stat.NODES]
+        budgets = [int(b*n) for b in budget_coeff]
+        crawler_defs = [
+           (ThreeStageCrawler, {'s': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
+        # ] + [
+        #    (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p, 'b': b}) for s in start_seeds for b in batches
+        ]
+
+        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=60)
+        print('\n\n')
+
+        # rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
+        # rm.draw_by_metric_crawler(x_lims=(0, 0.1*n), x_normalize=False, scale=12, draw_error=False)
+
+
 if __name__ == '__main__':
     import logging
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
@@ -242,4 +282,5 @@ if __name__ == '__main__':
     # cloud_prepare(clouds[0])
     # cloud_run(clouds[0])
 
-    main()  # to be run from cloud
+    # main()  # to be run from cloud
+    three_stage()

@@ -201,7 +201,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         :param p: fraction of graph nodes to be returned
         :param b: batch size
         """
-        assert 1 <= b <= n-s
+        # assert 1 <= b <= n-s
         super().__init__(graph, limit=n, s=s, n=n, p=p, b=b, **kwargs)
         self.s = s
         self.n = n

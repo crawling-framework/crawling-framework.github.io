@@ -225,7 +225,7 @@ class ResultsMerger:
         M - num of metrics, G - num of graphs, C - num of crawlers.
         Ox - crawling step, Oy - metric value.
         """
-        linestyles = ['-', '--', ':', '.-']
+        linestyles = ['-', '--', ':', '-.']
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
                   'pink', 'lime', 'wheat', 'lightsteelblue']
