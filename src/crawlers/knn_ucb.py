@@ -17,23 +17,27 @@ def count_dist(v1, v2):
 class KNN_UCB_Crawler(Crawler):
     short = 'KNN-UCB'
 
-    def __init__(self, graph: MyGraph, alpha, delta=0.5, k2=10, n0=20):
-        # TODO
-        self.dct_observed = dict()  # node -> (feature vector, need_update, y_j)
+    def __init__(self, graph: MyGraph, alpha, delta=0.5, k=10, n0=20):
+        # k - number of nearest neighbors to estimate expected reward
+        # alpha - search ratio
+        # dictionaries that store observed and crawled nodes feature vectors
+        # and for crawled nodes number of open nodes after crawling
+        self.dct_observed = dict()  # node -> (feature vector, need_update)
         self.dct_crawled = dict()  # node -> (feature vector, need_update, y_j)
+        self.k = k
+        self.alp = alpha
 
     def crawl(self, seed: int):
+
+        # calculate the number of open nodes after crawling current node
+        vert_degree_old = self._observed_graph.deg(seed)
         res = super().crawl(seed)
-        # TODO
-        # y = 0
-        # for j in MyGraph.neighbors(self, best_node):
-        #     if not(j in self.crawled_set or j in self.observed_set):
-        #         y += 1
-        # self.dct_crawled.update({best_node, (np.array((1, 1, 1)), False, y)})
+        vert_degree_new = self._observed_graph.deg(seed)
+        self.dct_crawled.update({seed, (np.array((1, 1, 1)), False, vert_degree_new - vert_degree_old)})
 
         return res
 
-    def next_seed(self, k, alf):
+    def next_seed(self):
 
         # initial_seed = self._orig_graph.random_node()
         # self.observed_set.add(initial_seed)
@@ -41,30 +45,32 @@ class KNN_UCB_Crawler(Crawler):
         best_node = -1
         best_expected_gain = -1
 
-        # TODO comment
+        # calculation of feature vector for crawled nodes
         for i in self.crawled_set:
 
             if self.dct_crawled.get(i) is not None:
                 # if dct_crawled.get(i)[1]:
                 if 0 == 0:
-                    # TODO comment
+                    # vert_degree - degree of current node
+                    # aver_neb_degree - average degree of adjacent crawled nodes
+                    # max_neb_degree - maximum degree of adjacent crawled nodes
+                    # kol_triangle - the number of triangles containing the current node
                     vert_degree = self._observed_graph.deg(i)
                     max_neb_degree = 0
                     aver_neb_degree = 0
                     kol_craw_neb = 0
-                    for j in MyGraph.neighbors(self, i):
+                    for j in self._observed_graph.neighbors(i):
                         if j in self.crawled_set:
-                            aver_neb_degree += MyGraph.deg(self, j)
+                            aver_neb_degree += self._observed_graph.deg(j)
                             kol_craw_neb += 1
-                            if MyGraph.deg(self, j) > max_neb_degree:
-                                max_neb_degree = MyGraph.deg(self, j)
+                            if self._observed_graph.deg(j) > max_neb_degree:
+                                max_neb_degree = self._observed_graph.deg(self, j)
 
                     aver_neb_degree /= kol_craw_neb
 
                     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    # TODO comment
                     # вычислить метрику для треугольников
-                    # kol_triangl = 0
+                    # kol_triangle = 0
                     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                     vec = np.array((vert_degree, max_neb_degree, aver_neb_degree))
@@ -74,38 +80,42 @@ class KNN_UCB_Crawler(Crawler):
                     self.dct_crawled[i][0] = vec
                     self.dct_crawled[i][1] = False
 
-        # TODO comment
+        # calculation of feature vector for observed nodes
         for i in self.observed_set:
             if i in self.dct_observed:
             # if dct_observed.get(i) is not None:
                 # if dct_observed.get(i)[1]:
                 if 0 == 0:
-                    vert_degree = MyGraph.deg(self, i)
+                    # vert_degree - degree of current node
+                    # aver_neb_degree - average degree of adjacent crawled nodes
+                    # max_neb_degree - maximum degree of adjacent crawled nodes
+                    # kol_triangle - the number of triangles containing the current node
+                    vert_degree = self._observed_graph.deg(self, i)
                     max_neb_degree = 0
                     aver_neb_degree = 0
                     kol_craw_neb = 0
-                    for j in MyGraph.neighbors(self, i):
+                    for j in self._observed_graph.neighbors(i):
                         if j in self.crawled_set:
-                            aver_neb_degree += MyGraph.deg(self, j)
+                            aver_neb_degree += self._observed_graph.deg(j)
                             kol_craw_neb += 1
-                            if MyGraph.deg(self, j) > max_neb_degree:
-                                max_neb_degree = MyGraph.deg(self, j)
+                            if self._observed_graph.deg(j) > max_neb_degree:
+                                max_neb_degree = self._observed_graph.deg(j)
 
                     aver_neb_degree /= kol_craw_neb
                     aver_neb_degree = round(aver_neb_degree)
 
                     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
                     # вычислить метрику для треугольников
-                    # kol_triangl = 0
+                    # kol_triangle = 0
                     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                     vec = np.array((vert_degree, max_neb_degree, aver_neb_degree))
                     # vec = np.array((vert_degree, max_neb_degree, aver_neb_degree, kol_triangl))
                     self.dct_observed.update({i, (vec, False)})
 
-        # TODO comment
+        # choosing the best node from observed nodes for crawling
         for key, value in self.dct_observed.items():
-            # TODO comment
+            # find k nearest neighbors
             arr = []
             for i in self.crawled_set:
                 arr.append((key, count_dist(value[0], self.dct_crawled.get(i)[0])))
@@ -114,11 +124,11 @@ class KNN_UCB_Crawler(Crawler):
             f = 0
             sigm = 0
 
-            # TODO comment
-            if len(self.crawled_set) >= k:
+            # calculate expected reward from crawling current node
+            if len(self.crawled_set) >= self.k:
                 flag = 0
                 kol = 0
-                for j in range(k):
+                for j in range(self.k):
                     if arr[j][1] == 0:
                         flag = 1
                         kol += 1
@@ -128,8 +138,8 @@ class KNN_UCB_Crawler(Crawler):
                         f += self.dct_crawled.get(j)[2] / arr[j][1]
                         sigm += arr[j][1]
                 if flag == 0:
-                    f /= k
-                    sigm /= k
+                    f /= self.k
+                    sigm /= self.k
                 else:
                     f /= kol
                     sigm /= kol
@@ -149,8 +159,8 @@ class KNN_UCB_Crawler(Crawler):
                 f /= kol
                 sigm /= kol
 
-            if(f + alf * sigm > best_expected_gain):
-                best_expected_gain = f + alf * sigm
+            if(f + self.alp * sigm > best_expected_gain):
+                best_expected_gain = f + self.alp * sigm
                 best_node = key
 
         del self.dct_observed[best_node]
