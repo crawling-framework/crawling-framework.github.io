@@ -15,7 +15,7 @@ class Metric:
 
     @staticmethod
     def from_definition(graph: MyGraph, definition):  # -> Metric:
-        """ Build a Metric instance from its definition """
+        """ Build graph_models Metric instance from its definition """
         _class, kwargs = definition
         return _class(graph, **kwargs)
 

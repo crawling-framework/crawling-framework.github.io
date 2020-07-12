@@ -132,7 +132,7 @@ cdef extern from "Snap.h" namespace "TSnap":
     void GetNodesClustCf "TSnap::GetNodeClustCf"[PGraph](const PGraph& Graph, TIntFltH& NIdCCfH)
     PGraph GetKCore[PGraph](const PGraph& Graph, const int& K)
 
-    # models
+    # graph_models
     PUNGraph GenConfModel(const TIntV& DegSeqV, TRnd& Rnd)
 
 
@@ -153,6 +153,8 @@ cdef class MyGraph:
     cdef _stats_dict
 
     cdef new_snap(self, PUNGraph snap_graph_ptr, name=?)
+
+    cpdef giant_component(self)
 
     cdef PUNGraph snap_graph_ptr(self)
 
@@ -188,7 +190,7 @@ cdef class MyGraph:
 cdef inline char* str_to_chars(str string):
     cdef int length = len(string)
     cdef char* res = <char *>PyMem_Malloc((length+1) * sizeof(char))
-    if not res:  # as in docs, a good practice
+    if not res:  # as in docs, graph_models good practice
         raise MemoryError()
 
     b_string = string.encode()

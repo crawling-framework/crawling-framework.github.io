@@ -6,6 +6,8 @@ from base.cgraph import MyGraph
 from statistics import Stat, get_top_centrality_nodes
 
 
+# FIXME old version
+
 def intersection(graph: MyGraph):
     import snap
     g = graph.snap

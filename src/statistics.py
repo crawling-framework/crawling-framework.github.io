@@ -6,9 +6,6 @@ import logging
 from enum import Enum
 from operator import itemgetter
 
-import snap
-from tqdm import tqdm
-
 from base.cgraph import MyGraph
 from graph_io import GraphCollections
 from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
@@ -67,6 +64,8 @@ class Stat(Enum):
 
     PLM_COMMUNITIES = 'PLM-comms', 'PLM communities'
     PLM_MODULARITY = 'PLM-modularity', 'PLM communities modularity'
+
+    LFR_COMMUNITIES = 'LFR-comms', 'LFR communities'
 
 
 def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=False):
