@@ -1,4 +1,3 @@
-snap-stanford==5.0.0
 patool
 networkx==2.3
 numpy

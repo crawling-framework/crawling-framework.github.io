@@ -92,7 +92,7 @@ class MultiCrawler(Crawler):
 
 class MultiInstanceCrawler(MultiCrawler):
     """
-    Runs several crawlers in parallel. Each crawler makes a step iteratively in a cycle.
+    Runs several crawlers in parallel. Each crawler makes graph_models step iteratively in graph_models cycle.
     When the crawler can't get next seed it is discarded from the cycle.
     """
     short = 'MultiInstance'
@@ -164,7 +164,7 @@ class MultiInstanceCrawler(MultiCrawler):
         return res
 
     def next_seed(self) -> int:
-        """ The next crawler makes a step. If impossible, it is discarded.
+        """ The next crawler makes graph_models step. If impossible, it is discarded.
         """
         for _ in range(len(self.crawlers)):
             try:
@@ -173,7 +173,7 @@ class MultiInstanceCrawler(MultiCrawler):
                 logger.debug("Run crawler[%s]: %s Removing it." % (self.next_crawler, e))
                 # print("Run crawler[%s]: %s Removing it." % (self.next_crawler, e))
                 del self.crawlers[self.next_crawler]
-                # idea - create a new instance
+                # idea - create graph_models new instance
                 self.next_crawler = self.next_crawler % len(self.crawlers)
                 continue
 
@@ -184,27 +184,6 @@ class MultiInstanceCrawler(MultiCrawler):
         raise NoNextSeedError("None of %s subcrawlers can get next seed." % len(self.crawlers))
 
 
-def test_carpet_graph(n, m):
-    # special n*m graph for visual testing
-    import snap
-    graph = MyGraph(name='test', directed=False)
-    g = graph.snap
-    pos = dict()
-    for i in range(0, n * m):
-        g.AddNodeUnchecked(i)
-    for k in range(0, n):
-        for i in range(0, m):
-            node = i * n + k
-            if (node > 0) and (node % n != 0):
-                g.AddEdgeUnchecked(node, node - 1)
-                # g.AddEdgeUnchecked(node - 1, node)
-            if node > n - 1:
-                g.AddEdgeUnchecked(node, node - n)
-                # g.AddEdgeUnchecked(node - n, node)
-
-            pos[node] = [float(k / n), float(i / m)]
-    return [graph, pos]
-
-
 if __name__ == '__main__':
-    test_carpet_graph(10, 10)
+    # test_carpet_graph(10, 10)
+    pass

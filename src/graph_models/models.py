@@ -8,7 +8,7 @@ from numpy import random
 import scipy.stats as stats
 
 from base.cgraph import MyGraph
-from models.cmodels import configuration_model, grid2d
+from graph_models.cmodels import configuration_model, grid2d
 from graph_io import temp_dir, GraphCollections
 from statistics import Stat
 from utils import LFR_DIR, GRAPHS_DIR
@@ -124,7 +124,7 @@ def LFR(nodes: int, avg_deg: float, max_deg: int, mixing: float, t1=None, t2=Non
         if value is not None:
             commands += ['-%s' % key, str(value)]
 
-    # Create path for a new graph
+    # Create path for graph_models new graph
     name = "LFR(%s)" % ",".join(
         "%s=%s" % (key, value) for key, value in sorted(kwargs.items()) if value is not None)
     path = opj(GRAPHS_DIR, 'synthetic', name, '*.ij')
@@ -141,10 +141,8 @@ def LFR(nodes: int, avg_deg: float, max_deg: int, mixing: float, t1=None, t2=Non
 
         # Handle graph
         os.rename(opj(directory, 'network.dat'), path)
-        # g = MyGraph(path=path, name=name)
-        # assert g[Stat.MAX_WCC] == 1  # TODO extract giant component
-        g = GraphCollections.get(name+'/'+str(ix), 'synthetic', giant_only=True)
-        g.save()
+        g = MyGraph(path=path, name=name).giant_component()
+        assert g[Stat.MAX_WCC] == 1
 
         # Handle communities
         comms = {}
@@ -183,4 +181,5 @@ def test():
 
 if __name__ == '__main__':
     test()
-    # g = LFR(500, 10, 100, 0.3)
+    g = LFR(500, 10, 30, 0.02)
+    print(g.nodes())

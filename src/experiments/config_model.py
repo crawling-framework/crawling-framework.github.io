@@ -6,7 +6,7 @@ from matplotlib.colors import LogNorm
 from graph_io import GraphCollections
 from base.cgraph import MyGraph
 from cyth.cstatistics import assortativity
-from models import truncated_power_law, configuration_model, ba_model
+from graph_models import truncated_power_law, configuration_model, ba_model
 
 raise Exception("OLD, NEED TO UPDATE")
 
@@ -189,7 +189,7 @@ def assort_conf_model_MH(deg_seq, r, directed=False):
         prob = np.exp((r1-r2)*(r1+r2-2*r)/0.000001)
         # print("prob", prob)
 
-        if np.random.random() < prob:  # make a switch
+        if np.random.random() < prob:  # make graph_models switch
             g.DelEdge(j1, j2)
             g.DelEdge(k1, k2)
             g.AddEdge(k1, j2)
@@ -288,7 +288,7 @@ def assort_conf_model_MH(deg_seq, r, directed=False):
 #         # print(prob)
 #         # prob = 1
 #
-#         if np.random.random() < prob:  # make a switch
+#         if np.random.random() < prob:  # make graph_models switch
 #             g.DelEdge(j1, j2)
 #             g.DelEdge(k1, k2)
 #             g.AddEdge(k1, j2)
@@ -436,7 +436,7 @@ def test_edge_switching(graph, r=None):
         else:
             prob = 1
 
-        if np.random.random() < prob:  # make a switch
+        if np.random.random() < prob:  # make graph_models switch
             g.DelEdge(j1, j2)
             g.DelEdge(k1, k2)
             g.AddEdge(k1, j2)

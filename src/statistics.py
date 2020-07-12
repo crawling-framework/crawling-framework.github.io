@@ -6,9 +6,6 @@ import logging
 from enum import Enum
 from operator import itemgetter
 
-import snap
-from tqdm import tqdm
-
 from base.cgraph import MyGraph
 from graph_io import GraphCollections
 from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR

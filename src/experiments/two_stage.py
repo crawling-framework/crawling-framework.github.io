@@ -1,6 +1,5 @@
 import logging
 
-import snap
 from matplotlib import pyplot as plt
 
 from running.history_runner import CrawlerHistoryRunner
@@ -16,39 +15,6 @@ from crawlers.multiseed import MultiInstanceCrawler
 from running.animated_runner import AnimatedCrawlerRunner, Metric
 from graph_io import GraphCollections
 from statistics import Stat, get_top_centrality_nodes
-
-
-def test_initial_graph(i: str):
-    from graph_io import GraphCollections
-    if i == "reall":
-        # name = 'soc-pokec-relationships'
-        # name = 'petster-friendships-cat'
-        name = 'petster-hamster'
-        # name = 'twitter'
-        # name = 'libimseti'
-        # name = 'advogato'
-        # name = 'facebook-wosn-links'
-        # name = 'soc-Epinions1'
-        # name = 'douban'
-        # name = 'slashdot-zoo'
-        # name = 'petster-friendships-cat'  # snap load is long possibly due to unordered ids
-        graph = GraphCollections.get(name, giant_only=True)
-        print("N=%s E=%s" % (graph.nodes(), graph.edges()))
-    else:
-        g = snap.TUNGraph.New()
-        g.AddNode(1)
-        g.AddNode(2)
-        g.AddNode(3)
-        g.AddNode(4)
-        g.AddNode(5)
-        g.AddEdge(1, 2)
-        g.AddEdge(2, 3)
-        g.AddEdge(4, 2)
-        g.AddEdge(4, 3)
-        g.AddEdge(5, 4)
-        print("N=%s E=%s" % (g.GetNodes(), g.GetEdges()))
-        graph = MyGraph.new_snap(g, name='test', directed=False)
-    return graph
 
 
 def test_target_set_coverage():

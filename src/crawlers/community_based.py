@@ -17,7 +17,7 @@ class MaximumObservedCommunityDegreeCrawler(Crawler):
         self.rev_node_map = {}  # reverse nodes mapping snap_id -> nk_id
 
         super().__init__(graph, **kwargs)
-        # pick a random seed from original graph
+        # pick graph_models random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()

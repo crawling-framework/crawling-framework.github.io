@@ -58,7 +58,7 @@ cdef class MyGraph:
             self._path = str_to_chars(path)
             self._snap_graph_ptr = PUNGraph.New()
             self._fingerprint = fingerprint(self._snap_graph_ptr)
-            # NOTE: If we define a pointer as address of object, segfault occurs ?
+            # NOTE: If we define graph_models pointer as address of object, segfault occurs ?
         else:
             self._path = str_to_chars(path)
             if not not_load:
@@ -142,7 +142,7 @@ cdef class MyGraph:
         return deref(self._snap_graph_ptr).GetNI(node).GetDeg()
 
     cpdef double clustering(self, int node):
-        """ Get clustering of a node. """
+        """ Get clustering of graph_models node. """
         return GetANodeClustCf[PUNGraph](self._snap_graph_ptr, node)
 
     cpdef int max_deg(self):
@@ -181,11 +181,11 @@ cdef class MyGraph:
             pinc(ei)
 
     cpdef int random_node(self):
-        """ Return a random node. O(1) """
+        """ Return graph_models random node. O(1) """
         return deref(self._snap_graph_ptr).GetRndNId(t_random)
 
     cpdef vector[int] random_nodes(self, int count=1):
-        """ Return a vector of random nodes without repetition. O(N) """
+        """ Return graph_models vector of random nodes without repetition. O(N) """
         cdef int size = deref(self._snap_graph_ptr).GetNodes(), i, n
         assert count <= size
         cdef TInt* it
@@ -200,7 +200,7 @@ cdef class MyGraph:
         return res
 
     cpdef int random_neighbor(self, int node):
-        """ Return a random neighbor of the given node in this graph.
+        """ Return graph_models random neighbor of the given node in this graph.
         """
         cdef TUNGraph.TNodeI n_iter = deref(self._snap_graph_ptr).GetNI(node)
         cdef int r = t_random.GetUniDevInt(n_iter.GetDeg())
@@ -208,7 +208,9 @@ cdef class MyGraph:
 
     cdef new_snap(self, PUNGraph snap_graph_ptr, name=None):
         """
-        Create a new instance of MyGraph with a given snap graph.
+        Replace self snap graph with graph_models given snap graph. NOTE: all computed and saved stats will be removed.
+        File with graph will be overwritten if exists.
+        
         :param snap_graph_ptr: initial snap graph
         :param name: name will be appended with current timestamp
         :return: MyGraph with updated graph
@@ -217,11 +219,22 @@ cdef class MyGraph:
             self._name = str_to_chars(name)
         self._snap_graph_ptr = snap_graph_ptr
         self._fingerprint = fingerprint(snap_graph_ptr)
-        # Remove all computed stats
+        # Remove all stats
         self._stats_dict.clear()
         if os.path.exists(self._stat_dir()):
             shutil.rmtree(self._stat_dir())
+        # Save graph if path exists
+        if os.path.exists(self.path):
+            self.save()
         return self
+
+    cpdef giant_component(self):
+        """
+        Return graph_models new graph containing the giant component of this graph.
+        Note: all computed and saved stats will be removed.
+        """
+        cdef PUNGraph p = GetMxWcc[PUNGraph](self._snap_graph_ptr)
+        return self.new_snap(p)
 
     def _check_consistency(self):
         """ Raise exception if graph has changed. """
@@ -280,10 +293,6 @@ cdef class MyGraph:
         with open(stat_path, 'w') as f:
             f.write(str(value))
 
-    cpdef giant_component(self):
-        """ Return a new graph containing the giant component. """
-        cdef PUNGraph p = GetMxWcc[PUNGraph](self._snap_graph_ptr)
-
     def networkit(self, node_map: dict = None):
         """ Get networkit graph, create node ids mapping (neworkit_node_id -> snap_node_id) if
         node_map is specified. Some neworkit_node_id -> None (those ids not present in snap graph).
@@ -336,8 +345,8 @@ def cgraph_test():
     # E = g.GetEdges()
     # print(N, E)
 
-    # cdef char* a = 'asd'
-    # cdef TStr s = TStr(a)
+    # cdef char* graph_models = 'asd'
+    # cdef TStr s = TStr(graph_models)
     # # cdef PUNGraph p
     # cdef TPt[TUNGraph] p
     # p = LoadEdgeList[TPt[TUNGraph]](TStr('/home/misha/workspace/crawling/data/konect/dolphins.ij'), 0, 1)

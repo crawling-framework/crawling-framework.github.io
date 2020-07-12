@@ -6,7 +6,6 @@ import re
 from time import time
 
 import patoolib
-import snap
 
 from base.cgraph import MyGraph
 from utils import GRAPHS_DIR, COLLECTIONS, TMP_GRAPHS_DIR
@@ -212,7 +211,7 @@ class GraphCollections:
         giant_only and self_loops, you need to remove the file manually.
 
         :param name: any of e.g. 'CL' or 'Actor collaborations' or 'actor-collaborations'
-        :param collection: 'other', 'konect', 'netrepo'. By default it searches by name in 'konect',
+        :param collection: 'synthetic', 'other', 'konect', 'netrepo'. By default it searches by name in 'konect',
          then 'neterepo', then 'other'
         :param directed: undirected by default
         :param format: output will be in this format, 'ij' by default
@@ -227,7 +226,7 @@ class GraphCollections:
         # assert collection in COLLECTIONS
 
         if collection is None:
-            # Resolve name: find in konect then neterpo, if no set collection to other
+            # Resolve name: search in konect then neterpo, if no set collection to other
             try:
                 name = konect_name_ref_dict[name]
                 collection = 'konect'
@@ -240,7 +239,7 @@ class GraphCollections:
 
         path = os.path.join(GRAPHS_DIR, collection, "%s.%s" % (name, format))
 
-        # TODO let collection be not specified, try Konect then Netrepo, etc
+        # Download graph if absent
         if not os.path.exists(path):
             temp_path = os.path.join(GRAPHS_DIR, collection, '%s.tmp' % name)
 
@@ -256,19 +255,14 @@ class GraphCollections:
             # elif collection == 'other':
             #     raise FileNotFoundError("File '%s' not found. Check graph name or file existence." % path)
             else:
-                raise FileNotFoundError("File '%s' not found. Check graph name or file existence." % path)
+                raise FileNotFoundError("File '%s' not found. Check graph name, collection or file existence." % path)
 
             reformat_graph_file(temp_path, path, out_format=format, remove_original=True, self_loops=self_loops)
 
             if giant_only:  # replace graph by its giant component
                 logging.info("Extracting giant component ...")
                 assert format == 'ij'
-                s = snap.LoadEdgeList(snap.PNGraph, path, 0, 1)  #
-                s = snap.GetMxWcc(s)
-                # snap.SaveEdgeList(s, path, "")
-                with open(path, 'w') as f:
-                    for e in s.Edges():
-                        f.write("%s %s\n" % (e.GetSrcNId(), e.GetDstNId()))
+                MyGraph(path, name, directed, format=format).giant_component()
                 logging.info("done.")
 
         return MyGraph(path, name, directed, format=format, not_load=not_load)
@@ -379,7 +373,7 @@ class GraphCollections:
 
 class temp_dir(object):
     """
-    Creates a temporary directory to store some files, which will be removed by exit.
+    Creates graph_models temporary directory to store some files, which will be removed by exit.
     Current working directory is also changed to this directory.
     """
     def __init__(self):
@@ -436,9 +430,12 @@ if __name__ == '__main__':
 
     # test_konect()
     # test_netrepo()
-    # test_graph_manipulations()
     # parse_konect_page()
     # parse_netrepo_page()
 
-    with temp_dir() as d:
-        print(d)
+    # with temp_dir() as d:
+    #     print(d)
+    g = GraphCollections.get('test')
+    g = g.giant_component()
+    print(g.nodes())
+    print(g.edges())

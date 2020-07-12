@@ -80,7 +80,7 @@ cdef dict compute_nodes_centrality(MyGraph graph, str centrality, nodes_fraction
     than the number of nodes
     :return: dict (node id -> centrality)
     """
-    logging.info("Computing '%s' for graph '%s' with N=%d, E=%d. Can take a while..." %
+    logging.info("Computing '%s' for graph '%s' with N=%d, E=%d. Can take graph_models while..." %
                  (centrality, graph.name, graph.nodes(), graph.edges()))
 
     cdef TUNGraph.TNodeI ni

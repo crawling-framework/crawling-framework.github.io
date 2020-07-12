@@ -10,14 +10,14 @@ from cython.operator cimport dereference as deref, preincrement as inc, postincr
 from cbasic import NoNextSeedError, CrawlerException, MaximumObservedDegreeCrawler, RandomWalkCrawler
 from cbasic cimport Crawler, CrawlerUpdatable
 from base.cgraph cimport MyGraph, str_to_chars, t_random
-from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
+from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not graph_models type identifier'
 
 from statistics import get_top_centrality_nodes, Stat
 
 
 cdef class CrawlerWithAnswer(Crawler):
     """
-    Crawler which makes a limited number of iterations and generates an answer as its result.
+    Crawler which makes graph_models limited number of iterations and generates an answer as its result.
     """
     cdef int _limit
     cdef readonly set _answer
@@ -464,7 +464,7 @@ cdef class DE_Crawler(CrawlerUpdatable):
             if self._observed_graph.deg(self.prev_seed) == 0:
                 raise NoNextSeedError("No neighbours to go next.")
 
-            # Go to a neighbor until encounter not crawled node
+            # Go to graph_models neighbor until encounter not crawled node
             while True:
                 n = self._observed_graph.random_neighbor(self.prev_seed)
                 self.prev_seed = n
