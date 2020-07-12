@@ -3,6 +3,8 @@ import glob
 import json
 import os
 import logging
+from math import ceil
+
 from tqdm import tqdm
 import multiprocessing as mp
 
@@ -18,7 +20,7 @@ from crawlers.cbasic import Crawler, definition_to_filename, filename_to_definit
     SnowBallCrawler, MaximumObservedDegreeCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections
-from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric
+from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric, centrality_by_name
 from running.merger import ResultsMerger
 from statistics import Stat
 
@@ -144,6 +146,12 @@ class CrawlerHistoryRunner(CrawlerRunner):
         """
         t = time()
 
+        # FIXME this is just to pre-load stats to avoid loading it in every process
+        for md in self.metric_defs:
+            kwargs = md[1]
+            if 'centrality' in kwargs:
+                s = self.graph[centrality_by_name[kwargs['centrality']]]
+
         jobs = []
         for i in range(num_processes):
             logging.info('Start parallel job %s of %s' % (i+1, num_processes))
@@ -197,7 +205,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
                 assert max_cds >= 1
                 crawler_defs = self.crawler_defs
                 left = len(crawler_defs)
-                logging.info("Split %s crawler_defs into %s parts" % (left, left // max_cds))
+                logging.info("Split %s crawler_defs into %s parts" % (left, ceil(left / max_cds)))
                 last_ix = 0
                 while left > 0:
                     batch = min(max_cds, left)

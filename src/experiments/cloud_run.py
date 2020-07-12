@@ -3,6 +3,7 @@ import subprocess, sys
 import logging
 
 from crawlers.cbasic import filename_to_definition
+from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, AvrachenkovCrawler
 from graph_io import konect_names, GraphCollections, netrepo_names, other_names
 from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
@@ -241,13 +242,7 @@ def main():
         print('\n\n')
 
 
-def three_stage():
-    from crawlers.cbasic import RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
-        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
-    from crawlers.cadvanced import DE_Crawler
-    from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler
-    from crawlers.multiseed import MultiInstanceCrawler
-
+def two_stage():
     p = 0.01
     budget_coeff = [
         0.00001, 0.00003, 0.00005,
@@ -255,41 +250,63 @@ def three_stage():
         0.001, 0.003, 0.005,
         0.01, 0.03, 0.05, 0.1, 0.3
     ]
-    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
     ]
 
     n_instances = 8
-    for graph_name in konect_names:
+    for graph_name in netrepo_names + konect_names:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
         budgets = [int(b*n) for b in budget_coeff]
         crawler_defs = [
-           (ThreeStageCrawler, {'s': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
-        # ] + [
-        #    (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p, 'b': b}) for s in start_seeds for b in batches
+           (AvrachenkovCrawler, {'s': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
         ]
 
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        chr.run_missing(n_instances, max_cpus=8, max_memory=12)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=26)
         print('\n\n')
 
         # rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
         # rm.draw_by_metric_crawler(x_lims=(0, 0.1*n), x_normalize=False, scale=12, draw_error=False)
 
 
-def three_stage_mod():
-    from crawlers.cbasic import RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
-        DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
-    from crawlers.cadvanced import DE_Crawler
-    from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler
-    from crawlers.multiseed import MultiInstanceCrawler
+def three_stage(p):
+    # p = 0.1
+    budget_coeff = [
+        # 0.00001, 0.00003, 0.00005,
+        0.0001, 0.0003, 0.0005,
+        0.001, 0.003, 0.005,
+        0.01, 0.03, 0.05, 0.1, 0.3
+    ]
+    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
-    p = 0.01
+    metric_defs = [
+        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
+    ]
+
+    n_instances = 8
+    for graph_name in netrepo_names + konect_names:
+        g = GraphCollections.get(graph_name)
+        n = g[Stat.NODES]
+        budgets = [int(b*n) for b in budget_coeff]
+        crawler_defs = [
+           (ThreeStageCrawler, {'s': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
+        ]
+
+        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=26)
+        print('\n\n')
+
+        # rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
+        # rm.draw_by_metric_crawler(x_lims=(0, 0.1*n), x_normalize=False, scale=12, draw_error=False)
+
+
+def three_stage_mod(p=0.01):
     budget_coeff = 0.03
-    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    seed_coeff = [0, 0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
 
     metric_defs = [
@@ -297,17 +314,16 @@ def three_stage_mod():
     ]
 
     n_instances = 8
-    for graph_name in konect_names[10:]:
+    for graph_name in netrepo_names + konect_names:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
-        s = g[Stat.DEGREE_DISTR]  # just to pre-load stat to avoid loading it in every process
         budget = int(budget_coeff * n)
         crawler_defs = [
            (ThreeStageMODCrawler, {'s': int(s*budget), 'n': budget, 'b': b, 'p': p}) for s in seed_coeff for b in batch
         ]
 
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        chr.run_missing(n_instances, max_cpus=8, max_memory=28)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=26)
         print('\n\n')
 
         # rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
@@ -324,5 +340,9 @@ if __name__ == '__main__':
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
-    # three_stage()
-    three_stage_mod()
+    # two_stage()
+    # three_stage(p=0.1)
+    # three_stage(p=0.0001)
+    three_stage_mod(p=0.1)
+    three_stage_mod(p=0.001)
+    three_stage_mod(p=0.0001)

@@ -104,18 +104,17 @@ def target_set_coverage_bigruns():
     g = GraphCollections.get('digg-friends')
     # g = GraphCollections.get('Pokec')
 
-    p = 0.01
-    budget = int(0.005 * g.nodes())
-    s = int(budget / 2)
+    p = 0.1
+    budget = int(0.03 * g.nodes())
+    s = int(0.5 * budget)
 
     crawler_defs = [
         # (MaximumObservedDegreeCrawler, {'batch': 1}),
         # (MaximumObservedDegreeCrawler, {'batch': 10}),
         # (MaximumObservedDegreeCrawler, {'batch': 100}),
         # (MultiInstanceCrawler, {'count': 5, 'crawler_def': (MaximumObservedDegreeCrawler, {'batch': 10})}),
-        # (ThreeStageCrawler, {'s': s, 'n': budget, 'p': p}),
-        ThreeStageCrawler(g, s=s, n=budget, p=p).definition,
-        ThreeStageMODCrawler(g, s=s, n=budget, p=p).definition,
+        (ThreeStageCrawler, {'s': s, 'n': budget, 'p': p}),
+        # (ThreeStageMODCrawler, {'s': s, 'n': budget, 'p': p}),
         # (ThreeStageCrawlerSeedsAreHubs, {'s': int(budget / 2), 'n': budget, 'p': p, 'name': 'hub'}),
         # (ThreeStageMODCrawler, {'s': int(budget / 2), 'n': budget, 'p': p, 'b': 1}),
         # (ThreeStageMODCrawler, {'s': int(budget / 3), 'n': budget, 'p': p, 'b': 1}),
@@ -133,19 +132,22 @@ def target_set_coverage_bigruns():
         # TopCentralityMetric(g, top=p, part='answer', measure='F1', centrality=Stat.ECCENTRICITY_DISTR.short).definition,
         # TopCentralityMetric(g, top=p, part='answer', measure='F1', centrality=Stat.CLOSENESS_DISTR.short).definition,
         # TopCentralityMetric(g, top=p, part='answer', measure='F1', centrality=Stat.K_CORENESS_DISTR.short).definition,
-        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
-        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'answer'}),
+        # (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
+        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'F1', 'part': 'answer'}),
 
     ]
-    n_instances = 10
-    # Run missing iterations
-    chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-    chr.run_missing(n_instances)
+    acr = AnimatedCrawlerRunner(g, crawler_defs, metric_defs, budget=budget)
+    acr.run()
 
-    # Run merger
-    crm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
-    crm.draw_by_metric_crawler(x_lims=(0, budget), x_normalize=False, scale=8, swap_coloring_scheme=True, draw_error=False)
-    # crm.missing_instances()
+    # n_instances = 10
+    # # Run missing iterations
+    # chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
+    # chr.run_missing(n_instances)
+    #
+    # # Run merger
+    # crm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
+    # crm.draw_by_metric_crawler(x_lims=(0, budget), x_normalize=False, scale=8, swap_coloring_scheme=True, draw_error=False)
+    # # crm.missing_instances()
 
 
 def test_detection_quality():
@@ -222,6 +224,6 @@ if __name__ == '__main__':
     # logging.getLogger().setLevel(logging.DEBUG)
 
     # test()
-    test_target_set_coverage()
-    # target_set_coverage_bigruns()
+    # test_target_set_coverage()
+    target_set_coverage_bigruns()
     # test_detection_quality()
