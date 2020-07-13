@@ -17,8 +17,8 @@ def test_knnucb():
     # s = int(budget / 2)
 
     crawler_defs = [
-        # (KNN_UCB_Crawler, {}),
-        (MaximumObservedDegreeCrawler, {}),
+        (KNN_UCB_Crawler, {}),
+        # (MaximumObservedDegreeCrawler, {}),
     ]
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
