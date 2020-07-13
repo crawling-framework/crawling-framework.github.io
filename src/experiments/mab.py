@@ -9,7 +9,8 @@ from statistics import Stat
 
 
 def test_knnucb():
-    g = GraphCollections.get('dolphins')
+    # g = GraphCollections.get('dolphins')
+    g = GraphCollections.get('digg-friends')
     # g = GraphCollections.get('Pokec')
 
     p = 1
@@ -17,8 +18,8 @@ def test_knnucb():
     # s = int(budget / 2)
 
     crawler_defs = [
-        (KNN_UCB_Crawler, {}),
-        # (MaximumObservedDegreeCrawler, {}),
+        (KNN_UCB_Crawler, {'initial_seed': 1}),
+        (MaximumObservedDegreeCrawler, {'initial_seed': 1}),
     ]
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),

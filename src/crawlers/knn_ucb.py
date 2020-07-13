@@ -18,6 +18,15 @@ class KNN_UCB_Crawler(Crawler):
     short = 'KNN-UCB'
 
     def __init__(self, graph: MyGraph, initial_seed=-1, alpha=0.5, delta=0.5, k=10, n0=20, **kwargs):
+        """
+
+        :param graph:
+        :param initial_seed:
+        :param alpha:
+        :param delta:
+        :param k:
+        :param n0:
+        """
 
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
@@ -28,6 +37,7 @@ class KNN_UCB_Crawler(Crawler):
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
 
+        # TODO make param docs
         # k - number of nearest neighbors to estimate expected reward
         # alpha - search ratio
         # dictionaries that store observed and crawled nodes feature vectors
@@ -44,10 +54,8 @@ class KNN_UCB_Crawler(Crawler):
     def crawl(self, seed: int):
 
         # calculate the number of open nodes after crawling current node
-        vert_degree_old = self._observed_graph.deg(seed)
         res = super().crawl(seed)
-        vert_degree_new = self._observed_graph.deg(seed)
-        self.dct_crawled.update({seed: (np.array([1.0, 1.0, 1.0]), False, vert_degree_new - vert_degree_old)})
+        self.dct_crawled.update({seed: (np.array([1.0, 1.0, 1.0]), False, len(res))})
         # print(res)
         # print("!!!")
         return res
@@ -68,7 +76,8 @@ class KNN_UCB_Crawler(Crawler):
         if len(self.crawled_set) > 1:
             for i in self.crawled_set:
 
-                if self.dct_crawled.get(i) is not None:
+                # if self.dct_crawled.get(i) is not None:
+                if i in self.dct_crawled:
                 # if dct_crawled.get(i)[1]:
                 # if 0 == 0:
                     # vert_degree - degree of current node

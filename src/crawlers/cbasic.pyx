@@ -140,7 +140,7 @@ cdef class Crawler:
         """ Crawl specified node. The observed graph is updated, also crawled and observed set.
 
         :param seed: node id to crawl
-        :return: vector of updated nodes
+        :return: vector of newly observed nodes
         """
         # seed = int(seed)  # convert possible int64 to int, since snap functions would get error
         cdef vector[int] res
