@@ -18,7 +18,7 @@ def test_knnucb():
     # s = int(budget / 2)
 
     crawler_defs = [
-        (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 0.5}),
+        (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 0}),
         (MaximumObservedDegreeCrawler, {'initial_seed': 1}),
         # (KNN_UCB_Crawler, {}),
         # (MaximumObservedDegreeCrawler, {}),

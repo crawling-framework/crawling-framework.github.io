@@ -77,15 +77,16 @@ class KNN_UCB_Crawler(Crawler):
         sigm /= kol
         return f + self.alp * sigm
 
-    # calculation of feature vector for node
     def calc_node_feat_vec(self, seed):
         """
+        Calculation of feature vector for node.
+        vert_degree - degree of current node
+        aver_neb_degree - average degree of adjacent crawled nodes
+        max_neb_degree - maximum degree of adjacent crawled nodes
+        kol_triangle - the number of triangles containing the current node
+
         :param seed: the node for which the feature vector is calculated
         """
-        # vert_degree - degree of current node
-        # aver_neb_degree - average degree of adjacent crawled nodes
-        # max_neb_degree - maximum degree of adjacent crawled nodes
-        # kol_triangle - the number of triangles containing the current node
 
         vert_degree = self._observed_graph.deg(seed)
         max_neb_degree = 0
@@ -114,13 +115,12 @@ class KNN_UCB_Crawler(Crawler):
         # self.dct_crawled[i][0] = vec
         # self.dct_crawled[i][1] = False
 
-
     def crawl(self, seed: int):
-
         # calculate the number of open nodes after crawling current node
         res = super().crawl(seed)
         bool = True
         self.dct_crawled.update({seed: (np.array([0.0, 0.0, 0.0, 0.0]), bool, len(res))})
+
         # for key, value in self.dct_observed.items():
         #     print(key)
         # print(self._observed_set)
