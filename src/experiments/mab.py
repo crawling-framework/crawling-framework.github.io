@@ -10,21 +10,23 @@ from statistics import Stat
 
 def test_knnucb():
     # g = GraphCollections.get('dolphins')
-    g = GraphCollections.get('digg-friends')
     # g = GraphCollections.get('Pokec')
+    g = GraphCollections.get('digg-friends')
 
     p = 1
     # budget = int(0.005 * g.nodes())
     # s = int(budget / 2)
 
     crawler_defs = [
-        (KNN_UCB_Crawler, {'initial_seed': 1}),
+        (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 0.5}),
         (MaximumObservedDegreeCrawler, {'initial_seed': 1}),
+        # (KNN_UCB_Crawler, {}),
+        # (MaximumObservedDegreeCrawler, {}),
     ]
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
     ]
-    acr = AnimatedCrawlerRunner(g, crawler_defs, metric_defs, budget=100)
+    acr = AnimatedCrawlerRunner(g, crawler_defs, metric_defs, budget=1000)
     acr.run()
 
 
