@@ -43,14 +43,16 @@ class KNN_UCB_Crawler(Crawler):
         self.dct_crawled = dict()  # node -> (feature vector, need_update, y_j)
         self.k = k
         self.alp = alpha
+        self.vec_len = 4
+        self.update_period = 1
 
         # self.observe(initial_seed)
         # initial_seed = self._orig_graph.random_node()
         # self.observed_set.add(initial_seed)
 
-    # calculation of the expected reward for the node
     def expected_reward(self, arr):
         """
+        Calculation of the expected reward for the node
         :param arr: array of distances from the calculated node to the crawled nodes
         """
         f = 0
@@ -110,6 +112,7 @@ class KNN_UCB_Crawler(Crawler):
 
         # vec = np.array([vert_degree, med_neb_degree, max_neb_degree, per_craw_neb])
         vec = np.array([vert_degree, med_neb_degree, aver_neb_degree, per_craw_neb])
+        # vec = np.array([vert_degree])
         return vec
         # dct_crawled[i] = vec, False, dct_crawled.get(i)[2]
         # self.dct_crawled[i][0] = vec
@@ -119,7 +122,7 @@ class KNN_UCB_Crawler(Crawler):
         # calculate the number of open nodes after crawling current node
         res = super().crawl(seed)
         bool = True
-        self.dct_crawled.update({seed: (np.array([0.0, 0.0, 0.0, 0.0]), bool, len(res))})
+        self.dct_crawled.update({seed: (np.zeros((self.vec_len)), bool, len(res))})
 
         # for key, value in self.dct_observed.items():
         #     print(key)
@@ -136,9 +139,9 @@ class KNN_UCB_Crawler(Crawler):
                 # print(self.crawled_set)
                 # print(i, ' !')
                 if self.dct_observed.get(i) is not None:
-                    self.dct_observed.update({i: (self.dct_observed.get(i)[0], True)})
+                    self.dct_observed.update({i: (self.dct_observed.get(i)[0], True, 0, True)})
                 else:
-                    self.dct_observed.update({i: (np.array([1.0, 1.0, 1.0, 1.0]), True)})
+                    self.dct_observed.update({i: (np.ones((self.vec_len)), True, 0, True)})
         # print(self.dct_crawled)
         # print(res)
         # print("!!!")
@@ -172,6 +175,9 @@ class KNN_UCB_Crawler(Crawler):
             for i in self.observed_set:
                 best_node = i
 
+        # print(self.dct_observed)
+        # print(self.dct_crawled)
+
         # calculation of feature vector for observed nodes
         if len(self.crawled_set) != 0:
             for i in self.observed_set:
@@ -182,28 +188,36 @@ class KNN_UCB_Crawler(Crawler):
                     if self.dct_observed.get(i)[1]:
                         # if 0 == 0:
                         vec = self.calc_node_feat_vec(i)
-                        self.dct_observed.update({i: (vec, False)})
+                        self.dct_observed.update({i: (vec, False, self.dct_observed.get(i)[2], self.dct_observed.get(i)[3])})
                 elif len(self.crawled_set) == 1:
                     vec = self.calc_node_feat_vec(i)
-                    self.dct_observed.update({i: (vec, False)})
+                    self.dct_observed.update({i: (vec, False, self.dct_observed.get(i)[2], self.dct_observed.get(i)[3])})
         # print(self.dct_observed)
         # print(self.dct_crawled)
 
         # choosing the best node from observed nodes for crawling
         if len(self.crawled_set) > 1:
             for key, value in self.dct_observed.items():
-                # find k nearest neighbors
-                arr = []
-                for i in self.crawled_set:
-                    arr.append((i, count_dist(value[0], self.dct_crawled.get(i)[0])))
-                arr.sort(key=itemgetter(1))
-                # print(arr)
+                if value[3] or len(self.crawled_set) % self.update_period == 0:
+                    # find k nearest neighbors
+                    arr = []
+                    for i in self.crawled_set:
+                        arr.append((i, count_dist(value[0], self.dct_crawled.get(i)[0])))
+                    arr.sort(key=itemgetter(1))
+                    # print(arr)
 
-                exp_rev = self.expected_reward(arr)
+                    exp_rev = self.expected_reward(arr)
+                    if len(self.crawled_set) >= 20:
+                        self.dct_observed.update({key: (value[0], value[1], exp_rev, False)})
+                    else:
+                        self.dct_observed.update({key: (value[0], value[1], exp_rev, True)})
+                else:
+                    exp_rev = value[2]
 
                 if(exp_rev > best_expected_gain):
                     best_expected_gain = exp_rev
                     best_node = key
+
         # print(self.dct_observed)
         # print(self.dct_crawled)
         # print(best_node)
@@ -211,6 +225,11 @@ class KNN_UCB_Crawler(Crawler):
             if self.dct_observed.get(best_node) is not None:
                 self.dct_crawled.update({best_node: (self.dct_observed.get(best_node)[0], False, 0)})
                 del self.dct_observed[best_node]
+
+        if len(self.crawled_set) >= 20 and len(self.crawled_set) < 50:
+            self.update_period = 5
+        elif self.update_period < 50 and len(self.crawled_set) % 50 == 0:
+            self.update_period += 10
 
         assert best_node != -1
         return best_node
