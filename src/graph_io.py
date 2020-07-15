@@ -140,7 +140,7 @@ netrepo_names = [
 
     # More social graphs
     'soc-anybeat',
-
+    'soc-twitter-follows',  # N=404719, E=713319, d_avg=3.53
 ]
 
 

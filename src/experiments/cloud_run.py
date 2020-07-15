@@ -158,7 +158,7 @@ def copy_remote2local(host: str, src: str, dst: str, ignore_fails=False):
 def cloud_prepare(host: str):
     # pass
     # Pull from branch cloud
-    # do_remote(host, 'eval `ssh-agent -s`; ssh-add ~/.ssh/cloud_rsa; cd workspace/crawling; git checkout cloud; git pull')
+    do_remote(host, 'eval `ssh-agent -s`; ssh-add ~/.ssh/cloud_rsa; cd workspace/crawling; git checkout cloud; git pull')
 
     # # Copy graphs and stats
     # do_remote(host, "cd workspace/crawling/data; mkdir konect; mkdir netrepo; mkdir other", ignore_fails=True)
@@ -173,10 +173,10 @@ def cloud_prepare(host: str):
     #     dst = os.path.dirname(src.replace('misha', 'ubuntu'))
     #     copy_local2remote(host, src=src, dst=dst)
 
-    # Copy results from cloud
-    dst = os.path.dirname(RESULT_DIR)
-    src = RESULT_DIR.replace('misha', 'ubuntu')  # will copy just in place
-    copy_remote2local(host, src=src, dst=dst)
+    # # Copy results from cloud
+    # dst = os.path.dirname(RESULT_DIR)
+    # src = RESULT_DIR.replace('misha', 'ubuntu')  # will copy just in place
+    # copy_remote2local(host, src=src, dst=dst)
 
     # pp = 'PYTHONPATH=~/workspace/crawling/src python3'
     # for name in netrepo_names:
@@ -244,13 +244,13 @@ def main():
 
 def two_stage():
     p = 0.01
-    budget_coeff = [
-        0.00001, 0.00003, 0.00005,
-        0.0001, 0.0003, 0.0005,
-        0.001, 0.003, 0.005,
-        0.01, 0.03, 0.05, 0.1, 0.3
-    ]
-    seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    # budget_coeff = [
+    #     0.00001, 0.00003, 0.00005,
+    #     0.0001, 0.0003, 0.0005,
+    #     0.001, 0.003, 0.005,
+    #     0.01, 0.03, 0.05, 0.1, 0.3
+    # ]
+    # seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
@@ -260,9 +260,11 @@ def two_stage():
     for graph_name in netrepo_names + konect_names:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
-        budgets = [int(b*n) for b in budget_coeff]
+        p = 100 / n
+        # budgets = [int(b*n) for b in budget_coeff]
         crawler_defs = [
-           (AvrachenkovCrawler, {'s': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
+           # (AvrachenkovCrawler, {'s': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
+           (AvrachenkovCrawler, {'s': 500, 'n': 1000, 'p': p}),
         ]
 
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
@@ -291,13 +293,14 @@ def three_stage(p):
     for graph_name in netrepo_names + konect_names:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
+        p = 100 / n
         budgets = [int(b*n) for b in budget_coeff]
         crawler_defs = [
            (ThreeStageCrawler, {'s': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
         ]
 
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        chr.run_missing(n_instances, max_cpus=8, max_memory=26)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=32)
         print('\n\n')
 
         # rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
@@ -305,7 +308,7 @@ def three_stage(p):
 
 
 def three_stage_mod(p=0.01):
-    budget_coeff = 0.03
+    budget_coeff = 0.005
     seed_coeff = [0, 0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
 
@@ -336,13 +339,13 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     # cloud_io()
-    # cloud_prepare(clouds[0])
+    # cloud_prepare(clouds[1])
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
     # two_stage()
-    # three_stage(p=0.1)
+    three_stage(p=0.01)
     # three_stage(p=0.0001)
-    three_stage_mod(p=0.1)
-    three_stage_mod(p=0.001)
-    three_stage_mod(p=0.0001)
+    # three_stage_mod(p=0.01)
+    # three_stage_mod(p=0.001)
+    # three_stage_mod(p=0.0001)

@@ -1,5 +1,6 @@
 import logging
 from math import sqrt, ceil
+from operator import itemgetter
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -129,8 +130,8 @@ def three_stage_mod_b_s():
     ]
 
     n_instances = 8
-    graph_names = konect_names[:12]
-    # graph_names = netrepo_names
+    # graph_names = konect_names[:12]
+    graph_names = netrepo_names
     finals = np.zeros((len(graph_names), len(batch), len(seed_coeff)))  # finals[graph][n][s] -> F1
 
     nrows = int(sqrt(len(graph_names)))
@@ -196,6 +197,7 @@ def three_stage_best_n_s():
     graph_names = konect_names + netrepo_names
     worst = np.ones((len(budget_coeff), len(seed_coeff)))
     res = np.zeros((len(graph_names), len(budget_coeff), len(seed_coeff)))
+    f_20_max = np.zeros(len(graph_names))  # 20th degree / max degree
     for i, graph_name in enumerate(graph_names):
         g = GraphCollections.get(graph_name, not_load=True)
         n = g[Stat.NODES]
@@ -214,12 +216,17 @@ def three_stage_best_n_s():
                 res[i][j][k] = v
                 if v < worst[j][k]:
                     worst[j][k] = v
+        node_cent = list(g[Stat.DEGREE_DISTR].items())
+        f_20 = sorted(node_cent, key=itemgetter(1), reverse=True)[20][1]
+        f_20_max[i] = g[Stat.NODES] / f_20
+        print(graph_name, f_20_max[i])
     avg = np.mean(res, axis=0)
     var = np.var(res, axis=0) ** 0.5
 
     print(worst)
     print(avg)
     print(var)
+    print(list(zip(graph_names, f_20_max)))
     # plt.title('3-Stage worst in konect')
     # plt.imshow(worst, cmap='inferno', vmin=0, vmax=1)
     plt.title('3-Stage average p=%s' % p)
