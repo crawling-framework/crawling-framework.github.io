@@ -18,29 +18,23 @@ from statistics import Stat, get_top_centrality_nodes
 
 
 class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
-
     short = 'EmulatorWA'
 
     def __init__(self, graph: MyGraph, crawler_def, target_size: int, **kwargs):
         super().__init__(graph, target_size=target_size, crawler_def=crawler_def, **kwargs)
         self.pN = target_size
 
-        klass, ckwargs = crawler_def
+        _, ckwargs = crawler_def
         ckwargs['observed_graph'] = self._observed_graph
         ckwargs['crawled_set'] = self._crawled_set
         ckwargs['observed_set'] = self._observed_set
 
         self.crawler = Crawler.from_definition(self._orig_graph, crawler_def)
-
-        # self._crawled_set = self.crawler._crawled_set
-        # self._observed_graph = self.crawler._observed_graph
-        # self._observed_set = self._observed_set
-        self.crawl = self.crawler.crawl
         self.next_seed = self.crawler.next_seed
-    # def crawl(self, seed: int) =
 
-    # def next_seed(self):
-    #     return self.crawler.next_seed()
+    def crawl(self, seed: int):
+        self._actual_answer = False
+        return self.crawler.crawl(seed)
 
     def seeds_generator(self):
         pass
@@ -98,7 +92,7 @@ def target_set_coverage_bigruns():
         # (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'F1', 'part': 'crawled'}),
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'F1', 'part': 'answer'}),
     ]
-    n_instances = 10
+    n_instances = 2
     # Run missing iterations
     chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
     chr.run_parallel(n_instances)

@@ -26,8 +26,9 @@ def all_subclasses(cls):
 def definition_to_filename(definition) -> str:
     """ Convert crawler string definition into filename. Uniqueness is maintained """
     _class, kwargs = definition
+    excluded = set(['name', 'observed_graph', 'crawled_set', 'observed_set'])  # will not be in filename
     args = ",".join("%s=%s" % (key, definition_to_filename(kwargs[key]) if key == 'crawler_def' else kwargs[key])
-                    for key in sorted(kwargs.keys()) if key != 'name')
+                    for key in sorted(kwargs.keys()) if key not in excluded)
     res = "%s(%s)" % (_class.short, args)
     return res
 
