@@ -30,14 +30,15 @@ class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
         ckwargs['observed_set'] = self._observed_set
 
         self.crawler = Crawler.from_definition(self._orig_graph, crawler_def)
-        self.next_seed = self.crawler.next_seed
+        # self.next_seed = self.crawler.next_seed
 
     def crawl(self, seed: int):
         self._actual_answer = False
         return self.crawler.crawl(seed)
 
     def seeds_generator(self):
-        pass
+        for i in range(self.pN):
+            yield self.crawler.next_seed()
 
     def _compute_answer(self):
         self._answer.clear()
@@ -70,7 +71,7 @@ def target_set_coverage_bigruns():
         # RandomCrawler(g, initial_seed=1).definition,
         # (AvrachenkovCrawler, {'n': budget, 'n1': s, 'k': int(p * g.nodes())}),
         # ThreeStageCrawler(g, s=s, n=budget, p=p).definition,
-        ThreeStageMODCrawler(g, s=1, n=budget, p=p, b=1).definition,
+        # ThreeStageMODCrawler(g, s=1, n=budget, p=p, b=1).definition,
         # (ThreeStageCrawlerSeedsAreHubs, {'s': int(budget / 2), 'n': budget, 'p': p, 'name': 'hub'}),
         # (ThreeStageMODCrawler, {'s': int(budget / 2), 'n': budget, 'p': p, 'b': 1}),
         # (ThreeStageMODCrawler, {'s': int(budget / 3), 'n': budget, 'p': p, 'b': 1}),
