@@ -7,8 +7,8 @@ from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric
 
 from base.cgraph import MyGraph
-from crawlers.cbasic import CrawlerException, MaximumObservedDegreeCrawler, RandomWalkCrawler, \
-    BreadthFirstSearchCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler, MaximumExcessDegreeCrawler
+from crawlers.cbasic import Crawler, CrawlerException, MaximumObservedDegreeCrawler, RandomWalkCrawler, \
+    BreadthFirstSearchCrawler, RandomCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler, MaximumExcessDegreeCrawler
 from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer, AvrachenkovCrawler, \
     ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs
 from crawlers.multiseed import MultiInstanceCrawler
@@ -17,104 +17,66 @@ from graph_io import GraphCollections
 from statistics import Stat, get_top_centrality_nodes
 
 
-def test_target_set_coverage():
-    # name, budget, start_seeds = 'flixster', 50000, 10000
-    # name, budget, start_seeds = 'soc-pokec-relationships', 3000, 3000
-    name, budget, start_seeds = 'digg-friends', 5000, 200
-    # name, budget, start_seeds = 'loc-brightkite_edges', 2500, 500
-    # name, budget, start_seeds = 'petster-hamster', 200, 100
-    # name, budget, start_seeds = 'dolphins', 1, 10
-    graph = GraphCollections.get(name, giant_only=True)
+class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
 
-    # name, budget, start_seeds = 'ca-CondMat', 1000, 2000
-    # name, budget, start_seeds = 'soc-hamsterster', 1000, 2000
-    # name, budget, start_seeds = 'tech-WHOIS', 1000, 2000
-    # name, budget, start_seeds = 'ca-AstroPh', 1000, 2000
-    # name, budget, start_seeds = 'tech-pgp', 1000, 2000
-    # name, budget, start_seeds = 'tech-routers-rf', 1000, 2000
-    # name, budget, start_seeds = 'web-indochina-2004', 1000, 2000
-    # name, budget, start_seeds = 'soc-anybeat', 1000, 2000
+    short = 'EmulatorWA'
 
-    # name, budget, start_seeds = 'socfb-Bingham82', 1000, 2000
-    # graph = GraphCollections.get(name, 'netrepo', giant_only=True)
+    def __init__(self, graph: MyGraph, crawler_def, target_size: int, **kwargs):
+        super().__init__(graph, target_size=target_size, crawler_def=crawler_def, **kwargs)
+        self.pN = target_size
 
-    p = 0.01
-    target_list = get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(p * graph[Stat.NODES]))
-    thr_degree = graph.deg(target_list[-1])
-    target_set = set(target_list)
+        klass, ckwargs = crawler_def
+        ckwargs['observed_graph'] = self._observed_graph
+        ckwargs['crawled_set'] = self._crawled_set
+        ckwargs['observed_set'] = self._observed_set
 
-    budget = int(0.005 * graph.nodes())
+        self.crawler = Crawler.from_definition(self._orig_graph, crawler_def)
 
-    crawlers = [
-        # (DE_Crawler, {'initial_budget': int(0.15*budget)}),
-        # BreadthFirstSearchCrawler(graph),
-        # RandomWalkCrawler(graph),
-        # MaximumObservedDegreeCrawler(graph, batch=1),
-        # # PreferentialObservedDegreeCrawler(graph, batch=1),
-        # MaximumExcessDegreeCrawler(graph),
-        ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
-        ThreeStageMODCrawler(graph, s=start_seeds, n=budget, p=p),
-        # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
-        # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
-        # ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=10),
-        # ThreeStageMODCrawler(graph, s=1000, n=budget, p=p, b=10),
-        # (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p}),
-        # (ThreeStageMODCrawler, {'s': start_seeds, 'n': budget, 'p': p, 'b': 2}),
-        # ThreeStageFlexMODCrawler(graph, s=start_seeds, n=budget, p=p, b=1, thr_degree=thr_degree),
-        # DepthFirstSearchCrawler(graph, initial_seed=1),
-        # RandomCrawler(graph, initial_seed=1),
-        # (AvrachenkovCrawler, {'n': budget, 'n1': start_seeds, 'k': int(p * graph.nodes())}),
-        # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
-        # ThreeStageCrawlerSeedsAreHubs(graph, s=start_seeds, n=budget, p=p),
-        # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=1),
-        # ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=1),
-        # MultiInstanceCrawler(graph, crawlers=[
-        #     MaximumObservedDegreeCrawler(graph, batch=1, initial_seed=i+1) for i in range(100)
-        # ])
-    ]
+        # self._crawled_set = self.crawler._crawled_set
+        # self._observed_graph = self.crawler._observed_graph
+        # self._observed_set = self._observed_set
+        self.crawl = self.crawler.crawl
+        self.next_seed = self.crawler.next_seed
+    # def crawl(self, seed: int) =
 
-    metrics = [
-        # Metric(r'$|V_o|/|V|$', lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES]),
-        # Metric(r'$|V_o \cap V^*|/|V^*|$', lambda crawler: len(target_set.intersection(crawler.nodes_set)) / len(target_set)),
-        # Metric(r'$F_1$', f1_measure),
-        # Metric(r'Pr', precision),
-        # Metric(r'Re', recall),
-        # Metric(r'Re - all nodes', recall_all),
-        # Metric(r'Pr - E1*', lambda crawler: pr(crawler.e1s)),
-        # Metric(r'Pr - E2*', lambda crawler: pr(crawler.e2s)),
-        # Metric(r'Re - E1*', lambda crawler: re(crawler.e1s)),
-        # Metric(r'Re - E2*', lambda crawler: re(crawler.e2s)),
-        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
-        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'answer'}),
-    ]
+    # def next_seed(self):
+    #     return self.crawler.next_seed()
 
-    from time import time
-    t = time()
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=max(1, int(budget/30)))
-    ci.run()
-    print(time()-t)
+    def seeds_generator(self):
+        pass
 
-    # print("time_top", crawlers[0].time_top)
-    # print("time_clust", crawlers[0].time_clust)
-    # print("time_next", crawlers[0].time_next)
+    def _compute_answer(self):
+        self._answer.clear()
+        self._get_mod_nodes(self._crawled_set, self._answer, self.pN)
+        return 0
 
 
 def target_set_coverage_bigruns():
-    g = GraphCollections.get('digg-friends')
+
+    # for name in ('soc-hamsterster', 'petster-hamster', 'soc-anybeat', 'loc-brightkite_edges', 'soc-themarker',
+    #              'soc-slashdot', 'soc-BlogCatalog', 'digg-friends', 'soc-twitter-follows'):
+    name = 'digg-friends'
+    g = GraphCollections.get(name)
     # g = GraphCollections.get('Pokec')
 
     p = 0.01
     budget = int(0.005 * g.nodes())
-    s = int(budget / 2)
+    s = int(budget/2)
 
     crawler_defs = [
-        # (MaximumObservedDegreeCrawler, {'batch': 1}),
         # (MaximumObservedDegreeCrawler, {'batch': 10}),
         # (MaximumObservedDegreeCrawler, {'batch': 100}),
         # (MultiInstanceCrawler, {'count': 5, 'crawler_def': (MaximumObservedDegreeCrawler, {'batch': 10})}),
         # (ThreeStageCrawler, {'s': s, 'n': budget, 'p': p}),
-        ThreeStageCrawler(g, s=s, n=budget, p=p).definition,
-        ThreeStageMODCrawler(g, s=s, n=budget, p=p).definition,
+        # (RandomWalkCrawler, {}),
+        # (MaximumObservedDegreeCrawler, {'batch': 1}),
+        (EmulatorWithAnswerCrawler, {'crawler_def': (DepthFirstSearchCrawler, {}), 'target_size': int(p*g.nodes())}),
+        # DepthFirstSearchCrawler(g).definition,
+        # RandomWalkCrawler(g).definition,
+        # RandomCrawler(g, initial_seed=1).definition,
+        # (AvrachenkovCrawler, {'n': budget, 'n1': s, 'k': int(p * g.nodes())}),
+        # ThreeStageCrawler(g, s=s, n=budget, p=p).definition,
+        ThreeStageMODCrawler(g, s=1, n=budget, p=p, b=1).definition,
         # (ThreeStageCrawlerSeedsAreHubs, {'s': int(budget / 2), 'n': budget, 'p': p, 'name': 'hub'}),
         # (ThreeStageMODCrawler, {'s': int(budget / 2), 'n': budget, 'p': p, 'b': 1}),
         # (ThreeStageMODCrawler, {'s': int(budget / 3), 'n': budget, 'p': p, 'b': 1}),
@@ -132,87 +94,87 @@ def target_set_coverage_bigruns():
         # TopCentralityMetric(g, top=p, part='answer', measure='F1', centrality=Stat.ECCENTRICITY_DISTR.short).definition,
         # TopCentralityMetric(g, top=p, part='answer', measure='F1', centrality=Stat.CLOSENESS_DISTR.short).definition,
         # TopCentralityMetric(g, top=p, part='answer', measure='F1', centrality=Stat.K_CORENESS_DISTR.short).definition,
-        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
-        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'answer'}),
-
+        # (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
+        # (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'F1', 'part': 'crawled'}),
+        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'F1', 'part': 'answer'}),
     ]
     n_instances = 10
     # Run missing iterations
     chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-    chr.run_missing(n_instances)
+    chr.run_parallel(n_instances)
 
-    # Run merger
-    crm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
-    crm.draw_by_metric_crawler(x_lims=(0, budget), x_normalize=False, scale=8, swap_coloring_scheme=True, draw_error=False)
-    # crm.missing_instances()
-
-
-def test_detection_quality():
-    # name = 'libimseti'
-    # name = 'petster-friendships-cat'
-    # name = 'soc-pokec-relationships'
-    # name = 'digg-friends'
-    # name = 'loc-brightkite_edges'
-    # name = 'ego-gplus'
-    name = 'petster-hamster'
-    graph = GraphCollections.get(name, giant_only=True)
-
-    p = 0.1
-
-    budget = 200  # 2500 5000 50000
-    start_seeds = 50  # 500 1000 5000
+        # Run merger
+        # crm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
+        # crm.draw_by_crawler(x_lims=(0, budget), x_normalize=False, scale=8, draw_error=False)
+        # crm.missing_instances()
 
 
-    crawler = ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p)
-    crawler.crawl_budget(budget)
-
-    ograph = crawler.observed_graph
-    # nodes = crawler.nodes_set
-    # obs = crawler.observed_set
-    crawler._compute_answer()
-    ans = crawler.answer
-
-    def deg(graph, node):
-        return graph.snap.GetNI(node).GetDeg()
-
-    # print("\n\ncrawler.crawled_set")
-    # for n in crawler.crawled_set:
-    #     o = deg(ograph, n)
-    #     r = deg(graph, n)
-    #     print("n=%s, real=%s, obs=%s %s" % (n, r, o, o/r))
-    #
-    # print("\n\ncrawler.observed_set")
-    # obs = crawler._get_mod_nodes(crawler.observed_set)
-    # for n in obs:
-    #     o = deg(ograph, n)
-    #     r = deg(graph, n)
-    #     print("n=%s, real=%s, obs=%s %s" % (n, r, o, o/r))
-    #
-
-    import numpy as np
-    plt.figure('', (22, 12))
-
-    target_list = get_top_centrality_nodes(graph, 'degree', count=int(graph[Stat.NODES]))
-
-    xs = np.arange(len(target_list))
-    rs = np.array([deg(graph, n) for n in target_list])
-    os = np.array([deg(ograph, n) if n in crawler.nodes_set else 0 for n in target_list])
-    answs = np.array([0.5 if n in crawler.answer else 0 for n in target_list])
-    border = min([deg(ograph, n) for n in ans])
-    print('border', border)
-
-    plt.bar(xs, rs, width=1, color='b', label='real degree')
-    plt.bar(xs, os, width=1, color='g', label='observed degree')
-    plt.bar(xs, answs, width=1, color='r', label='in answer')
-    plt.axvline(int(p*graph[Stat.NODES]), color='c')
-    plt.axhline(border, color='lightgreen')
-
-    plt.yscale('log')
-    plt.xlabel('node')
-    plt.ylabel('degree')
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+# def test_detection_quality():
+#     # name = 'libimseti'
+#     # name = 'petster-friendships-cat'
+#     # name = 'soc-pokec-relationships'
+#     # name = 'digg-friends'
+#     # name = 'loc-brightkite_edges'
+#     # name = 'ego-gplus'
+#     name = 'petster-hamster'
+#     graph = GraphCollections.get(name, giant_only=True)
+#
+#     p = 0.1
+#
+#     budget = 200  # 2500 5000 50000
+#     start_seeds = 50  # 500 1000 5000
+#
+#
+#     crawler = ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p)
+#     crawler.crawl_budget(budget)
+#
+#     ograph = crawler.observed_graph
+#     # nodes = crawler.nodes_set
+#     # obs = crawler.observed_set
+#     crawler._compute_answer()
+#     ans = crawler.answer
+#
+#     def deg(graph, node):
+#         return graph.snap.GetNI(node).GetDeg()
+#
+#     # print("\n\ncrawler.crawled_set")
+#     # for n in crawler.crawled_set:
+#     #     o = deg(ograph, n)
+#     #     r = deg(graph, n)
+#     #     print("n=%s, real=%s, obs=%s %s" % (n, r, o, o/r))
+#     #
+#     # print("\n\ncrawler.observed_set")
+#     # obs = crawler._get_mod_nodes(crawler.observed_set)
+#     # for n in obs:
+#     #     o = deg(ograph, n)
+#     #     r = deg(graph, n)
+#     #     print("n=%s, real=%s, obs=%s %s" % (n, r, o, o/r))
+#     #
+#
+#     import numpy as np
+#     plt.figure('', (22, 12))
+#
+#     target_list = get_top_centrality_nodes(graph, 'degree', count=int(graph[Stat.NODES]))
+#
+#     xs = np.arange(len(target_list))
+#     rs = np.array([deg(graph, n) for n in target_list])
+#     os = np.array([deg(ograph, n) if n in crawler.nodes_set else 0 for n in target_list])
+#     answs = np.array([0.5 if n in crawler.answer else 0 for n in target_list])
+#     border = min([deg(ograph, n) for n in ans])
+#     print('border', border)
+#
+#     plt.bar(xs, rs, width=1, color='b', label='real degree')
+#     plt.bar(xs, os, width=1, color='g', label='observed degree')
+#     plt.bar(xs, answs, width=1, color='r', label='in answer')
+#     plt.axvline(int(p*graph[Stat.NODES]), color='c')
+#     plt.axhline(border, color='lightgreen')
+#
+#     plt.yscale('log')
+#     plt.xlabel('node')
+#     plt.ylabel('degree')
+#     plt.legend()
+#     plt.tight_layout()
+#     plt.show()
 
 
 if __name__ == '__main__':
