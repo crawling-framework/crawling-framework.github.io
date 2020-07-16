@@ -17,7 +17,8 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
 
     def __init__(self, graph: MyGraph, n: int=1000, n1: int=500, k: int=100, **kwargs):
         super().__init__(graph, limit=n, n=n, n1=n1, k=k, **kwargs)
-        assert n1 <= n <= self._orig_graph.nodes()
+        assert n1 <= n
+        # assert n1 <= n <= self._orig_graph.nodes()
         #assert k <= n-n1
         self.n1 = n1
         self.n = n

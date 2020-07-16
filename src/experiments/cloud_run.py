@@ -4,6 +4,7 @@ import logging
 
 from crawlers.cbasic import filename_to_definition
 from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, AvrachenkovCrawler
+from experiments.three_stage import social_names
 from graph_io import konect_names, GraphCollections, netrepo_names, other_names
 from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
@@ -158,7 +159,7 @@ def copy_remote2local(host: str, src: str, dst: str, ignore_fails=False):
 def cloud_prepare(host: str):
     # pass
     # Pull from branch cloud
-    do_remote(host, 'eval `ssh-agent -s`; ssh-add ~/.ssh/cloud_rsa; cd workspace/crawling; git checkout cloud; git pull')
+    # do_remote(host, 'eval `ssh-agent -s`; ssh-add ~/.ssh/cloud_rsa; cd workspace/crawling; git checkout cloud; git pull')
 
     # # Copy graphs and stats
     # do_remote(host, "cd workspace/crawling/data; mkdir konect; mkdir netrepo; mkdir other", ignore_fails=True)
@@ -173,10 +174,10 @@ def cloud_prepare(host: str):
     #     dst = os.path.dirname(src.replace('misha', 'ubuntu'))
     #     copy_local2remote(host, src=src, dst=dst)
 
-    # # Copy results from cloud
-    # dst = os.path.dirname(RESULT_DIR)
-    # src = RESULT_DIR.replace('misha', 'ubuntu')  # will copy just in place
-    # copy_remote2local(host, src=src, dst=dst)
+    # Copy results from cloud
+    dst = os.path.dirname(RESULT_DIR)
+    src = RESULT_DIR.replace('misha', 'ubuntu')  # will copy just in place
+    copy_remote2local(host, src=src, dst=dst)
 
     # pp = 'PYTHONPATH=~/workspace/crawling/src python3'
     # for name in netrepo_names:
@@ -242,29 +243,28 @@ def main():
         print('\n\n')
 
 
-def two_stage():
-    p = 0.01
-    # budget_coeff = [
+def two_stage(p=0.01):
+    # p = 0.01
+    budget_coeff = [
     #     0.00001, 0.00003, 0.00005,
-    #     0.0001, 0.0003, 0.0005,
-    #     0.001, 0.003, 0.005,
-    #     0.01, 0.03, 0.05, 0.1, 0.3
-    # ]
-    # seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        0.0001, 0.0003, 0.0005,
+        0.001, 0.003, 0.005,
+        0.01, 0.03, 0.05, 0.1, 0.3
+    ]
+    seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
     ]
 
     n_instances = 8
-    for graph_name in netrepo_names + konect_names:
+    for graph_name in social_names:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
-        p = 100 / n
-        # budgets = [int(b*n) for b in budget_coeff]
+        # p = 100 / n
+        budgets = [int(b*n) for b in budget_coeff]
         crawler_defs = [
-           # (AvrachenkovCrawler, {'s': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
-           (AvrachenkovCrawler, {'s': 500, 'n': 1000, 'p': p}),
+           (AvrachenkovCrawler, {'n1': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
         ]
 
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
@@ -275,7 +275,7 @@ def two_stage():
         # rm.draw_by_metric_crawler(x_lims=(0, 0.1*n), x_normalize=False, scale=12, draw_error=False)
 
 
-def three_stage(p):
+def three_stage(p=0.01):
     # p = 0.1
     budget_coeff = [
         # 0.00001, 0.00003, 0.00005,
@@ -290,10 +290,10 @@ def three_stage(p):
     ]
 
     n_instances = 8
-    for graph_name in netrepo_names + konect_names:
+    for graph_name in social_names:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
-        p = 100 / n
+        # p = 100 / n
         budgets = [int(b*n) for b in budget_coeff]
         crawler_defs = [
            (ThreeStageCrawler, {'s': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
@@ -307,8 +307,9 @@ def three_stage(p):
         # rm.draw_by_metric_crawler(x_lims=(0, 0.1*n), x_normalize=False, scale=12, draw_error=False)
 
 
-def three_stage_mod(p=0.01):
-    budget_coeff = 0.005
+def three_stage_mod(p=0.01, budget_coeff=0.03):
+    # budget_coeff = 0.005
+    # budget_coeff = 0.03
     seed_coeff = [0, 0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
 
@@ -317,7 +318,7 @@ def three_stage_mod(p=0.01):
     ]
 
     n_instances = 8
-    for graph_name in netrepo_names + konect_names:
+    for graph_name in social_names:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
         budget = int(budget_coeff * n)
@@ -339,13 +340,17 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     # cloud_io()
-    # cloud_prepare(clouds[1])
+    # cloud_prepare(clouds[0])
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
-    # two_stage()
-    three_stage(p=0.01)
+    two_stage(p=0.01)
+    # three_stage(p=0.1)
+    # three_stage(p=0.01)
+    # three_stage(p=0.001)
     # three_stage(p=0.0001)
-    # three_stage_mod(p=0.01)
+    # three_stage_mod(p=0.1)
+    # three_stage_mod(p=0.01, budget_coeff=0.03)
+    # three_stage_mod(p=0.01, budget_coeff=0.005)
     # three_stage_mod(p=0.001)
     # three_stage_mod(p=0.0001)

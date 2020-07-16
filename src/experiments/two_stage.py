@@ -20,13 +20,12 @@ from statistics import Stat, get_top_centrality_nodes
 def test_target_set_coverage():
     # name, budget, start_seeds = 'flixster', 50000, 10000
     # name, budget, start_seeds = 'soc-pokec-relationships', 3000, 3000
-    name, budget, start_seeds = 'digg-friends', 1000, 500
+    # name, budget, start_seeds = 'digg-friends', 1000, 500
     # name, budget, start_seeds = 'soc-twitter-follows', 10000, 1000
     # name, budget, start_seeds = 'tech-p2p-gnutella', 3000, 500
     # name, budget, start_seeds = 'loc-brightkite_edges', 2500, 500
     # name, budget, start_seeds = 'petster-hamster', 200, 100
     # name, budget, start_seeds = 'dolphins', 1, 10
-    graph = GraphCollections.get(name, giant_only=True)
 
     # name, budget, start_seeds = 'ca-CondMat', 1000, 2000
     # name, budget, start_seeds = 'soc-hamsterster', 1000, 2000
@@ -36,18 +35,19 @@ def test_target_set_coverage():
     # name, budget, start_seeds = 'tech-routers-rf', 1000, 2000
     # name, budget, start_seeds = 'web-indochina-2004', 1000, 2000
     # name, budget, start_seeds = 'soc-anybeat', 1000, 2000
+    name, budget, start_seeds = 'web-uk-2005', 1000, 2000
 
     # name, budget, start_seeds = 'socfb-Bingham82', 1000, 2000
-    # graph = GraphCollections.get(name, 'netrepo', giant_only=True)
+    graph = GraphCollections.get(name, giant_only=True)
 
-    # p = 0.01
-    p = 100 / graph.nodes()
+    p = 0.01
+    # p = 100 / graph.nodes()
     target_list = get_top_centrality_nodes(graph, Stat.DEGREE_DISTR, count=int(p * graph[Stat.NODES]))
     thr_degree = graph.deg(target_list[-1])
     target_set = set(target_list)
 
-    # budget = int(0.05 * graph.nodes())
-    # start_seeds = int(1 * budget)
+    budget = int(0.005 * graph.nodes())
+    start_seeds = int(0.7 * budget)
 
     crawlers = [
         # (DE_Crawler, {'initial_budget': int(0.15*budget)}),
@@ -57,7 +57,7 @@ def test_target_set_coverage():
         # # PreferentialObservedDegreeCrawler(graph, batch=1),
         # MaximumExcessDegreeCrawler(graph),
         (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p}),
-        # (ThreeStageMODCrawler, {'s': 1, 'n': budget, 'p': p, 'b': 1}),
+        (ThreeStageMODCrawler, {'s': 1, 'n': budget, 'p': p, 'b': 1}),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=10),
@@ -67,7 +67,7 @@ def test_target_set_coverage():
         # ThreeStageFlexMODCrawler(graph, s=start_seeds, n=budget, p=p, b=1, thr_degree=thr_degree),
         # DepthFirstSearchCrawler(graph, initial_seed=1),
         # RandomCrawler(graph, initial_seed=1),
-        (AvrachenkovCrawler, {'n': budget, 'n1': start_seeds, 'k': int(p * graph.nodes())}),
+        # (AvrachenkovCrawler, {'n': budget, 'n1': start_seeds, 'k': int(p * graph.nodes())}),
         # ThreeStageCrawler(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageCrawlerSeedsAreHubs(graph, s=start_seeds, n=budget, p=p),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=1),
