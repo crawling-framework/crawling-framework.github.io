@@ -389,6 +389,23 @@ class ResultsMerger:
         plt.tight_layout()
         plt.show()
 
+    def compute_results_as_table(self):
+        with open(os.path.join(RESULT_DIR, 'ResultsAsTable'), 'a+') as f:
+            for _, m in enumerate(self.metric_names):
+                f.write('%s\n' % m)
+                for _, g in enumerate(self.graph_names):
+                    f.write('%s ' % g)
+                    max_result = -1
+
+                    for _, c in enumerate(self.crawler_names):
+                        contents = self.contents[g][c][m]
+                        final_results = [contents['ys'][inst][-1] for inst in range(len(contents['ys']))]
+                        avg_result = np.average(final_results)
+                        if avg_result > max_result:
+                            max_result = avg_result
+                        f.write(' & %.4f±%.4f' % (avg_result, np.std(final_results)))
+                    f.write(' & %.4f \\\ \hline\r\n' % max_result)
+            f.close()
 
 def test_merger():
     g = GraphCollections.get('socfb-Bingham82', not_load=True)
