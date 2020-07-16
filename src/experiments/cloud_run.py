@@ -264,7 +264,7 @@ def two_stage(p=0.01):
         # p = 100 / n
         budgets = [int(b*n) for b in budget_coeff]
         crawler_defs = [
-           (AvrachenkovCrawler, {'n1': int(s*budget), 'n': budget, 'p': p}) for s in seed_coeff for budget in budgets
+           (AvrachenkovCrawler, {'n1': int(s*budget), 'n': budget, 'k': int(p*n)}) for s in seed_coeff for budget in budgets
         ]
 
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
@@ -344,9 +344,9 @@ if __name__ == '__main__':
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
-    two_stage(p=0.1)
-    two_stage(p=0.001)
-    two_stage(p=0.0001)
+    two_stage(p=0.01)
+    # two_stage(p=0.001)
+    # two_stage(p=0.0001)
     # three_stage(p=0.1)
     # three_stage(p=0.01)
     # three_stage(p=0.001)

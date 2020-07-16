@@ -83,6 +83,71 @@ social_names = [
 ]
 
 
+def two_stage_n_s():
+    p = 0.01
+    budget_coeff = [
+        0.0001, 0.0003, 0.0005,
+        0.001, 0.003, 0.005,
+        0.01, 0.03, 0.05, 0.1, 0.3
+    ]
+    seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
+    metric_defs = [
+        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
+    ]
+
+    n_instances = 8
+    # graph_names = konect_names
+    graph_names = social_names[:2]
+    finals = np.zeros((len(graph_names), len(budget_coeff), len(seed_coeff)))  # finals[graph][n][s] -> F1
+
+    nrows = int(sqrt(len(graph_names)))
+    ncols = ceil(len(graph_names) / nrows)
+    scale = 4
+    fig, axs = plt.subplots(nrows, ncols, sharex=True, sharey=True, figsize=(1 + scale * ncols, scale * nrows), num='2-Stage_p=%s' % p)
+    aix = 0
+    for i, graph_name in enumerate(graph_names):
+        g = GraphCollections.get(graph_name, not_load=True)
+        n = g[Stat.NODES]
+        budgets = [int(b*n) for b in budget_coeff]
+        crawler_defs = [
+           (AvrachenkovCrawler, {'n1': int(s*budget), 'n': budget, 'k': int(p*n)}) for s in seed_coeff for budget in budgets
+        ]
+
+        # Collect final results
+        rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
+        for j, b in enumerate(budget_coeff):
+            budget = int(b*n)
+            for k, s in enumerate(seed_coeff):
+                start_seeds = int(s*budget)
+                cd = (AvrachenkovCrawler, {'n1': start_seeds, 'n': budget, 'k': int(p*n)})
+                finals[i][j][k] = rm.contents[graph_name][definition_to_filename(cd)][definition_to_filename(metric_defs[0])]['avy'][-1]
+                # print(b, s, finals[i][j][k])
+
+        # Draw finals
+        if nrows > 1 and ncols > 1:
+            plt.sca(axs[aix // ncols, aix % ncols])
+        elif nrows * ncols > 1:
+            plt.sca(axs[aix])
+        if aix % ncols == 0:
+            plt.ylabel('n / |V|')
+        if i == 0:
+            plt.title(g)
+        if aix // ncols == nrows - 1:
+            plt.xlabel('s / n')
+        aix += 1
+        plt.title(short_str(g))
+        plt.imshow(finals[i], cmap='inferno', vmin=0, vmax=1)
+        plt.yticks(np.arange(0, len(budget_coeff)), budget_coeff)
+        plt.xticks(np.arange(0, len(seed_coeff)), seed_coeff, rotation=90)
+        plt.grid(False)
+
+    # plt.colorbar()
+    plt.tight_layout()
+    plt.ylim((len(budget_coeff) - 0.5, -0.5))
+    plt.show()
+
+
 def three_stage_n_s():
     p = 0.01
     budget_coeff = [
@@ -424,9 +489,10 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     # logging.getLogger().setLevel(logging.DEBUG)
 
+    two_stage_n_s()
     # three_stage_n_s()
     # three_stage_mod_b_s()
     # three_stage_avg_n_s()
     # three_stage_avg_n_s_all()
-    three_stage_mod_avg_b_s()
+    # three_stage_mod_avg_b_s()
     # three_stage_comparison()
