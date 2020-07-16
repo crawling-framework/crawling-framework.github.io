@@ -98,10 +98,10 @@ def two_stage_n_s():
 
     n_instances = 8
     # graph_names = konect_names
-    graph_names = social_names[:16]
+    graph_names = social_names[:21]
     finals = np.zeros((len(graph_names), len(budget_coeff), len(seed_coeff)))  # finals[graph][n][s] -> F1
 
-    nrows = int(sqrt(len(graph_names)))
+    nrows = int(sqrt(0.7 * len(graph_names)))
     ncols = ceil(len(graph_names) / nrows)
     scale = 4
     fig, axs = plt.subplots(nrows, ncols, sharex=True, sharey=True, figsize=(1 + scale * ncols, scale * nrows), num='2-Stage_p=%s' % p)
@@ -151,7 +151,7 @@ def two_stage_n_s():
 def three_stage_n_s():
     p = 0.01
     budget_coeff = [
-        # 0.00001, 0.00003, 0.00005,
+        0.00001, 0.00003, 0.00005,
         0.0001, 0.0003, 0.0005,
         0.001, 0.003, 0.005,
         0.01, 0.03, 0.05, 0.1, 0.3
@@ -160,6 +160,7 @@ def three_stage_n_s():
 
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
+        # (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
     ]
 
     n_instances = 8
@@ -182,6 +183,7 @@ def three_stage_n_s():
 
         # Collect final results
         rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
+
         for j, b in enumerate(budget_coeff):
             budget = int(b*n)
             for k, s in enumerate(seed_coeff):
@@ -215,10 +217,10 @@ def three_stage_n_s():
 
 
 def three_stage_mod_b_s():
-    p = 0.01
+    p = 0.001
     # budget_coeff = 0.03
     budget_coeff = 0.005
-    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    seed_coeff = [0, 0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
 
     metric_defs = [
@@ -226,8 +228,8 @@ def three_stage_mod_b_s():
     ]
 
     n_instances = 8
-    graph_names = konect_names + netrepo_names
-    # graph_names = social_names
+    # graph_names = konect_names + netrepo_names
+    graph_names = social_names
     finals = np.zeros((len(graph_names), len(batch), len(seed_coeff)))  # finals[graph][n][s] -> F1
 
     nrows = int(sqrt(len(graph_names)))
@@ -313,9 +315,9 @@ def three_stage_avg_n_s():
                 res[i][j][k] = v
                 if v < worst[j][k]:
                     worst[j][k] = v
-        node_cent = list(g[Stat.DEGREE_DISTR].items())
-        f_20 = sorted(node_cent, key=itemgetter(1), reverse=True)[20][1]
-        f_20_max[i] = g[Stat.NODES] / f_20
+        # node_cent = list(g[Stat.DEGREE_DISTR].items())
+        # f_20 = sorted(node_cent, key=itemgetter(1), reverse=True)[20][1]
+        # f_20_max[i] = g[Stat.NODES] / f_20
         # print(graph_name, f_20_max[i])
     avg = np.mean(res, axis=0)
     var = np.var(res, axis=0) ** 0.5
@@ -336,6 +338,57 @@ def three_stage_avg_n_s():
     plt.colorbar()
     plt.tight_layout()
     plt.ylim((len(budget_coeff)-0.5, -0.5))
+    plt.show()
+
+
+def three_stage_mod_avg_b_s():
+    p = 0.0001
+    budget_coeff = 0.03
+    # budget_coeff = 0.005
+    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
+
+    metric_defs = [
+        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
+    ]
+
+    n_instances = 8
+    # graph_names = konect_names + netrepo_names
+    graph_names = social_names[:8]
+    worst = np.ones((len(batch), len(seed_coeff)))
+    avg = np.zeros((len(batch), len(seed_coeff)))
+    for i, graph_name in enumerate(graph_names):
+        g = GraphCollections.get(graph_name, not_load=True)
+        n = g[Stat.NODES]
+        budget = int(budget_coeff * n)
+        crawler_defs = [
+            (ThreeStageMODCrawler, {'s': int(s * budget), 'n': budget, 'b': b, 'p': p}) for s in seed_coeff for b in
+            batch
+        ]
+        rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
+
+        for j, b in enumerate(batch):
+            for k, s in enumerate(seed_coeff):
+                cd = (ThreeStageMODCrawler, {'s': int(s * budget), 'n': budget, 'b': b, 'p': p})
+                res = rm.contents[graph_name][definition_to_filename(cd)][definition_to_filename(metric_defs[0])]['avy'][-1]
+                avg[j][k] += res / len(graph_names)
+                if res < worst[j][k]:
+                    worst[j][k] = res
+
+    # print(worst)
+    print(avg)
+    # plt.title('3-StageMOD worst in netrepo')
+    # plt.imshow(worst, cmap='inferno', vmin=0, vmax=1)
+    plt.title('3-StageMOD average p=%s, n/|V|=%s' % (p, budget_coeff))
+    plt.imshow(avg, cmap='inferno', vmin=0, vmax=1)
+    plt.xlabel('s / n')
+    plt.ylabel('b')
+    plt.yticks(np.arange(0, len(batch)), batch)
+    plt.xticks(np.arange(0, len(seed_coeff)), seed_coeff, rotation=90)
+    plt.grid(False)
+    plt.colorbar()
+    plt.tight_layout()
+    plt.ylim((len(batch)-0.5, -0.5))
     plt.show()
 
 
@@ -400,54 +453,59 @@ def three_stage_avg_n_s_all():
     plt.show()
 
 
-def three_stage_mod_avg_b_s():
-    p = 0.01
-    # budget_coeff = 0.03
-    budget_coeff = 0.005
-    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
+def three_stage_mod_avg_b_s_all():
+    scale = 3.5
+    nrows = 1
+    ncols = 4
+    fig, axs = plt.subplots(nrows, ncols, sharex=False, sharey=True, figsize=(1 + scale * ncols, scale * nrows))
+    aix = 0
+    for p in [0.0001, 0.001, 0.01, 0.1]:
+        plt.sca(axs[aix])
 
-    metric_defs = [
-        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
-    ]
+        budget_coeff = 0.03
+        # budget_coeff = 0.005
+        seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
 
-    n_instances = 8
-    # graph_names = konect_names + netrepo_names
-    graph_names = social_names
-    worst = np.ones((len(batch), len(seed_coeff)))
-    avg = np.zeros((len(batch), len(seed_coeff)))
-    for i, graph_name in enumerate(graph_names):
-        g = GraphCollections.get(graph_name, not_load=True)
-        n = g[Stat.NODES]
-        budget = int(budget_coeff * n)
-        crawler_defs = [
-            (ThreeStageMODCrawler, {'s': int(s * budget), 'n': budget, 'b': b, 'p': p}) for s in seed_coeff for b in
-            batch
+        metric_defs = [
+            (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
         ]
-        rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
 
-        for j, b in enumerate(batch):
-            for k, s in enumerate(seed_coeff):
-                cd = (ThreeStageMODCrawler, {'s': int(s * budget), 'n': budget, 'b': b, 'p': p})
-                res = rm.contents[graph_name][definition_to_filename(cd)][definition_to_filename(metric_defs[0])]['avy'][-1]
-                avg[j][k] += res / len(graph_names)
-                if res < worst[j][k]:
-                    worst[j][k] = res
+        n_instances = 8
+        graph_names = social_names
+        worst = np.ones((len(batch), len(seed_coeff)))
+        avg = np.zeros((len(batch), len(seed_coeff)))
+        for i, graph_name in enumerate(graph_names):
+            g = GraphCollections.get(graph_name, not_load=True)
+            n = g[Stat.NODES]
+            budget = int(budget_coeff * n)
+            crawler_defs = [
+                (ThreeStageMODCrawler, {'s': int(s * budget), 'n': budget, 'b': b, 'p': p}) for s in seed_coeff for b in batch
+            ]
+            rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
 
-    # print(worst)
-    print(avg)
-    # plt.title('3-StageMOD worst in netrepo')
-    # plt.imshow(worst, cmap='inferno', vmin=0, vmax=1)
-    plt.title('3-StageMOD average p=%s, n/|V|=%s' % (p, budget_coeff))
-    plt.imshow(avg, cmap='inferno', vmin=0, vmax=1)
-    plt.xlabel('s / n')
-    plt.ylabel('b')
-    plt.yticks(np.arange(0, len(batch)), batch)
-    plt.xticks(np.arange(0, len(seed_coeff)), seed_coeff, rotation=90)
-    plt.grid(False)
-    plt.colorbar()
-    plt.tight_layout()
-    plt.ylim((len(batch)-0.5, -0.5))
+            for j, b in enumerate(batch):
+                for k, s in enumerate(seed_coeff):
+                    cd = (ThreeStageMODCrawler, {'s': int(s * budget), 'n': budget, 'b': b, 'p': p})
+                    res = rm.contents[graph_name][definition_to_filename(cd)][definition_to_filename(metric_defs[0])]['avy'][-1]
+                    avg[j][k] += res / len(graph_names)
+                    if res < worst[j][k]:
+                        worst[j][k] = res
+
+        plt.title(r'$p=%s$' % p, fontsize=14)
+        plt.imshow(avg, cmap='inferno', vmin=0, vmax=1)
+        plt.xlabel('s / n', fontsize=14)
+        if aix == 0:
+            plt.ylabel('b', fontsize=14)
+        plt.yticks(np.arange(0, len(batch)), batch)
+        plt.xticks(np.arange(0, len(seed_coeff)), seed_coeff, rotation=90)
+        plt.tight_layout()
+        plt.ylim((len(batch)-0.5, -0.5))
+        plt.grid(False)
+        aix += 1
+
+    # plt.colorbar()
+    # plt.ylim((len(budget_coeff) - 0.5, -0.5))
     plt.show()
 
 
@@ -487,12 +545,13 @@ def three_stage_comparison():
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s')
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
-    # logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
 
-    two_stage_n_s()
+    # two_stage_n_s()
     # three_stage_n_s()
-    # three_stage_mod_b_s()
+    three_stage_mod_b_s()
     # three_stage_avg_n_s()
     # three_stage_avg_n_s_all()
+    # three_stage_mod_avg_b_s_all()
     # three_stage_mod_avg_b_s()
     # three_stage_comparison()

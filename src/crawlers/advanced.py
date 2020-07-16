@@ -114,6 +114,7 @@ class ThreeStageCrawler(CrawlerWithAnswer):
         # logging.debug("|E*|=%s" % len(self._answer))
         # return 0
 
+        self._answer.clear()
         if (len(self.e1s) + len(self.h)) < self.pN:
             self.e2s.clear()
             # Get v=(pN-n+s) max degree observed nodes
@@ -121,10 +122,9 @@ class ThreeStageCrawler(CrawlerWithAnswer):
             logging.debug("|E2*|=%s" % len(self.e2s))
 
             # Final answer - E* = E1* + E2*
-            self._answer.clear()
             self._answer.update(self.h, self.e1s, self.e2s)
         else:
-            # Top-pN from e1s
+            # Top-pN from all crawled
             self._get_mod_nodes(self._crawled_set, self._answer, self.pN)
 
         logging.debug("|E*|=%s" % len(self._answer))
@@ -253,6 +253,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
     def _compute_answer(self):
         # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
 
+        self._answer.clear()
         if (len(self.e1s) + len(self.h)) < self.pN:
             self.e2s.clear()
             # Get v=(pN-n+s) max degree observed nodes
@@ -260,7 +261,6 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
             logging.debug("|E2*|=%s" % len(self.e2s))
 
             # Final answer - E* = E1* + E2*
-            self._answer.clear()
             self._answer.update(self.h, self.e1s, self.e2s)
         else:
             # Top-pN from e1s
