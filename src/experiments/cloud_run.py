@@ -344,7 +344,9 @@ if __name__ == '__main__':
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
-    two_stage(p=0.01)
+    two_stage(p=0.1)
+    two_stage(p=0.001)
+    two_stage(p=0.0001)
     # three_stage(p=0.1)
     # three_stage(p=0.01)
     # three_stage(p=0.001)
