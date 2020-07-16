@@ -90,7 +90,7 @@ def two_stage_n_s():
         0.001, 0.003, 0.005,
         0.01, 0.03, 0.05, 0.1, 0.3
     ]
-    seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
@@ -98,7 +98,7 @@ def two_stage_n_s():
 
     n_instances = 8
     # graph_names = konect_names
-    graph_names = social_names[:2]
+    graph_names = social_names[:16]
     finals = np.zeros((len(graph_names), len(budget_coeff), len(seed_coeff)))  # finals[graph][n][s] -> F1
 
     nrows = int(sqrt(len(graph_names)))

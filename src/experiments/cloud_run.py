@@ -251,7 +251,7 @@ def two_stage(p=0.01):
         0.001, 0.003, 0.005,
         0.01, 0.03, 0.05, 0.1, 0.3
     ]
-    seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    seed_coeff = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
