@@ -58,7 +58,7 @@ def test_target_set_coverage():
         # MaximumExcessDegreeCrawler(graph),
         (AvrachenkovCrawler, {'n': budget, 'n1': start_seeds, 'k': int(p * graph.nodes())}),
         (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p}),
-        # (ThreeStageMODCrawler, {'s': 1, 'n': budget, 'p': p, 'b': 1}),
+        (ThreeStageMODCrawler, {'s': start_seeds, 'n': budget, 'p': p, 'b': 1}),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=10),

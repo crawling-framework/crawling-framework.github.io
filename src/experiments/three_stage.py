@@ -64,7 +64,6 @@ social_names = [
     'soc-BlogCatalog',          # N=88784,   E=2093195,  d_avg=47.15
     'soc-anybeat',
     'soc-twitter-follows',      # N=404719,  E=713319,   d_avg=3.53
-    # konect
     'petster-hamster',          # N=2000,    E=16098,    d_avg=16.10
     'ego-gplus',                # N=23613,   E=39182,    d_avg=3.32
     'slashdot-threads',         # N=51083,   E=116573,   d_avg=4.56
@@ -151,7 +150,6 @@ def two_stage_n_s():
 def three_stage_n_s():
     p = 0.01
     budget_coeff = [
-        0.00001, 0.00003, 0.00005,
         0.0001, 0.0003, 0.0005,
         0.001, 0.003, 0.005,
         0.01, 0.03, 0.05, 0.1, 0.3
@@ -165,7 +163,7 @@ def three_stage_n_s():
 
     n_instances = 8
     # graph_names = konect_names
-    graph_names = social_names
+    graph_names = social_names[:20]
     finals = np.zeros((len(graph_names), len(budget_coeff), len(seed_coeff)))  # finals[graph][n][s] -> F1
 
     nrows = int(sqrt(len(graph_names)))
@@ -217,9 +215,9 @@ def three_stage_n_s():
 
 
 def three_stage_mod_b_s():
-    p = 0.001
-    # budget_coeff = 0.03
-    budget_coeff = 0.005
+    p = 0.01
+    budget_coeff = 0.05
+    # budget_coeff = 0.005
     seed_coeff = [0, 0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
 
@@ -229,7 +227,7 @@ def three_stage_mod_b_s():
 
     n_instances = 8
     # graph_names = konect_names + netrepo_names
-    graph_names = social_names
+    graph_names = social_names[:4]
     finals = np.zeros((len(graph_names), len(batch), len(seed_coeff)))  # finals[graph][n][s] -> F1
 
     nrows = int(sqrt(len(graph_names)))

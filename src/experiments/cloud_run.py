@@ -300,7 +300,7 @@ def three_stage(p=0.01):
         ]
 
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        chr.run_missing(n_instances, max_cpus=8, max_memory=32)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=36)
         print('\n\n')
 
         # rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
@@ -309,18 +309,18 @@ def three_stage(p=0.01):
 
 def three_stage_mod(p=0.01, budget_coeff=0.03):
     # budget_coeff = 0.005
-    # budget_coeff = 0.03
-    seed_coeff = [0.1, 0.2, 0.3, 0.4]
-    batch = [1, 3, 5, 10, 30, 50, 100]
-    # seed_coeff = [0, 0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    # batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
+    budget_coeff = 0.05
+    # seed_coeff = [0.1, 0.2, 0.3, 0.4]
+    # batch = [1, 3, 5, 10, 30, 50, 100]
+    seed_coeff = [0, 0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
 
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
     ]
 
     n_instances = 8
-    for graph_name in social_names:
+    for graph_name in social_names[:4]:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
         budget = int(budget_coeff * n)
@@ -349,10 +349,11 @@ if __name__ == '__main__':
     # two_stage(p=0.01)
     # two_stage(p=0.001)
     # two_stage(p=0.0001)
-    three_stage(p=0.01)
+    # three_stage(p=0.01)
     # three_stage(p=0.1)
     # three_stage(p=0.001)
     # three_stage(p=0.0001)
+    three_stage_mod(p=0.01)
     # three_stage_mod(p=0.1)
     # three_stage_mod(p=0.001)
     # three_stage_mod(p=0.0001)

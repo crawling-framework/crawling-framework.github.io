@@ -97,23 +97,6 @@ class ThreeStageCrawler(CrawlerWithAnswer):
             yield node
 
     def _compute_answer(self):
-        # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
-
-        # memorize E2
-        # self.e2 = self._observed_set.copy()
-        # logging.debug("|E2|=%s" % len(self.e2))
-        #
-        # # Get v=(pN-n+s) max degree observed nodes
-        # self.e2s.clear()
-        # self._get_mod_nodes(self.e2, self.e2s, self.pN - self.n + (int(1 - self.p) + 1) * self.s)
-        # logging.debug("|E2*|=%s" % len(self.e2s))
-        #
-        # # Final answer - E* = E1* + E2*
-        # self._answer.clear()
-        # self._answer.update(self.h, self.e1s, self.e2s)
-        # logging.debug("|E*|=%s" % len(self._answer))
-        # return 0
-
         self._answer.clear()
         if (len(self.e1s) + len(self.h)) < self.pN:
             self.e2s.clear()
@@ -251,8 +234,6 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
             yield self.mod.next_seed()
 
     def _compute_answer(self):
-        # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
-
         self._answer.clear()
         if (len(self.e1s) + len(self.h)) < self.pN:
             self.e2s.clear()
@@ -263,16 +244,12 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
             # Final answer - E* = E1* + E2*
             self._answer.update(self.h, self.e1s, self.e2s)
         else:
-            # Top-pN from e1s
+            # Top-pN from crawled
             self._get_mod_nodes(self._crawled_set, self._answer, self.pN)
 
         logging.debug("|E*|=%s" % len(self._answer))
         # assert len(self._answer) <= self.pN
         return 0
-
-
-# cdef class ThreeStageCustomCrawler(CrawlerWithAnswer):
-#     raise NotImplementedError()
 
 
 def test_generator():
