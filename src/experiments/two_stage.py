@@ -10,7 +10,7 @@ from base.cgraph import MyGraph
 from crawlers.cbasic import CrawlerException, MaximumObservedDegreeCrawler, RandomWalkCrawler, \
     BreadthFirstSearchCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler, MaximumExcessDegreeCrawler
 from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer, AvrachenkovCrawler, \
-    ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs
+    ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs, EmulatorWithAnswerCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from running.animated_runner import AnimatedCrawlerRunner, Metric
 from graph_io import GraphCollections
@@ -58,7 +58,8 @@ def test_target_set_coverage():
         # MaximumExcessDegreeCrawler(graph),
         (AvrachenkovCrawler, {'n': budget, 'n1': start_seeds, 'k': int(p * graph.nodes())}),
         (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p}),
-        (ThreeStageMODCrawler, {'s': start_seeds, 'n': budget, 'p': p, 'b': 1}),
+        (ThreeStageMODCrawler, {'s': 0, 'n': budget, 'p': p, 'b': 1}),
+        (EmulatorWithAnswerCrawler, {'crawler_def': (MaximumObservedDegreeCrawler, {}), 'n': budget, 'target_size': int(p*graph.nodes())}),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=10),

@@ -309,7 +309,7 @@ def three_stage(p=0.01):
 
 def three_stage_mod(p=0.01, budget_coeff=0.03):
     # budget_coeff = 0.005
-    budget_coeff = 0.05
+    # budget_coeff = 0.05
     # seed_coeff = [0.1, 0.2, 0.3, 0.4]
     # batch = [1, 3, 5, 10, 30, 50, 100]
     seed_coeff = [0, 0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
@@ -320,7 +320,7 @@ def three_stage_mod(p=0.01, budget_coeff=0.03):
     ]
 
     n_instances = 8
-    for graph_name in social_names[:4]:
+    for graph_name in social_names:
         g = GraphCollections.get(graph_name)
         n = g[Stat.NODES]
         budget = int(budget_coeff * n)
@@ -329,7 +329,7 @@ def three_stage_mod(p=0.01, budget_coeff=0.03):
         ]
 
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        chr.run_missing(n_instances, max_cpus=8, max_memory=26)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=30)
         print('\n\n')
 
         # rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
@@ -342,7 +342,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     # cloud_io()
-    # cloud_prepare(clouds[0])
+    cloud_prepare(clouds[0])
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
@@ -353,11 +353,11 @@ if __name__ == '__main__':
     # three_stage(p=0.1)
     # three_stage(p=0.001)
     # three_stage(p=0.0001)
-    three_stage_mod(p=0.01)
+    # three_stage_mod(p=0.01)
     # three_stage_mod(p=0.1)
     # three_stage_mod(p=0.001)
     # three_stage_mod(p=0.0001)
-    # three_stage_mod(p=0.01, budget_coeff=0.03)
-    # three_stage_mod(p=0.01, budget_coeff=0.005)
+    three_stage_mod(p=0.01, budget_coeff=0.05)
+    three_stage_mod(p=0.01, budget_coeff=0.005)
     # three_stage_mod(p=0.001)
     # three_stage_mod(p=0.0001)

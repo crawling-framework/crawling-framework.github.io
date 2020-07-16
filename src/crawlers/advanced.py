@@ -46,9 +46,15 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
 class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
     short = 'EmulatorWA'
 
-    def __init__(self, graph: MyGraph, crawler_def, target_size: int, **kwargs):
-        super().__init__(graph, target_size=target_size, crawler_def=crawler_def, **kwargs)
-        self.pN = target_size
+    def __init__(self, graph: MyGraph, crawler_def, n: int, target_size: int, **kwargs):
+        """
+        :param crawler_def: crawler to emulate
+        :param n: limit of crawls (budget)
+        :param target_size: max size of answer
+        """
+        super().__init__(graph, n=n, target_size=target_size, crawler_def=crawler_def, **kwargs)
+        self.n = n
+        self.target_size = target_size
 
         _, ckwargs = crawler_def
         ckwargs['observed_graph'] = self._observed_graph
@@ -62,12 +68,12 @@ class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
         return self.crawler.crawl(seed)
 
     def seeds_generator(self):
-        for i in range(self.pN):
+        for i in range(self.n):
             yield self.crawler.next_seed()
 
     def _compute_answer(self):
         self._answer.clear()
-        self._get_mod_nodes(self._crawled_set, self._answer, self.pN)
+        self._get_mod_nodes(self._crawled_set, self._answer, self.target_size)
         return 0
 
 
