@@ -305,7 +305,7 @@ def three_stage(p=0.01):
         # rm.draw_by_metric_crawler(x_lims=(0, 0.1*n), x_normalize=False, scale=12, draw_error=False)
 
 
-def three_stage_mod(p=0.01, budget_coeff=0.05):
+def three_stage_mod_b_s(p=0.01, budget_coeff=0.05):
     # budget_coeff = 0.005
     # budget_coeff = 0.05
     # seed_coeff = [0.1, 0.2, 0.3, 0.4]
@@ -334,6 +334,33 @@ def three_stage_mod(p=0.01, budget_coeff=0.05):
         # rm.draw_by_metric_crawler(x_lims=(0, 0.1*n), x_normalize=False, scale=12, draw_error=False)
 
 
+def three_stage_mod(p=0.01):
+    budget_coeff = [
+        0.0001, 0.0003, 0.0005,
+        0.001, 0.003, 0.005,
+        0.01, 0.03, 0.05, 0.1, 0.3
+    ]
+    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    batch = 100
+
+    metric_defs = [
+        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
+    ]
+
+    n_instances = 8
+    for graph_name in social_names:
+        g = GraphCollections.get(graph_name, not_load=True)
+        n = g[Stat.NODES]
+        budgets = [int(b*n) for b in budget_coeff]
+        crawler_defs = [
+           (ThreeStageMODCrawler, {'s': int(s*budget), 'n': budget, 'b': batch, 'p': p}) for s in seed_coeff for budget in budgets
+        ]
+
+        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=28)
+        print('\n\n')
+
+
 if __name__ == '__main__':
     import logging
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
@@ -352,10 +379,10 @@ if __name__ == '__main__':
     # three_stage(p=0.1)
     # three_stage(p=0.001)
     # three_stage(p=0.0001)
-    # three_stage_mod(p=0.01)
-    # three_stage_mod(p=0.1)
-    # three_stage_mod(p=0.001)
-    # three_stage_mod(p=0.0001)
+    three_stage_mod(p=0.01)
+    three_stage_mod(p=0.1)
+    three_stage_mod(p=0.001)
+    three_stage_mod(p=0.0001)
     # three_stage_mod(p=0.01, budget_coeff=0.05)
     # three_stage_mod(p=0.01, budget_coeff=0.005)
     # three_stage_mod(p=0.001)
