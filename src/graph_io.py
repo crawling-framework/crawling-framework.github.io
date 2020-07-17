@@ -377,7 +377,7 @@ class GraphCollections:
 
 class temp_dir(object):
     """
-    Creates graph_models temporary directory to store some files, which will be removed by exit.
+    Creates a temporary directory to store some files, which will be removed by exit.
     Current working directory is also changed to this directory.
     """
     def __init__(self):

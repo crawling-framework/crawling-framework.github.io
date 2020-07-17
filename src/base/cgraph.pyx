@@ -58,7 +58,7 @@ cdef class MyGraph:
             self._path = str_to_chars(path)
             self._snap_graph_ptr = PUNGraph.New()
             self._fingerprint = fingerprint(self._snap_graph_ptr)
-            # NOTE: If we define graph_models pointer as address of object, segfault occurs ?
+            # NOTE: If we define a pointer as address of object, segfault occurs ?
         else:
             self._path = str_to_chars(path)
             if not not_load:
@@ -69,6 +69,9 @@ cdef class MyGraph:
     def __dealloc__(self):
         # print("dealloc", self.name)
         pass
+
+    cpdef bint is_loaded(self):
+        return not self._snap_graph_ptr.Empty()
 
     cpdef void load(self):
         logging.info("Loading graph '%s' from '%s'..." % (self.name, self.path))
@@ -142,7 +145,7 @@ cdef class MyGraph:
         return deref(self._snap_graph_ptr).GetNI(node).GetDeg()
 
     cpdef double clustering(self, int node):
-        """ Get clustering of graph_models node. """
+        """ Get clustering of a node. """
         return GetANodeClustCf[PUNGraph](self._snap_graph_ptr, node)
 
     cpdef int max_deg(self):
@@ -181,11 +184,11 @@ cdef class MyGraph:
             pinc(ei)
 
     cpdef int random_node(self):
-        """ Return graph_models random node. O(1) """
+        """ Return a random node. O(1) """
         return deref(self._snap_graph_ptr).GetRndNId(t_random)
 
     cpdef vector[int] random_nodes(self, int count=1):
-        """ Return graph_models vector of random nodes without repetition. O(N) """
+        """ Return a vector of random nodes without repetition. O(N) """
         cdef int size = deref(self._snap_graph_ptr).GetNodes(), i, n
         assert count <= size
         cdef TInt* it
@@ -200,7 +203,7 @@ cdef class MyGraph:
         return res
 
     cpdef int random_neighbor(self, int node):
-        """ Return graph_models random neighbor of the given node in this graph.
+        """ Return a random neighbor of the given node in this graph.
         """
         cdef TUNGraph.TNodeI n_iter = deref(self._snap_graph_ptr).GetNI(node)
         cdef int r = t_random.GetUniDevInt(n_iter.GetDeg())
@@ -208,7 +211,7 @@ cdef class MyGraph:
 
     cdef new_snap(self, PUNGraph snap_graph_ptr, name=None):
         """
-        Replace self snap graph with graph_models given snap graph. NOTE: all computed and saved stats will be removed.
+        Replace self snap graph with a given snap graph. NOTE: all computed and saved stats will be removed.
         File with graph will be overwritten if exists.
         
         :param snap_graph_ptr: initial snap graph
@@ -230,7 +233,7 @@ cdef class MyGraph:
 
     cpdef giant_component(self):
         """
-        Return graph_models new graph containing the giant component of this graph.
+        Return a new graph containing the giant component of this graph.
         Note: all computed and saved stats will be removed.
         """
         cdef PUNGraph p = GetMxWcc[PUNGraph](self._snap_graph_ptr)
@@ -346,8 +349,8 @@ def cgraph_test():
     # E = g.GetEdges()
     # print(N, E)
 
-    # cdef char* graph_models = 'asd'
-    # cdef TStr s = TStr(graph_models)
+    # cdef char* a = 'asd'
+    # cdef TStr s = TStr(a)
     # # cdef PUNGraph p
     # cdef TPt[TUNGraph] p
     # p = LoadEdgeList[TPt[TUNGraph]](TStr('/home/misha/workspace/crawling/data/konect/dolphins.ij'), 0, 1)

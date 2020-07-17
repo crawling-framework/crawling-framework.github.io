@@ -124,7 +124,7 @@ def LFR(nodes: int, avg_deg: float, max_deg: int, mixing: float, t1=None, t2=Non
         if value is not None:
             commands += ['-%s' % key, str(value)]
 
-    # Create path for graph_models new graph
+    # Create path for a new graph
     name = "LFR(%s)" % ",".join(
         "%s=%s" % (key, value) for key, value in sorted(kwargs.items()) if value is not None)
     path = opj(GRAPHS_DIR, 'synthetic', name, '*.ij')

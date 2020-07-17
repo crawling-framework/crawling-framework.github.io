@@ -11,13 +11,13 @@ from libcpp.deque cimport deque
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec, address as addr
 
 from base.cgraph cimport MyGraph, str_to_chars, t_random
-# from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not graph_models type identifier'
+# from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 cimport cbasic  # pxd import DON'T DELETE
 
 logger = logging.getLogger(__name__)
 
 
-# Get all subclasses of graph_models class
+# Get all subclasses of a class
 def all_subclasses(cls):
     return set(cls.__subclasses__()).union(
         [s for c in cls.__subclasses__() for s in all_subclasses(c)])
@@ -98,7 +98,7 @@ cdef class Crawler:
 
     @staticmethod
     def from_definition(MyGraph graph, definition) -> Crawler:
-        """ Build graph_models Crawler instance from its definition
+        """ Build a Crawler instance from its definition
         """
         _class, kwargs = definition
         return _class(graph, **kwargs)
@@ -170,7 +170,7 @@ cdef class Crawler:
     cpdef int next_seed(self) except -1:
         """
         Core of the crawler - the algorithm to choose the next seed to be crawled.
-        Seed must be graph_models node of the original graph.
+        Seed must be a node of the original graph.
 
         :return: node id as int
         """
@@ -225,7 +225,7 @@ cdef class RandomCrawler(Crawler):
     def __init__(self, MyGraph graph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node (if -1 is given, graph_models random node of original graph will be used).
+         node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
@@ -233,7 +233,7 @@ cdef class RandomCrawler(Crawler):
             kwargs['name'] = self.short
 
         super().__init__(graph, **kwargs)
-        # pick graph_models random seed from original graph
+        # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
@@ -269,7 +269,7 @@ cdef class RandomWalkCrawler(Crawler):
     def __init__(self, MyGraph graph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node (if -1 is given, graph_models random node of original graph will be used).
+         node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
@@ -277,7 +277,7 @@ cdef class RandomWalkCrawler(Crawler):
             kwargs['name'] = self.short
 
         super().__init__(graph, **kwargs)
-        # pick graph_models random seed from original graph
+        # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
@@ -298,7 +298,7 @@ cdef class RandomWalkCrawler(Crawler):
         if self._observed_graph.deg(self.prev_seed) == 0:
             raise NoNextSeedError("No neighbours to go next.")
 
-        # Go to graph_models neighbor until encounter not crawled node
+        # Go to a neighbor until encounter not crawled node
         cdef int seed
         while True:
             seed = self._observed_graph.random_neighbor(self.prev_seed)
@@ -314,7 +314,7 @@ cdef class BreadthFirstSearchCrawler(Crawler):
     def __init__(self, MyGraph graph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node (if -1 is given, graph_models random node of original graph will be used).
+         node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
@@ -322,7 +322,7 @@ cdef class BreadthFirstSearchCrawler(Crawler):
             kwargs['name'] = self.short
 
         super().__init__(graph, **kwargs)
-        # pick graph_models random seed from original graph
+        # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
@@ -357,7 +357,7 @@ cdef class DepthFirstSearchCrawler(Crawler):
     def __init__(self, graph: MyGraph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node (if -1 is given, graph_models random node of original graph will be used).
+         node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
@@ -365,7 +365,7 @@ cdef class DepthFirstSearchCrawler(Crawler):
             kwargs['name'] = self.short
 
         super().__init__(graph, **kwargs)
-        # pick graph_models random seed from original graph
+        # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
@@ -405,7 +405,7 @@ cdef class SnowBallCrawler(Crawler):
         http://www.soundarajan.org/papers/CrawlingAnalysis.pdf
         https://arxiv.org/pdf/1004.1729.pdf
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node (if -1 is given, graph_models random node of original graph will be used).
+         node (if -1 is given, a random node of original graph will be used).
         :param p: probability of taking neighbor into queue
         """
         if initial_seed != -1:
@@ -414,7 +414,7 @@ cdef class SnowBallCrawler(Crawler):
             kwargs['name'] = "%s%2.f" % (self.short, 100*p)
 
         super().__init__(graph, p=p, **kwargs)
-        # pick graph_models random seed from original graph
+        # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
@@ -468,7 +468,7 @@ cdef class MaximumObservedDegreeCrawler(CrawlerUpdatable):
         """
         :param batch: batch size
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node (if -1 is given, graph_models random node of original graph will be used).
+         node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
@@ -476,7 +476,7 @@ cdef class MaximumObservedDegreeCrawler(CrawlerUpdatable):
         #     kwargs['name'] = "%s%s" % (self.short, '' if batch == 1 else batch)
 
         super().__init__(graph, batch=batch, **kwargs)
-        # pick graph_models random seed from original graph
+        # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
@@ -540,7 +540,7 @@ cdef class PreferentialObservedDegreeCrawler(CrawlerUpdatable):
             kwargs['name'] = "%s%s" %  (self.short, '' if batch == 1 else batch)
 
         super().__init__(graph, batch=batch, **kwargs)
-        # pick graph_models random seed from original graph
+        # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
@@ -599,13 +599,13 @@ cdef class MaximumExcessDegreeCrawler(Crawler):
     def __init__(self, MyGraph graph, int initial_seed=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node (if -1 is given, graph_models random node of original graph will be used).
+         node (if -1 is given, a random node of original graph will be used).
         """
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
 
         super().__init__(graph, **kwargs)
-        # pick graph_models random seed from original graph
+        # pick a random seed from original graph
         if len(self._observed_set) == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
@@ -655,18 +655,18 @@ cpdef cbasic_test():
     print("cbasic")
     # l = list(range(100))
     # shuffle(l)
-    # graph_models = set(l)
-    # while len(graph_models) > 0:
-    #     print(graph_models.pop())
-    # it = graph_models.__iter__()
+    # a = set(l)
+    # while len(a) > 0:
+    #     print(a.pop())
+    # it = a.__iter__()
     # print(next(it))
     # print(next(it))
-    # print('random_from_iterable', random_from_iterable(graph_models))
-    # print('random_from_iterable', random_from_iterable(graph_models))
-    # print('random_from_iterable', random_from_iterable(graph_models))
-    # print('random_from_iterable', random_from_iterable(graph_models))
-    # print('random_from_iterable', random_from_iterable(graph_models))
-    # print('random_from_iterable', random_from_iterable(graph_models))
+    # print('random_from_iterable', random_from_iterable(a))
+    # print('random_from_iterable', random_from_iterable(a))
+    # print('random_from_iterable', random_from_iterable(a))
+    # print('random_from_iterable', random_from_iterable(a))
+    # print('random_from_iterable', random_from_iterable(a))
+    # print('random_from_iterable', random_from_iterable(a))
 
     # cdef vector[int] s
     # s.push_back(1)
@@ -706,10 +706,10 @@ cpdef cbasic_test():
     # import numpy as np
     # cdef cset[int]* r = f(10)
     # cdef queue[int] q
-    # graph_models = list(range(10000)) + [1, 2, 3]
-    # np.random.shuffle(graph_models)
+    # a = list(range(10000)) + [1, 2, 3]
+    # np.random.shuffle(a)
     #
-    # for x in graph_models:
+    # for x in a:
     #     q.push(x)
     #     print("push", x)
     # # print(q)
@@ -722,7 +722,7 @@ cpdef cbasic_test():
     #     py_set.add(i)
 
     # from time import time
-    # cdef int graph_models = 0
+    # cdef int a = 0
     #
     # # 2
     # t = time()
@@ -731,12 +731,12 @@ cpdef cbasic_test():
     #     for k in range(10):
     #         py_set.add(k)
     #         # if k in py_set:
-    #         #     graph_models = 0
-    # print(graph_models)
+    #         #     a = 0
+    # print(a)
     # print("py for %s ms" % ((time()-t)*1000))
     #
     #
-    # graph_models = 0
+    # a = 0
     # # 1
     # t = time()
     # cdef cset[int].iterator it = cy_set.end()
@@ -745,7 +745,7 @@ cpdef cbasic_test():
     #     for k in range(10):
     #         cy_set.insert(k)
     #
-    # print(graph_models)
+    # print(a)
     # print("cy for %s ms" % ((time()-t)*1000))
 
     from time import time
@@ -761,7 +761,7 @@ cpdef cbasic_test():
         for k in range(10):
             py_map[k] = 1./(k+1)
             # if k in py_set:
-            #     graph_models = 0
+            #     a = 0
     print(a)
     print("py for %s ms" % ((time()-t)*1000))
 

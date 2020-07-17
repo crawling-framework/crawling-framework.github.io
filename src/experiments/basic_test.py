@@ -110,17 +110,17 @@ def test_snap_times():
 
     t = time()
     for i in range(n):
-        # graph_models = [n for n in range(g.GetNodes())]  # 1 ms
+        # a = [n for n in range(g.GetNodes())]  # 1 ms
 
-        # graph_models = [g.GetNI(n).GetDeg() for n in ids]  # 17 ms
-        # graph_models = [n for n in g.Nodes()]  # 27 ms
-        # graph_models = [n.GetId() for n in g.Nodes()]  # 32 ms
+        # a = [g.GetNI(n).GetDeg() for n in ids]  # 17 ms
+        # a = [n for n in g.Nodes()]  # 27 ms
+        # a = [n.GetId() for n in g.Nodes()]  # 32 ms
 
-        # graph_models = [n.GetDeg() for n in g.Nodes()]  # 33 ms
-        # graph_models = [n.GetDeg() for n in nodes]  # RuntimeError
+        # a = [n.GetDeg() for n in g.Nodes()]  # 33 ms
+        # a = [n.GetDeg() for n in nodes]  # RuntimeError
 
         a = {n: g.GetNI(n).GetDeg() for n in ids}  # 18 ms
-        # graph_models = {n.GetId(): n.GetDeg() for n in g.Nodes()}  # 38 ms
+        # a = {n.GetId(): n.GetDeg() for n in g.Nodes()}  # 38 ms
 
     print("%.3f ms" % ((time()-t)*1000))
 
@@ -180,21 +180,21 @@ def test_numpy_times():
 
     # t = time()
     # for i in range(n):
-    #     graph_models = []
+    #     a = []
     #     for j in range(res):
     #         if np.random.random() < p:
-    #             graph_models.append(1)
+    #             a.append(1)
     #         else:
-    #             graph_models.append(0)
+    #             a.append(0)
     # print("%.3f ms" % ((time()-t)*1000))
     #
     # t = time()
     # for i in range(n):
-    #     graph_models = []
+    #     a = []
     #     neighbors = list(range(res))
     #     binomial_map = np.random.binomial(1, p=p, size=len(neighbors))
-    #     [graph_models.append(1) for j in neighbors if (binomial_map[neighbors.index(j)] == 1)]
-    #     [graph_models.append(0) for j in neighbors if (binomial_map[neighbors.index(j)] == 0)]
+    #     [a.append(1) for j in neighbors if (binomial_map[neighbors.index(j)] == 1)]
+    #     [a.append(0) for j in neighbors if (binomial_map[neighbors.index(j)] == 0)]
     #
     # print("%.3f ms" % ((time()-t)*1000))
 

@@ -77,7 +77,8 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :return:
         """
         super().__init__(graph, crawler_defs=crawler_defs, metric_defs=metric_defs, budget=budget, step=step)
-        self._semaphore = mp.Semaphore(1)
+        self._init_semaphore = mp.Semaphore(1)
+        self._save_semaphore = mp.Semaphore(1)
 
     def _save_history(self, crawler_metric_seq, step_seq):
         pbar = tqdm(total=len(crawler_metric_seq), desc='Saving history')
@@ -109,8 +110,12 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :param same_initial_seed: use the same initial seed for all crawler instances TODO
         :return:
         """
-        with self._semaphore:  # to ensure stats reading/calculation only once
+        # print('_init_semaphore', self._init_semaphore)
+        with self._init_semaphore:  # to ensure stats reading/calculation only once
+            # print('_init_semaphore in')
+            sleep(0.1)  # FIXME bugfix for strange semaphores lock
             crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
+            # print('_init_semaphore out')
 
         pbar = tqdm(total=self.budget, desc='Running iterations')  # drawing crawling progress bar
 
@@ -132,8 +137,11 @@ class CrawlerHistoryRunner(CrawlerRunner):
 
         pbar.close()  # closing progress bar
 
-        with self._semaphore:
+        # print('_save_semaphore', self._save_semaphore)
+        with self._save_semaphore:
+            # print('_save_semaphore in')
             self._save_history(crawler_metric_seq, step_seq)  # saving ending history
+            # print('_save_semaphore out')
 
         logging.info("Finished running at %s" % (datetime.datetime.now()))
 
@@ -152,6 +160,10 @@ class CrawlerHistoryRunner(CrawlerRunner):
             if 'centrality' in kwargs:
                 s = self.graph[centrality_by_name[kwargs['centrality']]]
 
+        # This allows graph to be not loaded by this moment
+        if not self.graph.is_loaded():
+            self.graph.load()
+
         jobs = []
         for i in range(num_processes):
             logging.info('Start parallel job %s of %s' % (i+1, num_processes))
@@ -163,9 +175,11 @@ class CrawlerHistoryRunner(CrawlerRunner):
         errors = 0
         for i, p in enumerate(jobs):
             p.join()
+            err_msg = ''
             if p.exception:
                 errors += 1
-            logging.info('Complete parallel job %s of %s' % (i+1, num_processes))
+                err_msg = ' with exception: %s' % p.exception
+            logging.info('Complete parallel job %s of %s%s' % (i+1, num_processes, err_msg))
 
         msg = 'Completed %s of %s runs for graph %s with N=%s E=%s. Time elapsed %.1fs.' % (
             num_processes - errors, num_processes,
@@ -243,7 +257,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         missing = crm.missing_instances()
 
         if len(missing) == 0:
-            logging.info("No missing experiments found.")
+            logging.info("No missing experiments found for graph '%s'." % self.graph.name)
             return
 
         cmi = missing[self.graph.name]
@@ -297,53 +311,8 @@ def test_history_runner():
     # crm.draw_by_metric_crawler(x_lims=(0, budget), x_normalize=False, scale=8, swap_coloring_scheme=True, draw_error=False)
 
 
-def test_ipy_runner():
-    crawler_defs = [
-        (RandomWalkCrawler, {}),
-        (RandomCrawler, {}),
-        (BreadthFirstSearchCrawler, {}),
-        (DepthFirstSearchCrawler, {}),
-        (SnowBallCrawler, {'p': 0.1}),
-        (MaximumObservedDegreeCrawler, {'batch': 1}),
-        (MaximumObservedDegreeCrawler, {'batch': 10}),
-        (DE_Crawler, {}),
-        (MultiInstanceCrawler, {'count': 5, 'crawler_def': (MaximumObservedDegreeCrawler, {})}),
-    ]
-
-    p = 0.01
-    # Define recall metrics corresponding 6 node centralities
-    metric_defs = [
-        (TopCentralityMetric,
-         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
-        (TopCentralityMetric,
-         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.PAGERANK_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled',
-                               'centrality': Stat.BETWEENNESS_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled',
-                               'centrality': Stat.ECCENTRICITY_DISTR.short}),
-        (TopCentralityMetric,
-         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.CLOSENESS_DISTR.short}),
-        (TopCentralityMetric,
-         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
-    ]
-
-    # Set the number of random seeds to start from
-    n_instances = 8
-    # Run crawling for several graphs
-    graph_names = ['petster-hamster', 'soc-wiki-Vote']
-    for graph_name in graph_names:
-        g = GraphCollections.get(graph_name)
-        # Create runner which will save measurements history to file
-        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        # Run with limitations on the number concurrent processes and the amount of memory
-        chr.run_parallel_adaptive(n_instances, max_cpus=8, max_memory=30)
-        print('\n\n')
-
-
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
 
-    # test_history_runner()
-
-    test_ipy_runner()
+    test_history_runner()

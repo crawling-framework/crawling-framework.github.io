@@ -45,6 +45,11 @@ def compute_waucc(xs, ys):
     return res / norm
 
 
+# A graph needed just to generate pretty short crawlers and metrics names for ResultsMerger.
+# FIXME what if Multi with count > g.nodes()?
+example_graph = GraphCollections.get('example', 'other')
+
+
 class ResultsMerger:
     def __init__(self, graph_names, crawler_defs, metric_defs, n_instances=1):
         """
@@ -58,14 +63,13 @@ class ResultsMerger:
         self.metric_names = []  # list(map(definition_to_filename, metric_defs))
         self.labels = {}  # pretty short names to draw in plots
 
-        g = GraphCollections.get('petster-hamster')  # some sample graph. FIXME what if Multi with count > g.nodes()?
         for md in metric_defs:
-            m = Metric.from_definition(g, md)
+            m = Metric.from_definition(example_graph, md)
             f = definition_to_filename(m.definition)
             self.metric_names.append(f)
             self.labels[f] = m.name
         for cd in crawler_defs:
-            c = Crawler.from_definition(g, cd)
+            c = Crawler.from_definition(example_graph, cd)
             f = definition_to_filename(c.definition)
             self.crawler_names.append(f)
             self.labels[f] = c.name
@@ -76,10 +80,9 @@ class ResultsMerger:
         self.contents = {}  # contents[graph][crawler][metric]: 'x' -> [], 'ys' -> [[]*n_instances], 'avy' -> []
         self.auccs = {}  # auccs[graph][crawler][metric]: 'AUCC' -> [AUCC], 'wAUCC' -> [wAUCC]
         self.read()
-        missing = self.missing_instances()
+        # missing = self.missing_instances()
         # if len(missing) > 0:
         #     logging.warning("Missing instances, will not be plotted:\n%s" % json.dumps(missing, indent=2))
-
 
     @staticmethod
     def names_to_path(graph_name: str, crawler_name: str, metric_name: str):

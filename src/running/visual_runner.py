@@ -14,8 +14,8 @@ from crawlers.cadvanced import CrawlerWithAnswer
 from crawlers.cbasic import filename_to_definition, Crawler, definition_to_filename, \
     MaximumObservedDegreeCrawler
 from crawlers.community_based import MaximumObservedCommunityDegreeCrawler
-from graph_models.cmodels import grid2d
-from graph_models.models import LFR
+from a.cmodels import grid2d
+from a.models import LFR
 from running.metrics_and_runner import CrawlerRunner, Metric, TopCentralityMetric
 from statistics import Stat, get_top_centrality_nodes
 from utils import PICS_DIR
@@ -64,13 +64,13 @@ class CrawlerVisualRunner(CrawlerRunner):
 
     def run(self, draw_orig=True, target_set=set(), labels=False, bold_edges=False, make_gif=False):
         """
-        Run crawler and plot graph with nodes colored. All plots are saved in graph_models series of png files.
+        Run crawler and plot graph with nodes colored. All plots are saved in a series of png files.
 
         :param draw_orig: whether to draw original graph
         :param target_set: these nodes will be highlighted (bigger)
         :param labels: whether to draw node labels (ids)
         :param bold_edges: if True draw observed edges in bold, unobserved edges dotted
-        :param make_gif: whether to create gif from graph_models png series.
+        :param make_gif: whether to create gif from a png series.
         :return:
         """
         crawlers, metrics, batch_generator = self._init_runner()

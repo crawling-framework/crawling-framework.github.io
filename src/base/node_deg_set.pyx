@@ -36,7 +36,7 @@ cdef class ND_Set:
 
     # cpdef bint update(self, int node, int deg):
     #     """
-    #     Update node in set with graph_models new degree. Or inserts if didn't exist.
+    #     Update node in set with a new degree. Or inserts if didn't exist.
     #     :param node: node id
     #     :param deg: new degree
     #     :return: True if node existed False otherwise

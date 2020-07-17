@@ -92,7 +92,7 @@ class MultiCrawler(Crawler):
 
 class MultiInstanceCrawler(MultiCrawler):
     """
-    Runs several crawlers in parallel. Each crawler makes graph_models step iteratively in graph_models cycle.
+    Runs several crawlers in parallel. Each crawler makes a step iteratively in a cycle.
     When the crawler can't get next seed it is discarded from the cycle.
     """
     short = 'MultiInstance'
@@ -164,7 +164,7 @@ class MultiInstanceCrawler(MultiCrawler):
         return res
 
     def next_seed(self) -> int:
-        """ The next crawler makes graph_models step. If impossible, it is discarded.
+        """ The next crawler makes a step. If impossible, it is discarded.
         """
         for _ in range(len(self.crawlers)):
             try:
@@ -173,7 +173,7 @@ class MultiInstanceCrawler(MultiCrawler):
                 logger.debug("Run crawler[%s]: %s Removing it." % (self.next_crawler, e))
                 # print("Run crawler[%s]: %s Removing it." % (self.next_crawler, e))
                 del self.crawlers[self.next_crawler]
-                # idea - create graph_models new instance
+                # idea - create a new instance
                 self.next_crawler = self.next_crawler % len(self.crawlers)
                 continue
 

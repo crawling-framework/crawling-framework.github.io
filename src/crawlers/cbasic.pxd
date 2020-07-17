@@ -8,7 +8,7 @@ from libcpp.deque cimport deque
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec
 
 from base.cgraph cimport MyGraph, str_to_chars
-from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not graph_models type identifier'
+from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 
 
 cdef class Crawler:
