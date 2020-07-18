@@ -11,14 +11,16 @@ from statistics import Stat
 def test_knnucb():
     # g = GraphCollections.get('dolphins')
     # g = GraphCollections.get('Pokec')
-    g = GraphCollections.get('digg-friends')
+    # g = GraphCollections.get('digg-friends')
+    # g = GraphCollections.get('socfb-Bingham82')
+    g = GraphCollections.get('soc-brightkite')
 
     p = 1
     # budget = int(0.005 * g.nodes())
     # s = int(budget / 2)
 
     crawler_defs = [
-        (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 1, 'k': 10}),
+        (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 0, 'k': 1, 'n0': 50}),
         (MaximumObservedDegreeCrawler, {'initial_seed': 1}),
         # (KNN_UCB_Crawler, {}),
         # (MaximumObservedDegreeCrawler, {}),

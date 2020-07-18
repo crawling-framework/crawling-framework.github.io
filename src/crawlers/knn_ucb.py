@@ -17,7 +17,7 @@ def count_dist(v1, v2):
 class KNN_UCB_Crawler(Crawler):
     short = 'KNN-UCB'
 
-    def __init__(self, graph: MyGraph, initial_seed=-1, alpha=0.5, delta=0.5, k=10, n0=20, **kwargs):
+    def __init__(self, graph: MyGraph, initial_seed=-1, alpha=0.5, delta=0.5, k=10, n0=0, **kwargs):
         """
 
         :param graph: investigated graph
@@ -31,11 +31,6 @@ class KNN_UCB_Crawler(Crawler):
         if initial_seed != -1:
             kwargs['initial_seed'] = initial_seed
         super().__init__(graph, alpha=alpha, delta=delta, k=k, n0=n0, **kwargs)
-        # pick a random seed from original graph
-        if len(self._observed_set) == 0:
-            if initial_seed == -1:
-                initial_seed = self._orig_graph.random_node()
-            self.observe(initial_seed)
 
         # dictionaries that store observed and crawled nodes feature vectors
         # and for crawled nodes number of open nodes after crawling
@@ -43,8 +38,16 @@ class KNN_UCB_Crawler(Crawler):
         self.dct_crawled = dict()  # node -> (feature vector, need_update, y_j)
         self.k = k
         self.alp = alpha
-        self.vec_len = 4
+        self.vec_len = 1
         self.update_period = 1
+        self.update_add_per = 15
+        self.n0 = n0
+
+        # pick a random seed from original graph
+        if len(self._observed_set) == 0 and n0 < 1:
+            if initial_seed == -1:
+                initial_seed = self._orig_graph.random_node()
+            self.observe(initial_seed)
 
         # self.observe(initial_seed)
         # initial_seed = self._orig_graph.random_node()
@@ -104,15 +107,19 @@ class KNN_UCB_Crawler(Crawler):
                 kol_craw_neb += 1
                 if self._observed_graph.deg(j) > max_neb_degree:
                     max_neb_degree = self._observed_graph.deg(j)
-
-        med_neb_degree = np.median(arr)
-        aver_neb_degree /= kol_craw_neb
+        if len(arr) != 0:
+            med_neb_degree = np.median(arr)
+        else:
+            med_neb_degree = 0
+        if kol_craw_neb != 0:
+            aver_neb_degree /= kol_craw_neb
         aver_neb_degree = round(aver_neb_degree)
         per_craw_neb = kol_craw_neb / vert_degree
 
         # vec = np.array([vert_degree, med_neb_degree, max_neb_degree, per_craw_neb])
-        vec = np.array([vert_degree, med_neb_degree, aver_neb_degree, per_craw_neb])
-        # vec = np.array([vert_degree])
+        # vec = np.array([vert_degree, med_neb_degree, aver_neb_degree, per_craw_neb])
+        vec = np.array([vert_degree])
+        # vec = np.array([vert_degree, aver_neb_degree, med_neb_degree])
         return vec
         # dct_crawled[i] = vec, False, dct_crawled.get(i)[2]
         # self.dct_crawled[i][0] = vec
@@ -149,6 +156,13 @@ class KNN_UCB_Crawler(Crawler):
 
     def next_seed(self):
 
+        if len(self.crawled_set) >= 20 and len(self.crawled_set) < 40:
+            self.update_period = 5
+        elif len(self.crawled_set) % (30 + 2 * self.update_period) == 0:
+            self.update_period += self.update_add_per
+        # elif self.update_period < 50 and len(self.crawled_set) % 50 == 0:
+        #     self.update_period += 10
+
         # print("!!!")
         # print(self._observed_set)
         # print(self.crawled_set)
@@ -156,81 +170,88 @@ class KNN_UCB_Crawler(Crawler):
         # initial_seed = self._orig_graph.random_node()
         # self.observed_set.add(initial_seed)
 
-        best_node = -1
-        best_expected_gain = -1
-
-        # calculation of feature vector for crawled nodes
-        if len(self.crawled_set) > 1:
-            for i in self.crawled_set:
-
-                # if self.dct_crawled.get(i) is not None:
-                # if i in self.dct_crawled:
-                if self.dct_crawled.get(i)[1]:
-                    # if 0 == 0:
-                    vec = self.calc_node_feat_vec(i)
-                    # print(self.crawled_set)
-                    # print(i)
-                    self.dct_crawled.update({i: (vec, False, self.dct_crawled.get(i)[2])})
+        if self.n0 >= 1:
+            self.n0 -= 1
+            while True:
+                random_seeds = self._orig_graph.random_nodes().pop()
+                # print(random_seeds)
+                if self.crawled_set is None:
+                    break
+                elif random_seeds not in self.crawled_set:
+                    break
+            return random_seeds
         else:
-            for i in self.observed_set:
-                best_node = i
+            best_node = -1
+            best_expected_gain = -1
 
-        # print(self.dct_observed)
-        # print(self.dct_crawled)
+            # calculation of feature vector for crawled nodes
+            if len(self.crawled_set) > 1:
+                for i in self.crawled_set:
 
-        # calculation of feature vector for observed nodes
-        if len(self.crawled_set) != 0:
-            for i in self.observed_set:
-                # if i in self.dct_observed:
-                # print(self.crawled_set)
-                # print(i)
-                if self.dct_observed.get(i) is not None:
-                    if self.dct_observed.get(i)[1]:
+                    # if self.dct_crawled.get(i) is not None:
+                    # if i in self.dct_crawled:
+                    if self.dct_crawled.get(i)[1]:
                         # if 0 == 0:
                         vec = self.calc_node_feat_vec(i)
+                        # print(self.crawled_set)
+                        # print(i)
+                        self.dct_crawled.update({i: (vec, False, self.dct_crawled.get(i)[2])})
+            else:
+                for i in self.observed_set:
+                    best_node = i
+
+            # print(self.dct_observed)
+            # print(self.dct_crawled)
+
+            # calculation of feature vector for observed nodes
+            if len(self.crawled_set) != 0:
+                for i in self.observed_set:
+                    # if i in self.dct_observed:
+                    # print(self.crawled_set)
+                    # print(i)
+                    if self.dct_observed.get(i) is not None:
+                        if self.dct_observed.get(i)[1]:
+                            # if 0 == 0:
+                            vec = self.calc_node_feat_vec(i)
+                            self.dct_observed.update({i: (vec, False, self.dct_observed.get(i)[2], self.dct_observed.get(i)[3])})
+                    elif len(self.crawled_set) == 1:
+                        vec = self.calc_node_feat_vec(i)
                         self.dct_observed.update({i: (vec, False, self.dct_observed.get(i)[2], self.dct_observed.get(i)[3])})
-                elif len(self.crawled_set) == 1:
-                    vec = self.calc_node_feat_vec(i)
-                    self.dct_observed.update({i: (vec, False, self.dct_observed.get(i)[2], self.dct_observed.get(i)[3])})
-        # print(self.dct_observed)
-        # print(self.dct_crawled)
+            # print(self.dct_observed)
+            # print(self.dct_crawled)
 
-        # choosing the best node from observed nodes for crawling
-        if len(self.crawled_set) > 1:
-            for key, value in self.dct_observed.items():
-                if value[3] or len(self.crawled_set) % self.update_period == 0:
-                    # find k nearest neighbors
-                    arr = []
-                    for i in self.crawled_set:
-                        arr.append((i, count_dist(value[0], self.dct_crawled.get(i)[0])))
-                    arr.sort(key=itemgetter(1))
-                    # print(arr)
+            # choosing the best node from observed nodes for crawling
+            if len(self.crawled_set) > 1:
+                for key, value in self.dct_observed.items():
+                    if value[3] or len(self.crawled_set) % self.update_period == 0:
+                        # find k nearest neighbors
+                        arr = []
+                        for i in self.crawled_set:
+                            arr.append((i, count_dist(value[0], self.dct_crawled.get(i)[0])))
+                        arr.sort(key=itemgetter(1))
+                        # print(arr)
 
-                    exp_rev = self.expected_reward(arr)
-                    if len(self.crawled_set) >= 20:
-                        self.dct_observed.update({key: (value[0], value[1], exp_rev, False)})
+                        exp_rev = self.expected_reward(arr)
+                        if len(self.crawled_set) >= 20:
+                            self.dct_observed.update({key: (value[0], value[1], exp_rev, False)})
+                        else:
+                            self.dct_observed.update({key: (value[0], value[1], exp_rev, True)})
                     else:
-                        self.dct_observed.update({key: (value[0], value[1], exp_rev, True)})
-                else:
-                    exp_rev = value[2]
+                        exp_rev = value[2]
 
-                if(exp_rev > best_expected_gain):
-                    best_expected_gain = exp_rev
-                    best_node = key
+                    if(exp_rev > best_expected_gain):
+                        best_expected_gain = exp_rev
+                        best_node = key
 
-        # print(self.dct_observed)
-        # print(self.dct_crawled)
-        # print(best_node)
-        if len(self.crawled_set) > 0:
-            if self.dct_observed.get(best_node) is not None:
-                self.dct_crawled.update({best_node: (self.dct_observed.get(best_node)[0], False, 0)})
-                del self.dct_observed[best_node]
+            # print(self.dct_observed)
+            # print(self.dct_crawled)
+            # print(best_node)
+            if len(self.crawled_set) > 0:
+                if self.dct_observed.get(best_node) is not None:
+                    self.dct_crawled.update({best_node: (self.dct_observed.get(best_node)[0], False, 0)})
+                    del self.dct_observed[best_node]
 
-        if len(self.crawled_set) >= 20 and len(self.crawled_set) < 50:
-            self.update_period = 5
-        elif self.update_period < 50 and len(self.crawled_set) % 50 == 0:
-            self.update_period += 10
 
-        assert best_node != -1
-        return best_node
+            assert best_node != -1
+            return best_node
         # return self.crawled_set
