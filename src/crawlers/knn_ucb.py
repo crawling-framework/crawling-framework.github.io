@@ -143,14 +143,19 @@ class KNN_UCB_Crawler(Crawler):
         # print(arr)
 
         len_crawl = len(self.crawled_set)
-        if len_crawl >= self.k:
-            knn_model = NearestNeighbors(n_neighbors=self.k)
-            knn_model.fit(arr[1])
-            arr_ind = knn_model.kneighbors([[0]], n_neighbors=self.k)[1][0]
-        else:
-            knn_model = NearestNeighbors(n_neighbors=len_crawl)
-            knn_model.fit(arr[1])
-            arr_ind = knn_model.kneighbors([[0]], n_neighbors=len_crawl)[1][0]
+        n_neighbors = self.k if len_crawl >= self.k else len_crawl
+        knn_model = NearestNeighbors(n_neighbors=n_neighbors)
+        knn_model.fit(arr[1])
+        arr_ind = knn_model.kneighbors([[0]], n_neighbors=n_neighbors)[1][0]
+
+        # if len_crawl >= self.k:
+        #     knn_model = NearestNeighbors(n_neighbors=self.k)
+        #     knn_model.fit(arr[1])
+        #     arr_ind = knn_model.kneighbors([[0]], n_neighbors=self.k)[1][0]
+        # else:
+        #     knn_model = NearestNeighbors(n_neighbors=len_crawl)
+        #     knn_model.fit(arr[1])
+        #     arr_ind = knn_model.kneighbors([[0]], n_neighbors=len_crawl)[1][0]
         # print(arr_ind)
         arr_dist = []
         for i in arr_ind:
@@ -268,10 +273,11 @@ class KNN_UCB_Crawler(Crawler):
                         arr = self.knn(key, value[0])
 
                         exp_rev = self.expected_reward(arr)
-                        if len(self.crawled_set) >= 20:
-                            self.dct_observed.update({key: (value[0], value[1], exp_rev, False)})
-                        else:
-                            self.dct_observed.update({key: (value[0], value[1], exp_rev, True)})
+                        self.dct_observed.update({key: (value[0], value[1], exp_rev, len(self.crawled_set) < 20)})
+                        # if len(self.crawled_set) >= 20:
+                        #     self.dct_observed.update({key: (value[0], value[1], exp_rev, False)})
+                        # else:
+                        #     self.dct_observed.update({key: (value[0], value[1], exp_rev, True)})
                     else:
                         exp_rev = value[2]
 

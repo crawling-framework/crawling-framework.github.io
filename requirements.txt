@@ -16,3 +16,4 @@ networkit
 imageio
 vk
 jupiter
+kdtree
