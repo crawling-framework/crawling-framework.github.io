@@ -1,4 +1,6 @@
+import glob
 import logging
+import os
 from math import sqrt, ceil
 from operator import itemgetter
 
@@ -514,10 +516,13 @@ def three_stage_mod_avg_b_s_all():
     for p in [0.0001, 0.001, 0.01, 0.1]:
         plt.sca(axs[aix])
 
-        budget_coeff = 0.03
-        # budget_coeff = 0.005
+        budget_coeff = [
+            0.0001, 0.0003, 0.0005,
+            0.001, 0.003, 0.005,
+            0.01, 0.03, 0.05, 0.1, 0.3
+        ]
         seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-        batch = [1, 3, 5, 10, 30, 50, 100, 300, 500, 1000, 3000]
+        batch = 100
 
         metric_defs = [
             (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
@@ -525,20 +530,22 @@ def three_stage_mod_avg_b_s_all():
 
         n_instances = 8
         graph_names = social_names
-        worst = np.ones((len(batch), len(seed_coeff)))
-        avg = np.zeros((len(batch), len(seed_coeff)))
+        worst = np.ones((len(budget_coeff), len(seed_coeff)))
+        avg = np.zeros((len(budget_coeff), len(seed_coeff)))
         for i, graph_name in enumerate(graph_names):
             g = GraphCollections.get(graph_name, not_load=True)
             n = g[Stat.NODES]
-            budget = int(budget_coeff * n)
+            budgets = [int(b*n) for b in budget_coeff]
             crawler_defs = [
-                (ThreeStageMODCrawler, {'s': int(s * budget), 'n': budget, 'b': b, 'p': p}) for s in seed_coeff for b in batch
+               (ThreeStageMODCrawler, {'s': int(s*budget), 'n': budget, 'p': p, 'b': batch}) for s in seed_coeff for budget in budgets
             ]
             rm = ResultsMerger([g.name], crawler_defs, metric_defs, n_instances)
 
-            for j, b in enumerate(batch):
+            for j, b in enumerate(budget_coeff):
+                budget = int(b*n)
                 for k, s in enumerate(seed_coeff):
-                    cd = (ThreeStageMODCrawler, {'s': int(s * budget), 'n': budget, 'b': b, 'p': p})
+                    start_seeds = int(s*budget)
+                    cd = (ThreeStageMODCrawler, {'s': start_seeds, 'n': budget, 'p': p, 'b': batch})
                     res = rm.contents[graph_name][definition_to_filename(cd)][definition_to_filename(metric_defs[0])]['avy'][-1]
                     avg[j][k] += res / len(graph_names)
                     if res < worst[j][k]:
@@ -548,11 +555,11 @@ def three_stage_mod_avg_b_s_all():
         plt.imshow(avg, cmap='inferno', vmin=0, vmax=1)
         plt.xlabel('s / n', fontsize=14)
         if aix == 0:
-            plt.ylabel('b', fontsize=14)
-        plt.yticks(np.arange(0, len(batch)), batch)
+            plt.ylabel('n / |V|', fontsize=14)
+        plt.yticks(np.arange(0, len(budget_coeff)), budget_coeff)
         plt.xticks(np.arange(0, len(seed_coeff)), seed_coeff, rotation=90)
         plt.tight_layout()
-        plt.ylim((len(batch)-0.5, -0.5))
+        plt.ylim((len(budget_coeff)-0.5, -0.5))
         plt.grid(False)
         aix += 1
 
@@ -594,6 +601,40 @@ def three_stage_comparison():
         rm.draw_by_metric_crawler(x_lims=(0, budget), x_normalize=False, scale=12)
 
 
+def data_copy():
+    budget_coeff = [
+        0.0001, 0.0003, 0.0005,
+        0.001, 0.003, 0.005,
+        0.01, 0.03, 0.05, 0.1, 0.3
+    ]
+    seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
+    p = 0.01
+    md = (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short})
+    m = definition_to_filename(md)
+
+    graph_names = social_names
+    for i, graph_name in enumerate(graph_names):
+        g = GraphCollections.get(graph_name, not_load=True)
+        n = g[Stat.NODES]
+        for j, b in enumerate(budget_coeff):
+            budget = int(b * n)
+            for k, s in enumerate(seed_coeff):
+                start_seeds = int(s * budget)
+                cd = (AvrachenkovCrawler, {'n1': start_seeds, 'n': budget, 'k': int(p*n)})
+                # cd = (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p})
+                # cd = (ThreeStageMODCrawler, {'s': start_seeds, 'n': budget, 'p': p, 'b': 100})
+                c = definition_to_filename(cd)
+
+                path = ResultsMerger.names_to_path(graph_name, c, m)
+                paths = glob.glob(path)
+                for src in paths:
+                    dst = src.replace('results', '2-Stage')
+                    if not os.path.exists(os.path.dirname(dst)):
+                        os.makedirs(os.path.dirname(dst))
+                    os.system("cp '%s' '%s'" % (src, dst))
+
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s')
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
@@ -606,8 +647,9 @@ if __name__ == '__main__':
     # three_stage_avg_n_s()
     # three_stage_avg_n_s_all()
     # three_stage_mod_avg_b_s_all()
-    three_stage_mod_avg_b_s()
+    # three_stage_mod_avg_b_s()
     # three_stage_comparison()
+    data_copy()
 
     # g = GraphCollections.get('loc-brightkite_edges')
     # print(g[Stat.DEGREE_DISTR])
