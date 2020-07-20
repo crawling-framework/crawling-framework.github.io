@@ -1,6 +1,12 @@
 import logging
 from operator import itemgetter
 
+import kdtree
+from sklearn.exceptions import NotFittedError
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import StandardScaler
+
 import numpy as np
 
 
@@ -125,6 +131,35 @@ class KNN_UCB_Crawler(Crawler):
         # self.dct_crawled[i][0] = vec
         # self.dct_crawled[i][1] = False
 
+    def knn(self, seed, vec):
+        arr = [[], []]
+        for i in self.crawled_set:
+            arr[0].append(i)
+            # print(self.dct_observed.get(seed)[1])
+            dist = count_dist(vec, self.dct_crawled.get(i)[0])
+            # print(dist)
+            arr[1].append([dist])
+        # print(seed)
+        # print(arr)
+
+        len_crawl = len(self.crawled_set)
+        if len_crawl >= self.k:
+            knn_model = NearestNeighbors(n_neighbors=self.k)
+            knn_model.fit(arr[1])
+            arr_ind = knn_model.kneighbors([[0]], n_neighbors=self.k)[1][0]
+        else:
+            knn_model = NearestNeighbors(n_neighbors=len_crawl)
+            knn_model.fit(arr[1])
+            arr_ind = knn_model.kneighbors([[0]], n_neighbors=len_crawl)[1][0]
+        # print(arr_ind)
+        arr_dist = []
+        for i in arr_ind:
+            # print(i)
+            arr_dist.append((arr[0][i], arr[1][i][0]))
+        # print(arr_dist)
+        return arr_dist
+        # return []
+
     def crawl(self, seed: int):
         # calculate the number of open nodes after crawling current node
         res = super().crawl(seed)
@@ -226,10 +261,11 @@ class KNN_UCB_Crawler(Crawler):
                     if value[3] or len(self.crawled_set) % self.update_period == 0:
                         # find k nearest neighbors
                         arr = []
-                        for i in self.crawled_set:
-                            arr.append((i, count_dist(value[0], self.dct_crawled.get(i)[0])))
-                        arr.sort(key=itemgetter(1))
+                        # for i in self.crawled_set:
+                        #     arr.append((i, count_dist(value[0], self.dct_crawled.get(i)[0])))
+                        # arr.sort(key=itemgetter(1))
                         # print(arr)
+                        arr = self.knn(key, value[0])
 
                         exp_rev = self.expected_reward(arr)
                         if len(self.crawled_set) >= 20:
