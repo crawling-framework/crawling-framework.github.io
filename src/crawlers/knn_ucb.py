@@ -48,6 +48,9 @@ class KNN_UCB_Crawler(Crawler):
         self.update_period = 1
         self.update_add_per = 15
         self.n0 = n0
+        self.flag_tree = True
+        self.knn_model = NearestNeighbors(n_neighbors=k)
+        self.arr = [[], []]
 
         # pick a random seed from original graph
         if len(self._observed_set) == 0 and n0 < 1:
@@ -132,21 +135,25 @@ class KNN_UCB_Crawler(Crawler):
         # self.dct_crawled[i][1] = False
 
     def knn(self, seed, vec):
-        arr = [[], []]
-        for i in self.crawled_set:
-            arr[0].append(i)
-            # print(self.dct_observed.get(seed)[1])
-            dist = count_dist(vec, self.dct_crawled.get(i)[0])
-            # print(dist)
-            arr[1].append([dist])
-        # print(seed)
-        # print(arr)
-
         len_crawl = len(self.crawled_set)
         n_neighbors = self.k if len_crawl >= self.k else len_crawl
-        knn_model = NearestNeighbors(n_neighbors=n_neighbors)
-        knn_model.fit(arr[1])
-        arr_ind = knn_model.kneighbors([[0]], n_neighbors=n_neighbors)[1][0]
+        if self.flag_tree:
+            self.arr = [[], []]
+            for i in self.crawled_set:
+                self.arr[0].append(i)
+                # print(self.dct_observed.get(seed)[1])
+                dist = count_dist(vec, self.dct_crawled.get(i)[0])
+                # print(dist)
+                self.arr[1].append([dist])
+            # print(seed)
+            # print(self.arr)
+
+            # len_crawl = len(self.crawled_set)
+            # n_neighbors = self.k if len_crawl >= self.k else len_crawl
+            self.knn_model = NearestNeighbors(n_neighbors=n_neighbors)
+            self.knn_model.fit(self.arr[1])
+            self.flag_tree = False
+        arr_ind = self.knn_model.kneighbors([[0]], n_neighbors=n_neighbors)[1][0]
 
         # if len_crawl >= self.k:
         #     knn_model = NearestNeighbors(n_neighbors=self.k)
@@ -160,7 +167,7 @@ class KNN_UCB_Crawler(Crawler):
         arr_dist = []
         for i in arr_ind:
             # print(i)
-            arr_dist.append((arr[0][i], arr[1][i][0]))
+            arr_dist.append((self.arr[0][i], self.arr[1][i][0]))
         # print(arr_dist)
         return arr_dist
         # return []
@@ -284,7 +291,7 @@ class KNN_UCB_Crawler(Crawler):
                     if(exp_rev > best_expected_gain):
                         best_expected_gain = exp_rev
                         best_node = key
-
+            self.flag_tree = True
             # print(self.dct_observed)
             # print(self.dct_crawled)
             # print(best_node)
