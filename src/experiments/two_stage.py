@@ -20,7 +20,8 @@ from statistics import Stat, get_top_centrality_nodes
 def test_target_set_coverage():
     # name, budget, start_seeds = 'flixster', 50000, 10000
     # name, budget, start_seeds = 'soc-pokec-relationships', 3000, 3000
-    name, budget, start_seeds = 'digg-friends', 1000, 500
+    # name, budget, start_seeds = 'digg-friends', 1000, 500
+    name, budget, start_seeds = 'epinions', 1000, 500
     # name, budget, start_seeds = 'soc-twitter-follows', 10000, 1000
     # name, budget, start_seeds = 'tech-p2p-gnutella', 3000, 500
     # name, budget, start_seeds = 'loc-brightkite_edges', 2500, 500
@@ -56,9 +57,10 @@ def test_target_set_coverage():
         # (MaximumObservedDegreeCrawler, {'batch': 1}),
         # # PreferentialObservedDegreeCrawler(graph, batch=1),
         # MaximumExcessDegreeCrawler(graph),
-        (AvrachenkovCrawler, {'n': budget, 'n1': start_seeds, 'k': int(p * graph.nodes())}),
-        (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p}),
+        # (AvrachenkovCrawler, {'n': budget, 'n1': start_seeds, 'k': int(p * graph.nodes())}),
+        (ThreeStageCrawler, {'s': int(0.6*budget), 'n': budget, 'p': p}),
         (ThreeStageMODCrawler, {'s': 0, 'n': budget, 'p': p, 'b': 1}),
+        (ThreeStageMODCrawler, {'s': int(0.3*budget), 'n': budget, 'p': p, 'b': 1}),
         (EmulatorWithAnswerCrawler, {'crawler_def': (MaximumObservedDegreeCrawler, {}), 'n': budget, 'target_size': int(p*graph.nodes())}),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
@@ -96,7 +98,7 @@ def test_target_set_coverage():
 
     from time import time
     t = time()
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget)
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=1000)
     ci.run()
     print(time()-t)
 
