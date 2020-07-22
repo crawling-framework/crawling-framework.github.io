@@ -3,7 +3,7 @@ import subprocess, sys
 import logging
 
 from crawlers.cbasic import filename_to_definition
-from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, AvrachenkovCrawler
+from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, AvrachenkovCrawler, EmulatorWithAnswerCrawler
 from experiments.three_stage import social_names
 from graph_io import konect_names, GraphCollections, netrepo_names, other_names
 from running.history_runner import CrawlerHistoryRunner
@@ -200,44 +200,56 @@ def main():
     batches = [1, 10, 100, 1000, 10000]
     multi_counts = [2, 3, 5, 10, 30, 100, 1000]
     crawler_defs = [
-        (RandomWalkCrawler, {}),
-        (RandomCrawler, {}),
-        (BreadthFirstSearchCrawler, {}),
-        (DepthFirstSearchCrawler, {}),
-        (SnowBallCrawler, {'p': 0.1}),
-        (SnowBallCrawler, {'p': 0.25}),
-        (SnowBallCrawler, {'p': 0.75}),
-        (SnowBallCrawler, {'p': 0.9}),
-        (SnowBallCrawler, {'p': 0.5}),
-    ] + [
-        (MaximumObservedDegreeCrawler, {'batch': b}) for b in batches
-    ] + [
-        (PreferentialObservedDegreeCrawler, {'batch': b}) for b in batches
-    ] + [
-        (DE_Crawler, {}),
-    ] + [
-        (MultiInstanceCrawler, {'count': c, 'crawler_def': (BreadthFirstSearchCrawler, {})}) for c in multi_counts
-    ] + [
-        (MultiInstanceCrawler, {'count': c, 'crawler_def': (MaximumObservedDegreeCrawler, {'batch': 1})}) for c in multi_counts
-    ] + [
-        (MultiInstanceCrawler, {'count': c, 'crawler_def': (PreferentialObservedDegreeCrawler, {'batch': 1})}) for c in multi_counts
-    ] + [
-        (MultiInstanceCrawler, {'count': c, 'crawler_def': (DE_Crawler, {})}) for c in multi_counts
+        # (EmulatorWithAnswerCrawler, {'crawler_def': (DE_Crawler, {}), 'n': int}),
+    #     (RandomWalkCrawler, {}),
+    #     (RandomCrawler, {}),
+    #     (BreadthFirstSearchCrawler, {}),
+    #     (DepthFirstSearchCrawler, {}),
+    #     (SnowBallCrawler, {'p': 0.1}),
+    #     (SnowBallCrawler, {'p': 0.25}),
+    #     (SnowBallCrawler, {'p': 0.75}),
+    #     (SnowBallCrawler, {'p': 0.9}),
+    #     (SnowBallCrawler, {'p': 0.5}),
+    # ] + [
+    #     (MaximumObservedDegreeCrawler, {'batch': b}) for b in batches
+    # ] + [
+    #     (PreferentialObservedDegreeCrawler, {'batch': b}) for b in batches
+    # ] + [
+    #     (DE_Crawler, {}),
+    # ] + [
+    #     (MultiInstanceCrawler, {'count': c, 'crawler_def': (BreadthFirstSearchCrawler, {})}) for c in multi_counts
+    # ] + [
+    #     (MultiInstanceCrawler, {'count': c, 'crawler_def': (MaximumObservedDegreeCrawler, {'batch': 1})}) for c in multi_counts
+    # ] + [
+    #     (MultiInstanceCrawler, {'count': c, 'crawler_def': (PreferentialObservedDegreeCrawler, {'batch': 1})}) for c in multi_counts
+    # ] + [
+    #     (MultiInstanceCrawler, {'count': c, 'crawler_def': (DE_Crawler, {})}) for c in multi_counts
     ]
 
-    p = 0.001
+    p = 0.01
     metric_defs = [
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.PAGERANK_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.BETWEENNESS_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.ECCENTRICITY_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.CLOSENESS_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
+        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
+    #     (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
+    #     (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.PAGERANK_DISTR.short}),
+    #     (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.BETWEENNESS_DISTR.short}),
+    #     (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.ECCENTRICITY_DISTR.short}),
+    #     (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.CLOSENESS_DISTR.short}),
+    #     (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
+    ]
+
+    budget_coeff = [
+        0.0001, 0.0003, 0.0005,
+        0.001, 0.003, 0.005,
+        0.01, 0.03, 0.05, 0.1, 0.3
     ]
 
     n_instances = 8
     for graph_name in netrepo_names:
         g = GraphCollections.get(graph_name)
+        n = g[Stat.NODES]
+        crawler_defs = [
+            (EmulatorWithAnswerCrawler, {'crawler_def': (DE_Crawler, {}), 'n': int(bc * n), 'target_size': int(p*n)}) for bc in budget_coeff
+        ]
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
         chr.run_missing(n_instances, max_cpus=8, max_memory=30)
         print('\n\n')
@@ -370,7 +382,7 @@ if __name__ == '__main__':
     # cloud_prepare(clouds[1])  # Run to get all results from cloud
     # cloud_run(clouds[0])
 
-    # main()  # to be run from cloud
+    main()  # to be run from cloud
     # two_stage(p=0.01)
     # two_stage(p=0.1)
     # two_stage(p=0.001)
