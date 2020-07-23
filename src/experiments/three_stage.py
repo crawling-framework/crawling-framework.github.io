@@ -64,7 +64,7 @@ social_names = [
     'soc-slashdot',             # N=70068,   E=358647,   d_avg=10.24
     'soc-themarker',            # N=69317,   E=1644794,  d_avg=47.46
     'soc-BlogCatalog',          # N=88784,   E=2093195,  d_avg=47.15
-    'soc-anybeat',
+    'soc-anybeat',              # N=
     'soc-twitter-follows',      # N=404719,  E=713319,   d_avg=3.53
     'petster-hamster',          # N=2000,    E=16098,    d_avg=16.10
     'ego-gplus',                # N=23613,   E=39182,    d_avg=3.32

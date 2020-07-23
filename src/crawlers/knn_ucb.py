@@ -6,7 +6,6 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors.base import _get_weights
 
 import numpy as np
-from sklearn.preprocessing import StandardScaler
 
 from base.cgraph import MyGraph
 from crawlers.cbasic import Crawler
@@ -67,6 +66,7 @@ class KNN_UCB_Crawler(Crawler):
 
         self._node_feature = {}  # node_id -> (feature vector, observed_reward)
         self.n_features = n_features
+        self._max_deg = 1  # max degree in observed graph, for feature normalization
 
         # pick a random seed from original graph
         if len(self._observed_set) == 0 and n0 < 1:
@@ -84,22 +84,7 @@ class KNN_UCB_Crawler(Crawler):
 
         self._knn_model = KNeighborsRegressor(n_neighbors=self.k, weights='distance', n_jobs=None)
         self._fit_period = 1  # fit kNN model once in a period dynamically changing
-        self._scaler = StandardScaler()
-
-    # def _expected_reward(self, node: int) -> float:
-    #     """
-    #     :param node: node id
-    #     :return: expected reward for observed node
-    #     """
-    #     # Expected reward predicted by kNN regressor
-    #     feature = self._scaler.transform([self._node_feature[node][0]])
-    #     neigh_dist, neigh_ind = self._knn_model.kneighbors(feature)
-    #     f = _KNeighborsRegressor_predict(neigh_dist, neigh_ind, self._knn_model)
-    #
-    #     # Average distance to kNN
-    #     sigma = np.mean(neigh_dist)
-    #
-    #     return f + self.alpha * sigma
+        # self._scaler = StandardScaler()
 
     def _expected_rewards(self, node_list: list) -> float:
         """
@@ -107,7 +92,8 @@ class KNN_UCB_Crawler(Crawler):
         :return: expected reward for observed node
         """
         # Expected reward predicted by kNN regressor
-        feature = self._scaler.transform([self._node_feature[node][0] for node in node_list])
+        # feature = self._scaler.transform([self._node_feature[node][0] for node in node_list])
+        feature = np.array([self._node_feature[node][0] for node in node_list])  # FIXME quite a lot time for conversion to numpy array
         neigh_dist, neigh_ind = self._knn_model.kneighbors(feature)
         f = _KNeighborsRegressor_predict(neigh_dist, neigh_ind, self._knn_model)
 
@@ -140,11 +126,16 @@ class KNN_UCB_Crawler(Crawler):
                 max_neigh_degree = deg
             avg_neigh_degree += deg / obs_degree
 
-        res = [obs_degree, avg_neigh_degree, max_neigh_degree, crawled_neigh_frac][:self.n_features]
+        res = [obs_degree / self._max_deg,
+               avg_neigh_degree / self._max_deg,
+               max_neigh_degree / self._max_deg,
+               crawled_neigh_frac][:self.n_features]
         return res
 
     def crawl(self, seed: int):
         res = super().crawl(seed)
+        self._max_deg = max(self._max_deg, self._observed_graph.deg(seed))
+
         # Obtained reward = the number of newly open nodes
         self._node_feature[seed] = [None, len(res)]  # will be updated
         for n in res:
@@ -154,7 +145,7 @@ class KNN_UCB_Crawler(Crawler):
         to_be_updated = {seed}
         for n in self._observed_graph.neighbors(seed):
             to_be_updated.add(n)
-            to_be_updated.update(self._observed_graph.neighbors(n))  # TODO seems to have no effect experimentally
+            # to_be_updated.update(self._observed_graph.neighbors(n))  # TODO seems to have no effect experimentally
 
         for n in to_be_updated:
             assert n in self._node_feature
@@ -176,7 +167,7 @@ class KNN_UCB_Crawler(Crawler):
         if crawled % self._fit_period == 0:
             # X, y = zip(*self._node_feature.values())  # all nodes
             X, y = zip(*[self._node_feature[n] for n in self._crawled_set])  # crawled nodes
-            X = self._scaler.fit_transform(X)
+            # X = self._scaler.fit_transform(X)
             self._knn_model = KNeighborsRegressor(n_neighbors=min(len(y), self.k), weights='distance')
             self._knn_model.fit(X, y)
 
