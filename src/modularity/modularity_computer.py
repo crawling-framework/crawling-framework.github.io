@@ -133,8 +133,8 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     # logging.getLogger().setLevel(logging.DEBUG)
 
-    # graph_models = [1003, 924, 930, 1674, 720, 342, 1482, 804, 252, 708, 876, 1410, 1374, 1119, 1104, 1392, 351, 939]
-    # print(sum(graph_models))
+    # a = [1003, 924, 930, 1674, 720, 342, 1482, 804, 252, 708, 876, 1410, 1374, 1119, 1104, 1392, 351, 939]
+    # print(sum(a))
 
     name = 'petster-hamster'
     # name = 'digg-friends'

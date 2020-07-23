@@ -3,6 +3,8 @@ import glob
 import json
 import os
 import logging
+from math import ceil
+
 from tqdm import tqdm
 import multiprocessing as mp
 
@@ -18,7 +20,7 @@ from crawlers.cbasic import Crawler, definition_to_filename, filename_to_definit
     SnowBallCrawler, MaximumObservedDegreeCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections
-from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric
+from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric, centrality_by_name
 from running.merger import ResultsMerger
 from statistics import Stat
 
@@ -75,7 +77,8 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :return:
         """
         super().__init__(graph, crawler_defs=crawler_defs, metric_defs=metric_defs, budget=budget, step=step)
-        self._semaphore = mp.Semaphore(1)
+        self._init_semaphore = mp.Semaphore(1)
+        self._save_semaphore = mp.Semaphore(1)
 
     def _save_history(self, crawler_metric_seq, step_seq):
         pbar = tqdm(total=len(crawler_metric_seq), desc='Saving history')
@@ -104,15 +107,16 @@ class CrawlerHistoryRunner(CrawlerRunner):
     def run(self, same_initial_seed=False):
         """ Run crawlers and measure metrics. In the end, the measurements are saved.
 
-        :param graph: graph to run
-        :param same_initial_seed: use the same initial seed for all crawler instances
-        :param draw_networkx: if True draw graphs with colored nodes using networkx and save it as
-         gif. Use for small graphs only.
-        :param budget: maximal number of nodes to be crawled, by default the whole graph
-        :param step: compute metrics each `step` steps
+        :param same_initial_seed: use the same initial seed for all crawler instances TODO
         :return:
         """
-        crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
+        # print('_init_semaphore', self._init_semaphore)
+        with self._init_semaphore:  # to ensure stats reading/calculation only once
+            # print('_init_semaphore in')
+            sleep(0.1)  # FIXME bugfix for strange semaphores lock
+            crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
+            # print('_init_semaphore out')
+
         pbar = tqdm(total=self.budget, desc='Running iterations')  # drawing crawling progress bar
 
         step = 0
@@ -133,8 +137,11 @@ class CrawlerHistoryRunner(CrawlerRunner):
 
         pbar.close()  # closing progress bar
 
-        with self._semaphore:
+        # print('_save_semaphore', self._save_semaphore)
+        with self._save_semaphore:
+            # print('_save_semaphore in')
             self._save_history(crawler_metric_seq, step_seq)  # saving ending history
+            # print('_save_semaphore out')
 
         logging.info("Finished running at %s" % (datetime.datetime.now()))
 
@@ -147,6 +154,16 @@ class CrawlerHistoryRunner(CrawlerRunner):
         """
         t = time()
 
+        # FIXME this is just to pre-load stats to avoid loading it in every process
+        for md in self.metric_defs:
+            kwargs = md[1]
+            if 'centrality' in kwargs:
+                s = self.graph[centrality_by_name[kwargs['centrality']]]
+
+        # This allows graph to be not loaded by this moment
+        if not self.graph.is_loaded():
+            self.graph.load()
+
         jobs = []
         for i in range(num_processes):
             logging.info('Start parallel job %s of %s' % (i+1, num_processes))
@@ -158,9 +175,11 @@ class CrawlerHistoryRunner(CrawlerRunner):
         errors = 0
         for i, p in enumerate(jobs):
             p.join()
+            err_msg = ''
             if p.exception:
                 errors += 1
-            logging.info('Complete parallel job %s of %s' % (i+1, num_processes))
+                err_msg = ' with exception: %s' % p.exception
+            logging.info('Complete parallel job %s of %s%s' % (i+1, num_processes, err_msg))
 
         msg = 'Completed %s of %s runs for graph %s with N=%s E=%s. Time elapsed %.1fs.' % (
             num_processes - errors, num_processes,
@@ -173,24 +192,54 @@ class CrawlerHistoryRunner(CrawlerRunner):
                               max_cpus: int = mp.cpu_count(), max_memory: float = 6):
         """
         Runs in parallel crawlers and measure metrics. Number of processes is chosen adaptively.
-        Using magic coefficients: Mbytes of memory = A*n + B,
-        where A = 0.25, B = 2.5,  n - thousands of nodes in graph.
+        Using magic coefficients: Mbytes of memory = A*n + B*e + C,
+        where A = 0.25, B = 0.01, C = 2.5,  n - thousands of nodes in graph.
 
         :param n_instances: total wanted number of instances to be performed
         :param max_cpus: max number of CPUs to use for computation, all available by default
         :param max_memory: max Mbytes of operative memory to use for computation, 6Gb by default
         :return:
         """
-        # Gbytes of operative memory per instance
-        memory = (0.25 * self.graph['NODES'] / 1000 + 2.5) / 1024 * len(self.crawler_defs)
-        max_cpus = min(max_cpus, int(max_memory // memory))
+        # GBytes of operative memory per 1 crawler
+        m = (0.25 * self.graph[Stat.NODES] / 1000 + 0.01 * self.graph[Stat.EDGES] / 1000 + 2.5) / 1024
+        if m > max_memory:
+            raise MemoryError(
+                "Not enough memory to even run 1 configuration: %s < %s needed" % (max_memory, m))
 
-        while n_instances > 0:
-            num = min(max_cpus, n_instances)
-            n_instances -= num
-            msg = self.run_parallel(num_processes=num)
+        if len(self.crawler_defs) > n_instances:  # split by crawler_defs
+            # Prefer to take max possible instances
+            max_cpus = min(max_cpus, int(max_memory // m))
+            while n_instances > 0:
+                num = min(max_cpus, n_instances)
+                n_instances -= num
 
-            send_vk(msg)
+                # Now split crawler_def into parts if needed
+                memory = m * num
+                max_cds = int(max_memory // memory)
+                assert max_cds >= 1
+                crawler_defs = self.crawler_defs
+                left = len(crawler_defs)
+                logging.info("Split %s crawler_defs into %s parts" % (left, ceil(left / max_cds)))
+                last_ix = 0
+                while left > 0:
+                    batch = min(max_cds, left)
+                    self.crawler_defs = crawler_defs[last_ix: last_ix+batch]
+                    last_ix += batch
+                    left -= batch
+                    msg = self.run_parallel(num_processes=num) + ", %s of %s crawler_defs left" % (left, len(crawler_defs))
+                    send_vk(msg)
+
+        else:  # split by instances
+            memory = m * len(self.crawler_defs)
+            max_cpus = min(max_cpus, int(max_memory // memory))
+            assert max_cpus >= 1
+
+            while n_instances > 0:
+                num = min(max_cpus, n_instances)
+                n_instances -= num
+                msg = self.run_parallel(num_processes=num)
+
+                send_vk(msg)
 
     def run_missing(self, n_instances=10,
                     max_cpus: int = mp.cpu_count(), max_memory: float = 6):
@@ -208,7 +257,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         missing = crm.missing_instances()
 
         if len(missing) == 0:
-            logging.info("No missing experiments found.")
+            logging.info("No missing experiments found for graph '%s'." % self.graph.name)
             return
 
         cmi = missing[self.graph.name]
@@ -262,53 +311,8 @@ def test_history_runner():
     # crm.draw_by_metric_crawler(x_lims=(0, budget), x_normalize=False, scale=8, swap_coloring_scheme=True, draw_error=False)
 
 
-def test_ipy_runner():
-    crawler_defs = [
-        (RandomWalkCrawler, {}),
-        (RandomCrawler, {}),
-        (BreadthFirstSearchCrawler, {}),
-        (DepthFirstSearchCrawler, {}),
-        (SnowBallCrawler, {'p': 0.1}),
-        (MaximumObservedDegreeCrawler, {'batch': 1}),
-        (MaximumObservedDegreeCrawler, {'batch': 10}),
-        (DE_Crawler, {}),
-        (MultiInstanceCrawler, {'count': 5, 'crawler_def': (MaximumObservedDegreeCrawler, {})}),
-    ]
-
-    p = 0.01
-    # Define recall metrics corresponding 6 node centralities
-    metric_defs = [
-        (TopCentralityMetric,
-         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),
-        (TopCentralityMetric,
-         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.PAGERANK_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled',
-                               'centrality': Stat.BETWEENNESS_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled',
-                               'centrality': Stat.ECCENTRICITY_DISTR.short}),
-        (TopCentralityMetric,
-         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.CLOSENESS_DISTR.short}),
-        (TopCentralityMetric,
-         {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
-    ]
-
-    # Set the number of random seeds to start from
-    n_instances = 8
-    # Run crawling for several graphs
-    graph_names = ['petster-hamster', 'soc-wiki-Vote']
-    for graph_name in graph_names:
-        g = GraphCollections.get(graph_name)
-        # Create runner which will save measurements history to file
-        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
-        # Run with limitations on the number concurrent processes and the amount of memory
-        chr.run_parallel_adaptive(n_instances, max_cpus=8, max_memory=30)
-        print('\n\n')
-
-
 if __name__ == '__main__':
     logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s', level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
 
-    # test_history_runner()
-
-    test_ipy_runner()
+    test_history_runner()

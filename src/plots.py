@@ -3,7 +3,7 @@ from operator import itemgetter
 import six
 import seaborn as sns
 
-from graph_models import ba_model
+from a import ba_model
 from matplotlib import colors
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +21,7 @@ COLOR_CYCLE_2 = ['blue',
 
 def cumulative_function(x_list, reverse=False):
     """
-    Translate graph_models distribution into cumulative distribution.
+    Translate a distribution into cumulative distribution.
 
     :param x_list: list of [x]
     :param reverse: reverse ordering
@@ -45,12 +45,12 @@ def plot_degree_distribution(graph_list, direction='total', cumulative=False, no
                              fill_in_zeros=False, same_figure=False, legend=False, title=None, xlim=None, ylim=None,
                              verbose=False, lang='EN', fontsize=12, **kwargs):
     """
-    Draw (in-/out-/total) degree distribution for graph_models given list of graphs.
+    Draw (in-/out-/total) degree distribution for a given list of graphs.
 
     :param cumulative:
     :param graph_list: list of `Graph`s
     :param direction: 'in', 'out' or 'total' (default)
-    :param bar_plot: draw graph_models bar-plot
+    :param bar_plot: draw a bar-plot
     :param no_logs: plot in linear scale, not log-log
     :param fill_in_zeros: draw zero degrees
     :param same_figure: draw graphic in the same matplotlib figure (should be defined)

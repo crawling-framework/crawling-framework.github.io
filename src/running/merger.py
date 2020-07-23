@@ -2,6 +2,7 @@ import glob
 import json
 import logging
 import os
+import shutil
 from math import sqrt, ceil
 
 import numpy as np
@@ -44,6 +45,11 @@ def compute_waucc(xs, ys):
     return res / norm
 
 
+# A graph needed just to generate pretty short crawlers and metrics names for ResultsMerger.
+# FIXME what if Multi with count > g.nodes()?
+example_graph = GraphCollections.get('example', 'other')
+
+
 class ResultsMerger:
     def __init__(self, graph_names, crawler_defs, metric_defs, n_instances=1):
         """
@@ -57,14 +63,13 @@ class ResultsMerger:
         self.metric_names = []  # list(map(definition_to_filename, metric_defs))
         self.labels = {}  # pretty short names to draw in plots
 
-        g = GraphCollections.get('petster-hamster')  # some sample graph. FIXME what if Multi with count > g.nodes()?
         for md in metric_defs:
-            m = Metric.from_definition(g, md)
+            m = Metric.from_definition(example_graph, md)
             f = definition_to_filename(m.definition)
             self.metric_names.append(f)
             self.labels[f] = m.name
         for cd in crawler_defs:
-            c = Crawler.from_definition(g, cd)
+            c = Crawler.from_definition(example_graph, cd)
             f = definition_to_filename(c.definition)
             self.crawler_names.append(f)
             self.labels[f] = c.name
@@ -75,10 +80,9 @@ class ResultsMerger:
         self.contents = {}  # contents[graph][crawler][metric]: 'x' -> [], 'ys' -> [[]*n_instances], 'avy' -> []
         self.auccs = {}  # auccs[graph][crawler][metric]: 'AUCC' -> [AUCC], 'wAUCC' -> [wAUCC]
         self.read()
-        missing = self.missing_instances()
+        # missing = self.missing_instances()
         # if len(missing) > 0:
         #     logging.warning("Missing instances, will not be plotted:\n%s" % json.dumps(missing, indent=2))
-
 
     @staticmethod
     def names_to_path(graph_name: str, crawler_name: str, metric_name: str):
@@ -137,6 +141,36 @@ class ResultsMerger:
         pbar.close()
         # print(self.contents)
         # print(json.dumps(self.contents, indent=2))
+
+    def remove_files(self):
+        """ Remove all saved instances for current graphs X crawlers X metrics.
+        """
+        total = len(self.graph_names) * len(self.crawler_names) * len(self.metric_names)
+        pbar = tqdm(total=total, desc='Removing history')
+        folder = None
+        removed = 0
+        from os.path import dirname as parent
+        from os.path import exists as exist
+        for g in self.graph_names:
+            for c in self.crawler_names:
+                for m in self.metric_names:
+                    folder = os.path.dirname(ResultsMerger.names_to_path(g, c, m))
+                    if exist(folder):
+                        removed += 1
+                    shutil.rmtree(folder, ignore_errors=True)
+                    pbar.update(1)
+
+                # Remove parent folder if exists and empty
+                if exist(parent(folder)) and not os.listdir(parent(folder)):
+                    os.rmdir(parent(folder))
+
+            # Remove parent folder if exists and empty
+            if exist(parent(parent(folder))) and not os.listdir(parent(parent(folder))):
+                os.rmdir(parent(parent(folder)))
+        pbar.close()
+        logging.info("Removed %s folders" % removed)
+        self.instances.clear()
+        self.contents.clear()
 
     def missing_instances(self) -> dict:
         """ Return dict of instances where computed < n_instances: absent[graph][crawler][metric] -> missing count
@@ -225,7 +259,7 @@ class ResultsMerger:
         M - num of metrics, G - num of graphs, C - num of crawlers.
         Ox - crawling step, Oy - metric value.
         """
-        linestyles = ['-', '--', ':', '.-']
+        linestyles = ['-', '--', ':', '-.']
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
                   'pink', 'lime', 'wheat', 'lightsteelblue']
@@ -389,6 +423,23 @@ class ResultsMerger:
         plt.tight_layout()
         plt.show()
 
+    def compute_results_as_table(self):
+        with open(os.path.join(RESULT_DIR, 'ResultsAsTable'), 'a+') as f:
+            for _, m in enumerate(self.metric_names):
+                f.write('%s\n' % m)
+                for _, g in enumerate(self.graph_names):
+                    f.write('%s ' % g)
+                    max_result = -1
+
+                    for _, c in enumerate(self.crawler_names):
+                        contents = self.contents[g][c][m]
+                        final_results = [contents['ys'][inst][-1] for inst in range(len(contents['ys']))]
+                        avg_result = np.average(final_results)
+                        if avg_result > max_result:
+                            max_result = avg_result
+                        f.write(' & %.4f±%.4f' % (avg_result, np.std(final_results)))
+                    f.write(' & %.4f \\\ \hline\r\n' % max_result)
+            f.close()
 
 def test_merger():
     g = GraphCollections.get('socfb-Bingham82', not_load=True)
@@ -472,7 +523,7 @@ def test_merger():
     ]
     crm = ResultsMerger(graphs, crawler_defs, metric_defs, n_instances=6)
     # crm.missing_instances()
-    # crm.draw_by_crawler()
+    crm.draw_by_crawler()
     # crm.draw_aucc('AUCC')
     crm.draw_winners('AUCC')
 

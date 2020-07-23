@@ -82,10 +82,10 @@ konect_names = [
     'ego-gplus',                # N=23613,   E=39182,    d_avg=3.32
     'slashdot-threads',         # N=51083,   E=116573,   d_avg=4.56
     # 'facebook-wosn-links',      # N=63392,   E=816831,   d_avg=25.77
-    'petster-friendships-cat',  # N=148826,  E=5447464,  d_avg=73.21
-    'petster-friendships-dog',  # N=426485,  E=8543321,  d_avg=40.06
     'douban',                   # N=154908,  E=327162,   d_avg=4.22
     'digg-friends',             # N=261489,  E=1536577,  d_avg=11.75
+    'petster-friendships-cat',  # N=148826,  E=5447464,  d_avg=73.21
+    'petster-friendships-dog',  # N=426485,  E=8543321,  d_avg=40.06
     'munmun_twitter_social',    # N=465017,  E=833540,   d_avg=3.58
     'com-youtube',              # N=1134890, E=2987624,  d_avg=5.27
     'flixster',                 # N=2523386, E=7918801,  d_avg=6.28
@@ -109,7 +109,7 @@ netrepo_names = [
     'ca-MathSciNet',  # N=332689, E=820644, d_avg=4.93
 
     # Recommendation
-    'rec-amazon',  # N=91813, E=125704, d_avg=2.74
+    # 'rec-amazon',  # N=91813, E=125704, d_avg=2.74  d_max=5
     'rec-github',  # N=121331, E=439642, d_avg=7.25
 
     # FB
@@ -137,6 +137,10 @@ netrepo_names = [
     'sc-pwtk',  # N=217883, E=5653217, d_avg=51.89
     'sc-shipsec1',  # N=139995, E=1705212, d_avg=24.36
     'sc-shipsec5',  # N=178573, E=2197367, d_avg=24.61
+
+    # More social graphs
+    'soc-anybeat',
+    'soc-twitter-follows',  # N=404719, E=713319, d_avg=3.53
 ]
 
 
@@ -373,7 +377,7 @@ class GraphCollections:
 
 class temp_dir(object):
     """
-    Creates graph_models temporary directory to store some files, which will be removed by exit.
+    Creates a temporary directory to store some files, which will be removed by exit.
     Current working directory is also changed to this directory.
     """
     def __init__(self):

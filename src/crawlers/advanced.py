@@ -17,7 +17,8 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
 
     def __init__(self, graph: MyGraph, n: int=1000, n1: int=500, k: int=100, **kwargs):
         super().__init__(graph, limit=n, n=n, n1=n1, k=k, **kwargs)
-        assert n1 <= n <= self._orig_graph.nodes()
+        assert n1 <= n
+        # assert n1 <= n <= self._orig_graph.nodes()
         #assert k <= n-n1
         self.n1 = n1
         self.n = n
@@ -39,6 +40,40 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
     def _compute_answer(self):
         self._answer.clear()
         self._get_mod_nodes(self._top_observed_seeds, self._answer, self.k)
+        return 0
+
+
+class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
+    short = 'EmulatorWA'
+
+    def __init__(self, graph: MyGraph, crawler_def, n: int, target_size: int, **kwargs):
+        """
+        :param crawler_def: crawler to emulate
+        :param n: limit of crawls (budget)
+        :param target_size: max size of answer
+        """
+        super().__init__(graph, n=n, target_size=target_size, crawler_def=crawler_def, **kwargs)
+        self.n = n
+        self.target_size = target_size
+
+        _, ckwargs = crawler_def
+        ckwargs['observed_graph'] = self._observed_graph
+        ckwargs['crawled_set'] = self._crawled_set
+        ckwargs['observed_set'] = self._observed_set
+
+        self.crawler = Crawler.from_definition(self._orig_graph, crawler_def)
+
+    def crawl(self, seed: int):
+        self._actual_answer = False
+        return self.crawler.crawl(seed)
+
+    def seeds_generator(self):
+        for i in range(self.n):
+            yield self.crawler.next_seed()
+
+    def _compute_answer(self):
+        self._answer.clear()
+        self._get_mod_nodes(self._crawled_set, self._answer, self.target_size)
         return 0
 
 
@@ -96,23 +131,7 @@ class ThreeStageCrawler(CrawlerWithAnswer):
             yield node
 
     def _compute_answer(self):
-        # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
-
-        # memorize E2
-        # self.e2 = self._observed_set.copy()
-        # logging.debug("|E2|=%s" % len(self.e2))
-        #
-        # # Get v=(pN-n+s) max degree observed nodes
-        # self.e2s.clear()
-        # self._get_mod_nodes(self.e2, self.e2s, self.pN - self.n + (int(1 - self.p) + 1) * self.s)
-        # logging.debug("|E2*|=%s" % len(self.e2s))
-        #
-        # # Final answer - E* = E1* + E2*
-        # self._answer.clear()
-        # self._answer.update(self.h, self.e1s, self.e2s)
-        # logging.debug("|E*|=%s" % len(self._answer))
-        # return 0
-
+        self._answer.clear()
         if (len(self.e1s) + len(self.h)) < self.pN:
             self.e2s.clear()
             # Get v=(pN-n+s) max degree observed nodes
@@ -120,10 +139,9 @@ class ThreeStageCrawler(CrawlerWithAnswer):
             logging.debug("|E2*|=%s" % len(self.e2s))
 
             # Final answer - E* = E1* + E2*
-            self._answer.clear()
             self._answer.update(self.h, self.e1s, self.e2s)
         else:
-            # Top-pN from e1s
+            # Top-pN from all crawled
             self._get_mod_nodes(self._crawled_set, self._answer, self.pN)
 
         logging.debug("|E*|=%s" % len(self._answer))
@@ -201,7 +219,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         :param p: fraction of graph nodes to be returned
         :param b: batch size
         """
-        assert 1 <= b <= n-s
+        # assert 1 <= b <= n-s
         super().__init__(graph, limit=n, s=s, n=n, p=p, b=b, **kwargs)
         self.s = s
         self.n = n
@@ -250,8 +268,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
             yield self.mod.next_seed()
 
     def _compute_answer(self):
-        # 3) Find v=(pN-n+s) nodes by MOD from E2 -> E2*. Return E*=(E1* + E2*) of size pN
-
+        self._answer.clear()
         if (len(self.e1s) + len(self.h)) < self.pN:
             self.e2s.clear()
             # Get v=(pN-n+s) max degree observed nodes
@@ -259,19 +276,14 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
             logging.debug("|E2*|=%s" % len(self.e2s))
 
             # Final answer - E* = E1* + E2*
-            self._answer.clear()
             self._answer.update(self.h, self.e1s, self.e2s)
         else:
-            # Top-pN from e1s
+            # Top-pN from crawled
             self._get_mod_nodes(self._crawled_set, self._answer, self.pN)
 
         logging.debug("|E*|=%s" % len(self._answer))
         # assert len(self._answer) <= self.pN
         return 0
-
-
-# cdef class ThreeStageCustomCrawler(CrawlerWithAnswer):
-#     raise NotImplementedError()
 
 
 def test_generator():
