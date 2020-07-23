@@ -25,14 +25,14 @@ def test_knnucb():
     crawler_defs = [
         # (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 0, 'k': 1, 'n0': 50}),
         # (MaximumObservedDegreeCrawler, {'initial_seed': 1}),
-        (KNN_UCB_Crawler, {}),
-        (MaximumObservedDegreeCrawler, {'initial_seed': 2}),
+        (KNN_UCB_Crawler, {'initial_seed': 2, 'n0': 0}),
+        # (MaximumObservedDegreeCrawler, {'initial_seed': 2}),
     ]
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
     ]
 
-    acr = AnimatedCrawlerRunner(g, crawler_defs, metric_defs, budget=1000)
+    acr = AnimatedCrawlerRunner(g, crawler_defs, metric_defs, budget=1000, step=1000)
     acr.run()
 
 
@@ -95,6 +95,6 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    # test_knnucb()
-    run_comparison()
+    test_knnucb()
+    # run_comparison()
     # repeat_paper()

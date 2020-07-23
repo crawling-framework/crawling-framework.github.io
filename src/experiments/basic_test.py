@@ -163,7 +163,7 @@ def test_crawler_times():
         # (MultiInstanceCrawler, {'count': 10, 'crawler_def': (DE_Crawler, {})}),
     ]:
         times = []
-        it = 10
+        it = 1
         for _ in range(it):
             crawler = Crawler.from_definition(g, crawler_def)
             t = time()

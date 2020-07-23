@@ -29,7 +29,7 @@ def _KNeighborsRegressor_predict(neigh_dist, neigh_ind, knn_model):
     if _y.ndim == 1:
         _y = _y.reshape((-1, 1))
 
-    y_pred = np.empty((1, _y.shape[1]), dtype=np.float64)
+    y_pred = np.empty((neigh_ind.shape[0], _y.shape[1]), dtype=np.float64)
     denom = np.sum(weights, axis=1)
 
     for j in range(_y.shape[1]):
@@ -86,20 +86,35 @@ class KNN_UCB_Crawler(Crawler):
         self._fit_period = 1  # fit kNN model once in a period dynamically changing
         self._scaler = StandardScaler()
 
-    def _expected_reward(self, node: int) -> float:
+    # def _expected_reward(self, node: int) -> float:
+    #     """
+    #     :param node: node id
+    #     :return: expected reward for observed node
+    #     """
+    #     # Expected reward predicted by kNN regressor
+    #     feature = self._scaler.transform([self._node_feature[node][0]])
+    #     neigh_dist, neigh_ind = self._knn_model.kneighbors(feature)
+    #     f = _KNeighborsRegressor_predict(neigh_dist, neigh_ind, self._knn_model)
+    #
+    #     # Average distance to kNN
+    #     sigma = np.mean(neigh_dist)
+    #
+    #     return f + self.alpha * sigma
+
+    def _expected_rewards(self, node_list: list) -> float:
         """
-        :param node: node id
+        :param node_list: list of node ids
         :return: expected reward for observed node
         """
         # Expected reward predicted by kNN regressor
-        feature = self._scaler.transform([self._node_feature[node][0]])
+        feature = self._scaler.transform([self._node_feature[node][0] for node in node_list])
         neigh_dist, neigh_ind = self._knn_model.kneighbors(feature)
         f = _KNeighborsRegressor_predict(neigh_dist, neigh_ind, self._knn_model)
 
         # Average distance to kNN
-        sigma = np.mean(neigh_dist)
+        sigma = np.mean(neigh_dist, axis=1)
 
-        return f + self.alpha * sigma
+        return f.reshape(len(node_list)) + self.alpha * sigma
 
     def _compute_feature(self, node: int):
         """
@@ -165,15 +180,12 @@ class KNN_UCB_Crawler(Crawler):
             self._knn_model = KNeighborsRegressor(n_neighbors=min(len(y), self.k), weights='distance')
             self._knn_model.fit(X, y)
 
-        self._fit_period = 1 + crawled // 10
+        self._fit_period = 1  # + crawled // 2
 
         # Choosing the best node from observed nodes for crawling
-        best_node = -1
-        best_expected_reward = -1
-        for n in self._observed_set:
-            r = self._expected_reward(n)
-            if r > best_expected_reward:
-                best_node = n
-                best_expected_reward = r
+        candidates = list(self._observed_set)
+        rs = self._expected_rewards(candidates)
+        best_ix = np.argmax(rs)
+        best_node = candidates[best_ix]
 
         return best_node
