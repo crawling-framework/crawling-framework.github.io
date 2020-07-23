@@ -42,8 +42,8 @@ def run_comparison():
     crawler_defs = [
         # (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 0, 'k': 1, 'n0': 50}),
         # (MaximumObservedDegreeCrawler, {'initial_seed': 1}),
-        (KNN_UCB_Crawler, {}),
-        (MaximumObservedDegreeCrawler, {}),
+        (KNN_UCB_Crawler, {'alpha': a, 'k': k}) for a in [0.2, 0.5, 1.0, 5.0] for k in [3, 10, 30]
+        # (MaximumObservedDegreeCrawler, {}),
     ]
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
@@ -95,6 +95,6 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    test_knnucb()
-    # run_comparison()
+    # test_knnucb()
+    run_comparison()
     # repeat_paper()
