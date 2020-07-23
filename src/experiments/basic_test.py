@@ -1,3 +1,4 @@
+from crawlers.knn_ucb import KNN_UCB_Crawler
 from utils import rel_dir
 
 import logging
@@ -128,9 +129,10 @@ def test_snap_times():
 def test_crawler_times():
     from time import time
 
-    n = 500
+    n = 100
     # name = 'dolphins'
-    name = 'digg-friends'
+    name = 'socfb-Bingham82'
+    # name = 'digg-friends'
     # name = 'soc-pokec-relationships'
     g = GraphCollections.get(name)
 
@@ -143,7 +145,9 @@ def test_crawler_times():
         # (SnowBallCrawler, {}),
         # (MaximumObservedDegreeCrawler, {'batch': 1}),
         # (PreferentialObservedDegreeCrawler, {'batch': 10}),
-        (DE_Crawler, {'initial_budget': 10}),
+        # (DE_Crawler, {'initial_budget': 10}),
+        (KNN_UCB_Crawler, {'initial_seed': 1}),
+        # (KNN_UCB_CrawlerOld, {'initial_seed': 1}),
 
         # (ThreeStageMODCrawler, {'s': n//2, 'n': n, 'p': 0.01, 'b': 1}),
         # (ThreeStageCrawler, {'s': n//2, 'n': n, 'p': 0.01}),
@@ -159,7 +163,7 @@ def test_crawler_times():
         # (MultiInstanceCrawler, {'count': 10, 'crawler_def': (DE_Crawler, {})}),
     ]:
         times = []
-        it = 1
+        it = 10
         for _ in range(it):
             crawler = Crawler.from_definition(g, crawler_def)
             t = time()
@@ -226,7 +230,7 @@ if __name__ == '__main__':
     # name = 'flixster'
     # name = 'flickr-links'
     # name = 'soc-pokec-relationships'
-    name = 'digg-friends'
+    # name = 'digg-friends'
     # name = 'com-youtube'
     # name = 'Lj'
     # name = 'loc-brightkite_edges'
@@ -234,8 +238,8 @@ if __name__ == '__main__':
     # name = 'petster-hamster'
     # name = 'dolphins'
     # g = test_carpet_graph(8, 8)[0]
-    g = GraphCollections.get(name, giant_only=True)
+    # g = GraphCollections.get(name, giant_only=True)
 
-    test_basic(g)
+    # test_basic(g)
     # test_multi()
-    # test_crawler_times()
+    test_crawler_times()
