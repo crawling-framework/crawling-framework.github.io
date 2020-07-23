@@ -6,7 +6,7 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors.base import _get_weights
 
 import numpy as np
-
+from sklearn.preprocessing import StandardScaler
 
 from base.cgraph import MyGraph
 from crawlers.cbasic import Crawler
@@ -51,16 +51,16 @@ class KNN_UCB_Crawler(Crawler):
     short = 'KNN-UCB'
 
     def __init__(self, graph: MyGraph, initial_seed: int=-1,
-                 alpha: float=0.5, k: int=10, n0: int=20, n_features: int=4, **kwargs):
+                 alpha: float=2, k: int=20, n0: int=20, n_features: int=4, **kwargs):
         """
         :param graph: original graph
         :param initial_seed: start node
-        :param alpha: search ratio
-        :param k: number of nearest neighbors to estimate expected reward
+        :param alpha: exploration coefficient, default 2
+        :param k: number of nearest neighbors to estimate expected reward, default 20
         :param n0: number of starting random nodes, default 20
         :param n_features: number of features to use, default 4
         """
-        # TODO append features to params to differ them in filenames
+        # TODO append features to params to differ them in filenames?
         if initial_seed != -1 and n0 < 1:
             kwargs['initial_seed'] = initial_seed
         super().__init__(graph, alpha=alpha, k=k, n0=n0, n_features=n_features, **kwargs)
@@ -73,15 +73,18 @@ class KNN_UCB_Crawler(Crawler):
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
-            self._node_feature[initial_seed] = [[0] * self.n_features, 0]
+
+        for n in self.nodes_set:
+            self._node_feature[n] = [self._compute_feature(n), None]
 
         self.k = k
         self.alpha = alpha
         self.n0 = n0
         self._random_pool = [] if n0 == -1 else self._orig_graph.random_nodes(n0)
 
-        self._knn_model = KNeighborsRegressor(n_neighbors=self.k, weights='distance')
+        self._knn_model = KNeighborsRegressor(n_neighbors=self.k, weights='distance', n_jobs=None)
         self._fit_period = 1  # fit kNN model once in a period dynamically changing
+        self._scaler = StandardScaler()
 
     def _expected_reward(self, node: int) -> float:
         """
@@ -89,8 +92,8 @@ class KNN_UCB_Crawler(Crawler):
         :return: expected reward for observed node
         """
         # Expected reward predicted by kNN regressor
-        feature = self._node_feature[node][0]
-        neigh_dist, neigh_ind = self._knn_model.kneighbors([feature])
+        feature = self._scaler.transform([self._node_feature[node][0]])
+        neigh_dist, neigh_ind = self._knn_model.kneighbors(feature)
         f = _KNeighborsRegressor_predict(neigh_dist, neigh_ind, self._knn_model)
 
         # Average distance to kNN
@@ -139,13 +142,13 @@ class KNN_UCB_Crawler(Crawler):
             to_be_updated.update(self._observed_graph.neighbors(n))  # TODO seems to have no effect experimentally
 
         for n in to_be_updated:
+            assert n in self._node_feature
             self._node_feature[n][0] = self._compute_feature(n)
 
         return res
 
     def next_seed(self):
         crawled = len(self._crawled_set)
-        self._fit_period = 1 + crawled // 20
 
         # Yield random node first n0 times
         if self.n0 > crawled:
@@ -158,8 +161,11 @@ class KNN_UCB_Crawler(Crawler):
         if crawled % self._fit_period == 0:
             # X, y = zip(*self._node_feature.values())  # all nodes
             X, y = zip(*[self._node_feature[n] for n in self._crawled_set])  # crawled nodes
+            X = self._scaler.fit_transform(X)
             self._knn_model = KNeighborsRegressor(n_neighbors=min(len(y), self.k), weights='distance')
             self._knn_model.fit(X, y)
+
+        self._fit_period = 1 + crawled // 10
 
         # Choosing the best node from observed nodes for crawling
         best_node = -1
