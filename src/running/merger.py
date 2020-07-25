@@ -441,6 +441,7 @@ class ResultsMerger:
                     f.write(' & %.4f \\\ \hline\r\n' % max_result)
             f.close()
 
+
 def test_merger():
     g = GraphCollections.get('socfb-Bingham82', not_load=True)
     # print(g[Stat.NODES], g[Stat.ASSORTATIVITY])
