@@ -78,6 +78,9 @@ cdef class Crawler:
         """
         :param graph: original graph, must remain unchanged
         :param name: specify to use in pictures, by default name == filename generated from definition
+        :param observed_graph: optionally use a given observed graph, NOTE: the object will be modified, make a copy if needed
+        :param crawled_set: optionally use a given crawled set, NOTE: the object will be modified, make a copy if needed
+        :param observed_set: optionally use a given observed set, NOTE: the object will be modified, make a copy if needed
         :param kwargs: all additional parameters (needed in subclasses) - they will be encoded into string definition
         """
         # original graph

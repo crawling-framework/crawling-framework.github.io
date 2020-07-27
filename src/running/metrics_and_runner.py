@@ -17,6 +17,7 @@ class Metric:
     def from_definition(graph: MyGraph, definition):  # -> Metric:
         """ Build a Metric instance from its definition """
         _class, kwargs = definition
+        assert _class != Metric, "Create a subclass to define your own Metric"
         return _class(graph, **kwargs)
 
     @property

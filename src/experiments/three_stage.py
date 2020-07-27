@@ -7,6 +7,7 @@ from operator import itemgetter
 import numpy as np
 from matplotlib import pyplot as plt
 
+from crawlers.cadvanced import DE_Crawler
 from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric
@@ -16,7 +17,7 @@ from crawlers.cbasic import CrawlerException, MaximumObservedDegreeCrawler, Rand
     BreadthFirstSearchCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler, MaximumExcessDegreeCrawler, \
     definition_to_filename
 from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer, AvrachenkovCrawler, \
-    ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs
+    ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs, EmulatorWithAnswerCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from running.animated_runner import AnimatedCrawlerRunner, Metric
 from graph_io import GraphCollections, netrepo_names, konect_names
@@ -749,19 +750,23 @@ def data_copy():
     for i, graph_name in enumerate(graph_names):
         g = GraphCollections.get(graph_name, not_load=True)
         n = g[Stat.NODES]
-        for j, b in enumerate(budget_coeff):
-            budget = int(b * n)
-            for k, s in enumerate(seed_coeff):
-                start_seeds = int(s * budget)
-                cd = (AvrachenkovCrawler, {'n1': start_seeds, 'n': budget, 'k': int(p*n)})
-                # cd = (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p})
-                # cd = (ThreeStageMODCrawler, {'s': start_seeds, 'n': budget, 'p': p, 'b': 100})
+        crawler_defs = [
+            (EmulatorWithAnswerCrawler, {'crawler_def': (DE_Crawler, {}), 'n': int(bc * n), 'target_size': int(p*n)}) for bc in budget_coeff
+        ]
+        # for j, b in enumerate(budget_coeff):
+        #     budget = int(b * n)
+        #     for k, s in enumerate(seed_coeff):
+        #         start_seeds = int(s * budget)
+        #         cd = (AvrachenkovCrawler, {'n1': start_seeds, 'n': budget, 'k': int(p*n)})
+        #         # cd = (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p})
+        #         # cd = (ThreeStageMODCrawler, {'s': start_seeds, 'n': budget, 'p': p, 'b': 100})
+        for cd in crawler_defs:
                 c = definition_to_filename(cd)
 
                 path = ResultsMerger.names_to_path(graph_name, c, m)
                 paths = glob.glob(path)
                 for src in paths:
-                    dst = src.replace('results', '2-Stage')
+                    dst = src.replace('results', 'DE')
                     if not os.path.exists(os.path.dirname(dst)):
                         os.makedirs(os.path.dirname(dst))
                     os.system("cp '%s' '%s'" % (src, dst))
@@ -779,8 +784,8 @@ if __name__ == '__main__':
     # three_stage_avg_n_s()
     # three_stage_avg_n_s_all()
     # three_stage_mod_avg_n_s_all()
-    three_stage_both_avg_n_s_all()
-    # three_stage_mod_avg_b_s()
+    # three_stage_both_avg_n_s_all()
+    three_stage_mod_avg_b_s()
     # three_stage_mod_avg_n_s()
     # three_stage_comparison()
     # data_copy()

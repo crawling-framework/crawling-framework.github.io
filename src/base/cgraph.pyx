@@ -99,6 +99,17 @@ cdef class MyGraph:
             for i, j in self.iter_edges():
                 f.write("%s %s\n" % (i, j))
 
+    cpdef MyGraph copy(self):
+        """ Create and return a copy of this graph """
+        # TODO create snap graph(N, E) could be faster
+        cdef MyGraph g = MyGraph(name=self.name + '_copy', directed=self._directed, weighted=self._weighted)
+        cdef int n, i, j
+        for n in self.iter_nodes():
+            g.add_node(n)
+        for i, j in self.iter_edges():
+            g.add_edge(i, j)
+        return g
+
     @property
     def path(self):
         return bytes.decode(self._path)
