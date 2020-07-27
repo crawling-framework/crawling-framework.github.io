@@ -50,14 +50,14 @@ class KNN_UCB_Crawler(Crawler):
     short = 'KNN-UCB'
 
     def __init__(self, graph: MyGraph, initial_seed: int=-1,
-                 alpha: float=2, k: int=20, n0: int=20, n_features: int=4, **kwargs):
+                 alpha: float=0.5, k: int=30, n0: int=0, n_features: int=1, **kwargs):
         """
         :param graph: original graph
         :param initial_seed: start node
-        :param alpha: exploration coefficient, default 2
-        :param k: number of nearest neighbors to estimate expected reward, default 20
-        :param n0: number of starting random nodes, default 20
-        :param n_features: number of features to use, default 4
+        :param alpha: exploration coefficient, default 0.5
+        :param k: number of nearest neighbors to estimate expected reward, default 30
+        :param n0: number of starting random nodes, default 0
+        :param n_features: number of features to use, default 1
         """
         # TODO append features to params to differ them in filenames?
         if initial_seed != -1 and n0 < 1:
@@ -86,10 +86,10 @@ class KNN_UCB_Crawler(Crawler):
         self._fit_period = 1  # fit kNN model once in a period dynamically changing
         # self._scaler = StandardScaler()
 
-    def _expected_rewards(self, node_list: list) -> float:
+    def _expected_rewards(self, node_list: list):
         """
         :param node_list: list of node ids
-        :return: expected reward for observed node
+        :return: expected rewards for the nodes
         """
         # Expected reward predicted by kNN regressor
         # feature = self._scaler.transform([self._node_feature[node][0] for node in node_list])
