@@ -1,12 +1,9 @@
-from crawlers.knn_ucb import KNN_UCB_Crawler
-from utils import rel_dir
+from crawlers.ml.knn_ucb import KNN_UCB_Crawler
 
 import logging
 import matplotlib.pyplot as plt
 
-from crawlers.cbasic import Crawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
-    DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
-from crawlers.cadvanced import DE_Crawler
+from crawlers.cbasic import Crawler, RandomCrawler, DepthFirstSearchCrawler, MaximumObservedDegreeCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections
 from running.animated_runner import AnimatedCrawlerRunner, Metric
@@ -129,10 +126,10 @@ def test_snap_times():
 def test_crawler_times():
     from time import time
 
-    n = 100
+    n = 200
     # name = 'dolphins'
-    name = 'socfb-Bingham82'
-    # name = 'digg-friends'
+    # name = 'socfb-Bingham82'
+    name = 'digg-friends'
     # name = 'soc-pokec-relationships'
     g = GraphCollections.get(name)
 
@@ -146,7 +143,7 @@ def test_crawler_times():
         # (MaximumObservedDegreeCrawler, {'batch': 1}),
         # (PreferentialObservedDegreeCrawler, {'batch': 10}),
         # (DE_Crawler, {'initial_budget': 10}),
-        (KNN_UCB_Crawler, {'initial_seed': 1}),
+        (KNN_UCB_Crawler, {'initial_seed': 1, 'n0': 0}),
         # (KNN_UCB_CrawlerOld, {'initial_seed': 1}),
 
         # (ThreeStageMODCrawler, {'s': n//2, 'n': n, 'p': 0.01, 'b': 1}),
@@ -163,7 +160,7 @@ def test_crawler_times():
         # (MultiInstanceCrawler, {'count': 10, 'crawler_def': (DE_Crawler, {})}),
     ]:
         times = []
-        it = 10
+        it = 1
         for _ in range(it):
             crawler = Crawler.from_definition(g, crawler_def)
             t = time()

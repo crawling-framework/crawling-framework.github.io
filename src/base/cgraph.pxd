@@ -154,6 +154,8 @@ cdef class MyGraph:
 
     cdef new_snap(self, PUNGraph snap_graph_ptr, name=?)
 
+    cpdef MyGraph copy(self)
+
     cpdef giant_component(self)
 
     cdef PUNGraph snap_graph_ptr(self)

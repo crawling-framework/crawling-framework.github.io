@@ -428,6 +428,22 @@ def test_netrepo():
     # print("neigbours of %d: %s" % (2, graph.neighbors(2)))
 
 
+def rename_results_files():
+    """ Recursively replace separator in all filenames (',' -> ';') in RESULT_DIR
+    """
+    import os
+    from utils import RESULT_DIR
+    directory = RESULT_DIR
+    for _ in [1, 2]:  # run twice
+        for subdir, dirs, files in os.walk(directory):
+            for d in dirs:
+                src = os.path.join(subdir, d)
+                dst = src.replace(',', ';')
+                if src != dst:
+                    print(src, dst)
+                    os.rename(src, dst)
+
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)

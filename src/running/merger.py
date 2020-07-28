@@ -116,7 +116,9 @@ class ResultsMerger:
                     #         os.makedirs(os.path.dirname(new_p))
                     #     os.rename(p, new_p)
 
-                    paths = glob.glob(ResultsMerger.names_to_path(g, c, m))
+                    path_pattern = ResultsMerger.names_to_path(g, c, m)
+                    path_pattern = path_pattern.replace('[', '[[]')  # workaround for glob since '[' is a special symbol for it
+                    paths = glob.glob(path_pattern)
                     self.instances[g][c][m] = len(paths)
                     self.contents[g][c][m] = contents = {}
 
@@ -337,7 +339,7 @@ class ResultsMerger:
                     pbar.update(1)
         pbar.close()
 
-    def draw_aucc(self, aggregator='AUCC'):
+    def draw_aucc(self, aggregator='AUCC', scale=3):
         """ Draw G plots with M lines. Ox - C crawlers, Oy - AUCC value (M curves with error bars).
         M - num of metrics, G - num of graphs, C - num of crawlers
         """
@@ -354,7 +356,6 @@ class ResultsMerger:
         # Draw
         nrows = int(sqrt(G))
         ncols = ceil(G / nrows)
-        scale = 3
         fig, axs = plt.subplots(nrows, ncols, sharex=True, sharey=True, figsize=(1 + scale * ncols, scale * nrows))
         aix = 0
         pbar = tqdm(total=G*M, desc='Plotting AUCC')
@@ -380,7 +381,7 @@ class ResultsMerger:
         plt.tight_layout()
         plt.show()
 
-    def draw_winners(self, aggregator='AUCC'):
+    def draw_winners(self, aggregator='AUCC', scale=8):
         assert aggregator in ['AUCC', 'wAUCC']
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
@@ -408,7 +409,6 @@ class ResultsMerger:
                 winners[winner][m] += 1
 
         # Draw
-        scale = 8
         plt.figure(figsize=(1 + scale, scale))
         xs = list(range(1, 1 + C))
         prev_bottom = np.zeros(C)
