@@ -1,12 +1,9 @@
-from crawlers.knn_ucb import KNN_UCB_Crawler
-from utils import rel_dir
+from crawlers.ml.knn_ucb import KNN_UCB_Crawler
 
 import logging
 import matplotlib.pyplot as plt
 
-from crawlers.cbasic import Crawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, \
-    DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
-from crawlers.cadvanced import DE_Crawler
+from crawlers.cbasic import Crawler, RandomCrawler, DepthFirstSearchCrawler, MaximumObservedDegreeCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections
 from running.animated_runner import AnimatedCrawlerRunner, Metric

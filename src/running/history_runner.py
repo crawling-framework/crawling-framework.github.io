@@ -110,12 +110,9 @@ class CrawlerHistoryRunner(CrawlerRunner):
         :param same_initial_seed: use the same initial seed for all crawler instances TODO
         :return:
         """
-        # print('_init_semaphore', self._init_semaphore)
         with self._init_semaphore:  # to ensure stats reading/calculation only once
-            # print('_init_semaphore in')
             sleep(0.1)  # FIXME bugfix for strange semaphores lock
             crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
-            # print('_init_semaphore out')
 
         pbar = tqdm(total=self.budget, desc='Running iterations')  # drawing crawling progress bar
 

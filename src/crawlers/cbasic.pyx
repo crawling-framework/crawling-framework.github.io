@@ -27,7 +27,7 @@ def definition_to_filename(definition) -> str:
     """ Convert crawler string definition into filename. Uniqueness is maintained """
     _class, kwargs = definition
     excluded = set(['name', 'observed_graph', 'crawled_set', 'observed_set'])  # will not be in filename
-    args = ",".join("%s=%s" % (key, definition_to_filename(kwargs[key]) if key == 'crawler_def' else kwargs[key])
+    args = ";".join("%s=%s" % (key, definition_to_filename(kwargs[key]) if key == 'crawler_def' else kwargs[key])
                     for key in sorted(kwargs.keys()) if key not in excluded)
     res = "%s(%s)" % (_class.short, args)
     return res
@@ -63,7 +63,7 @@ def filename_to_definition(filename: str):
     _class = short_to_class[_class_str]
     kwargs = {}
     if len(params) > 0:
-        for eq in params.split(','):
+        for eq in params.split(';'):
             key, value = eq.split('=', 1)
             # print(key, value)
             kwargs[key] = filename_to_definition(value) if key == 'crawler_def' else eval_(value)

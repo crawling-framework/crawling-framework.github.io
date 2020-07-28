@@ -116,7 +116,9 @@ class ResultsMerger:
                     #         os.makedirs(os.path.dirname(new_p))
                     #     os.rename(p, new_p)
 
-                    paths = glob.glob(ResultsMerger.names_to_path(g, c, m))
+                    path_pattern = ResultsMerger.names_to_path(g, c, m)
+                    path_pattern = path_pattern.replace('[', '[[]')  # workaround for glob since '[' is a special symbol for it
+                    paths = glob.glob(path_pattern)
                     self.instances[g][c][m] = len(paths)
                     self.contents[g][c][m] = contents = {}
 

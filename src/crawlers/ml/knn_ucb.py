@@ -41,6 +41,15 @@ def _KNeighborsRegressor_predict(neigh_dist, neigh_ind, knn_model):
     return y_pred
 
 
+FEATURES = [
+    'OD',   # observed degree of the node
+    'CC',   # clustering coefficient
+    'CNF',  # crawled neighbors fraction (at the moment of crawling)
+    'AND',  # average neighbour degree
+    'MND',  # maximum neighbour degree
+]
+
+
 class KNN_UCB_Crawler(Crawler):
     """
     Implementation of KNN-UCB crawling strategy based on multi-armed bandit approach.
@@ -50,7 +59,7 @@ class KNN_UCB_Crawler(Crawler):
     short = 'KNN-UCB'
 
     def __init__(self, graph: MyGraph, initial_seed: int=-1,
-                 alpha: float=0.5, k: int=30, n0: int=0, n_features: int=1, **kwargs):
+                 alpha: float=0.5, k: int=30, n0: int=0, features: list=['OD'], **kwargs):
         """
         :param graph: original graph
         :param initial_seed: start node
@@ -62,11 +71,14 @@ class KNN_UCB_Crawler(Crawler):
         # TODO append features to params to differ them in filenames?
         if initial_seed != -1 and n0 < 1:
             kwargs['initial_seed'] = initial_seed
-        super().__init__(graph, alpha=alpha, k=k, n0=n0, n_features=n_features, **kwargs)
 
-        self._node_feature = {}  # node_id -> (feature vector, observed_reward)
-        self.n_features = n_features
+        features = sorted(features)
+        super().__init__(graph, alpha=alpha, k=k, n0=n0, features=features, **kwargs)
+
+        self.features = features
+        self._node_feature = {}  # node_id -> (feature dict, observed_reward)
         self._max_deg = 1  # max degree in observed graph, for feature normalization
+        self.node_clust = {}  # node_id -> clustering coeff
 
         # pick a random seed from original graph
         if len(self._observed_set) == 0 and n0 < 1:
@@ -75,6 +87,7 @@ class KNN_UCB_Crawler(Crawler):
             self.observe(initial_seed)
 
         for n in self.nodes_set:
+            self.node_clust[n] = self._observed_graph.clustering(n)
             self._node_feature[n] = [self._compute_feature(n), None]
 
         self.k = k
@@ -93,7 +106,7 @@ class KNN_UCB_Crawler(Crawler):
         """
         # Expected reward predicted by kNN regressor
         # feature = self._scaler.transform([self._node_feature[node][0] for node in node_list])
-        feature = np.array([self._node_feature[node][0] for node in node_list])  # FIXME quite a lot time for conversion to numpy array
+        feature = np.array([[self._node_feature[node][0][f] for f in self.features] for node in node_list])  # FIXME quite a lot time for conversion to numpy array
         neigh_dist, neigh_ind = self._knn_model.kneighbors(feature)
         f = _KNeighborsRegressor_predict(neigh_dist, neigh_ind, self._knn_model)
 
@@ -104,15 +117,12 @@ class KNN_UCB_Crawler(Crawler):
 
     def _compute_feature(self, node: int):
         """
-        Calculates feature vector for the node:
-        obs_degree - observed degree of the node
-        avg_neigh_degree - average degree of adjacent crawled nodes
-        max_neigh_degree - maximum degree of adjacent crawled nodes
-        crawled_neigh_frac - fraction of crawled neighbors
-        # n_triangles - the number of triangles containing the current node
+        Calculates node feature dict for all features.
 
         :param node: the node for which the feature vector is calculated
+        :return: dict {feature -> value}
         """
+        res = {}
         obs_degree = self._observed_graph.deg(node)
 
         max_neigh_degree = 0
@@ -126,10 +136,13 @@ class KNN_UCB_Crawler(Crawler):
                 max_neigh_degree = deg
             avg_neigh_degree += deg / obs_degree
 
-        res = [obs_degree / self._max_deg,
-               avg_neigh_degree / self._max_deg,
-               max_neigh_degree / self._max_deg,
-               crawled_neigh_frac][:self.n_features]
+        res['OD'] = obs_degree / self._max_deg
+        res['AND'] = avg_neigh_degree / self._max_deg
+        res['MND'] = max_neigh_degree / self._max_deg
+        # CNF is updated until node is not crawled
+        res['CNF'] = crawled_neigh_frac if node not in self._crawled_set else self._node_feature[node][0]['CNF']
+
+        res['CC'] = self.node_clust[node]  # self._observed_graph.clustering(node)
         return res
 
     def crawl(self, seed: int):
@@ -137,9 +150,26 @@ class KNN_UCB_Crawler(Crawler):
         self._max_deg = max(self._max_deg, self._observed_graph.deg(seed))
 
         # Obtained reward = the number of newly open nodes
-        self._node_feature[seed] = [None, len(res)]  # will be updated
+        self._node_feature[seed][1] = len(res)
         for n in res:
-            self._node_feature[n] = [None, 0]  # will be updated
+            self._node_feature[n] = [None, 0]  # feature will be updated
+
+        # Update CC for seed and its neighbors
+        upd = []
+        for n in self._observed_graph.neighbors(seed):
+            if n in self._observed_set:
+                upd.append(n)
+        self.node_clust[seed] = self._observed_graph.clustering(seed)
+        for n in upd:
+            d = self._observed_graph.deg(n)
+            conn_neigs = 0
+            for neigh in self._observed_graph.neighbors(n):
+                if self._observed_graph.has_edge(seed, neigh):
+                    conn_neigs += 1
+
+            if n not in self.node_clust:
+                self.node_clust[n] = 0
+            self.node_clust[n] = (self.node_clust[n] * (d-1) * (d-1) / 2 + conn_neigs) / d / d * 2
 
         # Update features for seed, its neighbors, and 2nd neighborhood
         to_be_updated = {seed}
@@ -166,7 +196,8 @@ class KNN_UCB_Crawler(Crawler):
         # Fit kNN model
         if crawled % self._fit_period == 0:
             # X, y = zip(*self._node_feature.values())  # all nodes
-            X, y = zip(*[self._node_feature[n] for n in self._crawled_set])  # crawled nodes
+            # print([self._node_feature[2][0][f] for f in self.features])
+            X, y = zip(*[([self._node_feature[n][0][f] for f in self.features], self._node_feature[n][1]) for n in self._crawled_set])  # crawled nodes
             # X = self._scaler.fit_transform(X)
             self._knn_model = KNeighborsRegressor(n_neighbors=min(len(y), self.k), weights='distance')
             self._knn_model.fit(X, y)
@@ -176,7 +207,6 @@ class KNN_UCB_Crawler(Crawler):
         # Choosing the best node from observed nodes for crawling
         candidates = list(self._observed_set)
         rs = self._expected_rewards(candidates)
-        best_ix = np.argmax(rs)
-        best_node = candidates[best_ix]
+        best_node = candidates[np.argmax(rs)]
 
         return best_node
