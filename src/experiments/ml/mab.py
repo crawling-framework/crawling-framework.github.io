@@ -1,9 +1,12 @@
 import logging
 from math import log
 
+from sklearn.linear_model import LinearRegression
+
 from crawlers.cadvanced import DE_Crawler
-from crawlers.cbasic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler
-from crawlers.ml.lin_reg import LinReg_Crawler
+from crawlers.cbasic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler, RandomCrawler, \
+    definition_to_filename, filename_to_definition
+from crawlers.ml.regression_reward import RegressionRewardCrawler
 from experiments.three_stage import social_names
 from graph_io import GraphCollections, rename_results_files
 from crawlers.ml.knn_ucb import KNN_UCB_Crawler
@@ -15,12 +18,12 @@ from statistics import Stat
 
 
 def analyze_features():
-    g = GraphCollections.get('soc-BlogCatalog')
-    # g = GraphCollections.get('socfb-Bingham82')
+    # g = GraphCollections.get('soc-BlogCatalog')
+    g = GraphCollections.get('socfb-Bingham82')
     # g = GraphCollections.get('ego-gplus')
     # g = GraphCollections.get('livemocha')
     # g = GraphCollections.get('digg-friends')
-    crawler = LinReg_Crawler(g, initial_seed=2, features=['OD', 'CC'])
+    crawler = RegressionRewardCrawler(g, initial_seed=2, features=['OD', 'CC', 'CNF'])
     # crawler = BreadthFirstSearchCrawler(g, initial_seed=2, features=['OD', 'CC'])
 
     logging.info("Crawling...")
@@ -55,16 +58,18 @@ def analyze_features():
     bins = 100
     reward_dict = {}
     rewards = np.zeros((bins, bins))
-    max_x = log(g[Stat.MAX_DEGREE])
+    max_x = log(1+g[Stat.MAX_DEGREE])
     for node, feat_dict in node_feature.items():
         cc = feat_dict[0]
-        od = feat_dict[1]
-        x = min(bins-1, int(bins * log(od) / max_x))  # [1, max_deg]
-        y = min(bins-1, int(bins * cc))  # [0,1]
+        cnf = feat_dict[1]
+        od = feat_dict[2]
+        x = min(bins-1, int(bins * od / max_x))  # [1, max_deg]
+        y = min(bins-1, int(bins * cnf))  # [0,1]
         if node in crawler.crawled_set:
             if (x, y) not in reward_dict:
                 reward_dict[(x, y)] = []
-            reward_dict[(x, y)].append(node_reward[node])
+            r = node_reward[node]
+            reward_dict[(x, y)].append(r)
         # else:
         #     observed.append((x, y))
     print(reward_dict)
@@ -76,17 +81,18 @@ def analyze_features():
                 rewards[y][x] = np.mean(reward_dict[(x, y)])
             else:
                 rewards[y][x] = np.nan
-    print(rewards)
+    rewards /= np.nanmax(rewards)
     plt.imshow(rewards, cmap='inferno', vmin=0, vmax=1)
     plt.gca().set_facecolor((0.8, 0.8, 0.8))
     plt.colorbar()
     plt.grid(False)
     # plt.hist2d(rewards)
 
-    plt.title(g.name)
+    plt.title("%s\n%s" % (definition_to_filename(crawler.definition), g.name))
     plt.xlabel('log OD')
     # plt.xscale('log')
-    plt.ylabel('CC')
+    # plt.ylabel('CC')
+    plt.ylabel('CNF')
     plt.ylim((-0.5, bins+0.5))
     plt.tight_layout()
     plt.show()
@@ -95,6 +101,7 @@ def analyze_features():
 def test_knnucb():
     # g = GraphCollections.get('dolphins')
     # g = GraphCollections.get('Pokec')
+    # g = GraphCollections.get('livemocha')
     # g = GraphCollections.get('digg-friends')
     # g = GraphCollections.get('socfb-Bingham82')
     g = GraphCollections.get('soc-BlogCatalog')
@@ -109,16 +116,27 @@ def test_knnucb():
         # (KNN_UCB_Crawler, {'initial_seed': 2, 'features': ['OD', ]}),
         # (KNN_UCB_Crawler, {'initial_seed': 2, 'features': ['OD', 'CNF']}),
         # (KNN_UCB_Crawler, {'initial_seed': 2, 'features': ['OD', 'CNF', 'CC'], 'tau': -1}),
-        (LinReg_Crawler, {'initial_seed': 2, 'features': ['OD'], 'tau': -1}),
-        (LinReg_Crawler, {'initial_seed': 2, 'features': ['OD', 'CNF'], 'tau': -1}),
-        (RandomCrawler, {'initial_seed': 2}),
+        # (LinReg_Crawler, {'initial_seed': 2, 'features': ['OD'], 'tau': -1}),
+        # (LinReg_Crawler, {'initial_seed': 2, 'features': ['OD', 'CNF'], 'tau': -1}),
+        # (RandomCrawler, {'initial_seed': 2}),
         # (LinReg_Crawler, {'initial_seed': 2, 'features': ['OD', 'CC'], 'tau': -1}),
-        # (LinReg_Crawler, {'initial_seed': 1, 'features': ['OD', 'CNF', 'CC'], 'tau': -1}),
+        # (LinReg_Crawler, {'initial_seed': 2, 'features': ['OD', 'CNF', 'CC'], 'tau': -1}),
         # (LinReg_Crawler, {'initial_seed': 1, 'features': ['OD', 'CNF', 'CC', 'MND', 'AND'], 'tau': -1}),
         # (KNN_UCB_Crawler, {'initial_seed': 2, 'features': ['OD', 'CNF']}),
         # (KNN_UCB_Crawler, {'initial_seed': 2, 'features': ['OD', 'CNF', 'CC']}),
         # (MaximumObservedDegreeCrawler, {'initial_seed': 2}),
+        # (DE_Crawler, {'name': 'DE'}),
+
+        (RegressionRewardCrawler, {'initial_seed': 2, 'features': ['OD', 'CNF', 'CC'], 'regr': 'LinearRegression', 'regr_args': {}}),
+        (RegressionRewardCrawler, {'initial_seed': 2, 'features': ['OD', 'CNF', 'CC'], 'regr': 'KNeighborsRegressor', 'regr_args': {'n_neighbors': 10}}),
     ]
+    cd = crawler_defs[1]
+    print(cd)
+    f = definition_to_filename(cd)
+    print(f)
+    cd = filename_to_definition(f)
+    print(cd)
+    crawler_defs[1] = cd
 
     # RewardMonitor = Metric('RM', lambda crawler: )
 
@@ -137,15 +155,15 @@ def run_comparison():
     crawler_defs = [
         # (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 0, 'k': 1, 'n0': 50}),
         (MaximumObservedDegreeCrawler, {'name': 'MOD'}),
-        (KNN_UCB_Crawler, {'features': ['OD'], 'name': "KNN-UCB"}),
-        (KNN_UCB_Crawler, {'features': ['OD', 'CC'], 'name': "KNN-UCB\n[OD+CC]"}),
-        (KNN_UCB_Crawler, {'features': ['OD', 'CNF'], 'name': "KNN-UCB\n[OD+CNF]"}),
-        (KNN_UCB_Crawler, {'features': ['OD', 'CNF', 'CC'], 'name': "KNN-UCB\n[OD+CNF+CC]"}),
+        # (KNN_UCB_Crawler, {'features': ['OD'], 'name': "KNN-UCB"}),
+        # (KNN_UCB_Crawler, {'features': ['OD', 'CC'], 'name': "KNN-UCB\n[OD+CC]"}),
+        # (KNN_UCB_Crawler, {'features': ['OD', 'CNF'], 'name': "KNN-UCB\n[OD+CNF]"}),
+        # (KNN_UCB_Crawler, {'features': ['OD', 'CNF', 'CC'], 'name': "KNN-UCB\n[OD+CNF+CC]"}),
         # (KNN_UCB_Crawler, {'features': ['OD', 'CNF', 'CC', 'MND', 'AND'], 'name': "KNN-UCB\n[all 5]"}),
-        (LinReg_Crawler, {'features': ['OD'], 'tau': -1, 'name': "LinReg"}),
-        (LinReg_Crawler, {'features': ['OD', 'CC'], 'name': "LinReg\n[OD+CC]"}),
-        (LinReg_Crawler, {'features': ['OD', 'CNF'], 'name': "LinReg\n[OD+CNF]"}),
-        (LinReg_Crawler, {'features': ['OD', 'CNF', 'CC'], 'tau': -1, 'name': "LinReg\n[OD+CNF+CC]"}),
+        (RegressionRewardCrawler, {'features': ['OD'], 'tau': -1, 'name': "LinReg"}),
+        # (LinReg_Crawler, {'features': ['OD', 'CC'], 'name': "LinReg\n[OD+CC]"}),
+        (RegressionRewardCrawler, {'features': ['OD', 'CNF'], 'name': "LinReg\n[OD+CNF]"}),
+        # (LinReg_Crawler, {'features': ['OD', 'CNF', 'CC'], 'tau': -1, 'name': "LinReg\n[OD+CNF+CC]"}),
         # (LinReg_Crawler, {'features': ['OD', 'CNF', 'CC', 'MND', 'AND'], 'tau': -1, 'name': "LinReg\n[all 5]"}),
         # (DE_Crawler, {'name': 'DE'}),
     ] + [
@@ -162,7 +180,7 @@ def run_comparison():
         # (MaximumObservedDegreeCrawler, {}),
     ]
     metric_defs = [
-        (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'crawled'}),
+        # (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'crawled'}),
         (TopCentralityMetric, {'top': 1, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
     ]
 
@@ -226,7 +244,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
 
     # analyze_features()
-    # test_knnucb()
-    run_comparison()
+    test_knnucb()
+    # run_comparison()
     # reproduce_paper()
 

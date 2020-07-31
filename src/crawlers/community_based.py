@@ -1,27 +1,19 @@
 from base.cgraph import MyGraph
-from crawlers.cbasic import Crawler
+from crawlers.cbasic import Crawler, CrawlerWithInitialSeed
 
 import networkit as nk
 from networkit._NetworKit import PLP, PLM
 
 
-class MaximumObservedCommunityDegreeCrawler(Crawler):
+class MaximumObservedCommunityDegreeCrawler(CrawlerWithInitialSeed):
     short = 'MOCD'
 
     def __init__(self, graph: MyGraph, initial_seed: int=-1, **kwargs):
-        if initial_seed != -1:
-            kwargs['initial_seed'] = initial_seed
+        super().__init__(graph, initial_seed=initial_seed, **kwargs)
 
         self.nk_graph = nk.Graph()  # observed graph - networkit copy
         self.node_map = {}  # nodes mapping nk_id -> snap_id
         self.rev_node_map = {}  # reverse nodes mapping snap_id -> nk_id
-
-        super().__init__(graph, **kwargs)
-        # pick a random seed from original graph
-        if len(self._observed_set) == 0:
-            if initial_seed == -1:
-                initial_seed = self._orig_graph.random_node()
-            self.observe(initial_seed)
 
     def observe(self, node: int):
         if not super(MaximumObservedCommunityDegreeCrawler, self).observe(node):

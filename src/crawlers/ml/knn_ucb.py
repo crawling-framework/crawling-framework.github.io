@@ -1,5 +1,6 @@
 import logging
 from collections import deque
+from math import log
 
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.neighbors import NearestNeighbors
@@ -8,7 +9,7 @@ from sklearn.neighbors.base import _get_weights
 import numpy as np
 
 from base.cgraph import MyGraph
-from crawlers.cbasic import Crawler
+from crawlers.cbasic import Crawler, CrawlerWithInitialSeed
 from crawlers.ml.with_features import CrawlerWithFeatures
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ def _KNeighborsRegressor_predict(neigh_dist, neigh_ind, knn_model):
     return y_pred
 
 
-class KNN_UCB_Crawler(CrawlerWithFeatures):
+class KNN_UCB_Crawler(CrawlerWithInitialSeed, CrawlerWithFeatures):
     """
     Implementation of KNN-UCB crawling strategy based on multi-armed bandit approach.
     "A multi-armed bandit approach for exploring partially observed networks" (2019)
@@ -61,26 +62,14 @@ class KNN_UCB_Crawler(CrawlerWithFeatures):
         :param tau: sliding window size, number of last crawled nodes used for learning and prediction, default use all (-1)
         :param features: list of features to use (see FEATURES), default ['OD']
         """
-        if initial_seed != -1 and n0 < 1:
-            kwargs['initial_seed'] = initial_seed
-
-        super().__init__(graph=graph, alpha=alpha, k=k, n0=n0, tau=tau, features=features, **kwargs)
-
-        self._node_reward = {}  # node_id -> observed_reward
-
-        # pick a random seed from original graph
-        if len(self._observed_set) == 0 and n0 < 1:
-            if initial_seed == -1:
-                initial_seed = self._orig_graph.random_node()
-            self.observe(initial_seed)
-
-        super().init()  # compute features for observed nodes
+        super(KNN_UCB_Crawler, self).__init__(graph=graph, initial_seed=initial_seed, alpha=alpha, k=k, n0=n0, tau=tau, features=features, **kwargs)
 
         self.k = k
         self.alpha = alpha
         self.n0 = n0
-        self._random_pool = [] if n0 == -1 else self._orig_graph.random_nodes(n0)
 
+        self._random_pool = [] if n0 == -1 else self._orig_graph.random_nodes(n0)
+        self._node_reward = {}  # node_id -> observed_reward
         self._knn_model = KNeighborsRegressor(n_neighbors=self.k, weights='distance', n_jobs=None)
         self._fit_period = 1  # fit kNN model once in a period dynamically changing
         # self._scaler = StandardScaler()
@@ -105,7 +94,7 @@ class KNN_UCB_Crawler(CrawlerWithFeatures):
         res = super().crawl(seed)
 
         # Obtained reward = the number of newly open nodes
-        self._node_reward[seed] = len(res)
+        self._node_reward[seed] = log(1 + len(res))
         for n in res:
             self._node_reward[n] = 0
 

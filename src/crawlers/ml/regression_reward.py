@@ -1,39 +1,47 @@
+from math import log
+
 import numpy as np
-from sklearn.linear_model import LinearRegression
+import sklearn
 
 from base.cgraph import MyGraph
+from crawlers.cbasic import CrawlerWithInitialSeed
 from crawlers.ml.with_features import CrawlerWithFeatures
 
 
-class LinReg_Crawler(CrawlerWithFeatures):
-    """
-    Use Linear Regression to predict reward.
-    """
-    short = 'LinReg'
+REGRESSORS = ['ElasticNet', 'Lasso', 'LinearRegression', 'KNeighborsRegressor', 'SVR']
 
-    def __init__(self, graph: MyGraph, initial_seed: int=-1, tau=-1, features: list=['OD'], **kwargs):
+
+class RegressionRewardCrawler(CrawlerWithInitialSeed, CrawlerWithFeatures):
+    """
+    Crawler uses a regression model trained on crawled nodes features to predict reward for observed nodes. The next
+    seed at each step is chosen as the node with the highest reward.
+    """
+    short = 'RegReward'
+
+    def __init__(self, graph: MyGraph, initial_seed: int=-1, tau=-1, features: list=['OD'], regr: str= 'LinearRegression', regr_args: dict={}, **kwargs):
         """
         :param graph: original graph
         :param initial_seed: start node
         :param tau: sliding window size, number of last crawled nodes used for learning and prediction, default use all (-1)
         :param features: list of features to use (see FEATURES), default ['OD']
+        :param regr: which regressor to use for reward prediction, default LinearRegression
+        :param regr_args: dict of arguments for the regressor
         """
-        if initial_seed != -1:
-            kwargs['initial_seed'] = initial_seed
-
-        super().__init__(graph=graph, tau=tau, features=features, **kwargs)
-
+        assert regr in REGRESSORS
+        super(RegressionRewardCrawler, self).__init__(graph=graph, initial_seed=initial_seed, tau=tau, features=features, regr=regr, regr_args=regr_args, **kwargs)
         self._node_reward = {}  # node_id -> observed_reward
 
-        # pick a random seed from original graph
-        if len(self._observed_set) == 0:
-            if initial_seed == -1:
-                initial_seed = self._orig_graph.random_node()
-            self.observe(initial_seed)
+        # Add some extra args depending on the regressor
+        if regr == 'LinearRegression':
+            regr_args['copy_X'] = False
+        elif regr == 'SVR':
+            if 'gamma' not in regr_args:
+                regr_args['gamma'] = 'auto'
 
-        super().init()  # compute features for observed nodes
+        # FIXME for KNeighborsRegressor n_neighbors must be > n_samples, so we need either update it or not use for first n steps
 
-        self._predictor = LinearRegression(fit_intercept=True, copy_X=False)
+        self._regressor = eval(regr)(**regr_args)
+
         self._fit_period = 1  # fit model once in a period dynamically changing
         # self._scaler = StandardScaler()
 
@@ -43,18 +51,17 @@ class LinReg_Crawler(CrawlerWithFeatures):
         :return: expected rewards for the nodes
         """
         # Expected reward predicted by Linear regressor
+        # TODO compute for nodes in self._nodes_learning_queue
         feature = np.array([self._node_feature[n] for n in node_list])  # FIXME quite a lot time for conversion to numpy array
-        r = self._predictor.predict(feature)
+        r = self._regressor.predict(feature)
         return r
 
     def crawl(self, seed: int):
         res = super().crawl(seed)
 
-        # Obtained reward = the number of newly open nodes
-        self._node_reward[seed] = len(res)
+        self._node_reward[seed] = log(1 + len(res))  # Obtained reward = the number of newly open nodes
         for n in res:
             self._node_reward[n] = 0
-
         return res
 
     def next_seed(self):
@@ -72,8 +79,8 @@ class LinReg_Crawler(CrawlerWithFeatures):
             X = [self._node_feature[n] for n in self._nodes_learning_queue]  # crawled nodes within a learning queue
             y = [self._node_reward[n] for n in self._nodes_learning_queue]
             # X = self._scaler.fit_transform(X)
-            self._predictor.fit(X, y)
-            print(self._predictor.coef_)
+            self._regressor.fit(X, y)
+            # print(self._regressor.coef_)
 
         self._fit_period = 1  # + crawled // 2
 

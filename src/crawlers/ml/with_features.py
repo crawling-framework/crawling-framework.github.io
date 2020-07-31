@@ -1,7 +1,9 @@
 import logging
 from collections import deque
 from math import log
+import numpy as np
 
+from base.cgraph import MyGraph
 from crawlers.cbasic import Crawler
 
 logger = logging.getLogger(__name__)
@@ -18,17 +20,18 @@ FEATURES = [
 
 class CrawlerWithFeatures(Crawler):
     """
-    Computes and stores feature vector for nodes during the crawling.
+    Computes and stores a feature vector for each node during the crawling.
     """
-    def __init__(self, features: list=['OD'], tau=-1, **kwargs):
+    def __init__(self, graph: MyGraph, features: list=['OD'], tau=-1, **kwargs):
         """
         :param features: list of feature codes to compute, default ['OD']
         :param tau: sliding window size, number of last crawled nodes used for learning and prediction, default use all (-1)
         :param kwargs: additional args for Crawler constructor including graph, name, initial_seed, etc
         """
+        print('init CrawlerWithFeatures')
         assert all([f in FEATURES for f in features])
         features = sorted(features)
-        super(CrawlerWithFeatures, self).__init__(features=features, tau=tau, **kwargs)
+        super().__init__(graph, features=features, tau=tau, **kwargs)
 
         self.features = features
         self.tau = tau
@@ -38,10 +41,9 @@ class CrawlerWithFeatures(Crawler):
         self._node_clust = {}  # node_id -> clustering coeff
         self._max_deg = 1  # max degree in observed graph, for feature normalization
 
-    def init(self):
-        """ Compute features for observed nodes before crawling.
-        FIXME
-        """
+        self._neigh_deg_features = 'AND' in self.features or 'MND' in self.features  # flag whether to compute AND, MND
+
+        # Compute features for observed nodes before crawling.
         for n in self._observed_set:
             self._node_clust[n] = self._observed_graph.clustering(n)
             self.update_feature(n)
@@ -62,13 +64,14 @@ class CrawlerWithFeatures(Crawler):
             if n in self._crawled_set:
                 crawled_neigh_frac += 1 / obs_degree
 
-        # neigh_degrees = np.array([self._observed_graph.deg(n) for n in self._observed_graph.neighbors(node)])
-        # avg_neigh_degree = np.average(neigh_degrees)
-        # median_neigh_degree = np.median(neigh_degrees)
+        if self._neigh_deg_features:
+            neigh_degrees = np.array([self._observed_graph.deg(n) for n in self._observed_graph.neighbors(node)])
+            avg_neigh_degree = np.average(neigh_degrees)
+            median_neigh_degree = np.median(neigh_degrees)
+            res['AND'] = avg_neigh_degree / self._max_deg
+            res['MND'] = median_neigh_degree / self._max_deg
 
         res['OD'] = log(1 + obs_degree)
-        # res['AND'] = avg_neigh_degree / self._max_deg
-        # res['MND'] = median_neigh_degree / self._max_deg
         res['CNF'] = crawled_neigh_frac
         res['CC'] = self._node_clust[node]  # self._observed_graph.clustering(node)
 

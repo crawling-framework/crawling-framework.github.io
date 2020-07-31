@@ -3,7 +3,7 @@ import logging
 from statistics import get_top_centrality_nodes, Stat
 
 from base.cgraph import MyGraph, seed_random, get_UniDevInt
-from crawlers.cbasic import Crawler, CrawlerUpdatable, CrawlerException, \
+from crawlers.cbasic import Crawler, CrawlerException, \
     MaximumObservedDegreeCrawler, NoNextSeedError, RandomWalkCrawler, DepthFirstSearchCrawler, RandomCrawler
 from crawlers.cadvanced import CrawlerWithAnswer
 
