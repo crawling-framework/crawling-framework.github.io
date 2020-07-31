@@ -426,7 +426,6 @@ class ResultsMerger:
     def compute_results_as_table(self):
         with open(os.path.join(RESULT_DIR, 'ResultsAsTable'), 'a+') as f:
             for _, m in enumerate(self.metric_names):
-                f.write('%s\n' % m)
                 for _, g in enumerate(self.graph_names):
                     f.write('%s ' % g)
                     max_result = -1
@@ -440,6 +439,7 @@ class ResultsMerger:
                         f.write(' & %.4f±%.4f' % (avg_result, np.std(final_results)))
                     f.write(' & %.4f \\\ \hline\r\n' % max_result)
             f.close()
+
 
 def test_merger():
     g = GraphCollections.get('socfb-Bingham82', not_load=True)

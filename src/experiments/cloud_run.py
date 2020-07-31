@@ -4,7 +4,7 @@ import logging
 
 from crawlers.cbasic import filename_to_definition
 from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, AvrachenkovCrawler, EmulatorWithAnswerCrawler
-from experiments.three_stage import social_names
+from experiments.three_stage_paper import social_names
 from graph_io import konect_names, GraphCollections, netrepo_names, other_names
 from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
