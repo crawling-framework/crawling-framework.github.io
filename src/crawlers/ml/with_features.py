@@ -28,11 +28,9 @@ class CrawlerWithFeatures(Crawler):
         :param tau: sliding window size, number of last crawled nodes used for learning and prediction, default use all (-1)
         :param kwargs: additional args for Crawler constructor including graph, name, initial_seed, etc
         """
-        print('init CrawlerWithFeatures')
         assert all([f in FEATURES for f in features])
         features = sorted(features)
         super().__init__(graph, features=features, tau=tau, **kwargs)
-        print('CWF after super')
 
         self.features = features
         self.tau = tau

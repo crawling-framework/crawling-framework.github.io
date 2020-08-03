@@ -103,7 +103,6 @@ cdef class Crawler:
         :param observed_set: optionally use a given observed set, NOTE: the object will be modified, make a copy if needed
         :param kwargs: all additional parameters (needed in subclasses) - they will be encoded into string definition
         """
-        print('init Crawler')
         # original graph
         self._orig_graph = graph  # FIXME copying here?
 
@@ -250,19 +249,16 @@ cdef class CrawlerWithInitialSeed(Crawler):
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
          node. If -1 is given (which is default), a random node of original graph will be used as initial one.
         """
-        print('init CrawlerWithInitialSeed')
         if initial_seed != -1:  # if not random, we reflect it in definition and filename
             kwargs['initial_seed'] = initial_seed
 
         super().__init__(graph, **kwargs)
-        print('CWIS after super')
 
         # If no observed nodes, pick a random seed from original graph or a specified initial seed
         if self._observed_graph.nodes() == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
-        print('observe initseed')
 
 
 cdef class RandomCrawler(CrawlerWithInitialSeed):

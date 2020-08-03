@@ -72,7 +72,7 @@ def run_comparison():
 
     crawler_defs = [
         # (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 0, 'k': 1, 'n0': 50}),
-        (MaximumObservedDegreeCrawler, {'name': 'MOD'}),
+        # (MaximumObservedDegreeCrawler, {'name': 'MOD'}),
         (KNN_UCB_Crawler, {'features': ['OD'], 'name': "KNN-UCB"}),
         (KNN_UCB_Crawler, {'features': ['OD', 'CC'], 'name': "KNN-UCB\n[OD+CC]"}),
         (KNN_UCB_Crawler, {'features': ['OD', 'CNF'], 'name': "KNN-UCB\n[OD+CNF]"}),
