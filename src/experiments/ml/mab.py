@@ -7,6 +7,7 @@ from experiments.three_stage_paper import social_names
 from graph_io import GraphCollections
 from crawlers.ml.knn_ucb import KNN_UCB_Crawler
 from running.animated_runner import AnimatedCrawlerRunner
+from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric, Metric
 from statistics import Stat
@@ -107,14 +108,14 @@ def run_comparison():
 
     n_instances = 8
     graph_names = social_names[:20]
-    # for graph_name in graph_names:
-    #     g = GraphCollections.get(graph_name)
-    #     chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs, budget=1000)
-    #     chr.run_missing(n_instances, max_cpus=8, max_memory=30)
+    for graph_name in graph_names:
+        g = GraphCollections.get(graph_name)
+        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs, budget=1000)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=30)
 
-    crm = ResultsMerger(graph_names, crawler_defs, metric_defs, n_instances, x_lims=(0, 1000))
-    crm.draw_by_crawler(x_normalize=False, draw_error=False, scale=3)
-    crm.draw_winners('AUCC', scale=3)
+    # crm = ResultsMerger(graph_names, crawler_defs, metric_defs, n_instances, x_lims=(0, 1000))
+    # crm.draw_by_crawler(x_normalize=False, draw_error=False, scale=3)
+    # crm.draw_winners('AUCC', scale=3)
     # crm.draw_winners('wAUCC', scale=3)
     # crm.draw_aucc()
 
