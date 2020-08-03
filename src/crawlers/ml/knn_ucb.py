@@ -43,7 +43,7 @@ def _KNeighborsRegressor_predict(neigh_dist, neigh_ind, knn_model):
     return y_pred
 
 
-class KNN_UCB_Crawler(CrawlerWithInitialSeed, CrawlerWithFeatures):
+class KNN_UCB_Crawler(CrawlerWithFeatures, CrawlerWithInitialSeed):
     """
     Implementation of KNN-UCB crawling strategy based on multi-armed bandit approach.
     "A multi-armed bandit approach for exploring partially observed networks" (2019)

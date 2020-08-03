@@ -28,6 +28,9 @@ class RegressionRewardCrawler(CrawlerWithFeatures, CrawlerWithInitialSeed):
         :param regr_args: dict of arguments for the regressor
         """
         assert regr in REGRESSORS
+        #
+        # FIXME should be careful with multiple superclasses, what is called first. See python3 MRO
+        #
         super(RegressionRewardCrawler, self).__init__(graph=graph, initial_seed=initial_seed, tau=tau, features=features, regr=regr, regr_args=regr_args, **kwargs)
         self._node_reward = {}  # node_id -> observed_reward
 
