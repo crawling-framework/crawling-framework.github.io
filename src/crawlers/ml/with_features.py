@@ -32,6 +32,7 @@ class CrawlerWithFeatures(Crawler):
         assert all([f in FEATURES for f in features])
         features = sorted(features)
         super().__init__(graph, features=features, tau=tau, **kwargs)
+        print('CWF after super')
 
         self.features = features
         self.tau = tau
@@ -66,8 +67,8 @@ class CrawlerWithFeatures(Crawler):
 
         if self._neigh_deg_features:
             neigh_degrees = np.array([self._observed_graph.deg(n) for n in self._observed_graph.neighbors(node)])
-            avg_neigh_degree = np.average(neigh_degrees)
-            median_neigh_degree = np.median(neigh_degrees)
+            avg_neigh_degree = np.average(neigh_degrees) if len(neigh_degrees) > 0 else 0
+            median_neigh_degree = np.median(neigh_degrees) if len(neigh_degrees) > 0 else 0
             res['AND'] = avg_neigh_degree / self._max_deg
             res['MND'] = median_neigh_degree / self._max_deg
 
@@ -101,14 +102,16 @@ class CrawlerWithFeatures(Crawler):
             self._node_clust[n] = (self._node_clust[n] * (d-1) * (d-1) / 2 + conn_neigs) / d / d * 2
 
         # Update features for seed, its neighbors(, and 2nd neighborhood). We update only observed nodes
-        to_be_updated.add(seed)
+        # to_be_updated.add(seed)
         for n in self._observed_graph.neighbors(seed):
             if n in self._observed_set:
                 # to_be_updated.add(n)
                 to_be_updated.update(self._observed_graph.neighbors(n))  # TODO seems to have no effect experimentally
 
+        # Update features for observed nodes only
         for n in to_be_updated:
-            self.update_feature(n)
+            if n in self._observed_set:
+                self.update_feature(n)
 
         # Update learning queue
         self._nodes_learning_queue.append(seed)

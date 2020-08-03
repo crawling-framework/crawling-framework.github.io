@@ -255,12 +255,14 @@ cdef class CrawlerWithInitialSeed(Crawler):
             kwargs['initial_seed'] = initial_seed
 
         super().__init__(graph, **kwargs)
+        print('CWIS after super')
 
         # If no observed nodes, pick a random seed from original graph or a specified initial seed
         if self._observed_graph.nodes() == 0:
             if initial_seed == -1:
                 initial_seed = self._orig_graph.random_node()
             self.observe(initial_seed)
+        print('observe initseed')
 
 
 cdef class RandomCrawler(CrawlerWithInitialSeed):

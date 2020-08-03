@@ -1,7 +1,7 @@
 from math import log
 
 import numpy as np
-import sklearn
+from sklearn.linear_model import LinearRegression
 
 from base.cgraph import MyGraph
 from crawlers.cbasic import CrawlerWithInitialSeed
@@ -11,14 +11,14 @@ from crawlers.ml.with_features import CrawlerWithFeatures
 REGRESSORS = ['ElasticNet', 'Lasso', 'LinearRegression', 'KNeighborsRegressor', 'SVR']
 
 
-class RegressionRewardCrawler(CrawlerWithInitialSeed, CrawlerWithFeatures):
+class RegressionRewardCrawler(CrawlerWithFeatures, CrawlerWithInitialSeed):
     """
     Crawler uses a regression model trained on crawled nodes features to predict reward for observed nodes. The next
     seed at each step is chosen as the node with the highest reward.
     """
     short = 'RegReward'
 
-    def __init__(self, graph: MyGraph, initial_seed: int=-1, tau=-1, features: list=['OD'], regr: str= 'LinearRegression', regr_args: dict={}, **kwargs):
+    def __init__(self, graph: MyGraph, initial_seed: int=-1, tau=-1, features: list=['OD'], regr: str='LinearRegression', regr_args: dict={}, **kwargs):
         """
         :param graph: original graph
         :param initial_seed: start node
