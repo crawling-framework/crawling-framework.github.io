@@ -44,6 +44,11 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
 
 
 class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
+    """
+    Runs a given crawler and forms an answer set.
+    In case of specified target set size T, the answer A = top-T degree nodes from crawled_set, or if there are not
+    enough, all crawled + the rest from observed_set.
+    """
     short = 'EmulatorWA'
 
     def __init__(self, graph: MyGraph, crawler_def, n: int, target_size: int, **kwargs):
@@ -73,7 +78,11 @@ class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
 
     def _compute_answer(self):
         self._answer.clear()
-        self._get_mod_nodes(self._crawled_set, self._answer, self.target_size)
+        if len(self._crawled_set) >= self.target_size:
+            self._get_mod_nodes(self._crawled_set, self._answer, self.target_size)
+        else:
+            self._answer.update(self._crawled_set)
+            self._get_mod_nodes(self._observed_set, self._answer, self.target_size - len(self._crawled_set))
         return 0
 
 

@@ -2,7 +2,9 @@ import os
 import subprocess, sys
 import logging
 
-from crawlers.cbasic import filename_to_definition
+from crawlers.cadvanced import DE_Crawler
+from crawlers.cbasic import filename_to_definition, MaximumObservedDegreeCrawler, RandomCrawler, RandomWalkCrawler, \
+    BreadthFirstSearchCrawler, DepthFirstSearchCrawler
 from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, AvrachenkovCrawler, EmulatorWithAnswerCrawler
 from experiments.three_stage_paper import social_names
 from graph_io import konect_names, GraphCollections, netrepo_names, other_names
@@ -285,6 +287,38 @@ def two_stage(p=0.01):
         # rm.draw_by_metric_crawler(x_lims=(0, 0.1*n), x_normalize=False, scale=12, draw_error=False)
 
 
+def baselines(p=0.01):
+    budget_coeff = [
+        0.0001, 0.0003, 0.0005,
+        0.001, 0.003, 0.005,
+        0.01, 0.03, 0.05, 0.1, 0.3
+    ]
+    crawlers = [
+        RandomCrawler,
+        RandomWalkCrawler,
+        BreadthFirstSearchCrawler,
+        DepthFirstSearchCrawler,
+        MaximumObservedDegreeCrawler,
+        DE_Crawler,
+    ]
+
+    metric_defs = [
+        (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short}),
+    ]
+
+    n_instances = 8
+    for graph_name in social_names:
+        g = GraphCollections.get(graph_name, not_load=True)
+        n = g[Stat.NODES]
+        budgets = [int(b*n) for b in budget_coeff]
+        crawler_defs = [
+            (EmulatorWithAnswerCrawler, {'crawler_def': c, 'n': budget, 'target_size': int(p * n)}) for budget in budgets for c in crawlers
+        ]
+        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
+        chr.run_missing(n_instances, max_cpus=8, max_memory=44)
+        print('\n\n')
+
+
 def three_stage(p=0.01):
     # p = 0.1
     budget_coeff = [
@@ -379,10 +413,11 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     # cloud_io()
-    cloud_prepare(clouds[1])  # Run to get all results from cloud
+    # cloud_prepare(clouds[1])  # Run to get all results from cloud
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
+    baselines()
     # two_stage(p=0.01)
     # two_stage(p=0.1)
     # two_stage(p=0.001)

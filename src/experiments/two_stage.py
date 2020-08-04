@@ -98,7 +98,7 @@ def test_target_set_coverage():
 
     from time import time
     t = time()
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=1000)
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=100)
     ci.run()
     print(time()-t)
 
