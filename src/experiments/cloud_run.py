@@ -312,7 +312,7 @@ def baselines(p=0.01):
         n = g[Stat.NODES]
         budgets = [int(b*n) for b in budget_coeff]
         crawler_defs = [
-            (EmulatorWithAnswerCrawler, {'crawler_def': c, 'n': budget, 'target_size': int(p * n)}) for budget in budgets for c in crawlers
+            (EmulatorWithAnswerCrawler, {'crawler_def': (c, {}), 'n': budget, 'target_size': int(p * n)}) for budget in budgets for c in crawlers
         ]
         chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs)
         chr.run_missing(n_instances, max_cpus=8, max_memory=44)
@@ -417,7 +417,7 @@ if __name__ == '__main__':
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
-    baselines()
+    # baselines()
     # two_stage(p=0.01)
     # two_stage(p=0.1)
     # two_stage(p=0.001)
@@ -426,7 +426,7 @@ if __name__ == '__main__':
     # three_stage(p=0.1)
     # three_stage(p=0.001)
     # three_stage(p=0.0001)
-    # three_stage_mod(p=0.01)
+    three_stage_mod(p=0.01)
     # three_stage_mod(p=0.1)
     # three_stage_mod(p=0.001)
     # three_stage_mod(p=0.0001)
