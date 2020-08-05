@@ -1,5 +1,6 @@
 import logging
 
+from crawlers.cadvanced import DE_Crawler
 from crawlers.cbasic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler, definition_to_filename, filename_to_definition
 from crawlers.ml.regression_reward import RegressionRewardCrawler
 from experiments.ml.feature_analyze import FeatureAnalyzerCrawler
@@ -72,22 +73,22 @@ def run_comparison():
 
     crawler_defs = [
         # (KNN_UCB_Crawler, {'initial_seed': 1, 'alpha': 0, 'k': 1, 'n0': 50}),
-        # (MaximumObservedDegreeCrawler, {'name': 'MOD'}),
-        (KNN_UCB_Crawler, {'features': ['OD'], 'name': "KNN-UCB"}),
+        (MaximumObservedDegreeCrawler, {'name': 'MOD'}),
+        (KNN_UCB_Crawler, {'features': ['OD'], 'name': "KNN-UCB\n[OD]"}),
         (KNN_UCB_Crawler, {'features': ['OD', 'CC'], 'name': "KNN-UCB\n[OD+CC]"}),
         (KNN_UCB_Crawler, {'features': ['OD', 'CNF'], 'name': "KNN-UCB\n[OD+CNF]"}),
         (KNN_UCB_Crawler, {'features': ['OD', 'CNF', 'CC'], 'name': "KNN-UCB\n[OD+CNF+CC]"}),
         (KNN_UCB_Crawler, {'features': ['OD', 'CNF', 'CC', 'MND', 'AND'], 'name': "KNN-UCB\n[all 5]"}),
-        (RegressionRewardCrawler, {'features': ['OD'], 'regr': 'LinearRegression', 'regr_args': {}}),
-        (RegressionRewardCrawler, {'features': ['OD', 'CC'], 'regr': 'LinearRegression', 'regr_args': {}}),
-        (RegressionRewardCrawler, {'features': ['OD', 'CNF'], 'regr': 'LinearRegression', 'regr_args': {}}),
-        (RegressionRewardCrawler, {'features': ['OD', 'CC', 'CNF'], 'regr': 'LinearRegression', 'regr_args': {}}),
-        (RegressionRewardCrawler, {'features': ['OD', 'CC', 'CNF', 'MND', 'AND'], 'regr': 'LinearRegression', 'regr_args': {}}),
+        (RegressionRewardCrawler, {'features': ['OD'], 'regr': 'LinearRegression', 'regr_args': {}, 'name': "LinReg\n[OD]"}),
+        (RegressionRewardCrawler, {'features': ['OD', 'CC'], 'regr': 'LinearRegression', 'regr_args': {}, 'name': "LinReg\n[OD+CC]"}),
+        (RegressionRewardCrawler, {'features': ['OD', 'CNF'], 'regr': 'LinearRegression', 'regr_args': {}, 'name': "LinReg\n[OD+CNF]"}),
+        (RegressionRewardCrawler, {'features': ['OD', 'CC', 'CNF'], 'regr': 'LinearRegression', 'regr_args': {}, 'name': "LinReg\n[OD+CC+CNF]"}),
+        (RegressionRewardCrawler, {'features': ['OD', 'CC', 'CNF', 'MND', 'AND'], 'regr': 'LinearRegression', 'regr_args': {}, 'name': "LinReg\n[all 5]"}),
         # (LinReg_Crawler, {'features': ['OD', 'CC'], 'name': "LinReg\n[OD+CC]"}),
         # (RegressionRewardCrawler, {'features': ['OD', 'CNF'], 'name': "LinReg\n[OD+CNF]"}),
         # (LinReg_Crawler, {'features': ['OD', 'CNF', 'CC'], 'tau': -1, 'name': "LinReg\n[OD+CNF+CC]"}),
         # (LinReg_Crawler, {'features': ['OD', 'CNF', 'CC', 'MND', 'AND'], 'tau': -1, 'name': "LinReg\n[all 5]"}),
-        # (DE_Crawler, {'name': 'DE'}),
+        (DE_Crawler, {'name': 'DE'}),
     ] + [
         # (LinReg_Crawler, {'features': ['OD', 'CNF'], 'name': "LinReg\n[OD+CNF]"}),
         # (LinReg_Crawler, {'features': ['OD', 'CC'], 'name': "LinReg\n[OD+CC]"}),
@@ -103,19 +104,19 @@ def run_comparison():
     ]
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'crawled'}),
-        (TopCentralityMetric, {'top': 1, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
+        # (TopCentralityMetric, {'top': 1, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
     ]
 
     n_instances = 8
     graph_names = social_names[:20]
-    for graph_name in graph_names:
-        g = GraphCollections.get(graph_name)
-        chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs, budget=1000)
-        chr.run_missing(n_instances, max_cpus=8, max_memory=30)
+    # for graph_name in graph_names:
+    #     g = GraphCollections.get(graph_name)
+    #     chr = CrawlerHistoryRunner(g, crawler_defs, metric_defs, budget=1000)
+    #     chr.run_missing(n_instances, max_cpus=8, max_memory=30)
 
-    # crm = ResultsMerger(graph_names, crawler_defs, metric_defs, n_instances, x_lims=(0, 1000))
-    # crm.draw_by_crawler(x_normalize=False, draw_error=False, scale=3)
-    # crm.draw_winners('AUCC', scale=3)
+    crm = ResultsMerger(graph_names, crawler_defs, metric_defs, n_instances, x_lims=(0, 1000))
+    crm.draw_by_crawler(x_normalize=False, draw_error=False, scale=3)
+    crm.draw_winners('AUCC', scale=3)
     # crm.draw_winners('wAUCC', scale=3)
     # crm.draw_aucc()
 
