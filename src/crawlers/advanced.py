@@ -157,11 +157,11 @@ class ThreeStageCrawler(CrawlerWithAnswer):
                 self._get_mod_nodes(self.nodes_set, self._answer, self.pV)
 
             else:  # As Max suggested
-                # A = top(ps+n-s) from S* + E1*
+                # a = top(ps+n-s) from S* + E1*
                 a = set()
                 self._get_mod_nodes(set.union(self.start_seeds, self.e1s), a, int(self.p * self.s) + self.n - self.s)
-                # A = top-pN from A + observed
-                self._get_mod_nodes(set.union(a, self._observed_set), a, self.pV)
+                # A = top-pN from a + observed
+                self._get_mod_nodes(set.union(a, self._observed_set), self._answer, self.pV)
 
         else:
             # # Top-pN from all crawled
@@ -314,7 +314,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
                 a = set()
                 self._get_mod_nodes(set.union(self.start_seeds, self.e1s), a, int(self.p * self.s) + self.n - self.s)
                 # A = top-pV from A + observed
-                self._get_mod_nodes(set.union(a, self._observed_set), a, self.pV)
+                self._get_mod_nodes(set.union(a, self._observed_set), self._answer, self.pV)
 
         else:
             # # Top-pV from all crawled

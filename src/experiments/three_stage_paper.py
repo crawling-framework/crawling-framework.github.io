@@ -934,9 +934,9 @@ if __name__ == '__main__':
     # three_stage_avg_n_s_all()
     # three_stage_mod_avg_n_s_all()
     # three_stage_both_avg_n_s_all()
-    three_stage_both_avg_n_s()
+    # three_stage_both_avg_n_s()
     # three_stage_mod_avg_b_s()
-    # three_stage_mod_avg_n_s()
+    three_stage_mod_avg_n_s()
     # three_stage_comparison()
     # data_copy()
 

@@ -413,7 +413,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     # cloud_io()
-    # cloud_prepare(clouds[1])  # Run to get all results from cloud
+    # cloud_prepare(clouds[0])  # Run to get all results from cloud
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
@@ -426,7 +426,7 @@ if __name__ == '__main__':
     # three_stage(p=0.1)
     # three_stage(p=0.001)
     # three_stage(p=0.0001)
-    three_stage_mod(p=0.01)
+    # three_stage_mod(p=0.01)
     # three_stage_mod(p=0.1)
     # three_stage_mod(p=0.001)
     # three_stage_mod(p=0.0001)
