@@ -413,11 +413,11 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
     # cloud_io()
-    # cloud_prepare(clouds[0])  # Run to get all results from cloud
+    # cloud_prepare(clouds[1])  # Run to get all results from cloud
     # cloud_run(clouds[0])
 
     # main()  # to be run from cloud
-    # baselines()
+    baselines()
     # two_stage(p=0.01)
     # two_stage(p=0.1)
     # two_stage(p=0.001)
