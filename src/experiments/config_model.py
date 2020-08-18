@@ -6,7 +6,7 @@ from matplotlib.colors import LogNorm
 from graph_io import GraphCollections
 from base.cgraph import MyGraph
 from cyth.cstatistics import assortativity
-from a import truncated_power_law, configuration_model, ba_model
+from graph_models.models import truncated_power_law, configuration_model, ba_model
 
 raise Exception("OLD, NEED TO UPDATE")
 

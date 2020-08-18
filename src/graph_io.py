@@ -232,11 +232,9 @@ class GraphCollections:
         if collection is None:
             # Resolve name: search in konect then neterpo, if no set collection to other
             try:
-                name = konect_name_ref_dict[name]
                 collection = 'konect'
             except KeyError:
                 try:
-                    netrepo_url = netrepo_name_ref_dict[name]
                     collection = 'netrepo'
                 except KeyError:
                     collection = 'other'
@@ -248,12 +246,12 @@ class GraphCollections:
             temp_path = os.path.join(GRAPHS_DIR, collection, '%s.tmp' % name)
 
             if collection == 'konect':
+                name = konect_name_ref_dict[name]
                 GraphCollections._download_konect(
                     temp_path, GraphCollections.konect_url_pattern % name)
 
             elif collection == 'netrepo':
-                # name_ref_dict = eval(open(netrepo_metadata_path, 'r').read())
-                # url = name_ref_dict[name]
+                netrepo_url = netrepo_name_ref_dict[name]
                 GraphCollections._download_netrepo(temp_path, netrepo_url)
 
             # elif collection == 'other':

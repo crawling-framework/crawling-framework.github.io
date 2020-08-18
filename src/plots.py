@@ -3,7 +3,7 @@ from operator import itemgetter
 import six
 import seaborn as sns
 
-from a import ba_model
+from graph_models.models import ba_model
 from matplotlib import colors
 import matplotlib.pyplot as plt
 import numpy as np

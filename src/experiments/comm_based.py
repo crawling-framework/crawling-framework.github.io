@@ -3,7 +3,7 @@ from crawlers.cbasic import MaximumObservedDegreeCrawler, RandomWalkCrawler
 from crawlers.community_based import MaximumObservedCommunityDegreeCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections, netrepo_names
-from a.models import LFR
+from graph_models.models import LFR
 from running.animated_runner import AnimatedCrawlerRunner
 from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
