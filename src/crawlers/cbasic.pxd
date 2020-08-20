@@ -1,12 +1,4 @@
-import logging
-import random
-
-from libcpp.set cimport set as cset
 from libcpp.vector cimport vector
-from libcpp.queue cimport queue
-from libcpp.deque cimport deque
-from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec
-
 from base.cgraph cimport MyGraph, str_to_chars
 from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 
@@ -25,5 +17,8 @@ cdef class Crawler:
     cpdef int crawl_budget(self, int budget) except -1
 
 
-cdef class CrawlerUpdatable(Crawler):
-    cpdef void update(self, vector[int] nodes)
+# cdef class CrawlerUpdatable(Crawler):
+#     cpdef void update(self, vector[int] nodes)
+#
+cdef class CrawlerWithInitialSeed(Crawler):
+    pass

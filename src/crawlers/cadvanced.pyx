@@ -8,7 +8,7 @@ from libcpp.pair cimport pair
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec, address as addr
 
 from cbasic import NoNextSeedError, CrawlerException, MaximumObservedDegreeCrawler, RandomWalkCrawler
-from cbasic cimport Crawler, CrawlerUpdatable
+from cbasic cimport Crawler, CrawlerWithInitialSeed
 from base.cgraph cimport MyGraph, str_to_chars, t_random
 from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 
@@ -353,7 +353,7 @@ cdef class CrawlerWithAnswer(Crawler):
 # from time import time
 # t = time()
 
-cdef class DE_Crawler(CrawlerUpdatable):
+cdef class DE_Crawler(CrawlerWithInitialSeed):
     """
     DE Crawler from http://kareekij.github.io/papers/de_crawler_asonam18.pdf
     DE-Crawler: A Densification-Expansion Algorithm for Online Data Collection
@@ -373,16 +373,8 @@ cdef class DE_Crawler(CrawlerUpdatable):
             kwargs['initial_budget'] = initial_budget
         self.initial_budget = initial_budget
 
-        if initial_seed != -1:
-            kwargs['initial_seed'] = initial_seed
+        super().__init__(graph, initial_seed=initial_seed, **kwargs)
 
-        super().__init__(graph, **kwargs)
-
-        if len(self._observed_set) == 0:
-            if initial_seed == -1:  # FIXME duplicate code in all basic crawlers?
-                initial_seed = self._orig_graph.random_node()
-            self.observe(initial_seed)
-        self.initial_seed = initial_seed
         self.prev_seed = -1
 
         self.s_d = 0
@@ -453,9 +445,10 @@ cdef class DE_Crawler(CrawlerUpdatable):
         if len(self._crawled_set) < self.initial_budget:  # RW step
             # return RandomWalkCrawler.next_seed(self)
             if self.prev_seed == -1:  # first step
-                self.prev_seed = self.initial_seed
-                self.nd_set.remove(self.initial_seed, self._observed_graph.deg(self.initial_seed))
-                return self.initial_seed
+                n = next(iter(self._observed_set))
+                self.prev_seed = n
+                self.nd_set.remove(n, self._observed_graph.deg(self.initial_seed))
+                return n
 
             if len(self._observed_set) == 0:
                 raise NoNextSeedError()

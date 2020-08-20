@@ -23,7 +23,7 @@ def parse_konect_page():
     logging.info("Parsing Konect metadata...")
     name_ref_dict = {}
     url = 'http://konect.uni-koblenz.de/networks/'
-    html = urllib.request.urlopen(url).read()
+    html = urllib.request.urlopen(url)._read()
 
     rows = BeautifulSoup(html, "lxml").table.find_all('tr')
     for row in rows[1:]:
@@ -53,7 +53,7 @@ def parse_netrepo_page():
     logging.info("Parsing networkrepository metadata...")
     name_ref_dict = {}
     url = 'http://networkrepository.com/networks.php'
-    html = urllib.request.urlopen(url).read()
+    html = urllib.request.urlopen(url)._read()
 
     rows = BeautifulSoup(html, "lxml").table.find_all('tr')
     for row in rows[1:]:

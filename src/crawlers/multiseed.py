@@ -1,7 +1,7 @@
 import logging
 
 from base.cgraph import MyGraph
-from crawlers.cbasic import Crawler, CrawlerUpdatable as CrawlerUpdatable, NoNextSeedError,\
+from crawlers.cbasic import Crawler, NoNextSeedError,\
     MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler, definition_to_filename
 
 logger = logging.getLogger(__name__)
@@ -124,7 +124,7 @@ class MultiInstanceCrawler(MultiCrawler):
                              observed_set={seeds[i]})
             self.crawlers.append(crawler)
 
-            if isinstance(crawler, CrawlerUpdatable):
+            if isinstance(crawler, MaximumObservedDegreeCrawler) or isinstance(crawler, PreferentialObservedDegreeCrawler):
                 n = seeds[i]
                 self.node_owner[n] = crawler
                 self.keep_node_owners = True
@@ -156,7 +156,7 @@ class MultiInstanceCrawler(MultiCrawler):
             for n in self._observed_graph.neighbors(seed):
                 if n in self.node_owner:
                     c = self.node_owner[n]
-                    if c != self.crawlers[self.next_crawler] and isinstance(c, CrawlerUpdatable):
+                    if c != self.crawlers[self.next_crawler] and (isinstance(c, MaximumObservedDegreeCrawler) or isinstance(c, PreferentialObservedDegreeCrawler)):
                         c.update([n])
 
         self.next_crawler = (self.next_crawler+1) % len(self.crawlers)
