@@ -81,7 +81,7 @@ class AnimatedCrawlerRunner(CrawlerRunner):
             plt.pause(0.001)
 
         if save_to_file is not None:
-            if not os.path.exists(save_to_file):
+            if not os.path.exists(os.path.dirname(save_to_file)):
                 os.makedirs(os.path.dirname(save_to_file))
             plt.savefig(save_to_file)
         plt.show()

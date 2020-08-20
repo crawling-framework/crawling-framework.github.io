@@ -252,8 +252,6 @@ def merge_and_visualize():
         (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.PAGERANK_DISTR.short}),
         (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.BETWEENNESS_DISTR.short}),
         (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.ECCENTRICITY_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.CLOSENESS_DISTR.short}),
-        (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.K_CORENESS_DISTR.short}),
     ]
     graph_names = ['petster-hamster', 'soc-wiki-Vote']
     n_instances =8
@@ -269,15 +267,14 @@ def merge_and_visualize():
     crm = ResultsMerger(graph_names, crawler_defs, metric_defs, n_instances=6)
 
     # Draw crawler curves for each graph and each metric
-    # TODO args docs
-    crm.draw_by_crawler()
+    crm.draw_by_crawler(x_lims=(0, 1), x_normalize=True, draw_error=True, scale=4)
     # Close the window to see the next
 
     # Draw AUCC values for each graph and each metric
-    crm.draw_aucc('AUCC')
+    crm.draw_aucc(aggregator='AUCC', scale=3, xticks_rotation=90)
 
     # Draw for each crawler weighted AUCC scores aggregated by all graphs and metrics
-    crm.draw_winners('wAUCC')
+    crm.draw_winners(aggregator='wAUCC', scale=8, xticks_rotation=90)
 
 
 if __name__ == '__main__':

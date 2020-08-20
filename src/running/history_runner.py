@@ -134,11 +134,8 @@ class CrawlerHistoryRunner(CrawlerRunner):
 
         pbar.close()  # closing progress bar
 
-        # print('_save_semaphore', self._save_semaphore)
         with self._save_semaphore:
-            # print('_save_semaphore in')
             self._save_history(crawler_metric_seq, step_seq)  # saving ending history
-            # print('_save_semaphore out')
 
         logging.info("Finished running at %s" % (datetime.datetime.now()))
 
@@ -182,7 +179,6 @@ class CrawlerHistoryRunner(CrawlerRunner):
             num_processes - errors, num_processes,
             self.graph.name, self.graph.nodes(), self.graph.edges(), time() - t)
 
-        # print(msg)
         return msg
 
     def run_parallel_adaptive(self, n_instances: int = 10,
