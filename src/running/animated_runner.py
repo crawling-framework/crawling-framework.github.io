@@ -1,3 +1,5 @@
+import os
+
 from matplotlib import pyplot as plt
 
 from base.cgraph import MyGraph
@@ -34,7 +36,7 @@ class AnimatedCrawlerRunner(CrawlerRunner):
 
     def run(self, same_initial_seed=False, ylims=None, xlabel='iteration, n', ylabel='metric value', swap_coloring_scheme=False, save_to_file=None):
         """
-        :param same_initial_seed: use the same initial seed for all crawler instances
+        :param same_initial_seed: use the same initial seed for all crawler instances (NOT IMPLEMENTED)
         :param ylims: (low, up)
         :param xlabel: by default 'iteration, n'
         :param ylabel: by default 'metric value'
@@ -78,15 +80,9 @@ class AnimatedCrawlerRunner(CrawlerRunner):
             plt.tight_layout()
             plt.pause(0.001)
 
-        # file_path = os.path.join(RESULT_DIR, self.graph.name, 'crawling_plot')
-        # if not os.path.exists(file_path):
-        #     os.makedirs(file_path)
-        # for metric in metrics:
-        #     file_name = os.path.join(file_path, metric.name + ':' +
-        #                              ','.join([crawler.name for crawler in self.crawlers]) + 'animated.png')
-        #     logging.info('Saved pic ' + file_name)
-        #     plt.savefig(file_name)
         if save_to_file is not None:
+            if not os.path.exists(save_to_file):
+                os.makedirs(os.path.dirname(save_to_file))
             plt.savefig(save_to_file)
         plt.show()
 

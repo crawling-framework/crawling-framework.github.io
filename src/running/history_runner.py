@@ -190,7 +190,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         """
         Runs in parallel crawlers and measure metrics. Number of processes is chosen adaptively.
         Using magic coefficients: Mbytes of memory = A*n + B*e + C,
-        where A = 0.25, B = 0.01, C = 2.5,  n - thousands of nodes in graph.
+        where A = 0.25, B = 0.01, C = 2.5,  n - thousands of nodes in graph, e - thousands of edges.
 
         :param n_instances: total wanted number of instances to be performed
         :param max_cpus: max number of CPUs to use for computation, all available by default
