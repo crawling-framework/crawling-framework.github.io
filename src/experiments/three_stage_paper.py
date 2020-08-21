@@ -15,8 +15,9 @@ from running.metrics_and_runner import TopCentralityMetric
 
 from base.cgraph import MyGraph
 from crawlers.cbasic import CrawlerException, MaximumObservedDegreeCrawler, RandomWalkCrawler, \
-    BreadthFirstSearchCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler, MaximumExcessDegreeCrawler, \
-    definition_to_filename
+    BreadthFirstSearchCrawler, DepthFirstSearchCrawler, PreferentialObservedDegreeCrawler, \
+    MaximumExcessDegreeCrawler, \
+    definition_to_filename, RandomCrawler
 from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer, AvrachenkovCrawler, \
     ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs, EmulatorWithAnswerCrawler
 from crawlers.multiseed import MultiInstanceCrawler
@@ -510,7 +511,7 @@ def three_stage_mod_avg_n_s():
     avg = np.mean(res, axis=0)
     var = np.var(res, axis=0) ** 0.5
 
-    print(worst)
+    # print(worst)
     print(avg)
     print(var)
     # print(list(zip(graph_names, f_20_max)))
@@ -893,6 +894,14 @@ def data_copy():
         0.01, 0.03, 0.05, 0.1, 0.3
     ]
     seed_coeff = [0.01, 0.03, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    crawlers = [
+        RandomCrawler,
+        RandomWalkCrawler,
+        BreadthFirstSearchCrawler,
+        DepthFirstSearchCrawler,
+        MaximumObservedDegreeCrawler,
+        DE_Crawler,
+    ]
 
     p = 0.01
     md = (TopCentralityMetric, {'top': p, 'measure': 'F1', 'part': 'answer', 'centrality': Stat.DEGREE_DISTR.short})
@@ -902,22 +911,36 @@ def data_copy():
     for i, graph_name in enumerate(graph_names):
         g = GraphCollections.get(graph_name, not_load=True)
         n = g[Stat.NODES]
-        for j, b in enumerate(budget_coeff):
-            budget = int(b * n)
-            for k, s in enumerate(seed_coeff):
-                start_seeds = int(s * budget)
-                cd = (AvrachenkovCrawler, {'n1': start_seeds, 'n': budget, 'k': int(p*n)})
-                # cd = (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p})
-                # cd = (ThreeStageMODCrawler, {'s': start_seeds, 'n': budget, 'p': p, 'b': 100})
-                c = definition_to_filename(cd)
+        # for j, b in enumerate(budget_coeff):
+        #     budget = int(b * n)
+        #     for k, s in enumerate(seed_coeff):
+        #         start_seeds = int(s * budget)
+        #         cd = (AvrachenkovCrawler, {'n1': start_seeds, 'n': budget, 'k': int(p*n)})
+        #         # cd = (ThreeStageCrawler, {'s': start_seeds, 'n': budget, 'p': p})
+        #         # cd = (ThreeStageMODCrawler, {'s': start_seeds, 'n': budget, 'p': p, 'b': 100})
+        #         c = definition_to_filename(cd)
+        #
+        #         path = ResultsMerger.names_to_path(graph_name, c, m)
+        #         paths = glob.glob(path)
+        #         for src in paths:
+        #             dst = src.replace('results', '2-Stage')
+        #             if not os.path.exists(os.path.dirname(dst)):
+        #                 os.makedirs(os.path.dirname(dst))
+        #             os.system("cp '%s' '%s'" % (src, dst))
+        budgets = [int(b*n) for b in budget_coeff]
+        crawler_defs = [
+            (EmulatorWithAnswerCrawler, {'crawler_def': (c, {}), 'n': budget, 'target_size': int(p * n)}) for budget in budgets for c in crawlers
+        ]
+        for cd in crawler_defs:
+            c = definition_to_filename(cd)
+            path = ResultsMerger.names_to_path(graph_name, c, m)
+            paths = glob.glob(path)
+            for src in paths:
+                dst = src.replace('results', 'baselines')
+                if not os.path.exists(os.path.dirname(dst)):
+                    os.makedirs(os.path.dirname(dst))
+                os.system("cp '%s' '%s'" % (src, dst))
 
-                path = ResultsMerger.names_to_path(graph_name, c, m)
-                paths = glob.glob(path)
-                for src in paths:
-                    dst = src.replace('results', '2-Stage')
-                    if not os.path.exists(os.path.dirname(dst)):
-                        os.makedirs(os.path.dirname(dst))
-                    os.system("cp '%s' '%s'" % (src, dst))
 
 
 if __name__ == '__main__':
@@ -934,11 +957,11 @@ if __name__ == '__main__':
     # three_stage_avg_n_s_all()
     # three_stage_mod_avg_n_s_all()
     # three_stage_both_avg_n_s_all()
-    three_stage_both_avg_n_s()
+    # three_stage_both_avg_n_s()
     # three_stage_mod_avg_b_s()
     # three_stage_mod_avg_n_s()
     # three_stage_comparison()
-    # data_copy()
+    data_copy()
 
     # g = GraphCollections.get('loc-brightkite_edges')
     # print(g[Stat.DEGREE_DISTR])

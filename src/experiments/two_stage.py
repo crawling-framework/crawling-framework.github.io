@@ -47,7 +47,7 @@ def test_target_set_coverage():
     thr_degree = graph.deg(target_list[-1])
     target_set = set(target_list)
 
-    budget = int(0.05 * graph.nodes())
+    budget = int(0.005 * graph.nodes())
     start_seeds = int(0.7 * budget)
 
     crawlers = [
@@ -59,9 +59,9 @@ def test_target_set_coverage():
         # MaximumExcessDegreeCrawler(graph),
         # (AvrachenkovCrawler, {'n': budget, 'n1': start_seeds, 'k': int(p * graph.nodes())}),
         (ThreeStageCrawler, {'s': int(0.6*budget), 'n': budget, 'p': p}),
-        (ThreeStageMODCrawler, {'s': 0, 'n': budget, 'p': p, 'b': 1}),
-        (ThreeStageMODCrawler, {'s': int(0.3*budget), 'n': budget, 'p': p, 'b': 1}),
-        (EmulatorWithAnswerCrawler, {'crawler_def': (MaximumObservedDegreeCrawler, {}), 'n': budget, 'target_size': int(p*graph.nodes())}),
+        (ThreeStageMODCrawler, {'s': int(0.1*budget), 'n': budget, 'p': p, 'b': 100}),
+        # (ThreeStageMODCrawler, {'s': int(0.3*budget), 'n': budget, 'p': p, 'b': 1}),
+        # (EmulatorWithAnswerCrawler, {'crawler_def': (MaximumObservedDegreeCrawler, {}), 'n': budget, 'target_size': int(p*graph.nodes())}),
         # ThreeStageMODCrawler(graph, s=1, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=10, n=budget, p=p, b=10),
         # ThreeStageMODCrawler(graph, s=100, n=budget, p=p, b=10),
@@ -98,7 +98,7 @@ def test_target_set_coverage():
 
     from time import time
     t = time()
-    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget, step=1000)
+    ci = AnimatedCrawlerRunner(graph, crawlers, metrics, budget=budget)
     ci.run()
     print(time()-t)
 
