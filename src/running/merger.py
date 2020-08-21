@@ -133,18 +133,6 @@ class ResultsMerger:
                 self.instances[g][c] = {}
                 self.contents[g][c] = {}
                 for m in self.metric_names:
-                    # # For rename
-                    # p = CrawlerRunsMerger.names_to_path(g, c, m, old=True)
-                    # paths = glob.glob(p)
-                    # self.contents[g][c][m] = len(paths)
-                    # for i, p in enumerate(paths):
-                    #     new_p = CrawlerRunsMerger.names_to_path(g, c, m, old=False)
-                    #     new_p = new_p.replace('*', str(i))
-                    #     print(p, new_p)
-                    #     if not os.path.exists(os.path.dirname(new_p)):
-                    #         os.makedirs(os.path.dirname(new_p))
-                    #     os.rename(p, new_p)
-
                     path_pattern = ResultsMerger.names_to_path(g, c, m)
                     path_pattern = path_pattern.replace('[', '[[]')  # workaround for glob since '[' is a special symbol for it
                     paths = glob.glob(path_pattern)
@@ -241,9 +229,15 @@ class ResultsMerger:
         return missing
 
     def draw_by_crawler(self, x_lims=None, x_normalize=True, draw_error=True, scale=3):
-        """ Draw M x G table of plots with C lines each, where
+        """
+        Draw M x G table of plots with C lines each, where
         M - num of metrics, G - num of graphs, C - num of crawlers.
         Ox - crawling step, Oy - metric value.
+
+        :param x_lims: x-limits for plots. Overrides x_lims passed in constructor
+        :param x_normalize: if True, x values are normalized to be from 0 to 1
+        :param draw_error: if True, fill standard deviation area around the averaged crawling curve
+        :param scale: size of plots (default 3)
         """
         x_lims = x_lims or self.x_lims
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
@@ -300,9 +294,16 @@ class ResultsMerger:
         plt.show()
 
     def draw_by_metric_crawler(self, x_lims=None, x_normalize=True, swap_coloring_scheme=False, draw_error=True, scale=3):
-        """ Draw G plots with CxM lines each, where
+        """
+        Draw G plots with CxM lines each, where
         M - num of metrics, G - num of graphs, C - num of crawlers.
         Ox - crawling step, Oy - metric value.
+
+        :param x_lims: x-limits for plots. Overrides x_lims passed in constructor
+        :param x_normalize: if True, x values are normalized to be from 0 to 1
+        :param swap_coloring_scheme: by default metrics differ in linestyle, crawlers differ in color. Set True to swap
+        :param draw_error: if True, fill standard deviation area around the averaged crawling curve
+        :param scale: size of plots (default 3)
         """
         x_lims = x_lims or self.x_lims
         linestyles = ['-', '--', ':', '-.']
@@ -399,8 +400,14 @@ class ResultsMerger:
         pbar.close()
 
     def draw_aucc(self, aggregator='AUCC', x_lims=None, scale=3, xticks_rotation=90):
-        """ Draw G plots with M lines. Ox - C crawlers, Oy - AUCC value (M curves with error bars).
+        """
+        Draw G plots with M lines. Ox - C crawlers, Oy - AUCC value (M curves with error bars).
         M - num of metrics, G - num of graphs, C - num of crawlers
+
+        :param aggregator: function translating crawling curve into 1 number. AUCC (default) or wAUCC
+        :param x_lims: x-limits passed to aggregator. Overrides x_lims passed in constructor
+        :param scale: size of plots (default 3)
+        :param xticks_rotation: rotate x-ticks (default 90 degrees)
         """
         assert aggregator in ['AUCC', 'wAUCC']
         x_lims = x_lims or self.x_lims
@@ -442,14 +449,14 @@ class ResultsMerger:
         plt.show()
 
     def draw_winners(self, aggregator='AUCC', x_lims=None, scale=8, xticks_rotation=90):
-        """  Draw C stacked bars (each of M elements). Ox - C crawlers, Oy - number of wins (among G) by (w)AUCC value.
+        """
+        Draw C stacked bars (each of M elements). Ox - C crawlers, Oy - number of wins (among G) by (w)AUCC value.
         Miss graphs where not all configurations are present.
 
-        :param aggregator:
-        :param x_lims:
-        :param scale:
-        :param xticks_rotation:
-        :return:
+        :param aggregator: function translating crawling curve into 1 number. AUCC (default) or wAUCC
+        :param x_lims: x-limits passed to aggregator. Overrides x_lims passed in constructor
+        :param scale: size of plots (default 8)
+        :param xticks_rotation: rotate x-ticks (default 90 degrees)
         """
         assert aggregator in ['AUCC', 'wAUCC']
         x_lims = x_lims or self.x_lims
@@ -474,7 +481,6 @@ class ResultsMerger:
                 ca = [np.mean(self.auccs[g][c][m][aggregator]) for c in self.crawler_names]
                 if any(np.isnan(ca)):
                     continue
-                # print(ca, np.argmax(ca))
                 winner = self.crawler_names[np.argmax(ca)]
                 winners[winner][m] += 1
 
@@ -545,51 +551,6 @@ def test_merger():
         filename_to_definition('SBS(p=0.1)'),
         filename_to_definition('SBS(p=0.25)'),
         filename_to_definition('SBS(p=0.5)'),
-        # filename_to_definition('SBS(p=0.75)'),
-        # filename_to_definition('SBS(p=0.89)'),
-        # filename_to_definition('MOD(batch=1)'),
-        # filename_to_definition('MOD(batch=10)'),
-        # filename_to_definition('MOD(batch=100)'),
-        # filename_to_definition('MOD(batch=1000)'),
-        # filename_to_definition('MOD(batch=10000)'),
-        # filename_to_definition('POD(batch=1)'),
-        # filename_to_definition('POD(batch=10)'),
-        # filename_to_definition('POD(batch=100)'),
-        # filename_to_definition('POD(batch=1000)'),
-        # filename_to_definition('POD(batch=10000)'),
-        # filename_to_definition('DE(initial_budget=10)'),
-        # filename_to_definition('MultiInstance(count=2,crawler_def=BFS())'),
-        # filename_to_definition('MultiInstance(count=2,crawler_def=MOD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=2,crawler_def=POD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=2,crawler_def=DE(initial_budget=10))'),
-        # filename_to_definition('MultiInstance(count=3,crawler_def=BFS())'),
-        # filename_to_definition('MultiInstance(count=3,crawler_def=MOD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=3,crawler_def=POD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=3,crawler_def=DE(initial_budget=10))'),
-        # filename_to_definition('MultiInstance(count=4,crawler_def=BFS())'),
-        # filename_to_definition('MultiInstance(count=4,crawler_def=MOD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=4,crawler_def=POD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=4,crawler_def=DE(initial_budget=10))'),
-        # filename_to_definition('MultiInstance(count=5,crawler_def=BFS())'),
-        # filename_to_definition('MultiInstance(count=5,crawler_def=MOD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=5,crawler_def=POD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=5,crawler_def=DE(initial_budget=10))'),
-        # filename_to_definition('MultiInstance(count=10,crawler_def=BFS())'),
-        # filename_to_definition('MultiInstance(count=10,crawler_def=MOD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=10,crawler_def=POD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=10,crawler_def=DE(initial_budget=10))'),
-        # filename_to_definition('MultiInstance(count=30,crawler_def=BFS())'),
-        # filename_to_definition('MultiInstance(count=30,crawler_def=MOD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=30,crawler_def=POD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=30,crawler_def=DE(initial_budget=10))'),
-        # filename_to_definition('MultiInstance(count=100,crawler_def=BFS())'),
-        # filename_to_definition('MultiInstance(count=100,crawler_def=MOD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=100,crawler_def=POD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=100,crawler_def=DE(initial_budget=10))'),
-        # filename_to_definition('MultiInstance(count=1000,crawler_def=BFS())'),
-        # filename_to_definition('MultiInstance(count=1000,crawler_def=MOD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=1000,crawler_def=POD(batch=1))'),
-        # filename_to_definition('MultiInstance(count=1000,crawler_def=DE(initial_budget=10))'),
     ]
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'measure': 'Re', 'part': 'crawled', 'centrality': Stat.DEGREE_DISTR.short}),

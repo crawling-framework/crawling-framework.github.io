@@ -35,6 +35,17 @@ class TopCentralityMetric(Metric):
     short = 'TopK'
 
     def __init__(self, graph: MyGraph, top: float, centrality: str, measure='F1', part='crawled', name=None):
+        """
+        Measure crawling result with respect to top fraction of nodes by a specified centrality.
+
+        :param graph: original graph
+        :param top: fraction of target nodes (from 0 to 1)
+        :param centrality: node centrality to get top (see Stat)
+        :param measure: 'Pr' (precision), 'Re' (recall), or 'F1' (F1-score)
+        :param part: 'crawled', 'observed', 'nodes' (observed+crawled), 'answer' (crawler must
+         support getting an answer, e.g. extend CrawlerWithAnswer)
+        :param name: name for plotting
+        """
         # assert 'Distr' in centrality
         assert part in ['crawled', 'observed', 'nodes', 'answer']
         assert measure in ['Pr', 'Re', 'F1']

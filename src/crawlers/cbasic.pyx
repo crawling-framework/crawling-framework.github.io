@@ -56,7 +56,6 @@ def filename_to_definition(filename: str):
                 short_to_class[name] = sb
             else:
                 short_to_class[sb.__name__] = sb
-        # print(short_to_class)
 
     # Recursive unpack
     _class_str, params = re.findall("([^\(\)]*)\((.*)\)", filename)[0]
@@ -65,7 +64,6 @@ def filename_to_definition(filename: str):
     if len(params) > 0:
         for eq in params.split(';'):
             key, value = eq.split('=', 1)
-            # print(key, value)
             kwargs[key] = filename_to_definition(value) if key == 'crawler_def' else eval_(value)
     return _class, kwargs
 
@@ -445,7 +443,6 @@ cdef class MaximumObservedDegreeCrawler(CrawlerWithInitialSeed):
         """
         :param batch: batch size
         """
-        print(kwargs)
         super().__init__(graph, initial_seed=initial_seed, batch=batch, **kwargs)
 
         self.batch = batch

@@ -231,14 +231,12 @@ class GraphCollections:
 
         if collection is None:
             # Resolve name: search in konect then neterpo, if no set collection to other
-            try:
-                name = konect_name_ref_dict[name]
+            if name in konect_name_ref_dict:
                 collection = 'konect'
-            except KeyError:
-                try:
-                    netrepo_url = netrepo_name_ref_dict[name]
+            else:
+                if name in netrepo_name_ref_dict:
                     collection = 'netrepo'
-                except KeyError:
+                else:
                     collection = 'other'
 
         path = os.path.join(GRAPHS_DIR, collection, "%s.%s" % (name, format))
@@ -249,12 +247,10 @@ class GraphCollections:
 
             if collection == 'konect':
                 GraphCollections._download_konect(
-                    temp_path, GraphCollections.konect_url_pattern % name)
+                    temp_path, GraphCollections.konect_url_pattern % konect_name_ref_dict[name])
 
             elif collection == 'netrepo':
-                # name_ref_dict = eval(open(netrepo_metadata_path, 'r').read())
-                # url = name_ref_dict[name]
-                GraphCollections._download_netrepo(temp_path, netrepo_url)
+                GraphCollections._download_netrepo(temp_path, netrepo_name_ref_dict[name])
 
             # elif collection == 'other':
             #     raise FileNotFoundError("File '%s' not found. Check graph name or file existence." % path)
