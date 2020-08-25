@@ -22,7 +22,7 @@ from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections
 from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric, centrality_by_name
 from running.merger import ResultsMerger
-from statistics import Stat
+from graph_stats import Stat
 
 
 def send_vk(msg: str):

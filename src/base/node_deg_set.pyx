@@ -1,9 +1,8 @@
-from libcpp.set cimport set as cset
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from cython.operator cimport dereference as deref, preincrement as inc
 
-cimport node_deg_set
+cimport node_deg_set  # pxd import DON'T DELETE
 
 
 cdef class ND_Set:
@@ -11,14 +10,11 @@ cdef class ND_Set:
     def __init__(self, iterable=None):
         self.ipset = IntPair_Set()
 
-        # print(iterable)
         if iterable is not None:
             for node, deg in iterable:
-                # deg = key(node)
                 self.ipset.add(node, deg)
 
     cpdef bint add(self, int node, int deg):
-        # print("Add %d, %d" % (node, deg))
         return self.ipset.add(node, deg)
 
     # cpdef bint remove(self, int node, int deg):
@@ -34,15 +30,6 @@ cdef class ND_Set:
         """
         return self.ipset.update_1(node, deg)
 
-    # cpdef bint update(self, int node, int deg):
-    #     """
-    #     Update node in set with a new degree. Or inserts if didn't exist.
-    #     :param node: node id
-    #     :param deg: new degree
-    #     :return: True if node existed False otherwise
-    #     """
-    #     return self.ipset.update(node, deg)
-    #
     cpdef remove(self, int node, int deg):
         self.ipset.remove(node, deg)
 
@@ -86,7 +73,6 @@ cdef class ND_Set:
         """ Get top-size removing from set"""
         cpdef vector[int] res
         while size > 0 and not self.ipset.empty():
-            # res.append(self.ipset.pop().second)
             res.push_back(self.ipset.pop().second)
             size -= 1
         return res

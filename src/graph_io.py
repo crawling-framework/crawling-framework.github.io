@@ -2,28 +2,34 @@ import logging
 import os.path
 import shutil
 import urllib.request
+import urllib.error
 import re
 from time import time
 
 import patoolib
 
 from base.cgraph import MyGraph
-from utils import GRAPHS_DIR, COLLECTIONS, TMP_GRAPHS_DIR
+from utils import GRAPHS_DIR, TMP_GRAPHS_DIR
 
 konect_metadata_path = os.path.join(GRAPHS_DIR, 'konect', 'metadata')
 netrepo_metadata_path = os.path.join(GRAPHS_DIR, 'netrepo', 'metadata')
 
 
 def parse_konect_page():
-    """ Parse konect page and create name resolution dict. E.g. 'CL' -> 'actor-collaborations'.
-    Note several non-unique codes: DB, HY, OF, PL, WT.
+    """
+    Parse konect page and create name resolution dict. E.g. 'CL' -> 'actor-collaborations'.
+    Note it has many non-unique codes.
     """
     from bs4 import BeautifulSoup
-    import lxml
     logging.info("Parsing Konect metadata...")
     name_ref_dict = {}
-    url = 'http://konect.uni-koblenz.de/networks/'
-    html = urllib.request.urlopen(url)._read()
+    # url = 'http://konect.uni-koblenz.de/networks/'  # The old one, but could be useful
+    url = 'http://konect.cc/networks/'
+    try:
+        html = urllib.request.urlopen(url).read()
+    except urllib.error.URLError as e:
+        logging.error("Unfortunately, web-cite %s is unavailable. Try again later. Perhaphs the URL could change" % url)
+        return
 
     rows = BeautifulSoup(html, "lxml").table.find_all('tr')
     for row in rows[1:]:
@@ -31,6 +37,7 @@ def parse_konect_page():
         code = cols[0].contents[0].contents[0]
         name = cols[1].contents[0].contents[0]
         ref = cols[1].contents[0]['href']
+        ref = ref.replace('/', '')
         if code in name_ref_dict:
             logging.warning("Konect repeating code %s" % code)
             pass  # FIXME codes are not unique, some repeat!
@@ -53,7 +60,11 @@ def parse_netrepo_page():
     logging.info("Parsing networkrepository metadata...")
     name_ref_dict = {}
     url = 'http://networkrepository.com/networks.php'
-    html = urllib.request.urlopen(url)._read()
+    try:
+        html = urllib.request.urlopen(url).read()
+    except urllib.error.URLError as e:
+        logging.error("Unfortunately, web-cite %s is unavailable. Try again later. Perhaphs the URL could change" % url)
+        return
 
     rows = BeautifulSoup(html, "lxml").table.find_all('tr')
     for row in rows[1:]:
@@ -205,7 +216,8 @@ def reformat_graph_file(path, out_path, out_format='ij', ignore_lines_starting_w
 
 
 class GraphCollections:
-    konect_url_pattern = 'http://konect.uni-koblenz.de/downloads/tsv/%s.tar.bz2'
+    # konect_url_pattern = 'http://konect.uni-koblenz.de/downloads/tsv/%s.tar.bz2'  # The old one
+    konect_url_pattern = 'http://konect.cc/files/download.tsv.%s.tar.bz2'
     networkrepository_url_pattern = 'http://nrvis.com/download/data/%s/%s.zip'
 
     @staticmethod
@@ -233,6 +245,7 @@ class GraphCollections:
             # Resolve name: search in konect then neterpo, if no set collection to other
             if name in konect_name_ref_dict:
                 collection = 'konect'
+                name = konect_name_ref_dict[name]
             else:
                 if name in netrepo_name_ref_dict:
                     collection = 'netrepo'
@@ -247,7 +260,7 @@ class GraphCollections:
 
             if collection == 'konect':
                 GraphCollections._download_konect(
-                    temp_path, GraphCollections.konect_url_pattern % konect_name_ref_dict[name])
+                    temp_path, GraphCollections.konect_url_pattern % name)
 
             elif collection == 'netrepo':
                 GraphCollections._download_netrepo(temp_path, netrepo_name_ref_dict[name])
@@ -294,7 +307,8 @@ class GraphCollections:
         patoolib.extract_archive(filename, outdir=graph_dir)
 
         # Rename extracted graph file
-        archive_dir_name = archive_name.split('.', 1)[0]
+        # archive_dir_name = archive_name.split('.', 1)[0]  # For the old cite
+        archive_dir_name = archive_name.split('.')[2]
         out_file_name = os.path.join(graph_dir, os.path.basename(graph_path))
 
         # multigraphs' filenames end with '-uniq'
@@ -390,54 +404,16 @@ class temp_dir(object):
 
 
 def test_konect():
-    # name = 'soc-pokec-relationships'
-    # name = 'petster-hamster'
-    # name = 'github'
-    # name = 'twitter'
-    # name = 'ego-gplus'
-    # name = 'libimseti'
-    name = 'Advogato'  # 'AD' 'advogato' # 'Advogato'
-    # name = 'facebook-wosn-links'
-    # name = 'soc-Epinions1'
-    # name = 'douban'
-    # name = 'slashdot-threads'
-    # name = 'digg-friends'
-    # name = 'petster-friendships-cat'  # snap load is long, possibly due to unordered ids
-    g = GraphCollections.get(name, directed=False, giant_only=True, self_loops=False)
-    # g = GraphCollections.get('eco-florida', collection='networkrepository').snap
-    print("N=%s E=%s" % (g.nodes(), g.edges()))
-    # print("neigbours of %d: %s" % (2, graph.neighbors(2)))
+    for name in konect_names:
+        g = GraphCollections.get(name, directed=False, giant_only=True, self_loops=False)
+        print("N=%s E=%s" % (g.nodes(), g.edges()))
+        # print("neigbours of %d: %s" % (2, graph.neighbors(2)))
 
 
 def test_netrepo():
-    # name = 'cit-DBLP'
-    # name = 'cit-HepPh'
-    # name = 'road-chesapeake'
-    # name = 'fb-pages-tvshow'
-    # name = 'socfb-Amherst41'
-    # name = 'socfb-nips-ego'
-    # name = 'ca-CSphd'
-    name = 'ia-crime-moreno'
-    g = GraphCollections.get(name, 'netrepo', directed=False, giant_only=True, self_loops=False)
-    # g = GraphCollections.get('eco-florida', collection='networkrepository').snap
-    print("N=%s E=%s" % (g.nodes(), g.edges()))
-    # print("neigbours of %d: %s" % (2, graph.neighbors(2)))
-
-
-def rename_results_files():
-    """ Recursively replace separator in all filenames (',' -> ';') in RESULT_DIR
-    """
-    import os
-    from utils import RESULT_DIR
-    directory = RESULT_DIR
-    for _ in [1, 2]:  # run twice
-        for subdir, dirs, files in os.walk(directory):
-            for d in dirs:
-                src = os.path.join(subdir, d)
-                dst = src.replace(',', ';')
-                if src != dst:
-                    print(src, dst)
-                    os.rename(src, dst)
+    for name in netrepo_names:
+        g = GraphCollections.get(name, 'netrepo', directed=False, giant_only=True, self_loops=False)
+        print("N=%s E=%s" % (g.nodes(), g.edges()))
 
 
 if __name__ == '__main__':
@@ -448,10 +424,3 @@ if __name__ == '__main__':
     # test_netrepo()
     # parse_konect_page()
     # parse_netrepo_page()
-
-    # with temp_dir() as d:
-    #     print(d)
-    g = GraphCollections.get('test')
-    g = g.giant_component()
-    print(g.nodes())
-    print(g.edges())

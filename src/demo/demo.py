@@ -3,9 +3,7 @@
 #
 
 import os
-
 import logging
-
 from utils import PICS_DIR
 
 logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s')
@@ -39,7 +37,7 @@ def stats_computing():
     """
     print("\n2. Statistics computation\n")
     from graph_io import GraphCollections
-    from statistics import Stat
+    from graph_stats import Stat
 
     # Once graph is downloaded, it will be loaded from file
     g = GraphCollections.get(name='dolphins')
@@ -50,8 +48,8 @@ def stats_computing():
         print("%s = %s" % (stat.description, g[stat]))
 
     # Statistics computation can be run from terminal, e.g.:
-    # (run 'python3 statistics.py -h' to see help)
-    command = 'python3 statistics.py -n soc-wiki-Vote -s DEGREE_DISTR BETWEENNESS_DISTR'
+    # (run 'python3 graph_stats.py -h' to see help)
+    command = 'python3 graph_stats.py -n soc-wiki-Vote -s DEGREE_DISTR BETWEENNESS_DISTR'
     print("running command '%s'" % command)
     os.system(command)
 
@@ -63,7 +61,7 @@ def visualize_crawling():
     from crawlers.cbasic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler
     from running.metrics_and_runner import TopCentralityMetric
     from running.visual_runner import CrawlerVisualRunner
-    from statistics import Stat, get_top_centrality_nodes
+    from graph_stats import Stat, get_top_centrality_nodes
     from graph_io import GraphCollections
 
     g = GraphCollections.get('dolphins')
@@ -100,7 +98,7 @@ def animated_crawler_runner():
     from crawlers.cadvanced import DE_Crawler
     from running.animated_runner import AnimatedCrawlerRunner
     from running.metrics_and_runner import TopCentralityMetric
-    from statistics import Stat
+    from graph_stats import Stat
     from graph_io import GraphCollections
 
     g = GraphCollections.get('petster-hamster')
@@ -138,7 +136,7 @@ def parallel_crawler_runner():
     from crawlers.multiseed import MultiInstanceCrawler
     from running.history_runner import CrawlerHistoryRunner
     from running.metrics_and_runner import TopCentralityMetric
-    from statistics import Stat
+    from graph_stats import Stat
     from graph_io import GraphCollections
 
     # Define several crawler configurations.
@@ -190,7 +188,7 @@ def run_missing():
     from crawlers.cadvanced import DE_Crawler
     from running.history_runner import CrawlerHistoryRunner
     from running.metrics_and_runner import TopCentralityMetric
-    from statistics import Stat
+    from graph_stats import Stat
     from graph_io import GraphCollections
 
     # Define some new configuration or an old one that contains uncomputed combinations.
@@ -231,7 +229,7 @@ def merge_and_visualize():
     from crawlers.multiseed import MultiInstanceCrawler
     from running.history_runner import CrawlerHistoryRunner
     from running.metrics_and_runner import TopCentralityMetric
-    from statistics import Stat
+    from graph_stats import Stat
     from graph_io import GraphCollections
 
     # Define a configuration of crawlers and metrics.
@@ -280,7 +278,7 @@ def merge_and_visualize():
 if __name__ == '__main__':
 
     # 1. Automatic graph downloading
-    # graph_handing()
+    graph_handing()
 
     # 2. Statistics computation
     # stats_computing()
@@ -298,6 +296,6 @@ if __name__ == '__main__':
     # run_missing()
 
     # 7. Merge and visualize results of a series of experiments
-    merge_and_visualize()
+    # merge_and_visualize()
 
 

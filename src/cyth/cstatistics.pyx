@@ -6,7 +6,7 @@ import sys
 from tqdm import tqdm
 
 from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
-from statistics import Stat, plm
+from graph_stats import Stat, plm
 from base.cgraph cimport MyGraph, GetClustCf, GetMxWccSz, PUNGraph, TUNGraph, GetBfsEffDiam, \
     GetMxWcc, TIntFltH, GetBetweennessCentr, THashKeyDatI, TInt, TFlt, GetPageRank, \
     GetClosenessCentr, GetNodeEcc, GetNodesClustCf, GetKCore

@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 
 from running.metrics_and_runner import TopCentralityMetric, Metric, exponential_batch_generator
 from graph_io import GraphCollections
-from statistics import Stat
+from graph_stats import Stat
 
 from crawlers.cbasic import Crawler, definition_to_filename, filename_to_definition
 from utils import RESULT_DIR

@@ -12,7 +12,7 @@ from cbasic cimport Crawler, CrawlerWithInitialSeed
 from base.cgraph cimport MyGraph, str_to_chars, t_random
 from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
 
-from statistics import get_top_centrality_nodes, Stat
+from graph_stats import get_top_centrality_nodes, Stat
 
 
 cdef class CrawlerWithAnswer(Crawler):

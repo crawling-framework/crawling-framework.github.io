@@ -8,7 +8,7 @@ from crawlers.advanced import ThreeStageMODCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric
 from graph_io import GraphCollections
-from statistics import Stat, get_top_centrality_nodes
+from graph_stats import Stat, get_top_centrality_nodes
 
 
 # TODO need to check several statistics / metrics
@@ -88,7 +88,7 @@ class AnimatedCrawlerRunner(CrawlerRunner):
 
 
 def test_runner(graph):
-    from statistics import Stat, get_top_centrality_nodes
+    from graph_stats import Stat, get_top_centrality_nodes
 
     p = 0.01
     budget = int(0.05 * g.nodes())

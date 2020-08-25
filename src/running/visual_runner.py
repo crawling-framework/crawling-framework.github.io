@@ -17,7 +17,7 @@ from crawlers.community_based import MaximumObservedCommunityDegreeCrawler
 from graph_models.cmodels import grid2d
 from graph_models.models import LFR
 from running.metrics_and_runner import CrawlerRunner, Metric, TopCentralityMetric
-from statistics import Stat, get_top_centrality_nodes
+from graph_stats import Stat, get_top_centrality_nodes
 from utils import PICS_DIR
 
 

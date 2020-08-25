@@ -7,7 +7,7 @@ from crawlers.cbasic import definition_to_filename, CrawlerWithInitialSeed, Craw
 from crawlers.ml.regression_reward import RegressionRewardCrawler
 from crawlers.ml.with_features import CrawlerWithFeatures
 from graph_io import GraphCollections
-from statistics import Stat
+from graph_stats import Stat
 
 
 class FeatureAnalyzerCrawler(CrawlerWithFeatures):

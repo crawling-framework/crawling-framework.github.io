@@ -1,7 +1,7 @@
 from base.cgraph import MyGraph
 from crawlers.cbasic import Crawler, definition_to_filename
 
-from statistics import Stat, get_top_centrality_nodes
+from graph_stats import Stat, get_top_centrality_nodes
 
 
 class Metric:

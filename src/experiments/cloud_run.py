@@ -11,7 +11,7 @@ from graph_io import konect_names, GraphCollections, netrepo_names, other_names
 from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric
-from statistics import Stat
+from graph_stats import Stat
 from utils import RESULT_DIR
 
 clouds = [
@@ -183,7 +183,7 @@ def cloud_prepare(host: str):
 
     # pp = 'PYTHONPATH=~/workspace/crawling/src python3'
     # for name in netrepo_names:
-    #     command = ' '.join([pp, '/home/ubuntu/workspace/crawling/src/statistics.py -n', "'%s'" % name, '-s NODES'])
+    #     command = ' '.join([pp, '/home/ubuntu/workspace/crawling/src/graph_stats.py -n', "'%s'" % name, '-s NODES'])
     #     do_remote(host, command)
 
 

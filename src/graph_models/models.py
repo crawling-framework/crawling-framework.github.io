@@ -10,7 +10,7 @@ import scipy.stats as stats
 from base.cgraph import MyGraph
 from graph_models.cmodels import configuration_model, grid2d
 from graph_io import temp_dir, GraphCollections
-from statistics import Stat
+from graph_stats import Stat
 from utils import LFR_DIR, GRAPHS_DIR
 
 LFR_PATH = opj(LFR_DIR, 'benchmark')

@@ -23,7 +23,7 @@ from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer, AvrachenkovC
 from crawlers.multiseed import MultiInstanceCrawler
 from running.animated_runner import AnimatedCrawlerRunner, Metric
 from graph_io import GraphCollections, netrepo_names, konect_names
-from statistics import Stat, get_top_centrality_nodes
+from graph_stats import Stat, get_top_centrality_nodes
 
 
 def short_str(graph: MyGraph):
