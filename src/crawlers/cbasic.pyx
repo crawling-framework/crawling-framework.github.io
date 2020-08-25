@@ -264,8 +264,6 @@ cdef class RandomCrawler(CrawlerWithInitialSeed):
     cdef vector[int] next_seeds
 
     def __init__(self, MyGraph graph, **kwargs):
-        if 'name' not in kwargs:
-            kwargs['name'] = self.short
         super().__init__(graph, **kwargs)
 
         cdef int n
@@ -443,6 +441,8 @@ cdef class MaximumObservedDegreeCrawler(CrawlerWithInitialSeed):
         """
         :param batch: batch size
         """
+        if 'name' not in kwargs:
+            kwargs['name'] = "%s%s" %  (self.short, '' if batch == 1 else batch)
         super().__init__(graph, initial_seed=initial_seed, batch=batch, **kwargs)
 
         self.batch = batch

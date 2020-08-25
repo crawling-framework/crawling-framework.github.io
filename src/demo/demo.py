@@ -2,14 +2,11 @@
 # Make sure you have followed all the instructions in Readme.md
 #
 
-import logging
 import os
-
+import logging
 from utils import PICS_DIR
 
 logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s')
-
-
 # logging.getLogger().setLevel(logging.INFO)
 
 
@@ -31,8 +28,8 @@ def graph_handing():
 
     # One can also use own graph if put it to "data/other/graph_name.ij" directory.
     # Edge list format is supported.
-    # g = GraphCollections.get(name='mipt', collection='other', giant_only=True, self_loops=False)
-    # print("%s. V=%s, E=%s. At '%s'" % (g.name, g.nodes(), g.edges(), g.path))
+    g = GraphCollections.get(name='example', collection='other', giant_only=True, self_loops=False)
+    print("%s. V=%s, E=%s. At '%s'" % (g.name, g.nodes(), g.edges(), g.path))
 
 
 def stats_computing():
@@ -284,7 +281,7 @@ def merge_and_visualize():
 
 if __name__ == '__main__':
     # 1. Automatic graph downloading
-    # graph_handing()
+    graph_handing()
 
     # 2. Statistics computation
     # stats_computing()
@@ -302,4 +299,6 @@ if __name__ == '__main__':
     # run_missing()
 
     # 7. Merge and visualize results of a series of experiments
-    merge_and_visualize()
+    # merge_and_visualize()
+
+

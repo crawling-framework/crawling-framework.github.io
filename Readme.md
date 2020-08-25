@@ -3,7 +3,7 @@
 _description_
 
 **Features**:
-* Automatic graphs downloading from [Konect](http://konect.uni-koblenz.de/networks/) and 
+* Automatic graphs downloading from [Konect](http://konect.cc/networks/) and 
 [networkrepository](http://networkrepository.com/) online collections.
 * Graph statistics (including centralities) can be calculated and are stored together with the
  graphs.
@@ -22,6 +22,7 @@ plots.
 
 * python version 3
 * GCC compiler
+* cmake
 
 For MacOS additional:
 
