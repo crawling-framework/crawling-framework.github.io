@@ -21,5 +21,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # send_message('test')
+    send_message('test', vk_id='11014788')
     main()

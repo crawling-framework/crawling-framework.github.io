@@ -1,28 +1,24 @@
 import datetime
-import glob
 import json
-import os
 import logging
-from math import ceil
-
-from tqdm import tqdm
 import multiprocessing as mp
-
+import os
 import traceback
+from math import ceil
 from time import time, sleep
-
-from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler
 
 from base.cgraph import MyGraph, seed_random
 from crawlers.cadvanced import DE_Crawler
-from crawlers.cbasic import Crawler, definition_to_filename, filename_to_definition, \
+from crawlers.cbasic import definition_to_filename, filename_to_definition, \
     RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, DepthFirstSearchCrawler, \
     SnowBallCrawler, MaximumObservedDegreeCrawler
+from tqdm import tqdm
+
 from crawlers.multiseed import MultiInstanceCrawler
 from graph_io import GraphCollections
-from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric, centrality_by_name
-from running.merger import ResultsMerger
 from graph_stats import Stat
+from running.merger import ResultsMerger
+from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, centrality_by_name
 
 
 def send_vk(msg: str):
@@ -32,7 +28,8 @@ def send_vk(msg: str):
         if VK_ID != "00000000":  # default value from config.example which means to not send
             bot_path = os.path.join(rel_dir, "src", "experiments", "vk_signal.py")
             os.system("python3 %s -m '%s' --id '%s'" % (bot_path, msg, VK_ID))
-    except: pass
+    except:
+        pass
 
 
 class Process(mp.Process):
@@ -62,9 +59,19 @@ class Process(mp.Process):
 
 
 class CrawlerHistoryRunner(CrawlerRunner):
-    """ Runs crawlers, measure metrics and save history. Step sequence is logarithmically growing,
-    universal for all graphs
     """
+    Runs crawlers, measure metrics and save history. Step sequence is logarithmically growing,
+    universal for all graphs.
+
+    Functions:
+    ----
+    * run - runs experiments one by one for each crawling method calculates every metric.
+    * run_parallel - runs experiments in parallel using given number of CPUs.
+    * run_parallel_adaptive - runs experiments with maximum number of processes adaptively not exceeding memory limit.
+    * run_missing - runs experiments adaptively to fulfill all combinations of methods and metrics.
+
+    """
+
     def __init__(self, graph: MyGraph, crawler_defs, metric_defs, budget: int = -1, step: int = -1):
         """
         :param graph: graph to run
@@ -182,7 +189,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
         return msg
 
     def run_parallel_adaptive(self, n_instances: int = 10,
-                              max_cpus: int = mp.cpu_count(), max_memory: float = 6):
+                              max_cpus: int = mp.cpu_count(), max_memory: float = 4):
         """
         Runs in parallel crawlers and measure metrics. Number of processes is chosen adaptively.
         Using magic coefficients: Mbytes of memory = A*n + B*e + C,
@@ -190,7 +197,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
 
         :param n_instances: total wanted number of instances to be performed
         :param max_cpus: max number of CPUs to use for computation, all available by default
-        :param max_memory: max Mbytes of operative memory to use for computation, 6Gb by default
+        :param max_memory: max Gb of operative memory to use for computation, 6Gb by default
         :return:
         """
         # GBytes of operative memory per 1 crawler

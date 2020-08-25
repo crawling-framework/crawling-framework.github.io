@@ -2,11 +2,14 @@
 # Make sure you have followed all the instructions in Readme.md
 #
 
-import os
 import logging
+import os
+
 from utils import PICS_DIR
 
 logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s')
+
+
 # logging.getLogger().setLevel(logging.INFO)
 
 
@@ -28,8 +31,8 @@ def graph_handing():
 
     # One can also use own graph if put it to "data/other/graph_name.ij" directory.
     # Edge list format is supported.
-    g = GraphCollections.get(name='mipt', collection='other', giant_only=True, self_loops=False)
-    print("%s. V=%s, E=%s. At '%s'" % (g.name, g.nodes(), g.edges(), g.path))
+    # g = GraphCollections.get(name='mipt', collection='other', giant_only=True, self_loops=False)
+    # print("%s. V=%s, E=%s. At '%s'" % (g.name, g.nodes(), g.edges(), g.path))
 
 
 def stats_computing():
@@ -58,7 +61,7 @@ def visualize_crawling():
     """ 3. Visualize crawler
     """
     print("\n3. Visualize crawler\n")
-    from crawlers.cbasic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler
+    from crawlers.cbasic import BreadthFirstSearchCrawler
     from running.metrics_and_runner import TopCentralityMetric
     from running.visual_runner import CrawlerVisualRunner
     from graph_stats import Stat, get_top_centrality_nodes
@@ -117,6 +120,10 @@ def animated_crawler_runner():
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'crawled'}),
+        (TopCentralityMetric, {'top': p, 'centrality': Stat.BETWEENNESS_DISTR.short, 'measure': 'F1', 'part': 'nodes'}),
+        (TopCentralityMetric,
+         {'top': p, 'centrality': Stat.BETWEENNESS_DISTR.short, 'measure': 'F1', 'part': 'crawled'}),
+
     ]
 
     # Create runner which will dynamically visualize measurements.
@@ -127,7 +134,7 @@ def animated_crawler_runner():
 
 
 def parallel_crawler_runner():
-    """ 5. Run series of experiments in parallel
+    """ 5. Run series of experiments in parallel. For every crawling method calculates every metric.
     """
     print("\n5. Run series of experiments in parallel\n")
     from crawlers.cbasic import RandomWalkCrawler, RandomCrawler, MaximumObservedDegreeCrawler, \
@@ -276,9 +283,8 @@ def merge_and_visualize():
 
 
 if __name__ == '__main__':
-
     # 1. Automatic graph downloading
-    graph_handing()
+    # graph_handing()
 
     # 2. Statistics computation
     # stats_computing()
@@ -296,6 +302,4 @@ if __name__ == '__main__':
     # run_missing()
 
     # 7. Merge and visualize results of a series of experiments
-    # merge_and_visualize()
-
-
+    merge_and_visualize()

@@ -1,20 +1,26 @@
+import logging
+import os
 import subprocess
 from argparse import ArgumentError
-
-import os
-import logging
 from enum import Enum
 from operator import itemgetter
 
 from base.cgraph import MyGraph
+
 from graph_io import GraphCollections
 from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
 
 if USE_NETWORKIT:  # Use networkit library for approximate centrality calculation
-    from networkit._NetworKit import EstimateBetweenness, ApproxCloseness, PLM, Modularity
+    from networkit._NetworKit import PLM, Modularity
 
 
 class Stat(Enum):
+    """
+    Common class for all graph statistics. Contains both global (calculated on all graph)
+    and local (calculated for every node.
+    To add new graph_stat write it in cyth/cstatistics.pyx, and add name remap here
+    """
+
     def __init__(self, short: str, description: str):
         self.short = short
         self.description = description
@@ -176,7 +182,6 @@ def test_approx_stat(graph: MyGraph, stat: Stat):
     """ Measure the intersection of top-set centrality nodes found by snap vs networkit
     """
     if stat in [Stat.CLOSENESS_DISTR, Stat.BETWEENNESS_DISTR]:
-        import networkit as nk
         node_map = {}
         g = graph.networkit(node_map)
         # centrality = Betweenness(g, normalized=False)

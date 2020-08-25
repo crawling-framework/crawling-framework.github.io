@@ -1,14 +1,14 @@
 import logging
 import os.path
-import shutil
-import urllib.request
-import urllib.error
 import re
+import shutil
+import urllib.error
+import urllib.request
 from time import time
 
 import patoolib
-
 from base.cgraph import MyGraph
+
 from utils import GRAPHS_DIR, TMP_GRAPHS_DIR
 
 konect_metadata_path = os.path.join(GRAPHS_DIR, 'konect', 'metadata')
@@ -23,13 +23,8 @@ def parse_konect_page():
     from bs4 import BeautifulSoup
     logging.info("Parsing Konect metadata...")
     name_ref_dict = {}
-    # url = 'http://konect.uni-koblenz.de/networks/'  # The old one, but could be useful
-    url = 'http://konect.cc/networks/'
-    try:
-        html = urllib.request.urlopen(url).read()
-    except urllib.error.URLError as e:
-        logging.error("Unfortunately, web-cite %s is unavailable. Try again later. Perhaphs the URL could change" % url)
-        return
+    url = 'http://konect.uni-koblenz.de/networks/'
+    html = urllib.request.urlopen(url)._read()
 
     rows = BeautifulSoup(html, "lxml").table.find_all('tr')
     for row in rows[1:]:
@@ -60,11 +55,7 @@ def parse_netrepo_page():
     logging.info("Parsing networkrepository metadata...")
     name_ref_dict = {}
     url = 'http://networkrepository.com/networks.php'
-    try:
-        html = urllib.request.urlopen(url).read()
-    except urllib.error.URLError as e:
-        logging.error("Unfortunately, web-cite %s is unavailable. Try again later. Perhaphs the URL could change" % url)
-        return
+    html = urllib.request.urlopen(url)._read()
 
     rows = BeautifulSoup(html, "lxml").table.find_all('tr')
     for row in rows[1:]:
@@ -224,10 +215,10 @@ class GraphCollections:
     def get(name, collection=None, directed=False, format='ij', giant_only=True, self_loops=False, not_load=False):
         """
         Read graph from storage or download it from the specified collection. In order to apply
-        giant_only and self_loops, you need to remove the file manually.
+        giant_only and self_loops, you need to remove the file manually. #TODO maybe make a rewrite?
 
         :param name: any of e.g. 'CL' or 'Actor collaborations' or 'actor-collaborations'
-        :param collection: 'synthetic', 'other', 'konect', 'netrepo'. By default it searches by name in 'konect',
+        :param collection: 'konect', 'netrepo', 'other'. By default it searches by name in 'konect',
          then 'neterepo', then 'other'
         :param directed: undirected by default
         :param format: output will be in this format, 'ij' by default
@@ -420,7 +411,7 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    # test_konect()
-    # test_netrepo()
-    # parse_konect_page()
-    # parse_netrepo_page()
+    test_konect()
+    test_netrepo()
+    parse_konect_page()
+    parse_netrepo_page()

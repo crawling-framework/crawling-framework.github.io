@@ -1,6 +1,6 @@
 Cython
 patool
-networkx>=2.4
+networkx==2.4
 networkit
 numpy
 matplotlib>=3.3.0

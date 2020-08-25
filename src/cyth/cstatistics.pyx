@@ -15,6 +15,9 @@ from cython.operator cimport dereference as deref, postincrement as pinc
 if USE_NETWORKIT:
     from networkit._NetworKit import Betweenness, ApproxBetweenness, EstimateBetweenness, ApproxCloseness
 
+# Remapping stats from names to declared functions
+## TODO: To add new statistics need to write it in stat_computer, in Stat class in graph_stats.py
+        ## and (if it is node stat): in this file in compute_nodes_centrality
 stat_computer = {
     Stat.NODES: lambda graph: graph.nodes(),
     Stat.EDGES: lambda graph: graph.edges(),

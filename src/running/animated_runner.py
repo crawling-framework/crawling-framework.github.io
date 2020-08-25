@@ -3,16 +3,19 @@ import os
 from matplotlib import pyplot as plt
 
 from base.cgraph import MyGraph
-from crawlers.cbasic import Crawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
 from crawlers.advanced import ThreeStageMODCrawler
-from crawlers.multiseed import MultiInstanceCrawler
-from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric
+from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric
 from graph_io import GraphCollections
-from graph_stats import Stat, get_top_centrality_nodes
+from graph_stats import Stat
 
 
 # TODO need to check several statistics / metrics
 class AnimatedCrawlerRunner(CrawlerRunner):
+    """
+    Crawler runner with visualization of metric measurement on every step of crawling process on given graph.
+    For every crawler definitions runs crawling process, calculates every metric and visualises them in parallel.
+    """
+
     def __init__(self, graph: MyGraph, crawler_defs, metric_defs, budget: int = -1, step: int = -1):
         """
         :param graph: graph to run
@@ -45,7 +48,7 @@ class AnimatedCrawlerRunner(CrawlerRunner):
         :return:
         """
         crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
-        linestyles = ['-', '--', ':', '.-']
+        linestyles = ['-', '--', ':', '-.']
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
                   'pink', 'lime', 'wheat', 'lightsteelblue']
@@ -88,7 +91,7 @@ class AnimatedCrawlerRunner(CrawlerRunner):
 
 
 def test_runner(graph):
-    from graph_stats import Stat, get_top_centrality_nodes
+    from graph_stats import Stat
 
     p = 0.01
     budget = int(0.05 * g.nodes())

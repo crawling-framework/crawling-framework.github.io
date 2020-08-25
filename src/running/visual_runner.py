@@ -4,24 +4,23 @@ import os
 import shutil
 
 import imageio
-from tqdm import tqdm
-import networkx as nx
 import matplotlib.pyplot as plt
-
+import networkx as nx
 from base.cgraph import MyGraph
-from crawlers.advanced import ThreeStageMODCrawler
 from crawlers.cadvanced import CrawlerWithAnswer
-from crawlers.cbasic import filename_to_definition, Crawler, definition_to_filename, \
-    MaximumObservedDegreeCrawler
+from crawlers.cbasic import definition_to_filename
+from tqdm import tqdm
+
 from crawlers.community_based import MaximumObservedCommunityDegreeCrawler
-from graph_models.cmodels import grid2d
-from graph_models.models import LFR
-from running.metrics_and_runner import CrawlerRunner, Metric, TopCentralityMetric
 from graph_stats import Stat, get_top_centrality_nodes
+from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric
 from utils import PICS_DIR
 
 
 def create_gif(directory, duration=1):
+    """
+    Creating gif from all .png files in directory with fixed duration between images.
+    """
     images = []
     filenames = glob.glob(os.path.join(directory, "*.png"))
     filenames.sort()
@@ -38,7 +37,7 @@ def create_gif(directory, duration=1):
 
 
 class CrawlerVisualRunner(CrawlerRunner):
-    """ Visualize how crawler gets nodes step by step.
+    """ Visualize how crawler gets nodes step by step in run method.
     """
     def __init__(self, graph: MyGraph, crawler_def, metric_def, budget: int = 100, step: int = 1,
                  steps_per_pic=1, layout_pos=None):
@@ -65,6 +64,8 @@ class CrawlerVisualRunner(CrawlerRunner):
     def run(self, draw_orig=True, target_set=set(), labels=False, bold_edges=False, make_gif=False):
         """
         Run crawler and plot graph with nodes colored. All plots are saved in a series of png files.
+        Coloring depends on node type: unobserved (gray), observed (yellow), current (red), crawled (blue).
+        Target nodes are labeled by big orange circles with type color inside.
 
         :param draw_orig: whether to draw original graph
         :param target_set: these nodes will be highlighted (bigger)
