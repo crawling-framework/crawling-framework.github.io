@@ -2,7 +2,8 @@ from crawlers.cadvanced import DE_Crawler
 from crawlers.cbasic import MaximumObservedDegreeCrawler, RandomWalkCrawler
 from crawlers.community_based import MaximumObservedCommunityDegreeCrawler
 from crawlers.multiseed import MultiInstanceCrawler
-from graph_io import GraphCollections, netrepo_names
+from graph_io import GraphCollections
+from experiments.three_stage_paper import netrepo_names
 from graph_models.models import LFR
 from running.animated_runner import AnimatedCrawlerRunner
 from running.history_runner import CrawlerHistoryRunner

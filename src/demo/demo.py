@@ -117,17 +117,13 @@ def animated_crawler_runner():
     metric_defs = [
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'}),
         (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'crawled'}),
-        (TopCentralityMetric, {'top': p, 'centrality': Stat.BETWEENNESS_DISTR.short, 'measure': 'F1', 'part': 'nodes'}),
-        (TopCentralityMetric,
-         {'top': p, 'centrality': Stat.BETWEENNESS_DISTR.short, 'measure': 'F1', 'part': 'crawled'}),
-
     ]
 
     # Create runner which will dynamically visualize measurements.
     acr = AnimatedCrawlerRunner(g, crawler_defs, metric_defs, budget=200, step=10)
     # Run and save the result picture.
     acr.run(ylims=(0, 1), xlabel='iteration, n', ylabel='metrics value', swap_coloring_scheme=False,
-           save_to_file=os.path.join(PICS_DIR, g.name, 'demo'))
+            save_to_file=os.path.join(PICS_DIR, g.name, 'demo'))
 
 
 def parallel_crawler_runner():
@@ -239,10 +235,7 @@ def merge_and_visualize():
     # Define a configuration of crawlers and metrics.
     crawler_defs = [
         (RandomWalkCrawler, {}),
-        (RandomCrawler, {}),
         (BreadthFirstSearchCrawler, {}),
-        (DepthFirstSearchCrawler, {}),
-        (SnowBallCrawler, {'p': 0.1}),
         (MaximumObservedDegreeCrawler, {'batch': 1}),
         (MaximumObservedDegreeCrawler, {'batch': 10}),
         (DE_Crawler, {}),
@@ -270,13 +263,24 @@ def merge_and_visualize():
 
     # Draw crawler curves for each graph and each metric
     crm.draw_by_crawler(x_lims=(0, 1), x_normalize=True, draw_error=True, scale=4)
-    # Close the window to see the next
+
+    # Draw metric curves for each graph and each crawler
+    crm.draw_by_metric(x_lims=(0, 1), x_normalize=True, draw_error=True, scale=4)
+
+    # Draw crawler/metric curves for each graph
+    crm.draw_by_metric_crawler(x_lims=(0, 1), x_normalize=True, draw_error=False, scale=6)
 
     # Draw AUCC values for each graph and each metric
     crm.draw_aucc(aggregator='AUCC', scale=3, xticks_rotation=90)
 
+    # Draw weighted AUCC values for each graph and each metric
+    crm.draw_aucc(aggregator='wAUCC', scale=3, xticks_rotation=90)
+
     # Draw for each crawler weighted AUCC scores aggregated by all graphs and metrics
-    crm.draw_winners(aggregator='wAUCC', scale=8, xticks_rotation=90)
+    crm.draw_winners(aggregator='wAUCC', scale=6, xticks_rotation=60)
+
+    # Show all plots
+    crm.show_plots()
 
 
 if __name__ == '__main__':
@@ -284,21 +288,19 @@ if __name__ == '__main__':
     graph_handing()
 
     # 2. Statistics computation
-    # stats_computing()
+    stats_computing()
 
     # 3. Visualize crawler
-    # visualize_crawling()
+    visualize_crawling()
 
     # 4. Animated crawler runner
-    # animated_crawler_runner()
+    animated_crawler_runner()
 
     # 5. Run series of experiments in parallel
-    # parallel_crawler_runner()
+    parallel_crawler_runner()
 
     # 6. Run missing configurations
-    # run_missing()
+    run_missing()
 
     # 7. Merge and visualize results of a series of experiments
-    # merge_and_visualize()
-
-
+    merge_and_visualize()

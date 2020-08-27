@@ -1,6 +1,6 @@
 from libcpp.vector cimport vector
 from base.cgraph cimport MyGraph, str_to_chars
-from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
+from base.node_deg_set cimport ND_Set
 
 
 cdef class Crawler:
@@ -17,8 +17,5 @@ cdef class Crawler:
     cpdef int crawl_budget(self, int budget) except -1
 
 
-# cdef class CrawlerUpdatable(Crawler):
-#     cpdef void update(self, vector[int] nodes)
-#
 cdef class CrawlerWithInitialSeed(Crawler):
     pass

@@ -1,5 +1,4 @@
 import os
-
 from matplotlib import pyplot as plt
 
 from base.cgraph import MyGraph
@@ -9,11 +8,10 @@ from graph_io import GraphCollections
 from graph_stats import Stat
 
 
-# TODO need to check several statistics / metrics
 class AnimatedCrawlerRunner(CrawlerRunner):
     """
-    Crawler runner with visualization of metric measurement on every step of crawling process on given graph.
-    For every crawler definitions runs crawling process, calculates every metric and visualises them in parallel.
+    Runs several crawlers and measures several metrics for a given graph.
+    Visualizes measurements in dynamics at one plot.
     """
 
     def __init__(self, graph: MyGraph, crawler_defs, metric_defs, budget: int = -1, step: int = -1):
@@ -37,9 +35,9 @@ class AnimatedCrawlerRunner(CrawlerRunner):
 
         plt.figure(self.title, figsize=(1 + scale * self.ncols, scale * self.nrows))
 
-    def run(self, same_initial_seed=False, ylims=None, xlabel='iteration, n', ylabel='metric value', swap_coloring_scheme=False, save_to_file=None):
+    def run(self, ylims=None, xlabel='iteration, n', ylabel='metric value', swap_coloring_scheme=False, save_to_file=None):
         """
-        :param same_initial_seed: use the same initial seed for all crawler instances (NOT IMPLEMENTED)
+        :param same_initial_seed: use the same initial seed for all crawler instances (NOT IMPLEMENTED) FIXME
         :param ylims: (low, up)
         :param xlabel: by default 'iteration, n'
         :param ylabel: by default 'metric value'
@@ -47,7 +45,7 @@ class AnimatedCrawlerRunner(CrawlerRunner):
         :param save_to_file: specify the full path here to save picture
         :return:
         """
-        crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
+        crawlers, metrics, batch_generator = self._init_runner()
         linestyles = ['-', '--', ':', '-.']
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
@@ -90,11 +88,12 @@ class AnimatedCrawlerRunner(CrawlerRunner):
         plt.show()
 
 
-def test_runner(graph):
+def test_runner():
     from graph_stats import Stat
 
+    graph = GraphCollections.get('petster-hamster')
     p = 0.01
-    budget = int(0.05 * g.nodes())
+    budget = int(0.05 * graph.nodes())
     s = int(budget / 2)
     crawler_defs = [
         # MaximumObservedDegreeCrawler(graph, batch=1),
@@ -127,15 +126,4 @@ if __name__ == '__main__':
     # logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     # logging.getLogger().setLevel(logging.DEBUG)
 
-    # name = 'libimseti'
-    # name = 'petster-friendships-cat'
-    # name = 'soc-pokec-relationships'
-    # name = 'digg-friends'
-    # name = 'loc-brightkite_edges'
-    # name = 'ego-gplus'
-    name = 'petster-hamster'
-
-    # name = 'sc-shipsec5'
-    g = GraphCollections.get(name)
-
-    test_runner(g)
+    test_runner()

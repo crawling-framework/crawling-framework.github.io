@@ -16,10 +16,9 @@ def main():
 
     args = parser.parse_args()
     send_message(text=args.m, vk_id=args.id)
-    # print('sent')
     return True
 
 
 if __name__ == '__main__':
-    send_message('test', vk_id='11014788')
+    # send_message('test')
     main()

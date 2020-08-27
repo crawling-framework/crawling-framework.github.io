@@ -11,33 +11,29 @@ from crawlers.cadvanced import CrawlerWithAnswer
 from crawlers.cbasic import definition_to_filename
 from tqdm import tqdm
 
-from crawlers.community_based import MaximumObservedCommunityDegreeCrawler
 from graph_stats import Stat, get_top_centrality_nodes
 from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric
 from utils import PICS_DIR
 
 
 def create_gif(directory, duration=1):
-    """
-    Creating gif from all .png files in directory with fixed duration between images.
+    """ Create gif from all .png files in directory with fixed duration between images.
     """
     images = []
     filenames = glob.glob(os.path.join(directory, "*.png"))
     filenames.sort()
-    # logging.info("adding")
-    # logging.info(filenames)
     for filename in tqdm(filenames, desc="Making gif"):
         images.append(imageio.imread(filename))
     file_path = os.path.join(directory, "gif.gif")
-    # if not os.path.exists(file_path):
-    #     os.makedirs(file_path)
-    # name = file_path + "{}.gif".format(crawler_name)
     imageio.mimsave(file_path, images, duration=0.2 * duration, loop=2)
-    # logging.info("made gif " + file_path)
 
 
 class CrawlerVisualRunner(CrawlerRunner):
-    """ Visualize how crawler gets nodes step by step in run method.
+    """
+    Visualize the crawling process step by step on a small graph.
+    Graph nodes and edges are plotted in colors corresponding to their state: crawled, observed,
+    target, etc.
+    Saves .png pictures to the disk.
     """
     def __init__(self, graph: MyGraph, crawler_def, metric_def, budget: int = 100, step: int = 1,
                  steps_per_pic=1, layout_pos=None):
@@ -49,10 +45,13 @@ class CrawlerVisualRunner(CrawlerRunner):
          function crawler -> float, and have name
         :param budget: maximal number of nodes to be crawled, by default 100
         :param step: compute metrics each `step` steps, by default 1
+        :param steps_per_pic: plot every this number of steps, by default 1
         :param layout_pos: specific layout for networkx drawer
         :return:
         """
         assert step > 0
+        if graph[Stat.NODES] > 1000:
+            logging.warning("Graphs with > 1000 nodes are too big to be plotted.")
         super().__init__(graph, crawler_defs=[crawler_def], metric_defs=[metric_def], budget=budget, step=step)
 
         self.steps_per_pic = steps_per_pic
@@ -65,7 +64,7 @@ class CrawlerVisualRunner(CrawlerRunner):
         """
         Run crawler and plot graph with nodes colored. All plots are saved in a series of png files.
         Coloring depends on node type: unobserved (gray), observed (yellow), current (red), crawled (blue).
-        Target nodes are labeled by big orange circles with type color inside.
+        Target nodes are labeled by bigger orange circles.
 
         :param draw_orig: whether to draw original graph
         :param target_set: these nodes will be highlighted (bigger)
@@ -119,14 +118,16 @@ class CrawlerVisualRunner(CrawlerRunner):
             for i in range(batch):
                 seed = crawler.next_seed()
                 crawler.crawl(seed)
+                # Memorize crawled seeds to draw them later
                 last_crawled.add(seed)
             if isinstance(crawler, CrawlerWithAnswer):
-                crawler.answer
+                # Recompute actual answer
+                _ = crawler.answer
 
             # Calculate metric for crawler
             value = metric(crawler)
 
-            # Draw graph with networkx
+            # Draw graph via networkx
             if step % self.steps_per_pic == 0:
                 plt.cla()
 
@@ -198,21 +199,22 @@ class CrawlerVisualRunner(CrawlerRunner):
 
 
 def test_visual_runner():
+    from crawlers.cbasic import MaximumObservedDegreeCrawler
     from graph_io import GraphCollections
-    g = GraphCollections.get('dolphins')
-    # g = GraphCollections.get('PDZBase')
+    # g = GraphCollections.get('dolphins')
+    g = GraphCollections.get('PDZBase')
     # g = GraphCollections.get('Infectious')
     # g = GraphCollections.get('soc-wiki-Vote')
     # g = GraphCollections.get('Jazz musicians')
     # g = GraphCollections.get('LFR(N=400,k=10,maxk=40,mu=0.1,t1=2,t2=2)/0', 'synthetic')
     # g = grid2d(20, 10)
-    # g = LFR(400, 10, 40, mixing=0.1, t1=2, t2=2)
+    # g = LFR(400, 10, 40, mixing=0.1, t1=2, t2=2)  FIXME do we leave models?
     # print(g[Stat.PLM_MODULARITY])
 
     p = 0.1
 
-    # crawler_def = (MaximumObservedDegreeCrawler, {'initial_seed': 1})
-    crawler_def = (MaximumObservedCommunityDegreeCrawler, {'initial_seed': 1})
+    crawler_def = (MaximumObservedDegreeCrawler, {'initial_seed': 1})
+    # crawler_def = (MaximumObservedCommunityDegreeCrawler, {'initial_seed': 1})
     # crawler_def = (ThreeStageMODCrawler, {'s': 10, 'n': g.nodes(), 'p': p, 'b': 1})
 
     metric_def = (TopCentralityMetric, {'top': p, 'centrality': Stat.DEGREE_DISTR.short, 'measure': 'Re', 'part': 'nodes'})

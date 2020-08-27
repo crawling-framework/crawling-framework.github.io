@@ -6,8 +6,8 @@ from crawlers.cadvanced import DE_Crawler
 from crawlers.cbasic import filename_to_definition, MaximumObservedDegreeCrawler, RandomCrawler, RandomWalkCrawler, \
     BreadthFirstSearchCrawler, DepthFirstSearchCrawler
 from crawlers.advanced import ThreeStageCrawler, ThreeStageMODCrawler, AvrachenkovCrawler, EmulatorWithAnswerCrawler
-from experiments.three_stage_paper import social_names
-from graph_io import konect_names, GraphCollections, netrepo_names, other_names
+from experiments.three_stage_paper import social_names, konect_names, netrepo_names, other_names
+from graph_io import GraphCollections
 from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric
