@@ -1,0 +1,204 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>crawlers.ml.knn_ucb &#8212; CrawlingFramework 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for crawlers.ml.knn_ucb</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">log</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="k">import</span> <span class="n">KNeighborsRegressor</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="k">import</span> <span class="n">NearestNeighbors</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors.base</span> <span class="k">import</span> <span class="n">_get_weights</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">base.cgraph</span> <span class="k">import</span> <span class="n">MyGraph</span>
+<span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">Crawler</span><span class="p">,</span> <span class="n">CrawlerWithInitialSeed</span>
+<span class="kn">from</span> <span class="nn">crawlers.ml.with_features</span> <span class="k">import</span> <span class="n">CrawlerWithFeatures</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_KNeighborsRegressor_predict</span><span class="p">(</span><span class="n">neigh_dist</span><span class="p">,</span> <span class="n">neigh_ind</span><span class="p">,</span> <span class="n">knn_model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copy of KNeighborsRegressor.predict() with precomputed kNN.</span>
+
+<span class="sd">    :param neigh_dist:</span>
+<span class="sd">    :param neigh_ind:</span>
+<span class="sd">    :param knn_model:</span>
+<span class="sd">    :return: y prediction</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">_get_weights</span><span class="p">(</span><span class="n">neigh_dist</span><span class="p">,</span> <span class="n">knn_model</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span>
+
+    <span class="n">_y</span> <span class="o">=</span> <span class="n">knn_model</span><span class="o">.</span><span class="n">_y</span>
+    <span class="k">if</span> <span class="n">_y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">_y</span> <span class="o">=</span> <span class="n">_y</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">neigh_ind</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">_y</span><span class="p">[</span><span class="n">neigh_ind</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">weights</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_pred</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">denom</span>
+
+    <span class="k">if</span> <span class="n">_y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">y_pred</span>
+
+
+<div class="viewcode-block" id="KNN_UCB_Crawler"><a class="viewcode-back" href="../../../code.html#crawlers.ml.knn_ucb.KNN_UCB_Crawler">[docs]</a><span class="k">class</span> <span class="nc">KNN_UCB_Crawler</span><span class="p">(</span><span class="n">CrawlerWithFeatures</span><span class="p">,</span> <span class="n">CrawlerWithInitialSeed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implementation of KNN-UCB crawling strategy based on multi-armed bandit approach.</span>
+<span class="sd">    &quot;A multi-armed bandit approach for exploring partially observed networks&quot; (2019)</span>
+<span class="sd">    https://link.springer.com/article/10.1007/s41109-019-0145-0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">short</span> <span class="o">=</span> <span class="s1">&#39;KNN-UCB&#39;</span>
+
+<div class="viewcode-block" id="KNN_UCB_Crawler.__init__"><a class="viewcode-back" href="../../../code.html#crawlers.ml.knn_ucb.KNN_UCB_Crawler.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">initial_seed</span><span class="p">:</span> <span class="nb">int</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">n0</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tau</span><span class="p">:</span> <span class="nb">int</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="nb">list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;OD&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param graph: original graph</span>
+<span class="sd">        :param initial_seed: start node</span>
+<span class="sd">        :param alpha: exploration coefficient, default 0.5</span>
+<span class="sd">        :param k: number of nearest neighbors to estimate expected reward, default 30</span>
+<span class="sd">        :param n0: number of starting random nodes, default 0</span>
+<span class="sd">        :param tau: sliding window size, number of last crawled nodes used for learning and prediction, default use all (-1)</span>
+<span class="sd">        :param features: list of features to use (see FEATURES), default [&#39;OD&#39;]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">KNN_UCB_Crawler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span> <span class="n">initial_seed</span><span class="o">=</span><span class="n">initial_seed</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">n0</span><span class="o">=</span><span class="n">n0</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">tau</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n0</span> <span class="o">=</span> <span class="n">n0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_random_pool</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">n0</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_orig_graph</span><span class="o">.</span><span class="n">random_nodes</span><span class="p">(</span><span class="n">n0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_node_reward</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># node_id -&gt; observed_reward</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_knn_model</span> <span class="o">=</span> <span class="n">KNeighborsRegressor</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="s1">&#39;distance&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit_period</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># fit kNN model once in a period dynamically changing</span></div>
+        <span class="c1"># self._scaler = StandardScaler()</span>
+
+    <span class="k">def</span> <span class="nf">_expected_rewards</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param node_list: list of node ids</span>
+<span class="sd">        :return: expected rewards for the nodes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Expected reward predicted by kNN regressor</span>
+        <span class="c1"># feature = self._scaler.transform([self._node_feature[node][0] for node in node_list])</span>
+        <span class="n">feature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_feature</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node_list</span><span class="p">])</span>  <span class="c1"># FIXME quite a lot time for conversion to numpy array</span>
+        <span class="n">neigh_dist</span><span class="p">,</span> <span class="n">neigh_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_knn_model</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">_KNeighborsRegressor_predict</span><span class="p">(</span><span class="n">neigh_dist</span><span class="p">,</span> <span class="n">neigh_ind</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_knn_model</span><span class="p">)</span>
+
+        <span class="c1"># Average distance to kNN</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">neigh_dist</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">node_list</span><span class="p">))</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">sigma</span>
+
+<div class="viewcode-block" id="KNN_UCB_Crawler.crawl"><a class="viewcode-back" href="../../../code.html#crawlers.ml.knn_ucb.KNN_UCB_Crawler.crawl">[docs]</a>    <span class="k">def</span> <span class="nf">crawl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">crawl</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="c1"># Obtained reward = the number of newly open nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_node_reward</span><span class="p">[</span><span class="n">seed</span><span class="p">]</span> <span class="o">=</span> <span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_node_reward</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="KNN_UCB_Crawler.next_seed"><a class="viewcode-back" href="../../../code.html#crawlers.ml.knn_ucb.KNN_UCB_Crawler.next_seed">[docs]</a>    <span class="k">def</span> <span class="nf">next_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">crawled</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_crawled_set</span><span class="p">)</span>
+
+        <span class="c1"># Yield random node first n0 times</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n0</span> <span class="o">&gt;</span> <span class="n">crawled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_random_pool</span><span class="p">[</span><span class="n">crawled</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">crawled</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observed_set</span><span class="p">))</span>
+
+        <span class="c1"># Fit kNN model</span>
+        <span class="k">if</span> <span class="n">crawled</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_period</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_feature</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_learning_queue</span><span class="p">]</span>  <span class="c1"># crawled nodes within a learning queue</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_reward</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_learning_queue</span><span class="p">]</span>
+            <span class="c1"># X = self._scaler.fit_transform(X)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_knn_model</span> <span class="o">=</span> <span class="n">KNeighborsRegressor</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">),</span> <span class="n">weights</span><span class="o">=</span><span class="s1">&#39;distance&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_knn_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit_period</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># + crawled // 2</span>
+
+        <span class="c1"># Choosing the best node from observed nodes for crawling</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observed_set</span><span class="p">)</span>
+        <span class="n">rs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expected_rewards</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">rs</span><span class="p">)]</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, misha et al.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

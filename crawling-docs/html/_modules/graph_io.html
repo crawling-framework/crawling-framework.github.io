@@ -1,0 +1,432 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>graph_io &#8212; CrawlingFramework 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for graph_io</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">urllib.error</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="k">import</span> <span class="n">time</span>
+
+<span class="kn">import</span> <span class="nn">patoolib</span>
+<span class="kn">from</span> <span class="nn">base.cgraph</span> <span class="k">import</span> <span class="n">MyGraph</span>
+
+<span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="n">TMP_GRAPHS_DIR</span>
+
+<span class="n">konect_metadata_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="s1">&#39;konect&#39;</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">)</span>
+<span class="n">netrepo_metadata_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="s1">&#39;netrepo&#39;</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">parse_konect_page</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse konect page and create name resolution dict. E.g. &#39;CL&#39; -&gt; &#39;actor-collaborations&#39;.</span>
+<span class="sd">    Note it has many non-unique codes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">bs4</span> <span class="k">import</span> <span class="n">BeautifulSoup</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Parsing Konect metadata...&quot;</span><span class="p">)</span>
+    <span class="n">name_ref_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c1"># url = &#39;http://konect.uni-koblenz.de/networks/&#39;  # The old one, but could be useful</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;http://konect.cc/networks/&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">html</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unfortunately, web-cite </span><span class="si">%s</span><span class="s2"> is unavailable. Try again later. Perhaphs the URL could change&quot;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="s2">&quot;lxml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;tr&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;td&#39;</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">cols</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">cols</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;href&#39;</span><span class="p">]</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">name_ref_dict</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Konect repeating code </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">code</span><span class="p">)</span>
+            <span class="k">pass</span>
+        <span class="n">name_ref_dict</span><span class="p">[</span><span class="n">code</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref</span>
+        <span class="n">name_ref_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref</span>
+        <span class="n">name_ref_dict</span><span class="p">[</span><span class="n">ref</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">konect_metadata_path</span><span class="p">)):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">konect_metadata_path</span><span class="p">))</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">konect_metadata_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name_ref_dict</span><span class="p">))</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Konect metadata saved to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">konect_metadata_path</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">parse_netrepo_page</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; Parse networkrepository page and create name resolution dict: name -&gt; url</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">bs4</span> <span class="k">import</span> <span class="n">BeautifulSoup</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Parsing networkrepository metadata...&quot;</span><span class="p">)</span>
+    <span class="n">name_ref_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;http://networkrepository.com/networks.php&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">html</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unfortunately, web-cite </span><span class="si">%s</span><span class="s2"> is unavailable. Try again later. Perhaphs the URL could change&quot;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="s2">&quot;lxml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;tr&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="s1">&#39;href&#39;</span><span class="p">]</span>
+        <span class="n">name_ref_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">)):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">))</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name_ref_dict</span><span class="p">))</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;networkrepository metadata saved to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">netrepo_metadata_path</span><span class="p">)</span>
+
+
+<span class="c1"># Should be run before downloading any graph</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">konect_metadata_path</span><span class="p">):</span> <span class="n">parse_konect_page</span><span class="p">()</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">):</span> <span class="n">parse_netrepo_page</span><span class="p">()</span>
+
+
+<span class="n">konect_name_ref_dict</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">konect_metadata_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="n">netrepo_name_ref_dict</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">reformat_graph_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">out_path</span><span class="p">,</span> <span class="n">ignore_lines_starting_with</span><span class="o">=</span><span class="s1">&#39;#%&#39;</span><span class="p">,</span>
+                        <span class="n">remove_original</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">renumerate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :param path:</span>
+<span class="sd">    :param out_path:</span>
+<span class="sd">    :param out_format: &#39;ij&#39;</span>
+<span class="sd">    :param ignore_lines_starting_with: lines starting with these symbols will be ignored</span>
+<span class="sd">    :param remove_original: if True, original file will be removed</span>
+<span class="sd">    :param self_loops: if True, self loops will be removed</span>
+<span class="sd">    :param renumerate: if True, nodes are re-numerated from 0 to N-1</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">in_format</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">out_format</span> <span class="o">=</span> <span class="s1">&#39;ij&#39;</span>
+    <span class="n">renums</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">separators</span> <span class="o">=</span> <span class="s1">&#39; |</span><span class="se">\t</span><span class="s1">|,&#39;</span>
+
+    <span class="k">assert</span> <span class="n">out_path</span> <span class="o">!=</span> <span class="n">path</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_file</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ignore_lines_starting_with</span><span class="p">:</span>  <span class="c1"># Filter comments</span>
+                <span class="k">continue</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">(),</span> <span class="s2">&quot;expected alpha-numeric line: &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">line</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">in_format</span><span class="p">:</span>
+                <span class="c1"># Define format</span>
+                <span class="n">items</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">separators</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="n">in_format</span> <span class="o">=</span> <span class="s1">&#39;ijwt&#39;</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out_format</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">in_format</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Could not reformat from &#39;</span><span class="si">%s</span><span class="s2">&#39; to &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">in_format</span><span class="p">,</span> <span class="n">out_format</span><span class="p">))</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reformatting </span><span class="si">%s</span><span class="s2">-&gt;</span><span class="si">%s</span><span class="s2"> for &#39;</span><span class="si">%s</span><span class="s2">&#39; ...&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">in_format</span><span class="p">,</span> <span class="n">out_format</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
+
+            <span class="n">items</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">separators</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">items</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">self_loops</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">renumerate</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">renums</span><span class="p">:</span>
+                    <span class="n">renums</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">renums</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">j</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">renums</span><span class="p">:</span>
+                    <span class="n">renums</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">renums</span><span class="p">)</span>
+                <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">renums</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">items</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">renums</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+
+            <span class="n">res_line</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">items</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">out_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">res_line</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">remove_original</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reformatting finished &#39;</span><span class="si">%s</span><span class="s2">&#39;.&quot;</span> <span class="o">%</span> <span class="n">out_path</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GraphCollections"><a class="viewcode-back" href="../code.html#graph_io.GraphCollections">[docs]</a><span class="k">class</span> <span class="nc">GraphCollections</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    TODO add docs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># konect_url_pattern = &#39;http://konect.uni-koblenz.de/downloads/tsv/%s.tar.bz2&#39;  # The old one</span>
+    <span class="n">konect_url_pattern</span> <span class="o">=</span> <span class="s1">&#39;http://konect.cc/files/download.tsv.</span><span class="si">%s</span><span class="s1">.tar.bz2&#39;</span>
+    <span class="n">networkrepository_url_pattern</span> <span class="o">=</span> <span class="s1">&#39;http://nrvis.com/download/data/</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">.zip&#39;</span>
+
+<div class="viewcode-block" id="GraphCollections.get"><a class="viewcode-back" href="../code.html#graph_io.GraphCollections.get">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read graph from storage or download it from the specified collection. In order to apply</span>
+<span class="sd">        giant_only and self_loops, you need to remove the file manually. #TODO maybe make a rewrite?</span>
+
+<span class="sd">        :param name: any of e.g. &#39;CL&#39; or &#39;Actor collaborations&#39; or &#39;actor-collaborations&#39;</span>
+<span class="sd">        :param collection: &#39;konect&#39;, &#39;netrepo&#39;, &#39;other&#39;, or any other subfolder in data/. If not</span>
+<span class="sd">         specified, it searches by name in &#39;konect&#39;, then &#39;neterepo&#39;, then &#39;other&#39;.</span>
+<span class="sd">        :param directed: undirected by default</span>
+<span class="sd">        :param giant_only: giant component instead of full graph. Component extraction is applied</span>
+<span class="sd">         only once when the graph is downloaded.</span>
+<span class="sd">        :param self_loops: self loops are removed by default. Applied only once when the graph is</span>
+<span class="sd">         downloaded.</span>
+<span class="sd">        :param not_load: if True do not load the graph (useful for stats exploring). Note: any graph</span>
+<span class="sd">         modification will lead to segfault</span>
+<span class="sd">        :return: MyGraph object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">format</span> <span class="o">=</span> <span class="s1">&#39;ij&#39;</span>
+        <span class="k">if</span> <span class="n">collection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Resolve name: search in konect then neterpo, if no set collection to other</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">konect_name_ref_dict</span><span class="p">:</span>
+                <span class="n">collection</span> <span class="o">=</span> <span class="s1">&#39;konect&#39;</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">konect_name_ref_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">netrepo_name_ref_dict</span><span class="p">:</span>
+                    <span class="n">collection</span> <span class="o">=</span> <span class="s1">&#39;netrepo&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">collection</span> <span class="o">=</span> <span class="s1">&#39;other&#39;</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="n">collection</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">format</span><span class="p">))</span>
+
+        <span class="c1"># Download graph if absent</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">temp_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="n">collection</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.tmp&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">collection</span> <span class="o">==</span> <span class="s1">&#39;konect&#39;</span><span class="p">:</span>
+                <span class="n">GraphCollections</span><span class="o">.</span><span class="n">_download_konect</span><span class="p">(</span>
+                    <span class="n">temp_path</span><span class="p">,</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">konect_url_pattern</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">collection</span> <span class="o">==</span> <span class="s1">&#39;netrepo&#39;</span><span class="p">:</span>
+                <span class="n">GraphCollections</span><span class="o">.</span><span class="n">_download_netrepo</span><span class="p">(</span><span class="n">temp_path</span><span class="p">,</span> <span class="n">netrepo_name_ref_dict</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;File &#39;</span><span class="si">%s</span><span class="s2">&#39; not found. Check graph name, collection or file existence.&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">)</span>
+
+            <span class="n">reformat_graph_file</span><span class="p">(</span><span class="n">temp_path</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">remove_original</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="n">self_loops</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">giant_only</span><span class="p">:</span>
+                <span class="c1"># Replace graph by its giant component</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Extracting giant component ...&quot;</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;ij&#39;</span>
+                <span class="n">MyGraph</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">directed</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">)</span><span class="o">.</span><span class="n">giant_component</span><span class="p">()</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;done.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">MyGraph</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">directed</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="n">not_load</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_download_konect</span><span class="p">(</span><span class="n">graph_path</span><span class="p">,</span> <span class="n">url_konect</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Downloads graph data from Konect http://konect.uni-koblenz.de</span>
+
+<span class="sd">        :param graph_path: full path to edge list file</span>
+<span class="sd">        :param url_konect: URL of graph data</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert &quot;url_konect.tar.*&quot; -&gt; &quot;filename.tar&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">url_konect</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;tar&quot;</span><span class="p">:</span>
+            <span class="n">archive_name</span> <span class="o">=</span> <span class="p">(</span><span class="n">url_konect</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">archive_name</span> <span class="o">=</span> <span class="p">(</span><span class="n">url_konect</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">graph_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">graph_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">)</span>
+
+        <span class="c1"># Download archive and extract graph file</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Downloading graph archive from Konect...&quot;</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_name</span><span class="p">)</span>
+        <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">url_konect</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;done.&quot;</span><span class="p">)</span>
+        <span class="n">patoolib</span><span class="o">.</span><span class="n">extract_archive</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">graph_dir</span><span class="p">)</span>
+
+        <span class="c1"># Rename extracted graph file</span>
+        <span class="c1"># archive_dir_name = archive_name.split(&#39;.&#39;, 1)[0]  # For the old cite</span>
+        <span class="n">archive_dir_name</span> <span class="o">=</span> <span class="n">archive_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">out_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">graph_path</span><span class="p">))</span>
+
+        <span class="c1"># multigraphs&#39; filenames end with &#39;-uniq&#39;</span>
+        <span class="c1"># signed networks&#39; filenames are &#39;.matrix todo what else?</span>
+        <span class="k">for</span> <span class="n">ending</span> <span class="ow">in</span> <span class="p">[</span><span class="n">archive_dir_name</span><span class="p">,</span> <span class="n">archive_dir_name</span> <span class="o">+</span> <span class="s1">&#39;-uniq&#39;</span><span class="p">,</span> <span class="s1">&#39;matrix&#39;</span><span class="p">]:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">konect_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_dir_name</span><span class="p">,</span> <span class="s2">&quot;out.&quot;</span> <span class="o">+</span> <span class="n">ending</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">konect_file_name</span><span class="p">,</span> <span class="n">out_file_name</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_name</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_dir_name</span><span class="p">))</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_download_netrepo</span><span class="p">(</span><span class="n">graph_path</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Downloads graph data from http://networkrepository.com/networks.php</span>
+
+<span class="sd">        :param graph_path: full path to edge list file</span>
+<span class="sd">        :param url: URL of graph data</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># &#39;http://nrvis.com/download/data/eco/eco-florida.zip&#39;</span>
+        <span class="c1"># Convert &quot;url.tar.*&quot; -&gt; &quot;filename.tar&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">url</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;tar&quot;</span><span class="p">:</span>
+            <span class="n">archive_name</span> <span class="o">=</span> <span class="p">(</span><span class="n">url</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">archive_name</span> <span class="o">=</span> <span class="p">(</span><span class="n">url</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">graph_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">graph_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">)</span>
+
+        <span class="c1"># Download archive and extract graph file</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Downloading graph archive from </span><span class="si">%s</span><span class="s2">...&quot;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_name</span><span class="p">)</span>
+        <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;done.&quot;</span><span class="p">)</span>
+        <span class="n">archive_dir_name</span> <span class="o">=</span> <span class="n">archive_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">patoolib</span><span class="o">.</span><span class="n">extract_archive</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">outdir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_dir_name</span><span class="p">))</span>
+
+        <span class="n">out_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">graph_path</span><span class="p">))</span>
+
+        <span class="c1"># Rename extracted graph file</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># todo are there else formats besides &#39;.edges&#39;, &#39;.mtx&#39; ?</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">netrepo_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_dir_name</span><span class="p">,</span> <span class="n">archive_dir_name</span> <span class="o">+</span> <span class="s2">&quot;.edges&quot;</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">netrepo_file_name</span><span class="p">,</span> <span class="n">out_file_name</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span> <span class="k">pass</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">netrepo_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_dir_name</span><span class="p">,</span> <span class="n">archive_dir_name</span> <span class="o">+</span> <span class="s2">&quot;.mtx&quot;</span><span class="p">)</span>
+                <span class="c1"># Remove first two lines (solution from https://stackoverflow.com/a/2329972/8900030)</span>
+                <span class="n">fro</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">netrepo_file_name</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span>
+                <span class="n">fro</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+                <span class="n">fro</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+                <span class="n">frw</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">netrepo_file_name</span><span class="p">,</span> <span class="s2">&quot;r+b&quot;</span><span class="p">)</span>
+                <span class="n">chars</span> <span class="o">=</span> <span class="n">fro</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+                <span class="k">while</span> <span class="n">chars</span><span class="p">:</span>
+                    <span class="n">frw</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span>
+                    <span class="n">chars</span> <span class="o">=</span> <span class="n">fro</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+                <span class="n">fro</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">frw</span><span class="o">.</span><span class="n">truncate</span><span class="p">()</span>
+                <span class="n">frw</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">netrepo_file_name</span><span class="p">,</span> <span class="n">out_file_name</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span> <span class="k">pass</span>
+            <span class="k">break</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_name</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_dir_name</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="temp_dir"><a class="viewcode-back" href="../code.html#graph_io.temp_dir">[docs]</a><span class="k">class</span> <span class="nc">temp_dir</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a temporary directory to store some files, which will be removed by exit.</span>
+<span class="sd">    Current working directory is also changed to this directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="temp_dir.__init__"><a class="viewcode-back" href="../code.html#graph_io.temp_dir.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">TMP_GRAPHS_DIR</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">test_konect</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;petster-hamster&#39;</span><span class="p">,</span> <span class="s1">&#39;digg-friends&#39;</span><span class="p">]:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;N=</span><span class="si">%s</span><span class="s2"> E=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()))</span>
+        <span class="c1"># print(&quot;neigbours of %d: %s&quot; % (2, graph.neighbors(2)))</span>
+
+
+<span class="k">def</span> <span class="nf">test_netrepo</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;soc-wiki-Vote&#39;</span><span class="p">,</span> <span class="s1">&#39;socfb-Bingham82&#39;</span><span class="p">]:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;netrepo&#39;</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;N=</span><span class="si">%s</span><span class="s2"> E=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()))</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">:</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+
+    <span class="c1"># parse_konect_page()</span>
+    <span class="c1"># parse_netrepo_page()</span>
+    <span class="n">test_konect</span><span class="p">()</span>
+    <span class="n">test_netrepo</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, misha et al.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

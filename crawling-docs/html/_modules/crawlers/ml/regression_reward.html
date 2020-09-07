@@ -1,0 +1,171 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>crawlers.ml.regression_reward &#8212; CrawlingFramework 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for crawlers.ml.regression_reward</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">log</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">LinearRegression</span>
+
+<span class="kn">from</span> <span class="nn">base.cgraph</span> <span class="k">import</span> <span class="n">MyGraph</span>
+<span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">CrawlerWithInitialSeed</span>
+<span class="kn">from</span> <span class="nn">crawlers.ml.with_features</span> <span class="k">import</span> <span class="n">CrawlerWithFeatures</span>
+
+
+<span class="n">REGRESSORS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ElasticNet&#39;</span><span class="p">,</span> <span class="s1">&#39;Lasso&#39;</span><span class="p">,</span> <span class="s1">&#39;LinearRegression&#39;</span><span class="p">,</span> <span class="s1">&#39;KNeighborsRegressor&#39;</span><span class="p">,</span> <span class="s1">&#39;SVR&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="RegressionRewardCrawler"><a class="viewcode-back" href="../../../code.html#crawlers.ml.regression_reward.RegressionRewardCrawler">[docs]</a><span class="k">class</span> <span class="nc">RegressionRewardCrawler</span><span class="p">(</span><span class="n">CrawlerWithFeatures</span><span class="p">,</span> <span class="n">CrawlerWithInitialSeed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Crawler uses a regression model trained on crawled nodes features to predict reward for observed nodes. The next</span>
+<span class="sd">    seed at each step is chosen as the node with the highest reward.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">short</span> <span class="o">=</span> <span class="s1">&#39;RegReward&#39;</span>
+
+<div class="viewcode-block" id="RegressionRewardCrawler.__init__"><a class="viewcode-back" href="../../../code.html#crawlers.ml.regression_reward.RegressionRewardCrawler.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">initial_seed</span><span class="p">:</span> <span class="nb">int</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">tau</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="nb">list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;OD&#39;</span><span class="p">],</span> <span class="n">regr</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s1">&#39;LinearRegression&#39;</span><span class="p">,</span> <span class="n">regr_args</span><span class="p">:</span> <span class="nb">dict</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param graph: original graph</span>
+<span class="sd">        :param initial_seed: start node</span>
+<span class="sd">        :param tau: sliding window size, number of last crawled nodes used for learning and prediction, default use all (-1)</span>
+<span class="sd">        :param features: list of features to use (see FEATURES), default [&#39;OD&#39;]</span>
+<span class="sd">        :param regr: which regressor to use for reward prediction, default LinearRegression</span>
+<span class="sd">        :param regr_args: dict of arguments for the regressor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">regr</span> <span class="ow">in</span> <span class="n">REGRESSORS</span>
+        <span class="c1">#</span>
+        <span class="c1"># FIXME should be careful with multiple superclasses, what is called first. See python3 MRO</span>
+        <span class="c1">#</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RegressionRewardCrawler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span> <span class="n">initial_seed</span><span class="o">=</span><span class="n">initial_seed</span><span class="p">,</span> <span class="n">tau</span><span class="o">=</span><span class="n">tau</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span> <span class="n">regr</span><span class="o">=</span><span class="n">regr</span><span class="p">,</span> <span class="n">regr_args</span><span class="o">=</span><span class="n">regr_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_node_reward</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># node_id -&gt; observed_reward</span>
+
+        <span class="c1"># Add some extra args depending on the regressor</span>
+        <span class="k">if</span> <span class="n">regr</span> <span class="o">==</span> <span class="s1">&#39;LinearRegression&#39;</span><span class="p">:</span>
+            <span class="n">regr_args</span><span class="p">[</span><span class="s1">&#39;copy_X&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="n">regr</span> <span class="o">==</span> <span class="s1">&#39;SVR&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;gamma&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">regr_args</span><span class="p">:</span>
+                <span class="n">regr_args</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span>
+
+        <span class="c1"># FIXME for KNeighborsRegressor n_neighbors must be &gt; n_samples, so we need either update it or not use for first n steps</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_regressor</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">regr</span><span class="p">)(</span><span class="o">**</span><span class="n">regr_args</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit_period</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># fit model once in a period dynamically changing</span></div>
+        <span class="c1"># self._scaler = StandardScaler()</span>
+
+    <span class="k">def</span> <span class="nf">_expected_rewards</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param node_list: list of node ids</span>
+<span class="sd">        :return: expected rewards for the nodes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Expected reward predicted by Linear regressor</span>
+        <span class="c1"># TODO compute for nodes in self._nodes_learning_queue</span>
+        <span class="n">feature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_feature</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node_list</span><span class="p">])</span>  <span class="c1"># FIXME quite a lot time for conversion to numpy array</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regressor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+<div class="viewcode-block" id="RegressionRewardCrawler.crawl"><a class="viewcode-back" href="../../../code.html#crawlers.ml.regression_reward.RegressionRewardCrawler.crawl">[docs]</a>    <span class="k">def</span> <span class="nf">crawl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">crawl</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_node_reward</span><span class="p">[</span><span class="n">seed</span><span class="p">]</span> <span class="o">=</span> <span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>  <span class="c1"># Obtained reward = the number of newly open nodes</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_node_reward</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="RegressionRewardCrawler.next_seed"><a class="viewcode-back" href="../../../code.html#crawlers.ml.regression_reward.RegressionRewardCrawler.next_seed">[docs]</a>    <span class="k">def</span> <span class="nf">next_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">crawled</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_crawled_set</span><span class="p">)</span>
+
+        <span class="c1"># # Yield random node first n0 times</span>
+        <span class="c1"># if self.n0 &gt; crawled:</span>
+        <span class="c1">#     return self._random_pool[crawled]</span>
+
+        <span class="k">if</span> <span class="n">crawled</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observed_set</span><span class="p">))</span>
+
+        <span class="c1"># Fit kNN model</span>
+        <span class="k">if</span> <span class="n">crawled</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit_period</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_feature</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_learning_queue</span><span class="p">]</span>  <span class="c1"># crawled nodes within a learning queue</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_reward</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_learning_queue</span><span class="p">]</span>
+            <span class="c1"># X = self._scaler.fit_transform(X)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_regressor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+            <span class="c1"># print(self._regressor.coef_)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit_period</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># + crawled // 2</span>
+
+        <span class="c1"># Choosing the best node from observed nodes for crawling</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observed_set</span><span class="p">)</span>
+        <span class="n">rs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expected_rewards</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">rs</span><span class="p">)]</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, misha et al.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

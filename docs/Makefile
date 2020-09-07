@@ -6,7 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = CrawlingFramework
 SOURCEDIR     = source
-BUILDDIR      = ../../crawling-docs
+BUILDDIR      = ../crawling-docs
 PDFBUILDDIR   = /tmp
 PDF           = ../manual.pdf
 
