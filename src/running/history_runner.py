@@ -66,7 +66,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
     Step sequence is exponentially growing independent of the graph.
 
     Functions:
-    ----
+    ----------
     * run - Run given crawlers and measure metrics. In the end, the measurements are saved to files.
     * run_parallel - Run the configuration  using the specified number of processes.
     * run_parallel_adaptive - Runs parallel computations adaptively. The configuration is split such
@@ -75,7 +75,7 @@ class CrawlerHistoryRunner(CrawlerRunner):
       of previous experiments failed.
 
     NOTES:
-    ----
+    ------
     * step sequence when metrics are computed must be the same for all runs. Otherwise the results
       would not be merged correctly
 

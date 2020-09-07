@@ -31,6 +31,10 @@ cpdef int get_UniDevInt(int max):
     return t_random.GetUniDevInt(max)
 
 cdef class MyGraph:
+    """
+
+    TODO add docs
+    """
     def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij', not_load: bool=False):
         """
 

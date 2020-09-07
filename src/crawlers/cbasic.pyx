@@ -79,7 +79,7 @@ cdef class Crawler:
     * `observed_set` - set of osberved but not crawled yet nodes.
 
     Supports methods:
-    ----
+    -----------------
 
     * int `next_seed` (self) - choose next seed among the observed ones, each crawler defines its own strategy.
     * vector[int] `crawl` (self, int seed) - crawl the specified node and return a list (vector) of newly observed nodes.

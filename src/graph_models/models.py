@@ -104,7 +104,7 @@ def LFR(nodes: int, avg_deg: float, max_deg: int, mixing: float, t1=None, t2=Non
     :param on: number of overlapping nodes
     :param om: number of memberships of the overlapping nodes
     :param C: [average clustering coefficient]
-    :return:
+    :return: MyGraph
     """
     kwargs = {
         'N': nodes,
