@@ -1,0 +1,399 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>demo.demo &#8212; CrawlingFramework 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for demo.demo</h1><div class="highlight"><pre>
+<span></span><span class="c1"># ###</span>
+<span class="c1"># Make sure you have followed all the instructions in Readme.md</span>
+<span class="c1">#</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="n">PICS_DIR</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(name)s</span><span class="s1">:</span><span class="si">%(levelname)s</span><span class="s1">:</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="c1"># logging.getLogger().setLevel(logging.INFO)</span>
+
+
+<div class="viewcode-block" id="graph_handing"><a class="viewcode-back" href="../../code.html#demo.demo.graph_handing">[docs]</a><span class="k">def</span> <span class="nf">graph_handing</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; 1. Automatic graph downloading</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">1. Automatic graph downloading</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">graph_io</span> <span class="k">import</span> <span class="n">GraphCollections</span>
+
+    <span class="c1"># Graph name is searched in konect then networkrepository namespaces.</span>
+    <span class="c1"># If not present on disk, the graph will be downloaded.</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;dolphins&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">. V=</span><span class="si">%s</span><span class="s2">, E=</span><span class="si">%s</span><span class="s2">. At &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
+
+    <span class="c1"># We can explicitly specify collection, whether to extract giant component, leave self-loops.</span>
+    <span class="c1"># Flags are applied only once when the graph is downloaded.</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;soc-wiki-Vote&#39;</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="s1">&#39;netrepo&#39;</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">. V=</span><span class="si">%s</span><span class="s2">, E=</span><span class="si">%s</span><span class="s2">. At &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
+
+    <span class="c1"># One can also use own graph if put it to &quot;data/other/graph_name.ij&quot; directory.</span>
+    <span class="c1"># Edge list format is supported.</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;example&#39;</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="s1">&#39;other&#39;</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">. V=</span><span class="si">%s</span><span class="s2">, E=</span><span class="si">%s</span><span class="s2">. At &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">path</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="stats_computing"><a class="viewcode-back" href="../../code.html#demo.demo.stats_computing">[docs]</a><span class="k">def</span> <span class="nf">stats_computing</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; 2. Statistics computation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">2. Statistics computation</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">graph_io</span> <span class="k">import</span> <span class="n">GraphCollections</span>
+    <span class="kn">from</span> <span class="nn">graph_stats</span> <span class="k">import</span> <span class="n">Stat</span>
+
+    <span class="c1"># Once graph is downloaded, it will be loaded from file</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;dolphins&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Iterate over all available statistics</span>
+    <span class="c1"># Once statistics are computed, they are saved to file</span>
+    <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">Stat</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stat</span><span class="o">.</span><span class="n">description</span><span class="p">,</span> <span class="n">g</span><span class="p">[</span><span class="n">stat</span><span class="p">]))</span>
+
+    <span class="c1"># Statistics computation can be run from terminal, e.g.:</span>
+    <span class="c1"># (run &#39;python3 graph_stats.py -h&#39; to see help)</span>
+    <span class="n">command</span> <span class="o">=</span> <span class="s1">&#39;python3 graph_stats.py -n soc-wiki-Vote -s DEGREE_DISTR BETWEENNESS_DISTR&#39;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;running command &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">command</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">command</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="visualize_crawling"><a class="viewcode-back" href="../../code.html#demo.demo.visualize_crawling">[docs]</a><span class="k">def</span> <span class="nf">visualize_crawling</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; 3. Visualize crawler</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">3. Visualize crawler</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">BreadthFirstSearchCrawler</span>
+    <span class="kn">from</span> <span class="nn">running.metrics_and_runner</span> <span class="k">import</span> <span class="n">TopCentralityMetric</span>
+    <span class="kn">from</span> <span class="nn">running.visual_runner</span> <span class="k">import</span> <span class="n">CrawlerVisualRunner</span>
+    <span class="kn">from</span> <span class="nn">graph_stats</span> <span class="k">import</span> <span class="n">Stat</span><span class="p">,</span> <span class="n">get_top_centrality_nodes</span>
+    <span class="kn">from</span> <span class="nn">graph_io</span> <span class="k">import</span> <span class="n">GraphCollections</span>
+
+    <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dolphins&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Define BFS crawler starting at node 1</span>
+    <span class="n">crawler_def</span> <span class="o">=</span> <span class="p">(</span><span class="n">BreadthFirstSearchCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;initial_seed&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+    <span class="c1"># crawler_def = (MaximumObservedDegreeCrawler, {&#39;initial_seed&#39;: 1})</span>
+
+    <span class="c1"># Top-p nodes are the target</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+    <span class="c1"># Define recall metric for all nodes (observed+crawled) with target set equal to top-10% by degree centrality.</span>
+    <span class="c1"># For args description see constructor docs.</span>
+    <span class="n">metric_def</span> <span class="o">=</span> <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;nodes&#39;</span><span class="p">})</span>
+
+    <span class="c1"># Target set is top-p degree nodes</span>
+    <span class="n">target_set</span> <span class="o">=</span> <span class="n">get_top_centrality_nodes</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">*</span><span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">()))</span>
+
+    <span class="c1"># Create visualizer for the graph which will make 20 crawling steps by 1 step</span>
+    <span class="n">cvr</span> <span class="o">=</span> <span class="n">CrawlerVisualRunner</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">crawler_def</span><span class="p">,</span> <span class="n">metric_def</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Run visualizer with drawing parameters.</span>
+    <span class="n">cvr</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">draw_orig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bold_edges</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">make_gif</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_set</span><span class="o">=</span><span class="n">target_set</span><span class="p">)</span>
+
+    <span class="c1"># Picture for each step is saved to file as well as a gif.</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;See pics at&quot;</span><span class="p">,</span> <span class="n">cvr</span><span class="o">.</span><span class="n">_save_dir</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="animated_crawler_runner"><a class="viewcode-back" href="../../code.html#demo.demo.animated_crawler_runner">[docs]</a><span class="k">def</span> <span class="nf">animated_crawler_runner</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; 4. Animated crawler runner</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">4. Animated crawler runner</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> <span class="n">BreadthFirstSearchCrawler</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cadvanced</span> <span class="k">import</span> <span class="n">DE_Crawler</span>
+    <span class="kn">from</span> <span class="nn">running.animated_runner</span> <span class="k">import</span> <span class="n">AnimatedCrawlerRunner</span>
+    <span class="kn">from</span> <span class="nn">running.metrics_and_runner</span> <span class="k">import</span> <span class="n">TopCentralityMetric</span>
+    <span class="kn">from</span> <span class="nn">graph_stats</span> <span class="k">import</span> <span class="n">Stat</span>
+    <span class="kn">from</span> <span class="nn">graph_io</span> <span class="k">import</span> <span class="n">GraphCollections</span>
+
+    <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;petster-hamster&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Top-p nodes are the target.</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+    <span class="c1"># Define several crawler configurations.</span>
+    <span class="n">crawler_defs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">BreadthFirstSearchCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;initial_seed&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;batch&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;initial_seed&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">DE_Crawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;initial_seed&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Define several metrics.</span>
+    <span class="n">metric_defs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;nodes&#39;</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">}),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Create runner which will dynamically visualize measurements.</span>
+    <span class="n">acr</span> <span class="o">=</span> <span class="n">AnimatedCrawlerRunner</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">crawler_defs</span><span class="p">,</span> <span class="n">metric_defs</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="c1"># Run and save the result picture.</span>
+    <span class="n">acr</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ylims</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;iteration, n&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;metrics value&#39;</span><span class="p">,</span> <span class="n">swap_coloring_scheme</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">save_to_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PICS_DIR</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;demo&#39;</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="parallel_crawler_runner"><a class="viewcode-back" href="../../code.html#demo.demo.parallel_crawler_runner">[docs]</a><span class="k">def</span> <span class="nf">parallel_crawler_runner</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; 5. Run series of experiments in parallel. For every crawling method calculates every metric.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">5. Run series of experiments in parallel</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">RandomWalkCrawler</span><span class="p">,</span> <span class="n">RandomCrawler</span><span class="p">,</span> <span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> \
+        <span class="n">BreadthFirstSearchCrawler</span><span class="p">,</span> <span class="n">DepthFirstSearchCrawler</span><span class="p">,</span> <span class="n">SnowBallCrawler</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cadvanced</span> <span class="k">import</span> <span class="n">DE_Crawler</span>
+    <span class="kn">from</span> <span class="nn">crawlers.multiseed</span> <span class="k">import</span> <span class="n">MultiInstanceCrawler</span>
+    <span class="kn">from</span> <span class="nn">running.history_runner</span> <span class="k">import</span> <span class="n">CrawlerHistoryRunner</span>
+    <span class="kn">from</span> <span class="nn">running.metrics_and_runner</span> <span class="k">import</span> <span class="n">TopCentralityMetric</span>
+    <span class="kn">from</span> <span class="nn">graph_stats</span> <span class="k">import</span> <span class="n">Stat</span>
+    <span class="kn">from</span> <span class="nn">graph_io</span> <span class="k">import</span> <span class="n">GraphCollections</span>
+
+    <span class="c1"># Define several crawler configurations.</span>
+    <span class="n">crawler_defs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">RandomWalkCrawler</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="n">RandomCrawler</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="n">BreadthFirstSearchCrawler</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="n">DepthFirstSearchCrawler</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="n">SnowBallCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;batch&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;batch&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">DE_Crawler</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="n">MultiInstanceCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;crawler_def&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> <span class="p">{})}),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Top-p nodes are the target.</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mf">0.01</span>
+    <span class="c1"># Define recall metrics corresponding 6 node centralities.</span>
+    <span class="n">metric_defs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">PAGERANK_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">BETWEENNESS_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">ECCENTRICITY_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">CLOSENESS_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">K_CORENESS_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Set the number of random seeds to start from.</span>
+    <span class="n">n_instances</span> <span class="o">=</span> <span class="mi">8</span>
+
+    <span class="c1"># Run crawling for several graphs</span>
+    <span class="k">for</span> <span class="n">graph_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;petster-hamster&#39;</span><span class="p">,</span> <span class="s1">&#39;soc-wiki-Vote&#39;</span><span class="p">]:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">graph_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">. V=</span><span class="si">%s</span><span class="s2">, E=</span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()))</span>
+
+        <span class="c1"># Create runner which will run all and save measurements history to file.</span>
+        <span class="nb">chr</span> <span class="o">=</span> <span class="n">CrawlerHistoryRunner</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">crawler_defs</span><span class="p">,</span> <span class="n">metric_defs</span><span class="p">)</span>
+
+        <span class="c1"># Run parallel execution with limitations on the number of concurrent processes and the amount of memory.</span>
+        <span class="nb">chr</span><span class="o">.</span><span class="n">run_parallel_adaptive</span><span class="p">(</span><span class="n">n_instances</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">max_memory</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="run_missing"><a class="viewcode-back" href="../../code.html#demo.demo.run_missing">[docs]</a><span class="k">def</span> <span class="nf">run_missing</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; 6. Run missing configurations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">6. Run missing configurations</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">SnowBallCrawler</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cadvanced</span> <span class="k">import</span> <span class="n">DE_Crawler</span>
+    <span class="kn">from</span> <span class="nn">running.history_runner</span> <span class="k">import</span> <span class="n">CrawlerHistoryRunner</span>
+    <span class="kn">from</span> <span class="nn">running.metrics_and_runner</span> <span class="k">import</span> <span class="n">TopCentralityMetric</span>
+    <span class="kn">from</span> <span class="nn">graph_stats</span> <span class="k">import</span> <span class="n">Stat</span>
+    <span class="kn">from</span> <span class="nn">graph_io</span> <span class="k">import</span> <span class="n">GraphCollections</span>
+
+    <span class="c1"># Define some new configuration or an old one that contains uncomputed combinations.</span>
+    <span class="n">crawler_defs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">SnowBallCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">DE_Crawler</span><span class="p">,</span> <span class="p">{}),</span>
+    <span class="p">]</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mf">0.01</span>
+    <span class="n">metric_defs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">PAGERANK_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Set the number of random seeds to start from.</span>
+    <span class="n">n_instances</span> <span class="o">=</span> <span class="mi">10</span>
+
+    <span class="c1"># If some of the combinations were already computed earlier, we can run only missing ones.</span>
+    <span class="k">for</span> <span class="n">graph_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;petster-hamster&#39;</span><span class="p">,</span> <span class="s1">&#39;soc-wiki-Vote&#39;</span><span class="p">]:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">graph_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">. V=</span><span class="si">%s</span><span class="s2">, E=</span><span class="si">%s</span><span class="s2">.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()))</span>
+
+        <span class="c1"># Again create runner which will run all and save measurements history to file.</span>
+        <span class="nb">chr</span> <span class="o">=</span> <span class="n">CrawlerHistoryRunner</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">crawler_defs</span><span class="p">,</span> <span class="n">metric_defs</span><span class="p">)</span>
+
+        <span class="c1"># Run missing configurations (detected after searching files in corresponding folders).</span>
+        <span class="c1"># Again using limitations on the number concurrent processes and the amount of memory.</span>
+        <span class="nb">chr</span><span class="o">.</span><span class="n">run_missing</span><span class="p">(</span><span class="n">n_instances</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">max_memory</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="merge_and_visualize"><a class="viewcode-back" href="../../code.html#demo.demo.merge_and_visualize">[docs]</a><span class="k">def</span> <span class="nf">merge_and_visualize</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; 7. Merge and visualize results of a series of experiments</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">7. Merge and visualize results of a series of experiments</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">running.merger</span> <span class="k">import</span> <span class="n">ResultsMerger</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">RandomWalkCrawler</span><span class="p">,</span> <span class="n">RandomCrawler</span><span class="p">,</span> <span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> \
+        <span class="n">BreadthFirstSearchCrawler</span><span class="p">,</span> <span class="n">DepthFirstSearchCrawler</span><span class="p">,</span> <span class="n">SnowBallCrawler</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cadvanced</span> <span class="k">import</span> <span class="n">DE_Crawler</span>
+    <span class="kn">from</span> <span class="nn">crawlers.multiseed</span> <span class="k">import</span> <span class="n">MultiInstanceCrawler</span>
+    <span class="kn">from</span> <span class="nn">running.history_runner</span> <span class="k">import</span> <span class="n">CrawlerHistoryRunner</span>
+    <span class="kn">from</span> <span class="nn">running.metrics_and_runner</span> <span class="k">import</span> <span class="n">TopCentralityMetric</span>
+    <span class="kn">from</span> <span class="nn">graph_stats</span> <span class="k">import</span> <span class="n">Stat</span>
+    <span class="kn">from</span> <span class="nn">graph_io</span> <span class="k">import</span> <span class="n">GraphCollections</span>
+
+    <span class="c1"># Define a configuration of crawlers and metrics.</span>
+    <span class="n">crawler_defs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">RandomWalkCrawler</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="n">BreadthFirstSearchCrawler</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;batch&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;batch&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">DE_Crawler</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="n">MultiInstanceCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;crawler_def&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> <span class="p">{}),</span> <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s2">&quot;Multi-5-MOD&quot;</span><span class="p">}),</span>
+    <span class="p">]</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mf">0.01</span>
+    <span class="n">metric_defs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">PAGERANK_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">BETWEENNESS_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">ECCENTRICITY_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
+    <span class="p">]</span>
+    <span class="n">graph_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;petster-hamster&#39;</span><span class="p">,</span> <span class="s1">&#39;soc-wiki-Vote&#39;</span><span class="p">]</span>
+    <span class="n">n_instances</span> <span class="o">=</span><span class="mi">8</span>
+
+    <span class="c1"># Run missing combination if any. It is useful when some runs of the initial configuration failed.</span>
+    <span class="k">for</span> <span class="n">graph_name</span> <span class="ow">in</span> <span class="n">graph_names</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">graph_name</span><span class="p">)</span>
+        <span class="nb">chr</span> <span class="o">=</span> <span class="n">CrawlerHistoryRunner</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">crawler_defs</span><span class="p">,</span> <span class="n">metric_defs</span><span class="p">)</span>
+        <span class="nb">chr</span><span class="o">.</span><span class="n">run_missing</span><span class="p">(</span><span class="n">n_instances</span><span class="p">,</span> <span class="n">max_cpus</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">max_memory</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+    <span class="c1"># Create a merger which can read measurements data from files, aggregate and draw various plots.</span>
+    <span class="c1"># Note it takes 3-dimensional input: graphs X crawlers X metrics</span>
+    <span class="n">crm</span> <span class="o">=</span> <span class="n">ResultsMerger</span><span class="p">(</span><span class="n">graph_names</span><span class="p">,</span> <span class="n">crawler_defs</span><span class="p">,</span> <span class="n">metric_defs</span><span class="p">,</span> <span class="n">n_instances</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+    <span class="c1"># Draw crawler curves for each graph and each metric</span>
+    <span class="n">crm</span><span class="o">.</span><span class="n">draw_by_crawler</span><span class="p">(</span><span class="n">x_lims</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">x_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">draw_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="c1"># Draw metric curves for each graph and each crawler</span>
+    <span class="n">crm</span><span class="o">.</span><span class="n">draw_by_metric</span><span class="p">(</span><span class="n">x_lims</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">x_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">draw_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="c1"># Draw crawler/metric curves for each graph</span>
+    <span class="n">crm</span><span class="o">.</span><span class="n">draw_by_metric_crawler</span><span class="p">(</span><span class="n">x_lims</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">x_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">draw_error</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+    <span class="c1"># Draw AUCC values for each graph and each metric</span>
+    <span class="n">crm</span><span class="o">.</span><span class="n">draw_aucc</span><span class="p">(</span><span class="n">aggregator</span><span class="o">=</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">xticks_rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+
+    <span class="c1"># Draw weighted AUCC values for each graph and each metric</span>
+    <span class="n">crm</span><span class="o">.</span><span class="n">draw_aucc</span><span class="p">(</span><span class="n">aggregator</span><span class="o">=</span><span class="s1">&#39;wAUCC&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">xticks_rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+
+    <span class="c1"># Draw for each crawler weighted AUCC scores aggregated by all graphs and metrics</span>
+    <span class="n">crm</span><span class="o">.</span><span class="n">draw_winners</span><span class="p">(</span><span class="n">aggregator</span><span class="o">=</span><span class="s1">&#39;wAUCC&#39;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">xticks_rotation</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+
+    <span class="c1"># Show all plots</span>
+    <span class="n">crm</span><span class="o">.</span><span class="n">show_plots</span><span class="p">()</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># 1. Automatic graph downloading</span>
+    <span class="n">graph_handing</span><span class="p">()</span>
+
+    <span class="c1"># 2. Statistics computation</span>
+    <span class="n">stats_computing</span><span class="p">()</span>
+
+    <span class="c1"># 3. Visualize crawler</span>
+    <span class="n">visualize_crawling</span><span class="p">()</span>
+
+    <span class="c1"># 4. Animated crawler runner</span>
+    <span class="n">animated_crawler_runner</span><span class="p">()</span>
+
+    <span class="c1"># 5. Run series of experiments in parallel</span>
+    <span class="n">parallel_crawler_runner</span><span class="p">()</span>
+
+    <span class="c1"># 6. Run missing configurations</span>
+    <span class="n">run_missing</span><span class="p">()</span>
+
+    <span class="c1"># 7. Merge and visualize results of a series of experiments</span>
+    <span class="n">merge_and_visualize</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">CrawlingFramework</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../project.html">Project description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code.html">Code Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, misha et al.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

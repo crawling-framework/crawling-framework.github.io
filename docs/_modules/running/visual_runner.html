@@ -1,0 +1,325 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>running.visual_runner &#8212; CrawlingFramework 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for running.visual_runner</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+<span class="kn">import</span> <span class="nn">imageio</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">from</span> <span class="nn">base.cgraph</span> <span class="k">import</span> <span class="n">MyGraph</span>
+<span class="kn">from</span> <span class="nn">crawlers.cadvanced</span> <span class="k">import</span> <span class="n">CrawlerWithAnswer</span>
+<span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">definition_to_filename</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="k">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">graph_stats</span> <span class="k">import</span> <span class="n">Stat</span><span class="p">,</span> <span class="n">get_top_centrality_nodes</span>
+<span class="kn">from</span> <span class="nn">running.metrics_and_runner</span> <span class="k">import</span> <span class="n">CrawlerRunner</span><span class="p">,</span> <span class="n">TopCentralityMetric</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="n">PICS_DIR</span>
+
+
+<div class="viewcode-block" id="create_gif"><a class="viewcode-back" href="../../code.html#running.visual_runner.create_gif">[docs]</a><span class="k">def</span> <span class="nf">create_gif</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Create gif from all .png files in directory with fixed duration between images.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">images</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">filenames</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s2">&quot;*.png&quot;</span><span class="p">))</span>
+    <span class="n">filenames</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Making gif&quot;</span><span class="p">):</span>
+        <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">imageio</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s2">&quot;gif.gif&quot;</span><span class="p">)</span>
+    <span class="n">imageio</span><span class="o">.</span><span class="n">mimsave</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">images</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mf">0.2</span> <span class="o">*</span> <span class="n">duration</span><span class="p">,</span> <span class="n">loop</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CrawlerVisualRunner"><a class="viewcode-back" href="../../code.html#running.visual_runner.CrawlerVisualRunner">[docs]</a><span class="k">class</span> <span class="nc">CrawlerVisualRunner</span><span class="p">(</span><span class="n">CrawlerRunner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visualize the crawling process step by step on a small graph.</span>
+<span class="sd">    Graph nodes and edges are plotted in colors corresponding to their state: crawled, observed,</span>
+<span class="sd">    target, etc.</span>
+<span class="sd">    Saves .png pictures to the disk.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="CrawlerVisualRunner.__init__"><a class="viewcode-back" href="../../code.html#running.visual_runner.CrawlerVisualRunner.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">crawler_def</span><span class="p">,</span> <span class="n">metric_def</span><span class="p">,</span> <span class="n">budget</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                 <span class="n">steps_per_pic</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">layout_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param graph: graph to run</span>
+<span class="sd">        :param crawler_def: crawler definitions to run. Crawler definition will be initialized when</span>
+<span class="sd">         run() is called</span>
+<span class="sd">        :param metric_def: metric definition to compute at each step. Metric should be callable</span>
+<span class="sd">         function crawler -&gt; float, and have name</span>
+<span class="sd">        :param budget: maximal number of nodes to be crawled, by default 100</span>
+<span class="sd">        :param step: compute metrics each `step` steps, by default 1</span>
+<span class="sd">        :param steps_per_pic: plot every this number of steps, by default 1</span>
+<span class="sd">        :param layout_pos: specific layout for networkx drawer</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">graph</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">NODES</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Graphs with &gt; 1000 nodes are too big to be plotted.&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">crawler_defs</span><span class="o">=</span><span class="p">[</span><span class="n">crawler_def</span><span class="p">],</span> <span class="n">metric_defs</span><span class="o">=</span><span class="p">[</span><span class="n">metric_def</span><span class="p">],</span> <span class="n">budget</span><span class="o">=</span><span class="n">budget</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">steps_per_pic</span> <span class="o">=</span> <span class="n">steps_per_pic</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout_pos</span> <span class="o">=</span> <span class="n">layout_pos</span></div>
+
+    <span class="k">def</span> <span class="nf">_save_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PICS_DIR</span><span class="p">,</span> <span class="s1">&#39;visual&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CrawlerVisualRunner.run"><a class="viewcode-back" href="../../code.html#running.visual_runner.CrawlerVisualRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">draw_orig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target_set</span><span class="o">=</span><span class="nb">set</span><span class="p">(),</span> <span class="n">labels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">bold_edges</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">make_gif</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run crawler and plot graph with nodes colored. All plots are saved in a series of png files.</span>
+<span class="sd">        Coloring depends on node type: unobserved (gray), observed (yellow), current (red), crawled (blue).</span>
+<span class="sd">        Target nodes are labeled by bigger orange circles.</span>
+
+<span class="sd">        :param draw_orig: whether to draw original graph</span>
+<span class="sd">        :param target_set: these nodes will be highlighted (bigger)</span>
+<span class="sd">        :param labels: whether to draw node labels (ids)</span>
+<span class="sd">        :param bold_edges: if True draw observed edges in bold, unobserved edges dotted</span>
+<span class="sd">        :param make_gif: whether to create gif from a png series.</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">crawlers</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">batch_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_runner</span><span class="p">()</span>
+        <span class="n">crawler</span> <span class="o">=</span> <span class="n">crawlers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">nx_orig_graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">snap_to_networkx</span><span class="p">()</span>
+
+        <span class="c1"># Define layout via networkx</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout_pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Computing networkx layout...&quot;</span><span class="p">)</span>
+            <span class="c1"># self.layout_pos = nx.spring_layout(nx_orig_graph, iterations=40)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">layout_pos</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">kamada_kawai_layout</span><span class="p">(</span><span class="n">nx_orig_graph</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;done.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Drawing parameters</span>
+        <span class="n">other_color</span> <span class="o">=</span> <span class="s1">&#39;lightgray&#39;</span>
+        <span class="n">observed_color</span> <span class="o">=</span> <span class="s1">&#39;yellow&#39;</span>
+        <span class="n">crawled_color</span> <span class="o">=</span> <span class="s1">&#39;blue&#39;</span>
+        <span class="n">current_color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span>
+        <span class="n">target_color</span> <span class="o">=</span> <span class="s1">&#39;orange&#39;</span>
+        <span class="n">node_size</span> <span class="o">=</span> <span class="mi">250</span> <span class="k">if</span> <span class="n">labels</span> <span class="k">else</span> <span class="mi">50</span>
+        <span class="n">target_node_size</span> <span class="o">=</span> <span class="n">node_size</span> <span class="o">+</span> <span class="mi">150</span>
+        <span class="n">bold_width</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># width of observed edges</span>
+        <span class="n">last_crawled</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># Handle directory to save pics to</span>
+        <span class="n">save_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_dir</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">crawlers</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">definition_to_filename</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">definition</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="s2">&quot;Graph </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">12</span><span class="p">))</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">budget</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Running iterations&#39;</span><span class="p">)</span>  <span class="c1"># drawing crawling progress bar</span>
+
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">batch_generator</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">+=</span> <span class="n">batch</span>
+
+            <span class="c1"># crawler.crawl_budget(batch)</span>
+            <span class="n">last_crawled</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
+                <span class="n">seed</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">next_seed</span><span class="p">()</span>
+                <span class="n">crawler</span><span class="o">.</span><span class="n">crawl</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+                <span class="c1"># Memorize crawled seeds to draw them later</span>
+                <span class="n">last_crawled</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="n">CrawlerWithAnswer</span><span class="p">):</span>
+                <span class="c1"># Recompute actual answer</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">answer</span>
+
+            <span class="c1"># Calculate metric for crawler</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">metric</span><span class="p">(</span><span class="n">crawler</span><span class="p">)</span>
+
+            <span class="c1"># Draw graph via networkx</span>
+            <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps_per_pic</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
+
+                <span class="c1"># Draw target set nodes of bigger size</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_set</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">layout_pos</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout_pos</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">target_set</span><span class="p">}</span>
+                    <span class="n">nx</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">nx_orig_graph</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="n">layout_pos</span><span class="p">,</span> <span class="n">nodelist</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">target_set</span><span class="p">),</span> <span class="n">edgelist</span><span class="o">=</span><span class="p">[],</span>
+                            <span class="n">node_size</span><span class="o">=</span><span class="p">[</span><span class="n">target_node_size</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_set</span><span class="p">),</span> <span class="n">node_color</span><span class="o">=</span><span class="n">target_color</span><span class="p">)</span>
+
+                <span class="c1"># Draw orig graph with node coloring</span>
+                <span class="k">if</span> <span class="n">draw_orig</span><span class="p">:</span>
+                    <span class="n">node_colors</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># nodes colorings</span>
+                    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nx_orig_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">last_crawled</span><span class="p">:</span>
+                            <span class="n">node_colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_color</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">crawler</span><span class="o">.</span><span class="n">observed_set</span><span class="p">:</span>
+                            <span class="n">node_colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">observed_color</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">crawler</span><span class="o">.</span><span class="n">crawled_set</span><span class="p">:</span>
+                            <span class="n">node_colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">crawled_color</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">target_set</span><span class="p">:</span>
+                            <span class="n">node_colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target_color</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">node_colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">other_color</span><span class="p">)</span>
+
+                    <span class="n">nx</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">nx_orig_graph</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">layout_pos</span><span class="p">,</span>
+                            <span class="n">with_labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                            <span class="n">node_size</span><span class="o">=</span><span class="n">node_size</span><span class="p">,</span> <span class="n">node_list</span><span class="o">=</span><span class="n">nx_orig_graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">,</span>
+                            <span class="n">node_color</span><span class="o">=</span><span class="n">node_colors</span><span class="p">,</span> <span class="n">edge_color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span>
+                            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;dotted&#39;</span> <span class="k">if</span> <span class="n">bold_edges</span> <span class="k">else</span> <span class="s1">&#39;solid&#39;</span><span class="p">,</span>
+                            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span> <span class="k">if</span> <span class="n">bold_edges</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># Draw observed graph edges in bold</span>
+                <span class="k">if</span> <span class="n">bold_edges</span><span class="p">:</span>
+                    <span class="n">nodes_set</span> <span class="o">=</span> <span class="n">crawler</span><span class="o">.</span><span class="n">nodes_set</span>
+                    <span class="n">node_colors</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># nodes colorings</span>
+                    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes_set</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">last_crawled</span><span class="p">:</span>
+                            <span class="n">node_colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_color</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">crawler</span><span class="o">.</span><span class="n">crawled_set</span><span class="p">:</span>
+                            <span class="n">node_colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">crawled_color</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">node_colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">observed_color</span><span class="p">)</span>
+
+                    <span class="n">nx</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">nx_orig_graph</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">layout_pos</span><span class="p">,</span>
+                            <span class="n">with_labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+                            <span class="n">node_size</span><span class="o">=</span><span class="n">node_size</span><span class="p">,</span> <span class="n">node_color</span><span class="o">=</span><span class="n">node_colors</span><span class="p">,</span>
+                            <span class="n">nodelist</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">nodes_set</span><span class="p">),</span>
+                            <span class="n">edgelist</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">crawler</span><span class="o">.</span><span class="n">_observed_graph</span><span class="o">.</span><span class="n">iter_edges</span><span class="p">()),</span> <span class="n">width</span><span class="o">=</span><span class="n">bold_width</span><span class="p">)</span>
+
+                <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Graph: </span><span class="si">%s</span><span class="s2">. nodes: </span><span class="si">%s</span><span class="s2">, edges: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span>
+                          <span class="s2">&quot;Crawler: </span><span class="si">%s</span><span class="s2">. crawled: </span><span class="si">%s</span><span class="s2">, observed: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span>
+                          <span class="s2">&quot;Metric: </span><span class="si">%s</span><span class="s2">. Value: </span><span class="si">%.4f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span>
+                    <span class="n">crawler</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">crawler</span><span class="o">.</span><span class="n">crawled_set</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">crawler</span><span class="o">.</span><span class="n">observed_set</span><span class="p">),</span>
+                    <span class="n">metric</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.005</span><span class="p">)</span>
+
+                <span class="c1"># fig.set_size_inches(25, 22, forward=False)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">definition_to_filename</span><span class="p">(</span><span class="n">crawler</span><span class="o">.</span><span class="n">definition</span><span class="p">),</span> <span class="s2">&quot;%05.f&quot;</span> <span class="o">%</span> <span class="n">step</span><span class="p">))</span>
+
+            <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+
+        <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>  <span class="c1"># closing progress bar</span>
+        <span class="k">if</span> <span class="n">make_gif</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">crawlers</span><span class="p">:</span>
+                <span class="n">create_gif</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">definition_to_filename</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">definition</span><span class="p">)),</span> <span class="n">duration</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">test_visual_runner</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">MaximumObservedDegreeCrawler</span>
+    <span class="kn">from</span> <span class="nn">graph_io</span> <span class="k">import</span> <span class="n">GraphCollections</span>
+    <span class="c1"># g = GraphCollections.get(&#39;dolphins&#39;)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PDZBase&#39;</span><span class="p">)</span>
+    <span class="c1"># g = GraphCollections.get(&#39;Infectious&#39;)</span>
+    <span class="c1"># g = GraphCollections.get(&#39;soc-wiki-Vote&#39;)</span>
+    <span class="c1"># g = GraphCollections.get(&#39;Jazz musicians&#39;)</span>
+    <span class="c1"># g = GraphCollections.get(&#39;LFR(N=400,k=10,maxk=40,mu=0.1,t1=2,t2=2)/0&#39;, &#39;synthetic&#39;)</span>
+    <span class="c1"># g = grid2d(20, 10)</span>
+    <span class="c1"># g = LFR(400, 10, 40, mixing=0.1, t1=2, t2=2)  FIXME do we leave models?</span>
+    <span class="c1"># print(g[Stat.PLM_MODULARITY])</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+    <span class="n">crawler_def</span> <span class="o">=</span> <span class="p">(</span><span class="n">MaximumObservedDegreeCrawler</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;initial_seed&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+    <span class="c1"># crawler_def = (MaximumObservedCommunityDegreeCrawler, {&#39;initial_seed&#39;: 1})</span>
+    <span class="c1"># crawler_def = (ThreeStageMODCrawler, {&#39;s&#39;: 10, &#39;n&#39;: g.nodes(), &#39;p&#39;: p, &#39;b&#39;: 1})</span>
+
+    <span class="n">metric_def</span> <span class="o">=</span> <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;nodes&#39;</span><span class="p">})</span>
+    <span class="c1"># metric_def = (TopCentralityMetric, {&#39;top&#39;: p, &#39;centrality&#39;: Stat.DEGREE_DISTR.short, &#39;measure&#39;: &#39;Re&#39;, &#39;part&#39;: &#39;answer&#39;})</span>
+    <span class="n">target_set</span> <span class="o">=</span> <span class="n">get_top_centrality_nodes</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">*</span><span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">()))</span>
+
+    <span class="n">cvr</span> <span class="o">=</span> <span class="n">CrawlerVisualRunner</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">crawler_def</span><span class="p">,</span> <span class="n">metric_def</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">cvr</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">draw_orig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bold_edges</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">make_gif</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">target_set</span><span class="o">=</span><span class="n">target_set</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(name)s</span><span class="s1">:</span><span class="si">%(levelname)s</span><span class="s1">:</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+    <span class="n">test_visual_runner</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">CrawlingFramework</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../project.html">Project description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code.html">Code Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, misha et al.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

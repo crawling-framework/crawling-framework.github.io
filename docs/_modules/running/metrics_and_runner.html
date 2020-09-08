@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>running.metrics_and_runner &#8212; CrawlingFramework 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for running.metrics_and_runner</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">base.cgraph</span> <span class="k">import</span> <span class="n">MyGraph</span>
+<span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">Crawler</span><span class="p">,</span> <span class="n">definition_to_filename</span>
+<span class="kn">from</span> <span class="nn">graph_io</span> <span class="k">import</span> <span class="n">GraphCollections</span>
+
+<span class="kn">from</span> <span class="nn">graph_stats</span> <span class="k">import</span> <span class="n">Stat</span><span class="p">,</span> <span class="n">get_top_centrality_nodes</span>
+
+<div class="viewcode-block" id="Metric"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.Metric">[docs]</a><span class="k">class</span> <span class="nc">Metric</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for metrics on crawling process.</span>
+<span class="sd">    Metric has an identifying name and a callback function which maps the crawler into a number.</span>
+
+<span class="sd">    Example of a custom metric:</span>
+
+<span class="sd">    &gt;&gt;&gt; graph = GraphCollections.get(&#39;example&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; m = Metric(name=&#39;coverage&#39;, callback=lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES])</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">short</span> <span class="o">=</span> <span class="s1">&#39;Metric&#39;</span>
+
+<div class="viewcode-block" id="Metric.__init__"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.Metric.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param name: identifying name</span>
+<span class="sd">        :param callback: metric function: callback(crawler, **kwargs) -&gt; number</span>
+<span class="sd">        :param kwargs: additional argument to callback function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_definition</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="n">definition_to_filename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_definition</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Metric.from_definition"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.Metric.from_definition">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_definition</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">definition</span><span class="p">):</span>  <span class="c1"># -&gt; Metric:</span>
+        <span class="sd">&quot;&quot;&quot; Build a Metric instance from its definition &quot;&quot;&quot;</span>
+        <span class="n">_class</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">definition</span>
+        <span class="k">assert</span> <span class="n">_class</span> <span class="o">!=</span> <span class="n">Metric</span><span class="p">,</span> <span class="s2">&quot;Create a subclass to define your own Metric&quot;</span>
+        <span class="k">return</span> <span class="n">_class</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">definition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_definition</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">Crawler</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span><span class="p">(</span><span class="n">crawler</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_kwargs</span><span class="p">)</span></div>
+
+
+<span class="c1"># dict {centrality_short -&gt; Stat}</span>
+<span class="n">centrality_by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">stat</span><span class="o">.</span><span class="n">short</span><span class="p">:</span> <span class="n">stat</span> <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">Stat</span> <span class="k">if</span> <span class="s1">&#39;DISTR&#39;</span> <span class="ow">in</span> <span class="n">stat</span><span class="o">.</span><span class="n">name</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="TopCentralityMetric"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.TopCentralityMetric">[docs]</a><span class="k">class</span> <span class="nc">TopCentralityMetric</span><span class="p">(</span><span class="n">Metric</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Measure crawling result with respect to the top centrality fraction of nodes.</span>
+<span class="sd">    Supports measuring precision, recall, and F1-score for various crawler parts defined: crawled,</span>
+<span class="sd">    observed, nodes, and answer (for those crawlers that has answer).</span>
+<span class="sd">    Centrality can be any of graph distributional statistics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">short</span> <span class="o">=</span> <span class="s1">&#39;TopK&#39;</span>
+
+<div class="viewcode-block" id="TopCentralityMetric.__init__"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.TopCentralityMetric.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">top</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">centrality</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">measure</span><span class="o">=</span><span class="s1">&#39;F1&#39;</span><span class="p">,</span> <span class="n">part</span><span class="o">=</span><span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Measure crawling result with respect to top fraction of nodes by a specified centrality.</span>
+
+<span class="sd">        :param graph: original graph</span>
+<span class="sd">        :param top: fraction of target nodes (from 0 to 1)</span>
+<span class="sd">        :param centrality: node centrality to get top (see Stat)</span>
+<span class="sd">        :param measure: &#39;Pr&#39; (precision), &#39;Re&#39; (recall), or &#39;F1&#39; (F1-score)</span>
+<span class="sd">        :param part: &#39;crawled&#39;, &#39;observed&#39;, &#39;nodes&#39; (observed+crawled), &#39;answer&#39; (crawler must</span>
+<span class="sd">         support getting an answer, e.g. extend CrawlerWithAnswer)</span>
+<span class="sd">        :param name: name for plotting</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># assert &#39;Distr&#39; in centrality</span>
+        <span class="k">assert</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;observed&#39;</span><span class="p">,</span> <span class="s1">&#39;nodes&#39;</span><span class="p">,</span> <span class="s1">&#39;answer&#39;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">measure</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Pr&#39;</span><span class="p">,</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;F1&#39;</span><span class="p">]</span>
+
+        <span class="n">target_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">get_top_centrality_nodes</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">centrality_by_name</span><span class="p">[</span><span class="n">centrality</span><span class="p">],</span> <span class="n">count</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">top</span><span class="o">*</span><span class="n">graph</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">NODES</span><span class="p">])))</span>
+        <span class="n">target_set_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_set</span><span class="p">)</span>
+
+        <span class="n">get_part</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;crawled&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">crawler</span><span class="o">.</span><span class="n">crawled_set</span><span class="p">,</span>
+            <span class="s1">&#39;observed&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">crawler</span><span class="o">.</span><span class="n">observed_set</span><span class="p">,</span>
+            <span class="s1">&#39;nodes&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">crawler</span><span class="o">.</span><span class="n">nodes_set</span><span class="p">,</span>
+            <span class="s1">&#39;answer&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">crawler</span><span class="p">:</span> <span class="n">crawler</span><span class="o">.</span><span class="n">answer</span><span class="p">,</span>
+        <span class="p">}[</span><span class="n">part</span><span class="p">]</span>
+
+        <span class="n">callback</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;Pr&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">crawler</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span>    <span class="nb">len</span><span class="p">(</span><span class="n">get_part</span><span class="p">(</span><span class="n">crawler</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">target_set</span><span class="p">))</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">get_part</span><span class="p">(</span><span class="n">crawler</span><span class="p">)),</span>
+            <span class="s1">&#39;Re&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">crawler</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span>    <span class="nb">len</span><span class="p">(</span><span class="n">get_part</span><span class="p">(</span><span class="n">crawler</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">target_set</span><span class="p">))</span> <span class="o">/</span> <span class="n">target_set_size</span><span class="p">,</span>
+            <span class="s1">&#39;F1&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">crawler</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span>  <span class="mi">2</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">get_part</span><span class="p">(</span><span class="n">crawler</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">target_set</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">target_set_size</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">get_part</span><span class="p">(</span><span class="n">crawler</span><span class="p">))),</span>
+        <span class="p">}[</span><span class="n">measure</span><span class="p">]</span>
+
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="n">part</span><span class="p">,</span> <span class="n">centrality</span><span class="p">,</span> <span class="n">top</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="n">top</span><span class="p">,</span> <span class="n">centrality</span><span class="o">=</span><span class="n">centrality</span><span class="p">,</span> <span class="n">measure</span><span class="o">=</span><span class="n">measure</span><span class="p">,</span> <span class="n">part</span><span class="o">=</span><span class="n">part</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="exponential_batch_generator"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.exponential_batch_generator">[docs]</a><span class="k">def</span> <span class="nf">exponential_batch_generator</span><span class="p">(</span><span class="n">budget</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1e9</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Generator for exponentially growing batches.</span>
+<span class="sd">    Yields batches until their sum &lt; budget; the last one fills it up to budget exactly.</span>
+
+<span class="sd">    NOTE: magic constant 20 is used in history and should not be changed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">total</span> <span class="o">/</span> <span class="mi">20</span><span class="p">))</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="n">batch</span>
+        <span class="k">if</span> <span class="n">total</span> <span class="o">&lt;</span> <span class="n">budget</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">batch</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">budget</span> <span class="o">-</span> <span class="n">total</span> <span class="o">+</span> <span class="n">batch</span>
+            <span class="k">break</span></div>
+
+
+<div class="viewcode-block" id="uniform_batch_generator"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.uniform_batch_generator">[docs]</a><span class="k">def</span> <span class="nf">uniform_batch_generator</span><span class="p">(</span><span class="n">budget</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Generator for uniform batches.</span>
+<span class="sd">    Yields batches until their sum &lt; budget; the last one fills it up to budget exactly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">step</span> <span class="o">&lt;=</span> <span class="n">budget</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="n">step</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="n">batch</span>
+        <span class="k">if</span> <span class="n">total</span> <span class="o">&lt;</span> <span class="n">budget</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">batch</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">budget</span> <span class="o">-</span> <span class="n">total</span> <span class="o">+</span> <span class="n">batch</span>
+            <span class="k">break</span></div>
+
+
+<div class="viewcode-block" id="CrawlerRunner"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.CrawlerRunner">[docs]</a><span class="k">class</span> <span class="nc">CrawlerRunner</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class to run configurations of several crawlers and metrics. Details in subclasses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CrawlerRunner.__init__"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.CrawlerRunner.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">crawler_defs</span><span class="p">,</span> <span class="n">metric_defs</span><span class="p">,</span> <span class="n">budget</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Setup configuration for the graph: crawler definitions, metric definitions, budget, and step.</span>
+
+<span class="sd">        :param graph: graph to run</span>
+<span class="sd">        :param crawler_defs: list of crawler definitions to run. Crawler definitions will be</span>
+<span class="sd">         initialized when run() is called</span>
+<span class="sd">        :param metric_defs: list of metric definitions to compute at each step. Metric should be</span>
+<span class="sd">         callable function crawler -&gt; float, and have name</span>
+<span class="sd">        :param budget: maximal number of nodes to be crawled, by default the whole graph</span>
+<span class="sd">        :param step: compute metrics each `step` steps, by default exponential step</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">graph</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crawler_defs</span> <span class="o">=</span> <span class="n">crawler_defs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric_defs</span> <span class="o">=</span> <span class="n">metric_defs</span>
+
+        <span class="c1"># Initialize step sequence</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">budget</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">budget</span><span class="p">,</span> <span class="n">graph</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">NODES</span><span class="p">])</span> <span class="k">if</span> <span class="n">budget</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="n">graph</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">NODES</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_generator_getter</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">exponential_batch_generator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">budget</span><span class="p">)</span> \
+            <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="n">uniform_batch_generator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">budget</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_init_runner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize crawlers, metrics, and batch generator.</span>
+
+<span class="sd">        :return: triple with defined objects: (crawlers, metrics, batch generator)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO implement same_initial_seed</span>
+        <span class="n">crawlers</span> <span class="o">=</span> <span class="p">[</span><span class="n">Crawler</span><span class="o">.</span><span class="n">from_definition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_defs</span><span class="p">]</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="n">Metric</span><span class="o">.</span><span class="n">from_definition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_defs</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">crawlers</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_generator_getter</span><span class="p">()</span>
+
+<div class="viewcode-block" id="CrawlerRunner.run"><a class="viewcode-back" href="../../code.html#running.metrics_and_runner.CrawlerRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Run specified configurations on the given graph</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;defined in subclasses&quot;</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">test_batch_generator</span><span class="p">():</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1"># for b in exponential_batch_generator(9949):</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">uniform_batch_generator</span><span class="p">(</span><span class="mi">9949</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">b</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">test_batch_generator</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">CrawlingFramework</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../project.html">Project description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code.html">Code Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, misha et al.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
