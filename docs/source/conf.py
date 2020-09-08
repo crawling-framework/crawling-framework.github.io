@@ -177,10 +177,8 @@ autodoc_special_members = '__init__'
 
 # The default options for autodoc directives. They are applied to all autodoc directives automatically. It must be a dictionary which maps option names to the values.
 autodoc_default_options = {
-    'members': 'var1, var2',
-#    'member-order': 'bysource',
+    'member-order': 'bysource',
     'special-members': '__init__',
-#    'undoc-members': True,
     'exclude-members': '__weakref__',
     'ignore-module-all': True,
 }
