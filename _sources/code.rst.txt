@@ -85,6 +85,7 @@ models
 
 demo
 ===================
+.. _demo-lbl:
 .. automodule:: demo.demo
    :members:
 
