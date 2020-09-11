@@ -77,11 +77,6 @@ runners
    :members:
    :special-members: __init__
 
-models
-===================
-.. automodule:: graph_models.models
-   :members:
-
 
 demo
 ===================

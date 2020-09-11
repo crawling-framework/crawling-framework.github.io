@@ -86,7 +86,7 @@ modification will lead to segfault</p></li>
 <dt id="base.cgraph.MyGraph.giant_component">
 <code class="sig-name descname">giant_component</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.giant_component" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a new graph containing the giant component of this graph.
-Note: all computed and saved stats will be removed.</p>
+Note: graph file will be overwritten, all computed and saved stats will be removed.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1437,58 +1437,6 @@ Miss graphs where not all configurations are present.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-graph_models.models">
-<span id="models"></span><h2>models<a class="headerlink" href="#module-graph_models.models" title="Permalink to this headline">¶</a></h2>
-<dl class="py function">
-<dt id="graph_models.models.truncated_power_law">
-<code class="sig-prename descclassname">graph_models.models.</code><code class="sig-name descname">truncated_power_law</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">count</span></em>, <em class="sig-param"><span class="n">gamma</span></em>, <em class="sig-param"><span class="n">maximal</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_models/models.html#truncated_power_law"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_models.models.truncated_power_law" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate power law integer samples y ~ x^{-gamma} for 1&lt;=x&lt;=maximal.
-:param count: number of samples
-:param gamma: power
-:param maximal: max value
-:return:</p>
-</dd></dl>
-
-<dl class="py function">
-<dt id="graph_models.models.truncated_normal">
-<code class="sig-prename descclassname">graph_models.models.</code><code class="sig-name descname">truncated_normal</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">count</span></em>, <em class="sig-param"><span class="n">mean</span></em>, <em class="sig-param"><span class="n">variance</span></em>, <em class="sig-param"><span class="n">min</span></em>, <em class="sig-param"><span class="n">max</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_models/models.html#truncated_normal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_models.models.truncated_normal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate normal integer samples for min&lt;=x&lt;=maximal.
-:param count: number of samples
-:param mean:
-:param variance:
-:param min: min value
-:param max: max value
-:return:</p>
-</dd></dl>
-
-<dl class="py function">
-<dt id="graph_models.models.LFR">
-<code class="sig-prename descclassname">graph_models.models.</code><code class="sig-name descname">LFR</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nodes</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">avg_deg</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">max_deg</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)">int</a></span></em>, <em class="sig-param"><span class="n">mixing</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">t1</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t2</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">minc</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">maxc</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">on</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">om</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">C</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_models/models.html#LFR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_models.models.LFR" title="Permalink to this definition">¶</a></dt>
-<dd><p>LFR benchmark. <a class="reference external" href="https://www.santofortunato.net/resources">https://www.santofortunato.net/resources</a>
-Default parameters: t1=2, t2=1, on=0, om=0, minc and maxc will be chosen close to the degree sequence extremes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nodes</strong> – number of nodes</p></li>
-<li><p><strong>avg_deg</strong> – average degree</p></li>
-<li><p><strong>max_deg</strong> – maximum degree</p></li>
-<li><p><strong>mixing</strong> – mixing parameter</p></li>
-<li><p><strong>t1</strong> – minus exponent for the degree sequence</p></li>
-<li><p><strong>t2</strong> – minus exponent for the community size distribution</p></li>
-<li><p><strong>minc</strong> – minimum for the community sizes</p></li>
-<li><p><strong>maxc</strong> – maximum for the community sizes</p></li>
-<li><p><strong>on</strong> – number of overlapping nodes</p></li>
-<li><p><strong>om</strong> – number of memberships of the overlapping nodes</p></li>
-<li><p><strong>C</strong> – [average clustering coefficient]</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>MyGraph</p>
-</dd>
-</dl>
-</dd></dl>
-
-</div>
 <div class="section" id="demo">
 <h2>demo<a class="headerlink" href="#demo" title="Permalink to this headline">¶</a></h2>
 <span class="target" id="module-demo.demo"><span id="demo-lbl"></span></span><dl class="py function">
@@ -1574,7 +1522,6 @@ Default parameters: t1=2, t2=1, on=0, om=0, minc and maxc will be chosen close t
 <li class="toctree-l2"><a class="reference internal" href="#module-base.cgraph">basics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-crawlers.cbasic">crawlers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-running.metrics_and_runner">runners</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-graph_models.models">models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#demo">demo</a></li>
 </ul>
 </li>
