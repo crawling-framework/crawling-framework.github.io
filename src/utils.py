@@ -14,5 +14,5 @@ config = exec(open(CONFIG_PATH, 'r').read())  # updates the above VARIABLES from
 
 
 # Should go before any cython imports. By calling here it is run once
-from cyth.setup import build_cython
+from setup import build_cython
 build_cython(rel_dir, SNAP_DIR)

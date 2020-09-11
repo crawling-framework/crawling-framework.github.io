@@ -230,14 +230,3 @@ cdef dict compute_nodes_centrality(MyGraph graph, str centrality, nodes_fraction
 
     logging.info(" done.")
     return node_cent
-
-
-cpdef int test_cstats() except -1:
-    from graph_io import GraphCollections
-    cdef MyGraph g = GraphCollections.get("petster-hamster")
-
-    for s in [Stat.ECCENTRICITY_DISTR]:
-        v = stat_computer[s](g)
-        print(s, v)
-
-    return 0

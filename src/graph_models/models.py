@@ -1,14 +1,11 @@
 import glob
 import os
 from os.path import join as opj
-from itertools import combinations
 
 import numpy as np
-from numpy import random
 import scipy.stats as stats
 
 from base.cgraph import MyGraph
-from graph_models.cmodels import configuration_model, grid2d
 from graph_io import temp_dir, GraphCollections
 from graph_stats import Stat
 from utils import LFR_DIR, GRAPHS_DIR
@@ -49,43 +46,6 @@ def truncated_normal(count, mean, variance, min, max):
     pmf /= pmf.sum()
     d = stats.rv_discrete(values=(range(min, max + 1), pmf))
     return d.rvs(size=count)
-
-
-# def ba_model(n, avg_deg, directed=False, random_seed=None) -> MyGraph:
-#     assert directed is False
-#
-#     # g = snap.TNGraph.New() if directed else snap.TUNGraph.New()
-#     #
-#     # degs = np.zeros(n, dtype=int)
-#     #
-#     # # Initial component
-#     # for i in range(avg_deg):
-#     #     g.AddNode(i)
-#     #     degs[i] = avg_deg-1
-#     # print(list(combinations(range(avg_deg), 2)))
-#     # for i, j in combinations(range(avg_deg), 2):
-#     #     g.AddEdge(i, j)
-#     #
-#     # for i in range(avg_deg, n):
-#     #     if i%1000 == 0:
-#     #         print("BA: nodes", i)
-#     #     g.AddNode(i)
-#     #     s = sum(degs)
-#     #     for j in range(0, i):
-#     #         p = avg_deg * degs[j] / s
-#     #         if np.random.random() < p:
-#     #             g.AddEdge(i, j)
-#     #             degs[i] += 1
-#     #             degs[j] += 1
-#     #
-#     # print(degs)
-#
-#     Rnd = snap.TRnd(random_seed if random_seed else random.randint(1e9))
-#     g = snap.GenPrefAttach(n, avg_deg, Rnd)
-#     # for EI in g.Edges():
-#     #     print("edge: (%d, %d)" % (EI.GetSrcNId(), EI.GetDstNId()))
-#     print("N=%d, E=%d" % (g.GetNodes(), g.GetEdges()))
-#     return MyGraph.new_snap(g, name='BA_model')
 
 
 def LFR(nodes: int, avg_deg: float, max_deg: int, mixing: float, t1=None, t2=None, minc=None, maxc=None, on=None, om=None, C=None):
@@ -142,6 +102,8 @@ def LFR(nodes: int, avg_deg: float, max_deg: int, mixing: float, t1=None, t2=Non
         # Handle graph
         os.rename(opj(directory, 'network.dat'), path)
         g = MyGraph(path=path, name=name).giant_component()
+        if g.nodes() == 0:
+            raise RuntimeError("LFR generated graph has no nodes.")
         assert g[Stat.MAX_WCC] == 1
 
         # Handle communities
@@ -158,28 +120,6 @@ def LFR(nodes: int, avg_deg: float, max_deg: int, mixing: float, t1=None, t2=Non
     return g
 
 
-def test():
-    import matplotlib.pyplot as plt
-
-    deg_seq = truncated_power_law(1000, gamma=1.6, maximal=100)
-    # deg_seq = truncated_normal(100, mean=10, variance=1000, min=1, max=100)
-    # print(deg_seq)
-
-    # plt.hist(sample, bins=np.arange(100) + 0.5)
-    # plt.show()
-    # graph = configuration_model(deg_seq)
-    # g = ba_model(100, 10)
-
-    g = LFR(500, 10, 100, 0.3)
-
-    # from graph_io import GraphCollections
-    # graph = GraphCollections.get('petster-hamster')
-    # for stat in Stat:
-    #     print(stat, g[stat])
-    # print(graph[Stat.DIAMETER_90])
-
-
 if __name__ == '__main__':
-    test()
     g = LFR(500, 10, 30, 0.02)
     print(g.nodes())

@@ -7,83 +7,6 @@ from crawlers.cbasic import Crawler, NoNextSeedError,\
 logger = logging.getLogger(__name__)
 
 
-# class MultiSeedCrawler(Crawler, ABC):
-#     """
-#     great class to Avrachenkov and other crawlers starting with n1 seeds
-#     """
-#
-#     def __init__(self, graph: MyGraph):
-#         super().__init__(graph)
-#         # assert n1 <= self.budget_left <= self.orig_graph.nodes()
-#         # assert k <= self.budget_left - n1
-#         # self.n1 = n1  # n1 seeds crawled on first steps, then comes crawler
-#         self.seed_sequence_ = []  # sequence of tries to add nodes
-#         self.initial_seeds = []  # store n1 seeds # TODO maybe use it not only in Random Walk (Frontier Sampling)
-#         self.budget_left = 1  # how many iterations left. stops when 0
-#         # print("n1={}, budget={}, nodes={}".format(self.n1, self.budget_left, self.orig_graph.nodes()))
-#         self.crawler_name = ""  # will be used in names of files
-#         # self.components_current_seeds
-#
-#     def crawl_multi_seed(self, n1):
-#         if n1 <= 0:  # if there is no parallel seeds, method do nothing
-#             return False
-#         graph_nodes = [n.GetId() for n in self.orig_graph.snap.Nodes()]
-#         # TODO do something if there are doublicates in initial seeds
-#         self.initial_seeds = [int(node) for node in np.random.choice(graph_nodes, n1)]
-#         for seed in self.initial_seeds:
-#             self.crawl(seed)
-#         print("observed set after multiseed", list(self._observed_set))
-#
-#     def crawl(self, seed):
-#         """
-#         Crawls given seed
-#         Decrease self.budget_left only if crawl is successful
-#         """
-#         # http://conferences.sigcomm.org/imc/2010/papers/p390.pdf
-#         # TODO implement frontier choosing of component (one from m)
-#         raise NotImplementedError()
-#         # FIXME res is set now
-#         self.seed_sequence_.append(seed)  # updates every TRY of crawling
-#         if super().crawl(seed):
-#             self.budget_left -= 1
-#
-#             logging.debug("{}.-- seed {}, crawled #{}: {}, observed #{},".format(len(self.seed_sequence_), seed,
-#                                                                                  len(self.crawled_set),
-#                                                                                  self.crawled_set,
-#                                                                                  len(self._observed_set),
-#                                                                                  self._observed_set))
-#             return True
-#         else:
-#             logging.debug("{}. budget ={}, seed = {}, in crawled set={}, observed ={}".format(len(self.seed_sequence_),
-#                                                                                               self.budget_left, seed,
-#                                                                                               self.crawled_set,
-#                                                                                               self._observed_set))
-#             return False
-#
-#     def crawl_budget(self, budget, p=0, file=False):
-#         """
-#         Crawl until done budget
-#         :param p: probability to jump into one of self.initial_seed nodes  # TODO do something with it. Mb delete?
-#         :param budget: how many iterations left
-#         :param file: - if you need to
-#         :return:
-#         """
-#         self.budget_left = min(budget, self.observed_graph.nodes() - 1)
-#         if np.random.randint(0, 100, 1) < p * 100:  # TODO to play with this dead staff
-#             print("variety play")
-#             self.crawl(int(np.random.choice(self.initial_seeds, 1)[0]))
-#             self.budget_left -= 1
-#
-#         while (self.budget_left > 0) and (len(self._observed_set) > 0) \
-#                 and (self.observed_graph.nodes() <= self.orig_graph.nodes()):
-#             seed = self.next_seed()
-#             self.crawl(seed)
-#
-#             # if file:
-#             logging.debug("seed:%s. crawled:%s, observed:%s, all:%s" %
-#                           (seed, self.crawled_set, self._observed_set, self.nodes_set))
-
-
 class MultiCrawler(Crawler):
     """ General class for complex crawling strategies using several crawlers
     """
@@ -182,8 +105,3 @@ class MultiInstanceCrawler(MultiCrawler):
             return s
 
         raise NoNextSeedError("None of %s subcrawlers can get next seed." % len(self.crawlers))
-
-
-if __name__ == '__main__':
-    # test_carpet_graph(10, 10)
-    pass

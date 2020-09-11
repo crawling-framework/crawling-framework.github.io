@@ -4,6 +4,7 @@ from graph_io import GraphCollections
 
 from graph_stats import Stat, get_top_centrality_nodes
 
+
 class Metric:
     """
     Base class for metrics on crawling process.

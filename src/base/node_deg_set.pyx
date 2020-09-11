@@ -130,35 +130,3 @@ cdef class ND_Set:
     #             # print(res)
     #             return res
     #         raise NotImplementedError()
-
-def key(n):
-    return 20*(n)
-
-
-cpdef test_ndset():
-    # from cyth.cskl import SKL
-
-
-    elems = [(1, 40),
-             (4, 30),
-             (6, 20),
-             (2, 40),
-             (0, 40),
-             (3, 40)]
-    deg = dict(elems)
-    cdef ND_Set skl = ND_Set(elems, key=key)
-
-    # for e in elems:
-    #     print("pushing %s" % str(e))
-    #     cpq.push(e)
-        # skl.add(e[0], e[1])
-        # print("pushed %s" % str(e))
-
-    # r = skl.remove(2, 40)
-    r = skl.discard(2)
-    print(r)
-
-    while not skl.empty():
-        a = skl.pop()
-        print(a)
-

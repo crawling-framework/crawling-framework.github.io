@@ -4,11 +4,9 @@ import shutil
 import json
 
 from libcpp.vector cimport vector
-from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, address as addr
+from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc
 
 from utils import TMP_GRAPHS_DIR
-
-cimport cgraph  # pxd import DON'T DELETE
 
 logger = logging.getLogger(__name__)
 
@@ -247,7 +245,7 @@ cdef class MyGraph:
     cpdef giant_component(self):
         """
         Return a new graph containing the giant component of this graph.
-        Note: all computed and saved stats will be removed.
+        Note: graph file will be overwritten, all computed and saved stats will be removed.
         """
         cdef PUNGraph p = GetMxWcc[PUNGraph](self._snap_graph_ptr)
         return self.new_snap(p)
@@ -278,7 +276,7 @@ cdef class MyGraph:
                 logger.info("Could not find stats '%s' at '%s'. Will be computed." % (stat, stat_path))
                 if self._snap_graph_ptr.Empty():
                     self.load()
-                from cyth.cstatistics import stat_computer
+                from base.cstatistics import stat_computer
                 # value = stat.computer(self)
                 value = stat_computer[stat](self)
 
@@ -349,117 +347,3 @@ cdef class MyGraph:
                 nx_graph.add_edge(n, k)
 
         return nx_graph
-
-
-def cgraph_test():
-    # print("MyGraph")
-    import numpy as np
-
-    # cdef TUNGraph g
-    # g = TUNGraph()
-    # g.AddNode(0)
-    # g.AddNode(1)
-    # g.AddEdge(0, 1)
-    # N = g.GetNodes()
-    # E = g.GetEdges()
-    # print(N, E)
-
-    # cdef char* a = 'asd'
-    # cdef TStr s = TStr(a)
-    # # cdef PUNGraph p
-    # cdef TPt[TUNGraph] p
-    # p = LoadEdgeList[TPt[TUNGraph]](TStr('/home/misha/workspace/crawling/data/konect/dolphins.ij'), 0, 1)
-    #
-    # cdef TUNGraph t
-    # # t = *p
-    # t = deref(p)
-    #
-    # print(t.GetNodes())
-
-    # cdef char* name = 'douban'
-    # cdef char* path = '/home/misha/workspace/crawling/data/konect/dolphins.ij'
-
-    graph = MyGraph(path='/home/misha/workspace/crawling/data/konect/petster-hamster.ij', name='d')
-    cdef TUNGraph g = deref(LoadEdgeList[PUNGraph](TStr('/home/misha/workspace/crawling/data/konect/dolphins.ij'), 0, 1))
-    empty = MyGraph(name='empty')
-
-    # graph = MyGraph.CLoad(path)
-    # graph = MyGraph.Empty('')
-    # print(empty.add_node(10))
-    # print("path=%s" % 'abc' + graph.path)
-    # print("N=%s" % graph.nodes())
-    # print("E=%s" % graph.edges())
-
-    # print("Nodes:")
-    # for n in graph.iter_nodes():
-    #     print(n)
-    # cdef TUNGraph.TNodeI ni = g.BegNI()
-    # cdef int count = g.GetNodes()
-    # for i in range(count):
-    #     print(ni.GetId())
-    #     pinc(ni)
-
-    # n = 1
-    # print("Neighs of %s:" % n)
-    # for n in graph.neighbors(n):
-    #     print(n)
-    #
-    # print("Rand neighs")
-
-    # cdef TRnd t_random = TRnd(int(time()*1e6 % 1e9), 0)
-    # t_random.PutSeed(3)
-    for _ in range(5):
-        print(t_random.GetUniDevInt(10))
-        # print(graph.random_node())
-    #     print(graph.random_neighbor(1))
-
-    # print("Rand nodes")
-    # cdef vector[int] rnodes
-    # cdef int n
-    #
-    # t = time()
-    # for _ in range(100):
-    #     n = graph.random_node()
-    #     # rnodes = graph.random_nodes(1000)
-    #     # np.random.choice(range(250000), 1000, replace=False)
-    # # for n in rnodes:
-    # #     print(n)
-    # print(time()-t)
-
-    # cdef PUNGraph ptr = PUNGraph.New()
-    # cdef TUNGraph g = deref(ptr)
-    # cdef TUNGraph g2 = g
-    # cdef TUNGraph g = TUNGraph()
-    # cdef PUNGraph ptr2 = TPt[TUNGraph](&g)
-
-    # print(ptr == TPt[TUNGraph](&g))
-    # print(g.GetNodes())
-    # print(deref(ptr).GetNodes())
-    # print(deref(ptr2).GetNodes())
-
-    # g.AddNode(1)
-    # print(g.GetNodes())
-    # print(g2.GetNodes())
-    # print(deref(ptr).GetNodes())
-    # print(deref(ptr2).GetNodes())
-
-    # deref(ptr).AddNode(1)
-    # print(g.GetNodes())
-    # print(deref(ptr).GetNodes())
-    # print(deref(ptr2).GetNodes())
-
-    # cdef int i, n = 10000000
-    # t = time()
-    # for i in range(n):
-    #     deref(ptr).AddNode(i)
-    # print(time()-t)
-    #
-    # t = time()
-    # for i in range(n):
-    #     g.AddNode(i)
-    # print(time()-t)
-
-    empty.add_node(1)
-    cdef double cc = GetANodeClustCf[PUNGraph](empty.snap_graph_ptr(), 1)
-    # print("cc", cc)
-    print("End")
