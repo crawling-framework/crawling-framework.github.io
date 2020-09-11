@@ -22,4 +22,4 @@ TODO description
 Demo-tutorial
 -------------
 
-See 7-steps tutorial at `src/demo/demo.py`
+See 7-steps tutorial at :ref:`demo <demo-lbl>`
