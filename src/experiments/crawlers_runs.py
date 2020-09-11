@@ -5,8 +5,9 @@ from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric
 from running.history_runner import CrawlerHistoryRunner
 
-from graph_io import GraphCollections, konect_names, netrepo_names
-from statistics import Stat
+from graph_io import GraphCollections
+from experiments.three_stage_paper import konect_names, netrepo_names
+from graph_stats import Stat
 import multiprocessing
 
 

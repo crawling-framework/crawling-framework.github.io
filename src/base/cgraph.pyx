@@ -1,10 +1,10 @@
 import logging
 import os
 import shutil
+import json
 
 from libcpp.vector cimport vector
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, address as addr
-from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 
 from utils import TMP_GRAPHS_DIR
 
@@ -12,14 +12,12 @@ cimport cgraph  # pxd import DON'T DELETE
 
 logger = logging.getLogger(__name__)
 
-cdef inline fingerprint(const PUNGraph snap_graph_ptr):  # FIXME duplicate
+cdef inline fingerprint(const PUNGraph snap_graph_ptr):
     """ Graph fingerprint to make sure briefly if it has changed.
 
     :param snap_graph:
     :return: (|V|, |E|)
     """
-    # if snap_graph_ptr is NULL:
-    #     return 0, 0
     return deref(snap_graph_ptr).GetNodes(), deref(snap_graph_ptr).GetEdges()
 
 
@@ -33,6 +31,10 @@ cpdef int get_UniDevInt(int max):
     return t_random.GetUniDevInt(max)
 
 cdef class MyGraph:
+    """
+
+    TODO add docs
+    """
     def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij', not_load: bool=False):
         """
 
@@ -66,9 +68,9 @@ cdef class MyGraph:
 
         self._stats_dict = {}
 
-    def __dealloc__(self):
-        # print("dealloc", self.name)
-        pass
+    # def __dealloc__(self):
+    #     # print("dealloc", self.name)
+    #     pass
 
     cpdef bint is_loaded(self):
         return not self._snap_graph_ptr.Empty()
@@ -263,7 +265,7 @@ cdef class MyGraph:
         """ Get graph statistics. Index by str or Stat. Works only if snap graph is immutable. """
         self._check_consistency()
         if isinstance(stat, str):
-            from statistics import Stat
+            from graph_stats import Stat
             stat = Stat[stat]
 
         if stat in self._stats_dict:
@@ -284,10 +286,12 @@ cdef class MyGraph:
                 if not os.path.exists(os.path.dirname(stat_path)):
                     os.makedirs(os.path.dirname(stat_path))
                 with open(stat_path, 'w') as f:
-                    f.write(str(value))
+                    f.write(json.dumps(value))
             else:
                 # Read stats from file - value or dict
-                value = eval(open(stat_path, 'r').read())  # FIXME very memory consuming for large graphs!
+                # TODO: json.loads() could be memory-consuming for large graphs
+                value = json.loads(open(stat_path, 'r').read(),
+                                   object_hook=lambda x: {int(k): v for k, v in x.items()} if isinstance(x, dict) else x)
 
             self._stats_dict[stat] = value
 
@@ -296,7 +300,7 @@ cdef class MyGraph:
     def __setitem__(self, stat, value):
         self._check_consistency()
         if isinstance(stat, str):
-            from statistics import Stat
+            from graph_stats import Stat
             stat = Stat[stat]
         self._stats_dict[stat] = value
 
@@ -306,7 +310,7 @@ cdef class MyGraph:
             if not os.path.exists(os.path.dirname(stat_path)):
                 os.makedirs(os.path.dirname(stat_path))
         with open(stat_path, 'w') as f:
-            f.write(str(value))
+            f.write(json.dumps(value))
 
     def networkit(self, node_map: dict = None):
         """ Get networkit graph, create node ids mapping (neworkit_node_id -> snap_node_id) if

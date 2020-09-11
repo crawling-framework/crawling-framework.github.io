@@ -1,10 +1,9 @@
 import logging
 
-from statistics import get_top_centrality_nodes, Stat
+from graph_stats import get_top_centrality_nodes, Stat
 
-from base.cgraph import MyGraph, seed_random, get_UniDevInt
-from crawlers.cbasic import Crawler, CrawlerException, \
-    MaximumObservedDegreeCrawler, NoNextSeedError, RandomWalkCrawler, DepthFirstSearchCrawler, RandomCrawler
+from base.cgraph import MyGraph
+from crawlers.cbasic import Crawler, CrawlerException, MaximumObservedDegreeCrawler
 from crawlers.cadvanced import CrawlerWithAnswer
 
 
@@ -19,7 +18,7 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
         super().__init__(graph, limit=n, n=n, n1=n1, k=k, **kwargs)
         assert n1 <= n
         # assert n1 <= n <= self._orig_graph.nodes()
-        #assert k <= n-n1
+        # assert k <= n-n1
         self.n1 = n1
         self.n = n
         self.k = k
@@ -46,8 +45,8 @@ class AvrachenkovCrawler(CrawlerWithAnswer):
 class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
     """
     Runs a given crawler and forms an answer set.
-    In case of specified target set size T, the answer A = top-T degree nodes from crawled_set, or if there are not
-    enough, all crawled + the rest from observed_set.
+    In case of specified target set size T, the answer A = top-T degree nodes from crawled_set, or
+    if there are not enough nodes, all crawled + the rest from observed_set.
     """
     short = 'EmulatorWA'
 
@@ -88,6 +87,9 @@ class EmulatorWithAnswerCrawler(CrawlerWithAnswer):
 
 class ThreeStageCrawler(CrawlerWithAnswer):
     """
+    Algorithm from our paper
+    "Three-step Algorithms for Detection of High Degree Nodes in Online Social Networks"
+    TODO add ref when published
     """
     short = '3-Stage'
 
@@ -96,7 +98,7 @@ class ThreeStageCrawler(CrawlerWithAnswer):
         :param graph: original graph
         :param s: number of initial random seed
         :param n: number of nodes to be crawled, must be >= seeds
-        :param p: fraction of graph nodes to be returned
+        :param p: fraction of target graph nodes
         """
         super().__init__(graph, limit=n, s=s, n=n, p=p, **kwargs)
         self.s = s
@@ -145,29 +147,13 @@ class ThreeStageCrawler(CrawlerWithAnswer):
     def _compute_answer(self):
         self._answer.clear()
         if (len(self.e1s) + len(self.h)) < self.pV:
-            # self.e2s.clear()
-            # # Get v=(pN-n+s) max degree observed nodes
-            # self._get_mod_nodes(self._observed_set, self.e2s, self.pV - len(self.e1s) - len(self.h))
-            # logging.debug("|E2*|=%s" % len(self.e2s))
-            #
-            # # Final answer - E* = E1* + E2*
-            # self._answer.update(self.h, self.e1s, self.e2s)
+            self.e2s.clear()
+            # Get v=(pN-n+s) max degree observed nodes
+            self._get_mod_nodes(self._observed_set, self.e2s, self.pV - len(self.e1s) - len(self.h))
+            logging.debug("|E2*|=%s" % len(self.e2s))
 
-            if len(self.e1s) == 0:  # we are at 1st step
-                self._get_mod_nodes(self.nodes_set, self._answer, self.pV)
-
-            else:  # As Max suggested
-                # a = top(ps+n-s) from S* + E1*
-                a = set()
-                self._get_mod_nodes(set.union(self.start_seeds, self.e1s), a, int(self.p * self.s) + self.n - self.s)
-                # A = top-pN from a + observed
-                self._get_mod_nodes(set.union(a, self._observed_set), self._answer, self.pV)
-
-        else:
-            # # Top-pN from all crawled
-            # self._get_mod_nodes(self._crawled_set, self._answer, self.pV)
-            # Top-pN from crawled + observed
-            self._get_mod_nodes(self.nodes_set, self._answer, self.pV)
+            # Final answer - E* = E1* + E2*
+            self._answer.update(self.h, self.e1s, self.e2s)
 
         logging.debug("|E*|=%s" % len(self._answer))
         # assert len(self._answer) <= self.pN
@@ -176,7 +162,7 @@ class ThreeStageCrawler(CrawlerWithAnswer):
 
 class ThreeStageCrawlerSeedsAreHubs(ThreeStageCrawler):
     """
-    Artificial version of ThreeStageCrawler, where instead of initial random seeds we take hubs
+    Oracle version of ThreeStageCrawler, where instead of initial random seeds we take hubs
     """
     short = '3-StageHubs'
 
@@ -233,6 +219,9 @@ class ThreeStageCrawlerSeedsAreHubs(ThreeStageCrawler):
 
 class ThreeStageMODCrawler(CrawlerWithAnswer):
     """
+    Algorithm from our paper
+    "Three-step Algorithms for Detection of High Degree Nodes in Online Social Networks"
+    TODO add ref when published
     """
     short = '3-StageMOD'
 
@@ -241,7 +230,7 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
         :param graph: original graph
         :param s: number of initial random seed
         :param n: number of nodes to be crawled, must be >= seeds
-        :param p: fraction of graph nodes to be returned
+        :param p: fraction of target graph nodes
         :param b: batch size
         """
         # assert 1 <= b <= n-s
@@ -298,29 +287,13 @@ class ThreeStageMODCrawler(CrawlerWithAnswer):
     def _compute_answer(self):
         self._answer.clear()
         if (len(self.e1s) + len(self.h)) < self.pV:
-            # self.e2s.clear()
-            # # Get v=(pV-n+s) max degree observed nodes
-            # self._get_mod_nodes(self._observed_set, self.e2s, self.pV - len(self.e1s) - len(self.h))
-            # logging.debug("|E2*|=%s" % len(self.e2s))
-            #
-            # # Final answer - E* = E1* + E2*
-            # self._answer.update(self.h, self.e1s, self.e2s)
+            self.e2s.clear()
+            # Get v=(pV-n+s) max degree observed nodes
+            self._get_mod_nodes(self._observed_set, self.e2s, self.pV - len(self.e1s) - len(self.h))
+            logging.debug("|E2*|=%s" % len(self.e2s))
 
-            if len(self.e1s) == 0:  # we are at 1st step
-                self._get_mod_nodes(self.nodes_set, self._answer, self.pV)
-
-            else:  # As Max suggested
-                # A = top(ps+n-s) from S* + E1*
-                a = set()
-                self._get_mod_nodes(set.union(self.start_seeds, self.e1s), a, int(self.p * self.s) + self.n - self.s)
-                # A = top-pV from A + observed
-                self._get_mod_nodes(set.union(a, self._observed_set), self._answer, self.pV)
-
-        else:
-            # # Top-pV from all crawled
-            # self._get_mod_nodes(self._crawled_set, self._answer, self.pV)
-            # Top-pV from crawled + observed
-            self._get_mod_nodes(self.nodes_set, self._answer, self.pV)
+            # Final answer - E* = E1* + E2*
+            self._answer.update(self.h, self.e1s, self.e2s)
 
         logging.debug("|E*|=%s" % len(self._answer))
         # assert len(self._answer) <= self.pV

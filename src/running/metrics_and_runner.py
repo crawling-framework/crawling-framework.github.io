@@ -1,13 +1,28 @@
 from base.cgraph import MyGraph
 from crawlers.cbasic import Crawler, definition_to_filename
+from graph_io import GraphCollections
 
-from statistics import Stat, get_top_centrality_nodes
-
+from graph_stats import Stat, get_top_centrality_nodes
 
 class Metric:
+    """
+    Base class for metrics on crawling process.
+    Metric has an identifying name and a callback function which maps the crawler into a number.
+
+    Example of a custom metric:
+
+    >>> graph = GraphCollections.get('example')
+    >>> m = Metric(name='coverage', callback=lambda crawler: len(crawler.nodes_set) / graph[Stat.NODES])
+
+    """
     short = 'Metric'
 
     def __init__(self, name, callback, **kwargs):
+        """
+        :param name: identifying name
+        :param callback: metric function: callback(crawler, **kwargs) -> number
+        :param kwargs: additional argument to callback function
+        """
         self._callback = callback
         self._kwargs = kwargs
         self._definition = type(self), kwargs
@@ -28,10 +43,17 @@ class Metric:
         return self._callback(crawler, **self._kwargs)
 
 
+# dict {centrality_short -> Stat}
 centrality_by_name = {stat.short: stat for stat in Stat if 'DISTR' in stat.name}
 
 
 class TopCentralityMetric(Metric):
+    """
+    Measure crawling result with respect to the top centrality fraction of nodes.
+    Supports measuring precision, recall, and F1-score for various crawler parts defined: crawled,
+    observed, nodes, and answer (for those crawlers that has answer).
+    Centrality can be any of graph distributional statistics.
+    """
     short = 'TopK'
 
     def __init__(self, graph: MyGraph, top: float, centrality: str, measure='F1', part='crawled', name=None):
@@ -71,8 +93,9 @@ class TopCentralityMetric(Metric):
 
 
 def exponential_batch_generator(budget: int = 1e9):
-    """ Generator for exponentially growing batches. Yields batches until their sum < budget; the
-    last one fills it up to budget exactly.
+    """ Generator for exponentially growing batches.
+    Yields batches until their sum < budget; the last one fills it up to budget exactly.
+
     NOTE: magic constant 20 is used in history and should not be changed.
     """
     total = 0
@@ -84,12 +107,12 @@ def exponential_batch_generator(budget: int = 1e9):
         else:
             yield budget - total + batch
             break
-        # print(total, batch)
 
 
 def uniform_batch_generator(budget: int, step: int):
-    """ Generator for uniform batches. Yields batches until their sum < budget; the last one
-    fills it up to budget exactly"""
+    """ Generator for uniform batches.
+    Yields batches until their sum < budget; the last one fills it up to budget exactly.
+    """
     assert 1 <= step <= budget
     batch = step
     total = 0
@@ -100,11 +123,11 @@ def uniform_batch_generator(budget: int, step: int):
         else:
             yield budget - total + batch
             break
-        # print(total, batch)
 
 
 class CrawlerRunner:
-    """ Base class to run crawlers and measure metrics. Details in subclasses
+    """
+    Base class to run configurations of several crawlers and metrics. Details in subclasses.
     """
 
     def __init__(self, graph: MyGraph, crawler_defs, metric_defs, budget: int = -1, step: int = -1):
@@ -129,8 +152,10 @@ class CrawlerRunner:
         self.batch_generator_getter = lambda: exponential_batch_generator(self.budget) \
             if step == -1 else uniform_batch_generator(self.budget, step)
 
-    def _init_runner(self, same_initial_seed=False):
+    def _init_runner(self):
         """ Initialize crawlers, metrics, and batch generator.
+
+        :return: triple with defined objects: (crawlers, metrics, batch generator)
         """
         # TODO implement same_initial_seed
         crawlers = [Crawler.from_definition(self.graph, d) for d in self.crawler_defs]
@@ -144,9 +169,13 @@ class CrawlerRunner:
         raise NotImplementedError("defined in subclasses")
 
 
-if __name__ == '__main__':
+def test_batch_generator():
     t = 0
     # for b in exponential_batch_generator(9949):
-    for b in uniform_batch_generator(9949, 9949):
+    for b in uniform_batch_generator(9949, step=100):
         t += b
         print(t, b)
+
+
+if __name__ == '__main__':
+    test_batch_generator()

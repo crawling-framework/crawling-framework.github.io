@@ -1,6 +1,6 @@
 from graph_io import GraphCollections
 from running.animated_runner import Metric, AnimatedCrawlerRunner
-from statistics import Stat, get_top_centrality_nodes
+from graph_stats import Stat, get_top_centrality_nodes
 from utils import USE_NETWORKIT, PICS_DIR
 
 if USE_NETWORKIT:

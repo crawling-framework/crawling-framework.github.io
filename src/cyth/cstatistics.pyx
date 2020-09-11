@@ -6,15 +6,18 @@ import sys
 from tqdm import tqdm
 
 from utils import USE_NETWORKIT, USE_LIGRA, LIGRA_DIR
-from statistics import Stat, plm
+from graph_stats import Stat, plm
 from base.cgraph cimport MyGraph, GetClustCf, GetMxWccSz, PUNGraph, TUNGraph, GetBfsEffDiam, \
     GetMxWcc, TIntFltH, GetBetweennessCentr, THashKeyDatI, TInt, TFlt, GetPageRank, \
     GetClosenessCentr, GetNodeEcc, GetNodesClustCf, GetKCore
 from cython.operator cimport dereference as deref, postincrement as pinc
 
-if USE_NETWORKIT:
+if USE_NETWORKIT:  # Use networkit library for approximate centrality calculation
     from networkit._NetworKit import Betweenness, ApproxBetweenness, EstimateBetweenness, ApproxCloseness
 
+# Remapping stats from names to declared functions
+## TODO: To add new statistics need to write it in stat_computer, in Stat class in graph_stats.py
+        ## and (if it is node stat): in this file in compute_nodes_centrality
 stat_computer = {
     Stat.NODES: lambda graph: graph.nodes(),
     Stat.EDGES: lambda graph: graph.edges(),
@@ -30,7 +33,7 @@ stat_computer = {
     Stat.ECCENTRICITY_DISTR: lambda graph: compute_nodes_centrality(graph, 'eccentricity'),
     Stat.CLOSENESS_DISTR: lambda graph: compute_nodes_centrality(graph, 'closeness'),
     Stat.PAGERANK_DISTR: lambda graph: compute_nodes_centrality(graph, 'pagerank'),
-    # Stat.CLUSTERING_DISTR: lambda graph: compute_nodes_centrality(graph, 'clustering'),
+    Stat.CLUSTERING_DISTR: lambda graph: compute_nodes_centrality(graph, 'clustering'),
     Stat.K_CORENESS_DISTR: lambda graph: compute_nodes_centrality(graph, 'k-coreness'),
 
     Stat.PLM_COMMUNITIES: (lambda graph: plm(graph)[0]),
@@ -210,7 +213,7 @@ cdef dict compute_nodes_centrality(MyGraph graph, str centrality, nodes_fraction
             node_cent[if_iter.GetKey()()] = if_iter.GetDat()()
             pinc(if_iter)
 
-    elif centrality == 'k-coreness':  # TODO could be computed in networkx
+    elif centrality == 'k-coreness':
         k = 0
         while True:
             k += 1

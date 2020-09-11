@@ -16,7 +16,6 @@ def main():
 
     args = parser.parse_args()
     send_message(text=args.m, vk_id=args.id)
-    # print('sent')
     return True
 
 

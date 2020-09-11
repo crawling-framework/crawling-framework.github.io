@@ -1,18 +1,19 @@
 import os
-
 from matplotlib import pyplot as plt
 
 from base.cgraph import MyGraph
-from crawlers.cbasic import Crawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler
 from crawlers.advanced import ThreeStageMODCrawler
-from crawlers.multiseed import MultiInstanceCrawler
-from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric, Metric
+from running.metrics_and_runner import CrawlerRunner, TopCentralityMetric
 from graph_io import GraphCollections
-from statistics import Stat, get_top_centrality_nodes
+from graph_stats import Stat
 
 
-# TODO need to check several statistics / metrics
 class AnimatedCrawlerRunner(CrawlerRunner):
+    """
+    Runs several crawlers and measures several metrics for a given graph.
+    Visualizes measurements in dynamics at one plot.
+    """
+
     def __init__(self, graph: MyGraph, crawler_defs, metric_defs, budget: int = -1, step: int = -1):
         """
         :param graph: graph to run
@@ -34,9 +35,9 @@ class AnimatedCrawlerRunner(CrawlerRunner):
 
         plt.figure(self.title, figsize=(1 + scale * self.ncols, scale * self.nrows))
 
-    def run(self, same_initial_seed=False, ylims=None, xlabel='iteration, n', ylabel='metric value', swap_coloring_scheme=False, save_to_file=None):
+    def run(self, ylims=None, xlabel='iteration, n', ylabel='metric value', swap_coloring_scheme=False, save_to_file=None):
         """
-        :param same_initial_seed: use the same initial seed for all crawler instances (NOT IMPLEMENTED)
+        :param same_initial_seed: use the same initial seed for all crawler instances (NOT IMPLEMENTED) FIXME
         :param ylims: (low, up)
         :param xlabel: by default 'iteration, n'
         :param ylabel: by default 'metric value'
@@ -44,8 +45,8 @@ class AnimatedCrawlerRunner(CrawlerRunner):
         :param save_to_file: specify the full path here to save picture
         :return:
         """
-        crawlers, metrics, batch_generator = self._init_runner(same_initial_seed)
-        linestyles = ['-', '--', ':', '.-']
+        crawlers, metrics, batch_generator = self._init_runner()
+        linestyles = ['-', '--', ':', '-.']
         colors = ['black', 'b', 'g', 'r', 'c', 'm', 'y',
                   'darkblue', 'darkgreen', 'darkred', 'darkmagenta', 'darkorange', 'darkcyan',
                   'pink', 'lime', 'wheat', 'lightsteelblue']
@@ -87,11 +88,12 @@ class AnimatedCrawlerRunner(CrawlerRunner):
         plt.show()
 
 
-def test_runner(graph):
-    from statistics import Stat, get_top_centrality_nodes
+def test_runner():
+    from graph_stats import Stat
 
+    graph = GraphCollections.get('petster-hamster')
     p = 0.01
-    budget = int(0.05 * g.nodes())
+    budget = int(0.05 * graph.nodes())
     s = int(budget / 2)
     crawler_defs = [
         # MaximumObservedDegreeCrawler(graph, batch=1),
@@ -124,15 +126,4 @@ if __name__ == '__main__':
     # logging.getLogger('matplotlib.font_manager').setLevel(logging.INFO)
     # logging.getLogger().setLevel(logging.DEBUG)
 
-    # name = 'libimseti'
-    # name = 'petster-friendships-cat'
-    # name = 'soc-pokec-relationships'
-    # name = 'digg-friends'
-    # name = 'loc-brightkite_edges'
-    # name = 'ego-gplus'
-    name = 'petster-hamster'
-
-    # name = 'sc-shipsec5'
-    g = GraphCollections.get(name)
-
-    test_runner(g)
+    test_runner()

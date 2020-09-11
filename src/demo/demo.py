@@ -3,9 +3,7 @@
 #
 
 import os
-
 import logging
-
 from utils import PICS_DIR
 
 logging.basicConfig(format='%(name)s:%(levelname)s:%(message)s')
@@ -30,7 +28,7 @@ def graph_handing():
 
     # One can also use own graph if put it to "data/other/graph_name.ij" directory.
     # Edge list format is supported.
-    g = GraphCollections.get(name='mipt', collection='other', giant_only=True, self_loops=False)
+    g = GraphCollections.get(name='example', collection='other', giant_only=True, self_loops=False)
     print("%s. V=%s, E=%s. At '%s'" % (g.name, g.nodes(), g.edges(), g.path))
 
 
@@ -39,7 +37,7 @@ def stats_computing():
     """
     print("\n2. Statistics computation\n")
     from graph_io import GraphCollections
-    from statistics import Stat
+    from graph_stats import Stat
 
     # Once graph is downloaded, it will be loaded from file
     g = GraphCollections.get(name='dolphins')
@@ -50,8 +48,8 @@ def stats_computing():
         print("%s = %s" % (stat.description, g[stat]))
 
     # Statistics computation can be run from terminal, e.g.:
-    # (run 'python3 statistics.py -h' to see help)
-    command = 'python3 statistics.py -n soc-wiki-Vote -s DEGREE_DISTR BETWEENNESS_DISTR'
+    # (run 'python3 graph_stats.py -h' to see help)
+    command = 'python3 graph_stats.py -n soc-wiki-Vote -s DEGREE_DISTR BETWEENNESS_DISTR'
     print("running command '%s'" % command)
     os.system(command)
 
@@ -60,10 +58,10 @@ def visualize_crawling():
     """ 3. Visualize crawler
     """
     print("\n3. Visualize crawler\n")
-    from crawlers.cbasic import MaximumObservedDegreeCrawler, BreadthFirstSearchCrawler
+    from crawlers.cbasic import BreadthFirstSearchCrawler
     from running.metrics_and_runner import TopCentralityMetric
     from running.visual_runner import CrawlerVisualRunner
-    from statistics import Stat, get_top_centrality_nodes
+    from graph_stats import Stat, get_top_centrality_nodes
     from graph_io import GraphCollections
 
     g = GraphCollections.get('dolphins')
@@ -100,7 +98,7 @@ def animated_crawler_runner():
     from crawlers.cadvanced import DE_Crawler
     from running.animated_runner import AnimatedCrawlerRunner
     from running.metrics_and_runner import TopCentralityMetric
-    from statistics import Stat
+    from graph_stats import Stat
     from graph_io import GraphCollections
 
     g = GraphCollections.get('petster-hamster')
@@ -125,11 +123,11 @@ def animated_crawler_runner():
     acr = AnimatedCrawlerRunner(g, crawler_defs, metric_defs, budget=200, step=10)
     # Run and save the result picture.
     acr.run(ylims=(0, 1), xlabel='iteration, n', ylabel='metrics value', swap_coloring_scheme=False,
-           save_to_file=os.path.join(PICS_DIR, g.name, 'demo'))
+            save_to_file=os.path.join(PICS_DIR, g.name, 'demo'))
 
 
 def parallel_crawler_runner():
-    """ 5. Run series of experiments in parallel
+    """ 5. Run series of experiments in parallel. For every crawling method calculates every metric.
     """
     print("\n5. Run series of experiments in parallel\n")
     from crawlers.cbasic import RandomWalkCrawler, RandomCrawler, MaximumObservedDegreeCrawler, \
@@ -138,7 +136,7 @@ def parallel_crawler_runner():
     from crawlers.multiseed import MultiInstanceCrawler
     from running.history_runner import CrawlerHistoryRunner
     from running.metrics_and_runner import TopCentralityMetric
-    from statistics import Stat
+    from graph_stats import Stat
     from graph_io import GraphCollections
 
     # Define several crawler configurations.
@@ -190,7 +188,7 @@ def run_missing():
     from crawlers.cadvanced import DE_Crawler
     from running.history_runner import CrawlerHistoryRunner
     from running.metrics_and_runner import TopCentralityMetric
-    from statistics import Stat
+    from graph_stats import Stat
     from graph_io import GraphCollections
 
     # Define some new configuration or an old one that contains uncomputed combinations.
@@ -231,16 +229,13 @@ def merge_and_visualize():
     from crawlers.multiseed import MultiInstanceCrawler
     from running.history_runner import CrawlerHistoryRunner
     from running.metrics_and_runner import TopCentralityMetric
-    from statistics import Stat
+    from graph_stats import Stat
     from graph_io import GraphCollections
 
     # Define a configuration of crawlers and metrics.
     crawler_defs = [
         (RandomWalkCrawler, {}),
-        (RandomCrawler, {}),
         (BreadthFirstSearchCrawler, {}),
-        (DepthFirstSearchCrawler, {}),
-        (SnowBallCrawler, {'p': 0.1}),
         (MaximumObservedDegreeCrawler, {'batch': 1}),
         (MaximumObservedDegreeCrawler, {'batch': 10}),
         (DE_Crawler, {}),
@@ -268,36 +263,44 @@ def merge_and_visualize():
 
     # Draw crawler curves for each graph and each metric
     crm.draw_by_crawler(x_lims=(0, 1), x_normalize=True, draw_error=True, scale=4)
-    # Close the window to see the next
+
+    # Draw metric curves for each graph and each crawler
+    crm.draw_by_metric(x_lims=(0, 1), x_normalize=True, draw_error=True, scale=4)
+
+    # Draw crawler/metric curves for each graph
+    crm.draw_by_metric_crawler(x_lims=(0, 1), x_normalize=True, draw_error=False, scale=6)
 
     # Draw AUCC values for each graph and each metric
     crm.draw_aucc(aggregator='AUCC', scale=3, xticks_rotation=90)
 
+    # Draw weighted AUCC values for each graph and each metric
+    crm.draw_aucc(aggregator='wAUCC', scale=3, xticks_rotation=90)
+
     # Draw for each crawler weighted AUCC scores aggregated by all graphs and metrics
-    crm.draw_winners(aggregator='wAUCC', scale=8, xticks_rotation=90)
+    crm.draw_winners(aggregator='wAUCC', scale=6, xticks_rotation=60)
+
+    # Show all plots
+    crm.show_plots()
 
 
 if __name__ == '__main__':
-
     # 1. Automatic graph downloading
-    # graph_handing()
+    graph_handing()
 
     # 2. Statistics computation
-    # stats_computing()
+    stats_computing()
 
     # 3. Visualize crawler
-    # visualize_crawling()
+    visualize_crawling()
 
     # 4. Animated crawler runner
-    # animated_crawler_runner()
+    animated_crawler_runner()
 
     # 5. Run series of experiments in parallel
-    # parallel_crawler_runner()
+    parallel_crawler_runner()
 
     # 6. Run missing configurations
-    # run_missing()
+    run_missing()
 
     # 7. Merge and visualize results of a series of experiments
     merge_and_visualize()
-
-

@@ -9,7 +9,7 @@ from crawlers.advanced import AvrachenkovCrawler
 from crawlers.cbasic import Crawler
 from graph_io import GraphCollections
 from base.cgraph import MyGraph
-from statistics import get_top_centrality_nodes, Stat
+from graph_stats import get_top_centrality_nodes, Stat
 
 raise Exception("OLD, NEED TO UPDATE")
 

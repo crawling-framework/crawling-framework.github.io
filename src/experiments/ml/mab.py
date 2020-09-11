@@ -11,7 +11,7 @@ from running.animated_runner import AnimatedCrawlerRunner
 from running.history_runner import CrawlerHistoryRunner
 from running.merger import ResultsMerger
 from running.metrics_and_runner import TopCentralityMetric, Metric
-from statistics import Stat
+from graph_stats import Stat
 
 
 def test_knnucb():

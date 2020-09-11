@@ -2,7 +2,7 @@ import numpy as np
 
 from graph_io import GraphCollections
 from running.animated_runner import Metric, AnimatedCrawlerRunner
-from statistics import get_top_centrality_nodes, Stat
+from graph_stats import get_top_centrality_nodes, Stat
 
 from base.cgraph import MyGraph
 from crawlers.cbasic import RandomWalkCrawler, RandomCrawler, BreadthFirstSearchCrawler, \

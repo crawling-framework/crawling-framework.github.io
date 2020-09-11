@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from graph_io import GraphCollections
 from base.cgraph import MyGraph
-from statistics import Stat, get_top_centrality_nodes
+from graph_stats import Stat, get_top_centrality_nodes
 
 
 # FIXME old version

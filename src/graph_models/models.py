@@ -10,7 +10,7 @@ import scipy.stats as stats
 from base.cgraph import MyGraph
 from graph_models.cmodels import configuration_model, grid2d
 from graph_io import temp_dir, GraphCollections
-from statistics import Stat
+from graph_stats import Stat
 from utils import LFR_DIR, GRAPHS_DIR
 
 LFR_PATH = opj(LFR_DIR, 'benchmark')
@@ -104,7 +104,7 @@ def LFR(nodes: int, avg_deg: float, max_deg: int, mixing: float, t1=None, t2=Non
     :param on: number of overlapping nodes
     :param om: number of memberships of the overlapping nodes
     :param C: [average clustering coefficient]
-    :return:
+    :return: MyGraph
     """
     kwargs = {
         'N': nodes,

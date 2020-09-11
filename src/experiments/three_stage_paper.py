@@ -22,9 +22,107 @@ from crawlers.advanced import ThreeStageCrawler, CrawlerWithAnswer, AvrachenkovC
     ThreeStageMODCrawler, ThreeStageCrawlerSeedsAreHubs, EmulatorWithAnswerCrawler
 from crawlers.multiseed import MultiInstanceCrawler
 from running.animated_runner import AnimatedCrawlerRunner, Metric
-from graph_io import GraphCollections, netrepo_names, konect_names
-from statistics import Stat, get_top_centrality_nodes
+from graph_io import GraphCollections
+from graph_stats import Stat, get_top_centrality_nodes
 
+
+konect_names = [
+    'petster-hamster',  # N=2000,    E=16098,    d_avg=16.10
+    'ego-gplus',  # N=23613,   E=39182,    d_avg=3.32
+    'slashdot-threads',  # N=51083,   E=116573,   d_avg=4.56
+    # 'facebook-wosn-links',      # N=63392,   E=816831,   d_avg=25.77
+    'douban',  # N=154908,  E=327162,   d_avg=4.22
+    'digg-friends',  # N=261489,  E=1536577,  d_avg=11.75
+    'petster-friendships-cat',  # N=148826,  E=5447464,  d_avg=73.21
+    'petster-friendships-dog',  # N=426485,  E=8543321,  d_avg=40.06
+    'munmun_twitter_social',  # N=465017,  E=833540,   d_avg=3.58
+    'com-youtube',  # N=1134890, E=2987624,  d_avg=5.27
+    'flixster',  # N=2523386, E=7918801,  d_avg=6.28
+    'youtube-u-growth',  # N=3216075, E=9369874,  d_avg=5.83
+    'soc-pokec-relationships',  # N=1632803, E=22301964, d_avg=27.32
+]
+
+
+netrepo_names = [
+    # Graphs used in https://dl.acm.org/doi/pdf/10.1145/3201064.3201066
+    # Guidelines for Online Network Crawling: A Study of DataCollection Approaches and Network Properties
+
+    # 'soc-wiki-Vote',  # N=889, E=2914, d_avg=6.56
+    'socfb-Bingham82',  # N=10001, E=362892, d_avg=72.57
+    'soc-brightkite',  # N=56739, E=212945, d_avg=7.51
+
+    # Collaboration
+    'ca-citeseer',  # N=227320, E=814134, d_avg=7.16
+    'ca-dblp-2010',  # N=226413, E=716460, d_avg=6.33
+    'ca-dblp-2012',  # N=317080, E=1049866, d_avg=6.62
+    'ca-MathSciNet',  # N=332689, E=820644, d_avg=4.93
+
+    # Recommendation
+    # 'rec-amazon',  # N=91813, E=125704, d_avg=2.74  d_max=5
+    'rec-github',  # N=121331, E=439642, d_avg=7.25
+
+    # FB
+    # 'socfb-OR',  # N=63392, E=816886, d_avg=25.77
+    'socfb-Penn94',  # N=41536, E=1362220, d_avg=65.59
+    'socfb-wosn-friends',  # N=63392, E=816886, d_avg=25.77
+
+    # Tech
+    'tech-p2p-gnutella',  # N=62561, E=147878, d_avg=4.73
+    'tech-RL-caida',  # N=190914, E=607610, d_avg=6.37
+
+    # Web
+    'web-arabic-2005',  # N=163598, E=1747269, d_avg=21.36
+    'web-italycnr-2000',  # N=325557, E=2738969, d_avg=16.83
+    'web-sk-2005',  # N=121422, E=334419, d_avg=5.51
+    'web-uk-2005',  # N=129632, E=11744049, d_avg=181.19
+
+    # OSNs
+    'soc-slashdot',  # N=70068, E=358647, d_avg=10.24
+    'soc-themarker',  # ? N=69317, E=1644794, d_avg=47.46
+    'soc-BlogCatalog',  # N=88784, E=2093195, d_avg=47.15
+
+    # Scientific
+    'sc-pkustk13',  # N=94893, E=3260967, d_avg=68.73
+    'sc-pwtk',  # N=217883, E=5653217, d_avg=51.89
+    'sc-shipsec1',  # N=139995, E=1705212, d_avg=24.36
+    'sc-shipsec5',  # N=178573, E=2197367, d_avg=24.61
+
+    # More social graphs
+    'soc-anybeat',
+    'soc-twitter-follows',  # N=404719, E=713319, d_avg=3.53
+]
+
+other_names = [
+    'mipt',  # N=14313, E=488852, d_avg=68.31
+    # 'example',  # N=2000, E=16098, d_avg=16.10
+]
+
+social_names = [
+    'socfb-Bingham82',          # N=10001,   E=362892,   d_avg=72.57
+    'soc-brightkite',           # N=56739,   E=212945,   d_avg=7.51
+    'socfb-Penn94',             # N=41536,   E=1362220,  d_avg=65.59
+    'socfb-wosn-friends',       # N=63392,   E=816886,   d_avg=25.77
+    'soc-slashdot',             # N=70068,   E=358647,   d_avg=10.24
+    'soc-themarker',            # N=69317,   E=1644794,  d_avg=47.46
+    'soc-BlogCatalog',          # N=88784,   E=2093195,  d_avg=47.15
+    'soc-anybeat',              # N=12645,   E=49132,    d_avg=7.77
+    'soc-twitter-follows',      # N=404719,  E=713319,   d_avg=3.53
+    'petster-hamster',          # N=2000,    E=16098,    d_avg=16.10
+    'ego-gplus',                # N=23613,   E=39182,    d_avg=3.32
+    'slashdot-threads',         # N=51083,   E=116573,   d_avg=4.56
+    'douban',                   # N=154908,  E=327162,   d_avg=4.22
+    'digg-friends',             # N=261489,  E=1536577,  d_avg=11.75
+    'loc-brightkite_edges',     # N=58228,   E=214078,   d_avg=7.35
+    'epinions',                 # N=119130,  E=704267,   d_avg=11.82
+    'livemocha',                # N=104103,  E=2193083,  d_avg=42.13
+    'petster-friendships-cat',  # N=148826,  E=5447464,  d_avg=73.21
+    'petster-friendships-dog',  # N=426485,  E=8543321,  d_avg=40.06
+    'munmun_twitter_social',    # N=465017,  E=833540,   d_avg=3.58
+    'com-youtube',              # N=1134890, E=2987624,  d_avg=5.27
+    'flixster',                 # N=2523386, E=7918801,  d_avg=6.28
+    'youtube-u-growth',         # N=3216075, E=9369874,  d_avg=5.83
+    'soc-pokec-relationships',  # N=1632803, E=22301964, d_avg=27.32
+]
 
 def short_str(graph: MyGraph):
     name = graph.name
@@ -57,34 +155,6 @@ def short_str(graph: MyGraph):
     d = graph[Stat.MAX_DEGREE]
     d = "%.1fK" % (d / 1e3) if d > 1e3 else "%s" % d
     return "%s\n" % (name) + r"N=%s, E=%s, $d_{max}$=%s" % (n, e, d)
-
-
-social_names = [
-    'socfb-Bingham82',          # N=10001,   E=362892,   d_avg=72.57
-    'soc-brightkite',           # N=56739,   E=212945,   d_avg=7.51
-    'socfb-Penn94',             # N=41536,   E=1362220,  d_avg=65.59
-    'socfb-wosn-friends',       # N=63392,   E=816886,   d_avg=25.77
-    'soc-slashdot',             # N=70068,   E=358647,   d_avg=10.24
-    'soc-themarker',            # N=69317,   E=1644794,  d_avg=47.46
-    'soc-BlogCatalog',          # N=88784,   E=2093195,  d_avg=47.15
-    'soc-anybeat',              # N=12645,   E=49132,    d_avg=7.77
-    'soc-twitter-follows',      # N=404719,  E=713319,   d_avg=3.53
-    'petster-hamster',          # N=2000,    E=16098,    d_avg=16.10
-    'ego-gplus',                # N=23613,   E=39182,    d_avg=3.32
-    'slashdot-threads',         # N=51083,   E=116573,   d_avg=4.56
-    'douban',                   # N=154908,  E=327162,   d_avg=4.22
-    'digg-friends',             # N=261489,  E=1536577,  d_avg=11.75
-    'loc-brightkite_edges',     # N=58228,   E=214078,   d_avg=7.35
-    'epinions',                 # N=119130,  E=704267,   d_avg=11.82
-    'livemocha',                # N=104103,  E=2193083,  d_avg=42.13
-    'petster-friendships-cat',  # N=148826,  E=5447464,  d_avg=73.21
-    'petster-friendships-dog',  # N=426485,  E=8543321,  d_avg=40.06
-    'munmun_twitter_social',    # N=465017,  E=833540,   d_avg=3.58
-    'com-youtube',              # N=1134890, E=2987624,  d_avg=5.27
-    'flixster',                 # N=2523386, E=7918801,  d_avg=6.28
-    'youtube-u-growth',         # N=3216075, E=9369874,  d_avg=5.83
-    'soc-pokec-relationships',  # N=1632803, E=22301964, d_avg=27.32
-]
 
 
 def two_stage_n_s():

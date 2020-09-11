@@ -1,18 +1,13 @@
-patool
-networkx>=2.4
-numpy
-matplotlib>=3.3.0
-matplotlib_venn
-tqdm
-sortedcontainers
-jupyter
-scikit-learn
 Cython
-bs4
-lxml
-cmake
-networkit
-imageio
-vk
-jupiter
-kdtree
+patool             # for extraction of archives downloaded from online graph collection
+networkx==2.4      # for crawling process visualizing
+imageio            # for creating gifs
+matplotlib==3.3.0  # for plots drawing
+networkit          # for many graph stats computing
+numpy
+scikit-learn
+tqdm               # for progress bars when runners
+jupyter            # for ipython notebook demo TODO need it?
+bs4                # for parsing htmls from online graph collection
+lxml               # for parsing htmls from online graph collection
+vk                 # for VK signals

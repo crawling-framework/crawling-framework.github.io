@@ -1,7 +1,6 @@
 import logging
 import random
 import re
-from random import shuffle
 
 from libcpp.set cimport set as cset
 from libcpp.map cimport map as cmap
@@ -10,21 +9,22 @@ from libcpp.queue cimport queue
 from libcpp.deque cimport deque
 from cython.operator cimport dereference as deref, preincrement as inc, postincrement as pinc, predecrement as dec, address as addr
 
-from base.cgraph cimport MyGraph, str_to_chars, t_random
-# from base.node_deg_set cimport ND_Set  # FIXME try 'as ND_Set' if error 'ND_Set is not a type identifier'
+from base.cgraph cimport MyGraph, t_random
 cimport cbasic  # pxd import DON'T DELETE
 
 logger = logging.getLogger(__name__)
 
 
-# Get all subclasses of a class
 def all_subclasses(cls):
+    """ Get all subclasses of a class
+    """
     return set(cls.__subclasses__()).union(
         [s for c in cls.__subclasses__() for s in all_subclasses(c)])
 
 
 def definition_to_filename(definition) -> str:
-    """ Convert crawler string definition into filename. Uniqueness is maintained """
+    """ Convert crawler string definition into filename. Uniqueness is maintained
+    """
     _class, kwargs = definition
     excluded = set(['name', 'observed_graph', 'crawled_set', 'observed_set'])  # will not be in filename
     args = ";".join("%s=%s" % (key, definition_to_filename(kwargs[key]) if key == 'crawler_def' else kwargs[key])
@@ -33,7 +33,8 @@ def definition_to_filename(definition) -> str:
     return res
 
 
-short_to_class = {}  # short class name -> class
+# short class name -> class
+short_to_class = {}
 
 def eval_(string: str):
     """ Same as eval but returns string as is if fails to eval"""
@@ -41,6 +42,7 @@ def eval_(string: str):
         return eval(string)
     except NameError:
         return string
+
 
 def filename_to_definition(filename: str):
     """ Convert filename into crawler string definition. Uniqueness is maintained """
@@ -77,6 +79,7 @@ cdef class Crawler:
     * `observed_set` - set of osberved but not crawled yet nodes.
 
     Supports methods:
+    -----------------
 
     * int `next_seed` (self) - choose next seed among the observed ones, each crawler defines its own strategy.
     * vector[int] `crawl` (self, int seed) - crawl the specified node and return a list (vector) of newly observed nodes.
@@ -101,14 +104,14 @@ cdef class Crawler:
         :param observed_set: optionally use a given observed set, NOTE: the object will be modified, make a copy if needed
         :param kwargs: all additional parameters (needed in subclasses) - they will be encoded into string definition
         """
-        # original graph
+        # Original graph
         self._orig_graph = graph  # FIXME copying here?
 
-        # observed graph
+        # Observed graph
         self._observed_graph = observed_graph if observed_graph is not None else \
             MyGraph(directed=self._orig_graph.directed, weighted=self._orig_graph.weighted)
 
-        # crawled set and observed set
+        # Crawled set and observed set
         self._crawled_set = crawled_set if crawled_set is not None else set()
         self._observed_set = observed_set if observed_set is not None else set()
         # assert self._observed_graph.nodes() == len(self._crawled_set) + len(self._observed_set)  # only for single not Multi
@@ -157,20 +160,18 @@ cdef class Crawler:
             self._observed_set.add(node)
         return already
 
-    # FIXME may be reference to vector?
+    # FIXME reference to vector faster?
     cpdef vector[int] crawl(self, int seed) except *:
         """ Crawl specified node. The observed graph is updated, also are crawled and observed set.
 
         :param seed: node id to crawl
         :return: vector (list) of newly seen nodes
         """
-        # seed = int(seed)  # convert possible int64 to int, since snap functions would get error
         cdef vector[int] res
         if seed in self._crawled_set:  # FIXME simplify!
             logger.error("Already crawled: %s" % seed)
             return res  # if already crawled - do nothing
 
-        # self.seed_sequence_.append(seed)
         self._crawled_set.add(seed)
 
         if self._observed_graph.has_node(seed):  # remove from observed set
@@ -179,7 +180,7 @@ cdef class Crawler:
         else:  # add to observed graph
             self._observed_graph.add_node(seed)
 
-        # iterate over neighbours
+        # Iterate over neighbours
         for n in self._orig_graph.neighbors(seed):
             if not self._observed_graph.has_node(n):  # add to observed graph and observed set
                 self._observed_graph.add_node(n)
@@ -215,7 +216,14 @@ class CrawlerException(Exception):
 
 
 class NoNextSeedError(CrawlerException):
-    """ Can't get next seed: no more observed nodes."""
+    """ Can't get next seed exception.
+    Called when the observed set becomes empty.
+    Could mean the following:
+
+    * all nodes are crawled
+    * cannot reach some nodes because they are disconnected
+    * algorithm errors in forming the observed set
+    """
     def __init__(self, error_msg=None):
         super().__init__(self)
         self.error_msg = error_msg if error_msg else "Can't get next seed: no more observed nodes."
@@ -224,28 +232,15 @@ class NoNextSeedError(CrawlerException):
         return self.error_msg
 
 
-cdef inline int random_from_iterable(an_iterable):
-    """ Works in O(n). Good for python set """
-    # cdef cset[int].iterator it = an_iterable.begin()
-    # for _ in range(random.randint(0, an_iterable.size()-1)):
-    #     inc(it)
-    # return deref(it)
-    cdef int r = random.randint(0, len(an_iterable)-1)
-    it = an_iterable.__iter__()
-    while r > 0:
-        next(it)
-        r -= 1
-    return next(it)
-
-
 cdef class CrawlerWithInitialSeed(Crawler):
     """
-    Implements starting with the specified seed or randomly chosen from original graph.
+    Starting seed is specified in constructor or randomly chosen from original graph.
     """
     def __init__(self, MyGraph graph, initial_seed: int=-1, **kwargs):
         """
         :param initial_seed: if observed set is empty, the crawler will start from the given initial
-         node. If -1 is given (which is default), a random node of original graph will be used as initial one.
+         node. (If not empty, starting seed is defined from `next_seed()` call). If -1 is given
+         (which is default), a random node of original graph will be used as initial one.
         """
         if initial_seed != -1:  # if not random, we reflect it in definition and filename
             kwargs['initial_seed'] = initial_seed
@@ -260,12 +255,13 @@ cdef class CrawlerWithInitialSeed(Crawler):
 
 
 cdef class RandomCrawler(CrawlerWithInitialSeed):
+    """
+    TODO docs
+    """
     short = 'RC'
     cdef vector[int] next_seeds
 
     def __init__(self, MyGraph graph, **kwargs):
-        if 'name' not in kwargs:
-            kwargs['name'] = self.short
         super().__init__(graph, **kwargs)
 
         cdef int n
@@ -292,6 +288,9 @@ cdef class RandomCrawler(CrawlerWithInitialSeed):
 
 
 cdef class RandomWalkCrawler(CrawlerWithInitialSeed):
+    """
+    TODO docs
+    """
     short = 'RW'
     cdef int prev_seed
 
@@ -321,6 +320,9 @@ cdef class RandomWalkCrawler(CrawlerWithInitialSeed):
 
 
 cdef class BreadthFirstSearchCrawler(CrawlerWithInitialSeed):
+    """
+    TODO docs
+    """
     short = 'BFS'
     cdef queue[int] bfs_queue
 
@@ -350,6 +352,9 @@ cdef class BreadthFirstSearchCrawler(CrawlerWithInitialSeed):
 
 
 cdef class DepthFirstSearchCrawler(CrawlerWithInitialSeed):
+    """
+    TODO docs
+    """
     short = 'DFS'
     cdef deque[int] dfs_queue
 
@@ -379,6 +384,12 @@ cdef class DepthFirstSearchCrawler(CrawlerWithInitialSeed):
 
 
 cdef class SnowBallCrawler(CrawlerWithInitialSeed):
+    """
+    Every step of BFS taking neighbors with probability p.
+    http://www.soundarajan.org/papers/CrawlingAnalysis.pdf
+    https://arxiv.org/pdf/1004.1729.pdf
+    TODO docs
+    """
     short = 'SBS'
     cdef float p
     cdef deque[int] sbs_queue
@@ -386,9 +397,6 @@ cdef class SnowBallCrawler(CrawlerWithInitialSeed):
 
     def __init__(self, MyGraph graph, initial_seed: int=-1, p: float=0.5, **kwargs):
         """
-        Every step of BFS taking neighbors with probability p.
-        http://www.soundarajan.org/papers/CrawlingAnalysis.pdf
-        https://arxiv.org/pdf/1004.1729.pdf
         :param p: probability of taking neighbor into queue
         """
         if 'name' not in kwargs:
@@ -427,14 +435,10 @@ cdef class SnowBallCrawler(CrawlerWithInitialSeed):
         return res
 
 
-# cdef class CrawlerUpdatable(Crawler):
-#     cpdef void update(self, vector[int] nodes):  # FIXME maybe ref?
-#         """ Update inner structures, knowing that the specified nodes have changed their degrees.
-#         """
-#         raise NotImplementedError()
-
-
 cdef class MaximumObservedDegreeCrawler(CrawlerWithInitialSeed):
+    """
+    TODO docs
+    """
     short = 'MOD'
     cdef int batch
     cdef ND_Set nd_set
@@ -443,6 +447,8 @@ cdef class MaximumObservedDegreeCrawler(CrawlerWithInitialSeed):
         """
         :param batch: batch size
         """
+        if 'name' not in kwargs:
+            kwargs['name'] = "%s%s" %  (self.short, '' if batch == 1 else batch)
         super().__init__(graph, initial_seed=initial_seed, batch=batch, **kwargs)
 
         self.batch = batch
@@ -452,7 +458,7 @@ cdef class MaximumObservedDegreeCrawler(CrawlerWithInitialSeed):
         for n in self._observed_set:
             self.nd_set.add(n, self._observed_graph.deg(n))
 
-    cpdef void update(self, vector[int] nodes):  # FIXME maybe ref faster?
+    cpdef void update(self, vector[int] nodes):  # TODO passing ref may be faster?
         """ Update priority structures with specified nodes (suggested their degrees have changed).
         """
         cdef int d, n
@@ -492,11 +498,17 @@ cdef class MaximumObservedDegreeCrawler(CrawlerWithInitialSeed):
 
 
 cdef class PreferentialObservedDegreeCrawler(CrawlerWithInitialSeed):
+    """
+    TODO docs
+    """
     short = 'POD'
     cdef int batch
     cdef ND_Set nd_set
 
     def __init__(self, MyGraph graph, initial_seed: int=-1, int batch=1, **kwargs):
+        """
+        :param batch: batch size
+        """
         if 'name' not in kwargs:
             kwargs['name'] = "%s%s" %  (self.short, '' if batch == 1 else batch)
         super().__init__(graph, initial_seed=initial_seed, batch=batch, **kwargs)
@@ -508,7 +520,7 @@ cdef class PreferentialObservedDegreeCrawler(CrawlerWithInitialSeed):
         for n in self._observed_set:
             self.nd_set.add(n, self._observed_graph.deg(n))
 
-    cpdef void update(self, vector[int] nodes):  # FIXME maybe ref faster?
+    cpdef void update(self, vector[int] nodes):  # TODO passing ref may be faster?
         """ Update priority structures with specified nodes (suggested their degrees have changed).
         """
         cdef int d, n
@@ -602,12 +614,6 @@ cpdef cbasic_test():
     # it = a.__iter__()
     # print(next(it))
     # print(next(it))
-    # print('random_from_iterable', random_from_iterable(a))
-    # print('random_from_iterable', random_from_iterable(a))
-    # print('random_from_iterable', random_from_iterable(a))
-    # print('random_from_iterable', random_from_iterable(a))
-    # print('random_from_iterable', random_from_iterable(a))
-    # print('random_from_iterable', random_from_iterable(a))
 
     # cdef vector[int] s
     # s.push_back(1)

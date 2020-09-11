@@ -9,14 +9,7 @@ using namespace std;
 
 unsigned long long seed = (unsigned long long) time(0);
 
-int inline rnd() {
-//	seed = seed * 25214903917 + 11;
-//	return (seed >> 16) % RAND_MAX;
-    return rand();
-}
-
 float inline rnd_01() {
-//    return float(rnd()) / RAND_MAX;
     return float(rand()) / RAND_MAX;
 }
 
@@ -40,8 +33,6 @@ class IntPair_Set : public set<pair<int, int>>
         }
 
         void remove(int node, int deg) {
-//            bool f = find(pair<int, int>(deg, node)) != end();
-//            std::cout << 'r' << f << '\n';
             erase(pair<int, int>(deg, node));
         }
 
@@ -82,7 +73,6 @@ class IntPair_Set : public set<pair<int, int>>
             float r = cums[len-1] * rnd_01();
             // bin search
             int ix = std::lower_bound(&(cums[0]), cums+len, r) - cums;
-//                printf("ix=%d\n", ix);
             pair<int, int> res = pair<int, int>(degs[ix], nodes[ix]);
             erase(res);
             return res;
@@ -103,16 +93,6 @@ class IntPair_Set_With_Map : public set<pair<int, int>>
             node_deg_map[node] = deg;
             return it_res.second;
         }
-
-//        /// remove node->deg entry
-//        bool remove(int node, int deg){
-//            // remove from map if present
-//            auto it = node_deg_map.find(node);
-//            if (it != node_deg_map.end())
-//                node_deg_map.erase(it);
-//            // remove from set, return true if success
-//            return erase(pair<int, int>(deg, node)) > 0;
-//        }
 
         /// update node entry with a new degree. Returns true if element was replaced.
         bool update(int node, int new_deg) {
@@ -152,22 +132,12 @@ class IntPair_Set_With_Map : public set<pair<int, int>>
         }
 };
 
-//bool cmp(int a, int b)
-//{
-//    printf("C cmp %d and %d\n", a, b);
-//    return a < b;
-//}
-
-
 int main(int argc, char *argv[])
 {
     if (argc != 2) {
         printf("123\n");
     }
     vector<pair<int, int>> l;
-//    for(int i=1; i<10; ++i) {
-//        l.push_back(pair<int, int>(i, 10*i));
-//    }
     l.push_back(pair<int, int>(3, 1));
     l.push_back(pair<int, int>(15, 1));
     l.push_back(pair<int, int>(16, 1));
@@ -176,7 +146,6 @@ int main(int argc, char *argv[])
     l.push_back(pair<int, int>(21, 2));
     l.push_back(pair<int, int>(11, 3));
 
-//    IntPair_Set_With_Map cpq = IntPair_Set_With_Map();
     IntPair_Set cpq = IntPair_Set();
 
     for (pair<int, int> e : l) {
@@ -185,40 +154,9 @@ int main(int argc, char *argv[])
     }
     cpq.print_me();
 
-//    auto a = cpq.begin();
-//    a = a + 2;
-//    std::cout << a->first << ',' << a->second << '\n';
-
-//    int k = 100;
-//    int nodes[k];
-//    cpq.sample(k, nodes);
-//    for (int i=0; i<k; ++i)
-//        std::cout << nodes[i] << ' ';
-////        printf("%g\n", rnd_01());
-
     for (int i=0; i<10; ++i) {
         auto e = cpq.pop_proportional_degree();
         cout << e.first << ',' << e.second << '\n';
     }
-
-//    pair<int, int> r;
-//    r = pair<int, int>(11, 1);
-//    printf("updating (%d, %d)\n", r.first, r.second);
-//    cpq.update(r.first, r.second);
-//    cpq.print_me();
-
-//    r = pair<int, int>(7, 10);
-//    printf("updating (%d, %d)\n", r.first, r.second);
-//    cpq.update(r.first, r.second);
-//
-//    cpq.print_me();
-
-//    while(!cpq.empty()) {
-//        int a = cpq.top();
-//        cpq.pop();
-//        printf("2:%d\n", a);
-//    }
-
-//    priority_queue<int, vector<int>, function<bool(int, int)>> cpq = priority_queue<int, vector<int>, function<bool(int, int)>>(cmp);
 
 }
