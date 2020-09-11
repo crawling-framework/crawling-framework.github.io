@@ -95,14 +95,14 @@ if __name__ == '__main__':
                   extra_objects=extra_objects,
                   include_dirs=include_dirs,
                   ),
-        Extension("graph_models.cmodels",
-                  ["graph_models/cmodels.pyx"],
-                  language='c++',
-                  extra_compile_args=extra_compile_flags,
-                  extra_link_args=snap_extra_link_args,
-                  extra_objects=extra_objects,
-                  include_dirs=include_dirs,
-                  ),
+        # Extension("graph_models.cmodels",
+        #           ["graph_models/cmodels.pyx"],
+        #           language='c++',
+        #           extra_compile_args=extra_compile_flags,
+        #           extra_link_args=snap_extra_link_args,
+        #           extra_objects=extra_objects,
+        #           include_dirs=include_dirs,
+        #           ),
     ]
 
     setup(
