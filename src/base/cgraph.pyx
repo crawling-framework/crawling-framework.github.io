@@ -30,8 +30,28 @@ cpdef int get_UniDevInt(int max):
 
 cdef class MyGraph:
     """
+    Graph object representing nodes and undirected unweighted edges.
+    Uses `SNAP <https://github.com/snap-stanford/snap>`_ library for graph operations.
+    Graph is stored in edgelist format.
 
-    TODO add docs
+    Fast operations via snap:
+
+    * IO operations
+    * nodes/edges addition/iteration
+    * maximal degree, clustering coefficient, extraction of giant component
+    * getting random nodes, neighbours
+
+    Other methods:
+
+    * graph statistics are available by index access. Once computed it is saved in file.
+    * converting to `networkit <https://networkit.github.io/>`_ (for some statistics computing) and
+      `networkx <https://networkx.github.io/>`_ (for drawing) graphs
+
+    NOTES:
+
+    * When graph is modified, all computed statistics are removed. If want to keep statistics in file and modify graph,
+      make a copy of it.
+
     """
     def __init__(self, path: str=None, name: str='noname', directed: bool=False, weighted: bool=False, str format='ij', not_load: bool=False):
         """

@@ -144,8 +144,15 @@ def reformat_graph_file(path, out_path, ignore_lines_starting_with='#%',
 
 class GraphCollections:
     """
+    Manager of graph data.
+    By calling method `get(name, collection)`, it loads graph from file if any or downloads a graph from online
+    collection.
+    `Konect <http://konect.uni-koblenz.de>`_ and `networkrepository <http://networkrepository.com/>`_ collections are
+    available.
 
-    TODO add docs
+    Example:
+    >>> graph = GraphCollections.get(name='dolphins', collection='konect')
+
     """
     # konect_url_pattern = 'http://konect.uni-koblenz.de/downloads/tsv/%s.tar.bz2'  # The old one
     konect_url_pattern = 'http://konect.cc/files/download.tsv.%s.tar.bz2'

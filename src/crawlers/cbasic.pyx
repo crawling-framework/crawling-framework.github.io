@@ -256,7 +256,7 @@ cdef class CrawlerWithInitialSeed(Crawler):
 
 cdef class RandomCrawler(CrawlerWithInitialSeed):
     """
-    TODO docs
+    Crawls a random node from the observed ones.
     """
     short = 'RC'
     cdef vector[int] next_seeds
@@ -289,7 +289,8 @@ cdef class RandomCrawler(CrawlerWithInitialSeed):
 
 cdef class RandomWalkCrawler(CrawlerWithInitialSeed):
     """
-    TODO docs
+    Crawls a random neighbor of the previously crawled node.
+    If cannot crawl, goes to a random neighbor and proceed there.
     """
     short = 'RW'
     cdef int prev_seed
@@ -321,7 +322,7 @@ cdef class RandomWalkCrawler(CrawlerWithInitialSeed):
 
 cdef class BreadthFirstSearchCrawler(CrawlerWithInitialSeed):
     """
-    TODO docs
+    Crawls in a breadth first manner.
     """
     short = 'BFS'
     cdef queue[int] bfs_queue
@@ -353,7 +354,7 @@ cdef class BreadthFirstSearchCrawler(CrawlerWithInitialSeed):
 
 cdef class DepthFirstSearchCrawler(CrawlerWithInitialSeed):
     """
-    TODO docs
+    Crawls in a depth first manner.
     """
     short = 'DFS'
     cdef deque[int] dfs_queue
@@ -388,7 +389,6 @@ cdef class SnowBallCrawler(CrawlerWithInitialSeed):
     Every step of BFS taking neighbors with probability p.
     http://www.soundarajan.org/papers/CrawlingAnalysis.pdf
     https://arxiv.org/pdf/1004.1729.pdf
-    TODO docs
     """
     short = 'SBS'
     cdef float p
@@ -437,7 +437,7 @@ cdef class SnowBallCrawler(CrawlerWithInitialSeed):
 
 cdef class MaximumObservedDegreeCrawler(CrawlerWithInitialSeed):
     """
-    TODO docs
+    Crawls a node with maximal observed degree.
     """
     short = 'MOD'
     cdef int batch
@@ -499,7 +499,7 @@ cdef class MaximumObservedDegreeCrawler(CrawlerWithInitialSeed):
 
 cdef class PreferentialObservedDegreeCrawler(CrawlerWithInitialSeed):
     """
-    TODO docs
+    selects for crawling one of the observed nodes with probability proportional to the observed degree.
     """
     short = 'POD'
     cdef int batch

@@ -18,16 +18,6 @@ plots.
 **Planning**:
 * graph models: controlled assortativity, ERGG.
 
-## Requirements
-
-* python version 3
-* GCC compiler
-* cmake
-
-For MacOS additional:
-
-* brew
-
 ## Installation and usage
 
-See the docs.
+See the documentation https://crawling-framework.github.io/
