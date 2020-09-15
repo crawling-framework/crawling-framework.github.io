@@ -176,8 +176,15 @@
 
 <div class="viewcode-block" id="GraphCollections"><a class="viewcode-back" href="../code.html#graph_io.GraphCollections">[docs]</a><span class="k">class</span> <span class="nc">GraphCollections</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manager of graph data.</span>
+<span class="sd">    By calling method `get(name, collection)`, it loads graph from file if any or downloads a graph from online</span>
+<span class="sd">    collection.</span>
+<span class="sd">    `Konect &lt;http://konect.uni-koblenz.de&gt;`_ and `networkrepository &lt;http://networkrepository.com/&gt;`_ collections are</span>
+<span class="sd">    available.</span>
 
-<span class="sd">    TODO add docs</span>
+<span class="sd">    Example:</span>
+<span class="sd">    &gt;&gt;&gt; graph = GraphCollections.get(name=&#39;dolphins&#39;, collection=&#39;konect&#39;)</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># konect_url_pattern = &#39;http://konect.uni-koblenz.de/downloads/tsv/%s.tar.bz2&#39;  # The old one</span>
     <span class="n">konect_url_pattern</span> <span class="o">=</span> <span class="s1">&#39;http://konect.cc/files/download.tsv.</span><span class="si">%s</span><span class="s1">.tar.bz2&#39;</span>

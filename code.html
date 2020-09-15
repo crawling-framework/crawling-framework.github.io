@@ -39,7 +39,27 @@
 <dl class="py class">
 <dt id="base.cgraph.MyGraph">
 <em class="property">class </em><code class="sig-prename descclassname">base.cgraph.</code><code class="sig-name descname">MyGraph</code><a class="headerlink" href="#base.cgraph.MyGraph" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO add docs</p>
+<dd><p>Graph object representing nodes and undirected unweighted edges.
+Uses <a class="reference external" href="https://github.com/snap-stanford/snap">SNAP</a> library for graph operations.
+Graph is stored in edgelist format.</p>
+<p>Fast operations via snap:</p>
+<ul class="simple">
+<li><p>IO operations</p></li>
+<li><p>nodes/edges addition/iteration</p></li>
+<li><p>maximal degree, clustering coefficient, extraction of giant component</p></li>
+<li><p>getting random nodes, neighbours</p></li>
+</ul>
+<p>Other methods:</p>
+<ul class="simple">
+<li><p>graph statistics are available by index access. Once computed it is saved in file.</p></li>
+<li><p>converting to <a class="reference external" href="https://networkit.github.io/">networkit</a> (for some statistics computing) and
+<a class="reference external" href="https://networkx.github.io/">networkx</a> (for drawing) graphs</p></li>
+</ul>
+<p>NOTES:</p>
+<ul class="simple">
+<li><p>When graph is modified, all computed statistics are removed. If want to keep statistics in file and modify graph,
+make a copy of it.</p></li>
+</ul>
 <dl class="py method">
 <dt id="base.cgraph.MyGraph.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.__init__" title="Permalink to this definition">¶</a></dt>
@@ -143,7 +163,13 @@ node_map is specified. Some neworkit_node_id -&gt; None (those ids not present i
 <span class="target" id="module-graph_io"></span><dl class="py class">
 <dt id="graph_io.GraphCollections">
 <em class="property">class </em><code class="sig-prename descclassname">graph_io.</code><code class="sig-name descname">GraphCollections</code><a class="reference internal" href="_modules/graph_io.html#GraphCollections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_io.GraphCollections" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO add docs</p>
+<dd><p>Manager of graph data.
+By calling method <cite>get(name, collection)</cite>, it loads graph from file if any or downloads a graph from online
+collection.
+<a class="reference external" href="http://konect.uni-koblenz.de">Konect</a> and <a class="reference external" href="http://networkrepository.com/">networkrepository</a> collections are
+available.</p>
+<p>Example:
+&gt;&gt;&gt; graph = GraphCollections.get(name=’dolphins’, collection=’konect’)</p>
 <dl class="py method">
 <dt id="graph_io.GraphCollections.get">
 <em class="property">static </em><code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">collection</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">directed</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">giant_only</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">self_loops</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">not_load</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_io.html#GraphCollections.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_io.GraphCollections.get" title="Permalink to this definition">¶</a></dt>
@@ -353,7 +379,7 @@ Seed must be a node of the original graph.</p>
 <dl class="py class">
 <dt id="crawlers.cbasic.RandomCrawler">
 <em class="property">class </em><code class="sig-prename descclassname">crawlers.cbasic.</code><code class="sig-name descname">RandomCrawler</code><a class="headerlink" href="#crawlers.cbasic.RandomCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO docs</p>
+<dd><p>Crawls a random node from the observed ones.</p>
 <dl class="py method">
 <dt id="crawlers.cbasic.RandomCrawler.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.RandomCrawler.__init__" title="Permalink to this definition">¶</a></dt>
@@ -391,7 +417,8 @@ Seed must be a node of the original graph.</p>
 <dl class="py class">
 <dt id="crawlers.cbasic.RandomWalkCrawler">
 <em class="property">class </em><code class="sig-prename descclassname">crawlers.cbasic.</code><code class="sig-name descname">RandomWalkCrawler</code><a class="headerlink" href="#crawlers.cbasic.RandomWalkCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO docs</p>
+<dd><p>Crawls a random neighbor of the previously crawled node.
+If cannot crawl, goes to a random neighbor and proceed there.</p>
 <dl class="py method">
 <dt id="crawlers.cbasic.RandomWalkCrawler.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.RandomWalkCrawler.__init__" title="Permalink to this definition">¶</a></dt>
@@ -415,7 +442,7 @@ Seed must be a node of the original graph.</p>
 <dl class="py class">
 <dt id="crawlers.cbasic.BreadthFirstSearchCrawler">
 <em class="property">class </em><code class="sig-prename descclassname">crawlers.cbasic.</code><code class="sig-name descname">BreadthFirstSearchCrawler</code><a class="headerlink" href="#crawlers.cbasic.BreadthFirstSearchCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO docs</p>
+<dd><p>Crawls in a breadth first manner.</p>
 <dl class="py method">
 <dt id="crawlers.cbasic.BreadthFirstSearchCrawler.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.BreadthFirstSearchCrawler.__init__" title="Permalink to this definition">¶</a></dt>
@@ -453,7 +480,7 @@ Seed must be a node of the original graph.</p>
 <dl class="py class">
 <dt id="crawlers.cbasic.DepthFirstSearchCrawler">
 <em class="property">class </em><code class="sig-prename descclassname">crawlers.cbasic.</code><code class="sig-name descname">DepthFirstSearchCrawler</code><a class="headerlink" href="#crawlers.cbasic.DepthFirstSearchCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO docs</p>
+<dd><p>Crawls in a depth first manner.</p>
 <dl class="py method">
 <dt id="crawlers.cbasic.DepthFirstSearchCrawler.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.DepthFirstSearchCrawler.__init__" title="Permalink to this definition">¶</a></dt>
@@ -493,8 +520,7 @@ Seed must be a node of the original graph.</p>
 <em class="property">class </em><code class="sig-prename descclassname">crawlers.cbasic.</code><code class="sig-name descname">SnowBallCrawler</code><a class="headerlink" href="#crawlers.cbasic.SnowBallCrawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Every step of BFS taking neighbors with probability p.
 <a class="reference external" href="http://www.soundarajan.org/papers/CrawlingAnalysis.pdf">http://www.soundarajan.org/papers/CrawlingAnalysis.pdf</a>
-<a class="reference external" href="https://arxiv.org/pdf/1004.1729.pdf">https://arxiv.org/pdf/1004.1729.pdf</a>
-TODO docs</p>
+<a class="reference external" href="https://arxiv.org/pdf/1004.1729.pdf">https://arxiv.org/pdf/1004.1729.pdf</a></p>
 <dl class="py method">
 <dt id="crawlers.cbasic.SnowBallCrawler.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.SnowBallCrawler.__init__" title="Permalink to this definition">¶</a></dt>
@@ -536,7 +562,7 @@ Seed must be a node of the original graph.</p>
 <dl class="py class">
 <dt id="crawlers.cbasic.MaximumObservedDegreeCrawler">
 <em class="property">class </em><code class="sig-prename descclassname">crawlers.cbasic.</code><code class="sig-name descname">MaximumObservedDegreeCrawler</code><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO docs</p>
+<dd><p>Crawls a node with maximal observed degree.</p>
 <dl class="py method">
 <dt id="crawlers.cbasic.MaximumObservedDegreeCrawler.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler.__init__" title="Permalink to this definition">¶</a></dt>
@@ -570,7 +596,7 @@ Seed must be a node of the original graph.</p>
 <dl class="py class">
 <dt id="crawlers.cbasic.PreferentialObservedDegreeCrawler">
 <em class="property">class </em><code class="sig-prename descclassname">crawlers.cbasic.</code><code class="sig-name descname">PreferentialObservedDegreeCrawler</code><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>TODO docs</p>
+<dd><p>selects for crawling one of the observed nodes with probability proportional to the observed degree.</p>
 <dl class="py method">
 <dt id="crawlers.cbasic.PreferentialObservedDegreeCrawler.__init__">
 <code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler.__init__" title="Permalink to this definition">¶</a></dt>
@@ -1290,19 +1316,22 @@ number of instances is maximal among missing ones.</p>
 <dd><p>ResultsMerger can aggregate and plot results saved in files.
 Process all combinations of G graphs x C crawlers x M metrics. Averages over n instances of each.
 All missed instances are just ignored.</p>
+<p>Plotting functions:</p>
 <ul class="simple">
 <li><p>draw_by_crawler - Draw M x G table of plots with C lines each. Ox - crawling step, Oy - metric value.</p></li>
 <li><p>draw_by_metric_crawler - Draw G plots with C x M lines each. Ox - crawling step, Oy - metric value.</p></li>
-<li><p>draw_by_metric - Draw C x G table of plots with M lines each. NOT IMPLEMENTED</p></li>
+<li><p>draw_by_metric - Draw C x G table of plots with M lines each. Ox - crawling step, Oy - metric value.</p></li>
 <li><p>draw_aucc - Draw G plots with M lines. Ox - C crawlers, Oy - (w)AUCC value (M curves with error bars).</p></li>
 <li><p>draw_winners - Draw C stacked bars (each of M elements). Ox - C crawlers, Oy - number of wins (among G) by (w)AUCC
 value.</p></li>
 </ul>
+<p>Additional functions:</p>
 <ul class="simple">
 <li><p>missing_instances - Calculate how many instances of all configurations are missing.</p></li>
 <li><p>remove_files - Remove all saved instances for current graphs, crawlers, metrics.</p></li>
 <li><p>print_results_as_table - Remove all saved instances for current graphs, crawlers, metrics.</p></li>
 </ul>
+<p>NOTES:</p>
 <ul class="simple">
 <li><p>x values must be the same for all files and are the ones generated by <cite>exponential_batch_generator()</cite> from
 running/metrics_and_runner.py</p></li>
