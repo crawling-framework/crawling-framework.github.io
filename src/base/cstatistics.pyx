@@ -38,8 +38,6 @@ stat_computer = {
 
     Stat.PLM_COMMUNITIES: (lambda graph: plm(graph)[0]),
     Stat.PLM_MODULARITY: (lambda graph: plm(graph)[1]),
-
-    Stat.LFR_COMMUNITIES: (lambda _: []),  # can be pre-defined only, not computable
 }
 
 

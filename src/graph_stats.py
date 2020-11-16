@@ -48,7 +48,6 @@ class Stat(Enum):
     # Other global statistics
     PLM_COMMUNITIES = 'PLM-comms', 'PLM communities'
     PLM_MODULARITY = 'PLM-modularity', 'PLM communities modularity'
-    LFR_COMMUNITIES = 'LFR-comms', 'LFR communities'
 
 
 def get_top_centrality_nodes(graph: MyGraph, centrality, count=None, threshold=False):

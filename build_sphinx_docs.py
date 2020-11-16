@@ -3,20 +3,26 @@
 #
 
 import os
+import sys
 
 # on branch 'public'
-os.system("git checkout public")
+res = os.system("git checkout public")
+if res != 0:
+    sys.exit(res)
 
 # generate sphinx docs
 res = os.system("cd docs; make clean; make github")  # result in sphinx_docs/
-print(res)
+if res != 0:
+    sys.exit(res)
 
 # go to gh-pages, copy docs
 res = os.system("git checkout gh-pages")
-print(res)
+if res != 0:
+    sys.exit(res)
 
 res = os.system("cp -rT sphinx_docs .")
-print(res)
+if res != 0:
+    sys.exit(res)
 
 # commit and push to github
 os.system("git add -u")

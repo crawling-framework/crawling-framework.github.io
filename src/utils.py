@@ -9,7 +9,7 @@ TMP_GRAPHS_DIR = os.path.join(GRAPHS_DIR, 'tmp')  # root directory to store temp
 PICS_DIR = os.path.join(rel_dir, 'pics')  # directory to store pictures
 RESULT_DIR = os.path.join(rel_dir, 'results')  # directory to store pictures
 
-SNAP_DIR = None; LIGRA_DIR = None; LFR_DIR = None; USE_NETWORKIT = None; USE_LIGRA = None; VK_ID = None  # defined in config
+SNAP_DIR = None; LIGRA_DIR = None; USE_NETWORKIT = None; USE_LIGRA = None; VK_ID = None  # defined in config
 config = exec(open(CONFIG_PATH, 'r').read())  # updates the above VARIABLES from config file
 
 

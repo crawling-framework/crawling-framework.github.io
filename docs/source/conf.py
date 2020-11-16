@@ -21,8 +21,8 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = 'CrawlingFramework'
-copyright = '2020, misha et al'
-author = 'misha et al'
+copyright = '2020, Mikhail Drobyshevskiy'
+author = 'Mikhail Drobyshevskiy, Danil Shaykhelislamov, Denis Aivazov, Kirill Lukyanov'
 
 # The short X.Y version
 version = ''

@@ -33,7 +33,7 @@ In ``Makefile.config`` add ``-fPIC`` compiler option: find a string
 and replace it with
 ``CXXFLAGS += -O3 -DNDEBUG -fopenmp -fPIC``
 
-Now build it::
+Now build it (requires 5-10 mins)::
 
    make all
 
