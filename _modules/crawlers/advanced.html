@@ -1,27 +1,36 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>crawlers.advanced &#8212; CrawlingFramework 1.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
-  
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head><body>
+  </head>
+  <body>
   
 
     <div class="document">
@@ -32,11 +41,11 @@
   <h1>Source code for crawlers.advanced</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
 
-<span class="kn">from</span> <span class="nn">graph_stats</span> <span class="k">import</span> <span class="n">get_top_centrality_nodes</span><span class="p">,</span> <span class="n">Stat</span>
+<span class="kn">from</span> <span class="nn">graph_stats</span> <span class="kn">import</span> <span class="n">get_top_centrality_nodes</span><span class="p">,</span> <span class="n">Stat</span>
 
-<span class="kn">from</span> <span class="nn">base.cgraph</span> <span class="k">import</span> <span class="n">MyGraph</span>
-<span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="k">import</span> <span class="n">Crawler</span><span class="p">,</span> <span class="n">CrawlerException</span><span class="p">,</span> <span class="n">MaximumObservedDegreeCrawler</span>
-<span class="kn">from</span> <span class="nn">crawlers.cadvanced</span> <span class="k">import</span> <span class="n">CrawlerWithAnswer</span>
+<span class="kn">from</span> <span class="nn">base.cgraph</span> <span class="kn">import</span> <span class="n">MyGraph</span>
+<span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="kn">import</span> <span class="n">Crawler</span><span class="p">,</span> <span class="n">CrawlerException</span><span class="p">,</span> <span class="n">MaximumObservedDegreeCrawler</span>
+<span class="kn">from</span> <span class="nn">crawlers.cadvanced</span> <span class="kn">import</span> <span class="n">CrawlerWithAnswer</span>
 
 
 <div class="viewcode-block" id="AvrachenkovCrawler"><a class="viewcode-back" href="../../code.html#crawlers.advanced.AvrachenkovCrawler">[docs]</a><span class="k">class</span> <span class="nc">AvrachenkovCrawler</span><span class="p">(</span><span class="n">CrawlerWithAnswer</span><span class="p">):</span>
@@ -46,7 +55,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">short</span> <span class="o">=</span> <span class="s1">&#39;2-Stage&#39;</span>
 
-<div class="viewcode-block" id="AvrachenkovCrawler.__init__"><a class="viewcode-back" href="../../code.html#crawlers.advanced.AvrachenkovCrawler.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">n1</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">n1</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">n1</span><span class="o">=</span><span class="n">n1</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">n1</span> <span class="o">&lt;=</span> <span class="n">n</span>
         <span class="c1"># assert n1 &lt;= n &lt;= self._orig_graph.nodes()</span>
@@ -55,9 +64,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_top_observed_seeds</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_top_observed_seeds</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
-<div class="viewcode-block" id="AvrachenkovCrawler.seeds_generator"><a class="viewcode-back" href="../../code.html#crawlers.advanced.AvrachenkovCrawler.seeds_generator">[docs]</a>    <span class="k">def</span> <span class="nf">seeds_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">seeds_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># 1) random seeds</span>
         <span class="n">random_seeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_orig_graph</span><span class="o">.</span><span class="n">random_nodes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n1</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n1</span><span class="p">):</span>
@@ -66,7 +75,7 @@
         <span class="c1"># 2) detect MOD batch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_get_mod_nodes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observed_set</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_top_observed_seeds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">n1</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_top_observed_seeds</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">node</span></div>
+            <span class="k">yield</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">_compute_answer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_answer</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -82,7 +91,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">short</span> <span class="o">=</span> <span class="s1">&#39;EmulatorWA&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">crawler_def</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">crawler_def</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param crawler_def: crawler to emulate</span>
 <span class="sd">        :param n: limit of crawls (budget)</span>
@@ -125,7 +134,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">short</span> <span class="o">=</span> <span class="s1">&#39;3-Stage&#39;</span>
 
-<div class="viewcode-block" id="ThreeStageCrawler.__init__"><a class="viewcode-back" href="../../code.html#crawlers.advanced.ThreeStageCrawler.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ThreeStageCrawler.__init__"><a class="viewcode-back" href="../../code.html#crawlers.advanced.ThreeStageCrawler.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param graph: original graph</span>
 <span class="sd">        :param s: number of initial random seed</span>
@@ -146,7 +155,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">e2s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>  <span class="c1"># E2*</span></div>
         <span class="c1"># self.e2 = set()  # E2</span>
 
-<div class="viewcode-block" id="ThreeStageCrawler.seeds_generator"><a class="viewcode-back" href="../../code.html#crawlers.advanced.ThreeStageCrawler.seeds_generator">[docs]</a>    <span class="k">def</span> <span class="nf">seeds_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">seeds_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># 1) random seeds</span>
         <span class="n">random_seeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_orig_graph</span><span class="o">.</span><span class="n">random_nodes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">):</span>
@@ -174,7 +183,7 @@
 
         <span class="c1"># NOTE: e1s is not sorted by degree</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">e1s</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">node</span></div>
+            <span class="k">yield</span> <span class="n">node</span>
 
     <span class="k">def</span> <span class="nf">_compute_answer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_answer</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -198,7 +207,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">short</span> <span class="o">=</span> <span class="s1">&#39;3-StageHubs&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param graph: original graph</span>
 <span class="sd">        :param s: number of initial random seed</span>
@@ -257,7 +266,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">short</span> <span class="o">=</span> <span class="s1">&#39;3-StageMOD&#39;</span>
 
-<div class="viewcode-block" id="ThreeStageMODCrawler.__init__"><a class="viewcode-back" href="../../code.html#crawlers.advanced.ThreeStageMODCrawler.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ThreeStageMODCrawler.__init__"><a class="viewcode-back" href="../../code.html#crawlers.advanced.ThreeStageMODCrawler.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">MyGraph</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param graph: original graph</span>
 <span class="sd">        :param s: number of initial random seed</span>
@@ -294,7 +303,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">e1s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span>  <span class="c1"># FIXME copying</span></div>
 
-<div class="viewcode-block" id="ThreeStageMODCrawler.seeds_generator"><a class="viewcode-back" href="../../code.html#crawlers.advanced.ThreeStageMODCrawler.seeds_generator">[docs]</a>    <span class="k">def</span> <span class="nf">seeds_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">seeds_generator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># 1) random seeds</span>
         <span class="n">random_seeds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_orig_graph</span><span class="o">.</span><span class="n">random_nodes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">):</span>
@@ -314,7 +323,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">mod_on</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">mod</span><span class="o">.</span><span class="n">next_seed</span><span class="p">()</span></div>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">mod</span><span class="o">.</span><span class="n">next_seed</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_compute_answer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_answer</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -354,25 +363,7 @@
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">CrawlingFramework</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../project.html">Project description</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Installation guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../code.html">Code Documentation</a></li>
-</ul>
-
-<div class="relations">
+        <div class="sphinxsidebarwrapper"><div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../../index.html">Documentation overview</a><ul>
@@ -382,15 +373,15 @@
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
+  <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
-    </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -399,8 +390,8 @@
       &copy;2020, misha et al.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
     </div>
 

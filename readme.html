@@ -1,18 +1,27 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Installation guide &#8212; CrawlingFramework 1.0.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Code Documentation" href="code.html" />
@@ -20,10 +29,10 @@
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
-  
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head><body>
+  </head>
+  <body>
   
 
     <div class="document">
@@ -36,13 +45,13 @@
 <div class="section" id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>python version 3</p></li>
-<li><p>GCC compiler</p></li>
-<li><p>cmake</p></li>
+<li>python version 3</li>
+<li>GCC compiler</li>
+<li>cmake</li>
 </ul>
 <p>For MacOS additional:</p>
 <ul class="simple">
-<li><p>brew</p></li>
+<li>brew</li>
 </ul>
 </div>
 <div class="section" id="install">
@@ -50,37 +59,37 @@
 <div class="section" id="for-linux">
 <h3>For Linux<a class="headerlink" href="#for-linux" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>Install all needed python libraries (from project folder):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+<li><p class="first">Install all needed python libraries (from project folder):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
 </pre></div>
 </div>
 </li>
-<li><p>Install <a class="reference external" href="https://snap.stanford.edu/snap/index.html">SNAP</a> C++ (to any directory):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">snap</span><span class="o">-</span><span class="n">stanford</span><span class="o">/</span><span class="n">snap</span><span class="o">.</span><span class="n">git</span>
+<li><p class="first">Install <a class="reference external" href="https://snap.stanford.edu/snap/index.html">SNAP</a> C++ (to any directory):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">snap</span><span class="o">-</span><span class="n">stanford</span><span class="o">/</span><span class="n">snap</span><span class="o">.</span><span class="n">git</span>
 <span class="n">cd</span> <span class="n">snap</span>
 </pre></div>
 </div>
 </li>
 </ul>
-<p>In <code class="docutils literal notranslate"><span class="pre">Makefile.config</span></code> add <code class="docutils literal notranslate"><span class="pre">-fPIC</span></code> compiler option: find a string
-<code class="docutils literal notranslate"><span class="pre">CXXFLAGS</span> <span class="pre">+=</span> <span class="pre">-O3</span> <span class="pre">-DNDEBUG</span> <span class="pre">-fopenmp</span></code>
+<p>In <code class="docutils literal"><span class="pre">Makefile.config</span></code> add <code class="docutils literal"><span class="pre">-fPIC</span></code> compiler option: find a string
+<code class="docutils literal"><span class="pre">CXXFLAGS</span> <span class="pre">+=</span> <span class="pre">-O3</span> <span class="pre">-DNDEBUG</span> <span class="pre">-fopenmp</span></code>
 and replace it with
-<code class="docutils literal notranslate"><span class="pre">CXXFLAGS</span> <span class="pre">+=</span> <span class="pre">-O3</span> <span class="pre">-DNDEBUG</span> <span class="pre">-fopenmp</span> <span class="pre">-fPIC</span></code></p>
+<code class="docutils literal"><span class="pre">CXXFLAGS</span> <span class="pre">+=</span> <span class="pre">-O3</span> <span class="pre">-DNDEBUG</span> <span class="pre">-fopenmp</span> <span class="pre">-fPIC</span></code></p>
 <p>Now build it:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="nb">all</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="nb">all</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="for-macos">
 <h3>For MacOS<a class="headerlink" href="#for-macos" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p>Install all needed python libraries (from project folder):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">brew</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+<li><p class="first">Install all needed python libraries (from project folder):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">brew</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
 </pre></div>
 </div>
 </li>
-<li><p>Install <a class="reference external" href="https://snap.stanford.edu/snap/index.html">SNAP</a> C++ (to any directory):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">snap</span><span class="o">-</span><span class="n">stanford</span><span class="o">/</span><span class="n">snap</span><span class="o">.</span><span class="n">git</span>
+<li><p class="first">Install <a class="reference external" href="https://snap.stanford.edu/snap/index.html">SNAP</a> C++ (to any directory):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">snap</span><span class="o">-</span><span class="n">stanford</span><span class="o">/</span><span class="n">snap</span><span class="o">.</span><span class="n">git</span>
 <span class="n">cd</span> <span class="n">snap</span>
 <span class="n">make</span> <span class="nb">all</span>
 </pre></div>
@@ -91,15 +100,15 @@ and replace it with
 </div>
 <div class="section" id="set-up-configurations">
 <h2>Set up configurations<a class="headerlink" href="#set-up-configurations" title="Permalink to this headline">¶</a></h2>
-<p>Copy the file <code class="docutils literal notranslate"><span class="pre">config.example</span></code> to <code class="docutils literal notranslate"><span class="pre">config</span></code> - this file will contain your specific
+<p>Copy the file <code class="docutils literal"><span class="pre">config.example</span></code> to <code class="docutils literal"><span class="pre">config</span></code> - this file will contain your specific
 flags and paths:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cp</span> <span class="n">config</span><span class="o">.</span><span class="n">example</span> <span class="n">config</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cp</span> <span class="n">config</span><span class="o">.</span><span class="n">example</span> <span class="n">config</span>
 </pre></div>
 </div>
 <div class="section" id="snap-c-for-cythonic-crawlers">
 <h3>SNAP C++ (for cythonic crawlers)<a class="headerlink" href="#snap-c-for-cythonic-crawlers" title="Permalink to this headline">¶</a></h3>
-<p>In the <code class="docutils literal notranslate"><span class="pre">config</span></code> file set variables:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SNAP_DIR</span> <span class="o">=</span> <span class="s2">&quot;/path/to/snap&quot;</span>         <span class="c1"># directory with snap built</span>
+<p>In the <code class="docutils literal"><span class="pre">config</span></code> file set variables:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SNAP_DIR</span> <span class="o">=</span> <span class="s2">&quot;/path/to/snap&quot;</span>         <span class="c1"># directory with snap built</span>
 </pre></div>
 </div>
 <p>Put there your path to the installed snap root directory.
@@ -111,7 +120,7 @@ NOTE: don’t start the path from ‘~’ or it will fail with the g++ option �
 <p>Approximate centralities computing can significantly reduce computation time for large
 graphs. Set the corresponding variable to toggle <a class="reference external" href="https://networkit.github.io/">Networkit</a>
 library usage (for betweenness and closeness):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">USE_NETWORKIT</span> <span class="o">=</span> <span class="kc">True</span>                 <span class="c1"># Use networkit library for approximate centrality calculation</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">USE_NETWORKIT</span> <span class="o">=</span> <span class="kc">True</span>                 <span class="c1"># Use networkit library for approximate centrality calculation</span>
 </pre></div>
 </div>
 </div>
@@ -119,7 +128,7 @@ library usage (for betweenness and closeness):</p>
 <h3>Ligra (for fast eccentricity estimations)<a class="headerlink" href="#ligra-for-fast-eccentricity-estimations" title="Permalink to this headline">¶</a></h3>
 <p>You may install <a class="reference external" href="https://github.com/jshun/ligra">Ligra</a> framework to use approximate
 eccentricity algorithm for large graphs:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">jshun</span><span class="o">/</span><span class="n">ligra</span><span class="o">.</span><span class="n">git</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">jshun</span><span class="o">/</span><span class="n">ligra</span><span class="o">.</span><span class="n">git</span>
 <span class="n">cd</span> <span class="n">ligra</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">eccentricity</span>
 <span class="n">export</span> <span class="n">CILK</span><span class="o">=</span><span class="s2">&quot; &quot;</span>
 <span class="n">make</span> <span class="nb">all</span>
@@ -128,7 +137,7 @@ eccentricity algorithm for large graphs:</p>
 </pre></div>
 </div>
 <p>Set corresponding variables in config file:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">USE_LIGRA</span> <span class="o">=</span> <span class="kc">True</span>                     <span class="c1"># Use Ligra library for approximate centrality calculation</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">USE_LIGRA</span> <span class="o">=</span> <span class="kc">True</span>                     <span class="c1"># Use Ligra library for approximate centrality calculation</span>
 <span class="n">LIGRA_DIR</span> <span class="o">=</span> <span class="s2">&quot;/path/to/ligra&quot;</span>         <span class="c1"># directory with Ligra built</span>
 </pre></div>
 </div>
@@ -137,7 +146,7 @@ eccentricity algorithm for large graphs:</p>
 <h3>VK messages<a class="headerlink" href="#vk-messages" title="Permalink to this headline">¶</a></h3>
 <p>You may set your VK account id to get messages from crawler runner (<cite>CrawlerHistoryRunner</cite>).
 It reports when computations are complete or when errors occur:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">VK_ID</span> <span class="o">=</span> <span class="s2">&quot;00000000&quot;</span>                   <span class="c1"># VK id to send info messages</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">VK_ID</span> <span class="o">=</span> <span class="s2">&quot;00000000&quot;</span>                   <span class="c1"># VK id to send info messages</span>
 </pre></div>
 </div>
 <p>You should allow the <cite>vk_bot</cite> to send messages to you (TODO how?).</p>
@@ -151,28 +160,25 @@ It reports when computations are complete or when errors occur:</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="index.html">CrawlingFramework</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="project.html">Project description</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#set-up-configurations">Set up configurations</a></li>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation guide</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#install">Install</a><ul>
+<li><a class="reference internal" href="#for-linux">For Linux</a></li>
+<li><a class="reference internal" href="#for-macos">For MacOS</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="code.html">Code Documentation</a></li>
+<li><a class="reference internal" href="#set-up-configurations">Set up configurations</a><ul>
+<li><a class="reference internal" href="#snap-c-for-cythonic-crawlers">SNAP C++ (for cythonic crawlers)</a></li>
+<li><a class="reference internal" href="#networkit-for-fast-betweenness-and-closeness-estimations">Networkit (for fast betweenness and closeness estimations)</a></li>
+<li><a class="reference internal" href="#ligra-for-fast-eccentricity-estimations">Ligra (for fast eccentricity estimations)</a></li>
+<li><a class="reference internal" href="#vk-messages">VK messages</a></li>
 </ul>
-
+</li>
+</ul>
+</li>
+</ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
@@ -182,16 +188,23 @@ It reports when computations are complete or when errors occur:</p>
   </ul></li>
 </ul>
 </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/readme.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
+  <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
-    </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -200,8 +213,8 @@ It reports when computations are complete or when errors occur:</p>
       &copy;2020, misha et al.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
       |
       <a href="_sources/readme.rst.txt"
