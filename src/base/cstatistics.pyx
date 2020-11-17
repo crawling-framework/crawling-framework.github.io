@@ -13,7 +13,7 @@ from base.cgraph cimport MyGraph, GetClustCf, GetMxWccSz, PUNGraph, TUNGraph, Ge
 from cython.operator cimport dereference as deref, postincrement as pinc
 
 if USE_NETWORKIT:  # Use networkit library for approximate centrality calculation
-    from networkit._NetworKit import Betweenness, ApproxBetweenness, EstimateBetweenness, ApproxCloseness
+    from networkit.centrality import Betweenness, ApproxBetweenness, EstimateBetweenness, ApproxCloseness
 
 # Remapping stats from names to declared functions
 ## TODO: To add new statistics need to write it in stat_computer, in Stat class in graph_stats.py

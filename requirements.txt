@@ -1,9 +1,9 @@
-Cython
+Cython             # (works for version 0.29.21)
 patool             # for extraction of archives downloaded from online graph collection
 networkx==2.4      # for crawling process visualizing
 imageio            # for creating gifs
 matplotlib==3.3.0  # for plots drawing
-networkit          # for many graph stats computing
+networkit==7.1     # for many graph stats computing
 numpy
 scikit-learn
 tqdm               # for progress bars when runners

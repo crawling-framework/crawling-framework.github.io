@@ -8,7 +8,7 @@ from graph_io import GraphCollections
 from utils import USE_NETWORKIT
 
 if USE_NETWORKIT:  # Use networkit library for community detection
-    from networkit._NetworKit import PLM, Modularity
+    from networkit.community import PLM, Modularity
 
 
 class Stat(Enum):
