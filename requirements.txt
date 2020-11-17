@@ -1,13 +1,15 @@
+# Obligate:
 Cython             # (works for version 0.29.21)
 patool             # for extraction of archives downloaded from online graph collection
 networkx==2.4      # for crawling process visualizing
 imageio            # for creating gifs
 matplotlib==3.3.0  # for plots drawing
 networkit==7.1     # for many graph stats computing
-numpy
-scikit-learn
+numpy              # (works for version 0.19.4)
+scikit-learn       # (works for version 0.23.2)
 tqdm               # for progress bars when runners
-jupyter            # for ipython notebook demo TODO need it?
 bs4                # for parsing htmls from online graph collection
 lxml               # for parsing htmls from online graph collection
+# Optional:
+jupyter            # for ipython notebook demo
 vk                 # for VK signals
