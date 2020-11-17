@@ -2,4 +2,3 @@ SNAP_DIR = "/path/to/snap"           # directory with snap built
 USE_NETWORKIT = True                 # Use networkit library for approximate centrality calculation
 USE_LIGRA = False                     # Use Ligra library for approximate centrality calculation
 LIGRA_DIR = "/path/to/ligra"         # directory with Ligra built
-VK_ID = "00000000"                   # VK id to send info messages

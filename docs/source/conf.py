@@ -21,7 +21,7 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = 'CrawlingFramework'
-copyright = '2020, Mikhail Drobyshevskiy'
+copyright = '2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov'
 author = 'Mikhail Drobyshevskiy, Danil Shaykhelislamov, Denis Aivazov, Kirill Lukyanov'
 
 # The short X.Y version
@@ -47,6 +47,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
+    'sphinxcontrib.fulltoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -104,6 +105,7 @@ html_static_path = ['_static']
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
+html_sidebars = { '**': ['localtoc.html', 'searchbox.html'] }
 
 
 # -- Options for HTMLHelp output ---------------------------------------------

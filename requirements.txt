@@ -12,4 +12,3 @@ bs4                # for parsing htmls from online graph collection
 lxml               # for parsing htmls from online graph collection
 # Optional:
 jupyter            # for ipython notebook demo
-vk                 # for VK signals
