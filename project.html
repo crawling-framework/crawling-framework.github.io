@@ -42,26 +42,33 @@
             
   <div class="section" id="project-description">
 <h1>Project description<a class="headerlink" href="#project-description" title="Permalink to this headline">¶</a></h1>
-<p>TODO description</p>
+<p>The CrawlingFramework (<a class="reference external" href="https://github.com/crawling-framework/crawling-framework.github.io">source code</a>) is aimed for offline testing of network crawling algorithms on graph data. Undirected graphs without self-loops are supported yet.</p>
 <p><strong>Features</strong>:</p>
 <ol class="arabic simple">
-<li>Automatic graphs downloading from <a class="reference external" href="http://konect.cc/networks/">Konect</a> and <a class="reference external" href="http://networkrepository.com/">networkrepository</a> online collections.</li>
+<li>Automatic graphs downloading from <a class="reference external" href="http://networkrepository.com/">networkrepository</a> online collections.</li>
 <li>Graph statistics (including centralities) can be calculated and are stored together with the graphs.</li>
-<li>Several families of crawlers implemented:<ul>
+<li>Implement your own algorithm or use one of the already implemented from several families of crawlers:<ul>
 <li>popular ones: RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, DepthFirstSearchCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler;</li>
 <li>multicrawler mode - when a set of crawlers work together;</li>
-<li>advanced crawlers - for more complex strategies.</li>
+<li>advanced crawlers - more complex strategies, e.g. described in [1], [2], and [3].</li>
 </ul>
 </li>
-<li>Run crawlers on given graphs, calculating quality measures, saving the history, and drawing plots.</li>
+<li>Run crawlers on given graphs, calculating quality measures, saving the history, and drawing comparison plots.</li>
 </ol>
 <p><strong>Planning</strong>:</p>
 <ul class="simple">
-<li>graph models: controlled assortativity, ERGG.</li>
+<li>graph models: controlled assortativity, LFR, ERGG;</li>
+<li>extension for directed graphs.</li>
 </ul>
 <div class="section" id="demo-tutorial">
 <h2>Demo-tutorial<a class="headerlink" href="#demo-tutorial" title="Permalink to this headline">¶</a></h2>
-<p>See 7-steps tutorial at <a class="reference internal" href="code.html#demo-lbl"><span class="std std-ref">demo</span></a></p>
+<p>See 7-steps tutorial at <a class="reference internal" href="code.html#demo-lbl"><span class="std std-ref">demo</span></a> for a quick start.</p>
+</div>
+<div class="section" id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<p>[1] Avrachenkov, Konstantin, et al. “Quick detection of high-degree entities in large directed networks.” 2014 IEEE International Conference on Data Mining. IEEE, 2014. <a class="reference external" href="https://arxiv.org/pdf/1410.0571.pdf">arxiv</a></p>
+<p>[2] Madhawa, K., Murata, T. A multi-armed bandit approach for exploring partially observed networks. Appl Netw Sci 4, 26 (2019). <a class="reference external" href="https://doi.org/10.1007/s41109-019-0145-0">springer</a></p>
+<p>[3] Three-step Algorithms for Detection of High Degree Nodes in Online Social Networks (2020) (TODO add ref when published) <a href="#id1"><span class="problematic" id="id2">`link &lt;&gt;`_</span></a></p>
 </div>
 </div>
 
@@ -72,28 +79,17 @@
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Project description</a><ul>
-<li><a class="reference internal" href="#demo-tutorial">Demo-tutorial</a></li>
+  <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Project description</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#demo-tutorial">Demo-tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">Code Documentation</a></li>
 </ul>
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="index.html" title="previous chapter">Welcome to CrawlingFramework’s documentation!</a></li>
-      <li>Next: <a href="readme.html" title="next chapter">Installation guide</a></li>
-  </ul></li>
-</ul>
-</div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/project.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
+
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -109,7 +105,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, misha et al.
+      &copy;2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>

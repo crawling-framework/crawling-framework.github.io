@@ -57,7 +57,7 @@
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">1. Automatic graph downloading</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="kn">from</span> <span class="nn">graph_io</span> <span class="kn">import</span> <span class="n">GraphCollections</span>
 
-    <span class="c1"># Graph name is searched in konect then networkrepository namespaces.</span>
+    <span class="c1"># Graph name is searched in networkrepository namespace.</span>
     <span class="c1"># If not present on disk, the graph will be downloaded.</span>
     <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;dolphins&#39;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">. V=</span><span class="si">%s</span><span class="s2">, E=</span><span class="si">%s</span><span class="s2">. At &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
@@ -351,15 +351,15 @@
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
-<h3>Related Topics</h3>
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-  <li><a href="../../index.html">Documentation overview</a><ul>
-  <li><a href="../index.html">Module code</a><ul>
-  </ul></li>
-  </ul></li>
+<li class="toctree-l1"><a class="reference internal" href="../../project.html">Project description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../code.html">Code Documentation</a></li>
 </ul>
-</div>
+
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
@@ -375,7 +375,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, misha et al.
+      &copy;2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>

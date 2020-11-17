@@ -75,7 +75,7 @@
 <code class="docutils literal"><span class="pre">CXXFLAGS</span> <span class="pre">+=</span> <span class="pre">-O3</span> <span class="pre">-DNDEBUG</span> <span class="pre">-fopenmp</span></code>
 and replace it with
 <code class="docutils literal"><span class="pre">CXXFLAGS</span> <span class="pre">+=</span> <span class="pre">-O3</span> <span class="pre">-DNDEBUG</span> <span class="pre">-fopenmp</span> <span class="pre">-fPIC</span></code></p>
-<p>Now build it:</p>
+<p>Now build it (requires 5-10 mins):</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="nb">all</span>
 </pre></div>
 </div>
@@ -141,15 +141,7 @@ eccentricity algorithm for large graphs:</p>
 <span class="n">LIGRA_DIR</span> <span class="o">=</span> <span class="s2">&quot;/path/to/ligra&quot;</span>         <span class="c1"># directory with Ligra built</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="vk-messages">
-<h3>VK messages<a class="headerlink" href="#vk-messages" title="Permalink to this headline">¶</a></h3>
-<p>You may set your VK account id to get messages from crawler runner (<cite>CrawlerHistoryRunner</cite>).
-It reports when computations are complete or when errors occur:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">VK_ID</span> <span class="o">=</span> <span class="s2">&quot;00000000&quot;</span>                   <span class="c1"># VK id to send info messages</span>
-</pre></div>
-</div>
-<p>You should allow the <cite>vk_bot</cite> to send messages to you (TODO how?).</p>
+<p>Now when you are done, go to <a class="reference external" href="code.html#demo-lbl">demo</a> for a quick start.</p>
 </div>
 </div>
 </div>
@@ -161,40 +153,27 @@ It reports when computations are complete or when errors occur:</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Installation guide</a><ul>
-<li><a class="reference internal" href="#requirements">Requirements</a></li>
-<li><a class="reference internal" href="#install">Install</a><ul>
-<li><a class="reference internal" href="#for-linux">For Linux</a></li>
-<li><a class="reference internal" href="#for-macos">For MacOS</a></li>
+  <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project description</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#for-linux">For Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#for-macos">For MacOS</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#set-up-configurations">Set up configurations</a><ul>
-<li><a class="reference internal" href="#snap-c-for-cythonic-crawlers">SNAP C++ (for cythonic crawlers)</a></li>
-<li><a class="reference internal" href="#networkit-for-fast-betweenness-and-closeness-estimations">Networkit (for fast betweenness and closeness estimations)</a></li>
-<li><a class="reference internal" href="#ligra-for-fast-eccentricity-estimations">Ligra (for fast eccentricity estimations)</a></li>
-<li><a class="reference internal" href="#vk-messages">VK messages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#set-up-configurations">Set up configurations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#snap-c-for-cythonic-crawlers">SNAP C++ (for cythonic crawlers)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#networkit-for-fast-betweenness-and-closeness-estimations">Networkit (for fast betweenness and closeness estimations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ligra-for-fast-eccentricity-estimations">Ligra (for fast eccentricity estimations)</a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">Code Documentation</a></li>
 </ul>
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="project.html" title="previous chapter">Project description</a></li>
-      <li>Next: <a href="code.html" title="next chapter">Code Documentation</a></li>
-  </ul></li>
-</ul>
-</div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/readme.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
+
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -210,7 +189,7 @@ It reports when computations are complete or when errors occur:</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, misha et al.
+      &copy;2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>

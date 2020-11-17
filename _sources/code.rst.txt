@@ -84,4 +84,13 @@ demo
 .. automodule:: demo.demo
    :members:
 
+advanced usage
+-------------------
+
+For a more advanced usage see examples in the code.
+
+To create a **custom crawler** you should extend the root class Crawler from *base.crawlers.cbasic.py*. See examples in *base.crawlers.advanced.py*. For more complex algorithms using machine learning see *base.crawlers.ml*. To make it faster you could also implement your crawler in cython, see examples in *base.crawlers.advanced.pyx*.
+
+To create a **custom metric** take a look at *running.metrics_and_runner.py*. You should extend the root class Metric for that.
+
 

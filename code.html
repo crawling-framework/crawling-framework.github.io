@@ -179,10 +179,9 @@ node_map is specified. Some neworkit_node_id -&gt; None (those ids not present i
 <dd><p>Manager of graph data.
 By calling method <cite>get(name, collection)</cite>, it loads graph from file if any or downloads a graph from online
 collection.
-<a class="reference external" href="http://konect.uni-koblenz.de">Konect</a> and <a class="reference external" href="http://networkrepository.com/">networkrepository</a> collections are
-available.</p>
+<a class="reference external" href="http://networkrepository.com/">networkrepository</a> collection is available.</p>
 <p>Example:
-&gt;&gt;&gt; graph = GraphCollections.get(name=’dolphins’, collection=’konect’)</p>
+&gt;&gt;&gt; graph = GraphCollections.get(name=’dolphins’, collection=’netrepo’)</p>
 <dl class="staticmethod">
 <dt id="graph_io.GraphCollections.get">
 <em class="property">static </em><code class="descname">get</code><span class="sig-paren">(</span><em>name</em>, <em>collection=None</em>, <em>directed=False</em>, <em>giant_only=True</em>, <em>self_loops=False</em>, <em>not_load=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_io.html#GraphCollections.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_io.GraphCollections.get" title="Permalink to this definition">¶</a></dt>
@@ -194,8 +193,8 @@ giant_only and self_loops, you need to remove the file manually. #TODO maybe mak
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>name</strong> – any of e.g. ‘CL’ or ‘Actor collaborations’ or ‘actor-collaborations’</li>
-<li><strong>collection</strong> – ‘konect’, ‘netrepo’, ‘other’, or any other subfolder in data/. If not
-specified, it searches by name in ‘konect’, then ‘neterepo’, then ‘other’.</li>
+<li><strong>collection</strong> – ‘netrepo’, ‘other’, or any other subfolder in data/. If not
+specified, it searches by name in ‘neterepo’, then ‘other’.</li>
 <li><strong>directed</strong> – undirected by default</li>
 <li><strong>giant_only</strong> – giant component instead of full graph. Component extraction is applied
 only once when the graph is downloaded.</li>
@@ -1379,6 +1378,12 @@ Miss graphs where not all configurations are present.</p>
 </ol>
 </dd></dl>
 
+<div class="section" id="advanced-usage">
+<h3>advanced usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h3>
+<p>For a more advanced usage see examples in the code.</p>
+<p>To create a <strong>custom crawler</strong> you should extend the root class Crawler from <em>base.crawlers.cbasic.py</em>. See examples in <em>base.crawlers.advanced.py</em>. For more complex algorithms using machine learning see <em>base.crawlers.ml</em>. To make it faster you could also implement your crawler in cython, see examples in <em>base.crawlers.advanced.pyx</em>.</p>
+<p>To create a <strong>custom metric</strong> take a look at <em>running.metrics_and_runner.py</em>. You should extend the root class Metric for that.</p>
+</div>
 </div>
 </div>
 
@@ -1389,35 +1394,27 @@ Miss graphs where not all configurations are present.</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Code Documentation</a><ul>
-<li><a class="reference internal" href="#module-base.cgraph">basics</a></li>
-<li><a class="reference internal" href="#module-crawlers.cbasic">crawlers</a><ul>
-<li><a class="reference internal" href="#module-crawlers.cbasic">classic</a></li>
-<li><a class="reference internal" href="#module-crawlers.advanced">advanced</a></li>
-<li><a class="reference internal" href="#module-crawlers.ml.with_features">ml-crawlers</a></li>
+  <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Installation guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Code Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-base.cgraph">basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-crawlers.cbasic">crawlers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-crawlers.cbasic">classic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-crawlers.advanced">advanced</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-crawlers.ml.with_features">ml-crawlers</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-running.metrics_and_runner">runners</a></li>
-<li><a class="reference internal" href="#demo">demo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-running.metrics_and_runner">runners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#demo">demo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-usage">advanced usage</a></li>
 </ul>
 </li>
 </ul>
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="readme.html" title="previous chapter">Installation guide</a></li>
-  </ul></li>
+</li>
 </ul>
-</div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/code.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
+
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -1433,7 +1430,7 @@ Miss graphs where not all configurations are present.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, misha et al.
+      &copy;2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>

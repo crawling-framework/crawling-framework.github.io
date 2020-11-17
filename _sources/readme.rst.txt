@@ -33,7 +33,7 @@ In ``Makefile.config`` add ``-fPIC`` compiler option: find a string
 and replace it with
 ``CXXFLAGS += -O3 -DNDEBUG -fopenmp -fPIC``
 
-Now build it::
+Now build it (requires 5-10 mins)::
 
    make all
 
@@ -97,12 +97,15 @@ Set corresponding variables in config file::
    USE_LIGRA = True                     # Use Ligra library for approximate centrality calculation
    LIGRA_DIR = "/path/to/ligra"         # directory with Ligra built
 
-VK messages
-~~~~~~~~~~~
+Now when you are done, go to `demo <code.html#demo-lbl>`_ for a quick start.
 
-You may set your VK account id to get messages from crawler runner (`CrawlerHistoryRunner`).
-It reports when computations are complete or when errors occur::
+..
+    VK messages
+    ~~~~~~~~~~~
 
-   VK_ID = "00000000"                   # VK id to send info messages
+    You may set your VK account id to get messages from crawler runner (`CrawlerHistoryRunner`).
+    It reports when computations are complete or when errors occur::
 
-You should allow the `vk_bot` to send messages to you (TODO how?).
+       VK_ID = "00000000"                   # VK id to send info messages
+
+    You should allow the `vk_bot` to send messages to you (TODO how?).
