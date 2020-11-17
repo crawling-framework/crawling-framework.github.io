@@ -6,7 +6,7 @@ The CrawlingFramework (`source code <https://github.com/crawling-framework/crawl
 
 **Features**:
 
-#. Automatic graphs downloading from `Konect <http://konect.cc/networks/>`_ and `networkrepository <http://networkrepository.com/>`_ online collections.
+#. Automatic graphs downloading from `networkrepository <http://networkrepository.com/>`_ online collection.
 #. Graph statistics (including centralities) can be calculated and are stored together with the graphs.
 #. Implement your own algorithm or use one of the already implemented from several families of crawlers:
 

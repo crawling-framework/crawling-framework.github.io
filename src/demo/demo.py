@@ -16,7 +16,7 @@ def graph_handing():
     print("\n1. Automatic graph downloading\n")
     from graph_io import GraphCollections
 
-    # Graph name is searched in konect then networkrepository namespaces.
+    # Graph name is searched in networkrepository namespace.
     # If not present on disk, the graph will be downloaded.
     g = GraphCollections.get(name='dolphins')
     print("%s. V=%s, E=%s. At '%s'" % (g.name, g.nodes(), g.edges(), g.path))

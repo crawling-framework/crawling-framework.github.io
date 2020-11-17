@@ -113,10 +113,11 @@ def main():
     import argparse
     stats = [s.name for s in Stat]
     parser = argparse.ArgumentParser(
-        description='Compute statistics for graphs. Graph is specified via path (-p) or name in Konect (-n).')
+        description='Compute statistics for graphs. Graph is specified via path (-p) or name in '
+                    'available collections (-n).')
     parser.add_argument('-p', '--path', required=False, nargs='+', help='path to input graphs as edgelist')
-    parser.add_argument('-n', '--name', required=False, nargs='+', help='names/codes of input graphs in Konect')
-    parser.add_argument('-c', '--collection', required=False, help="graphs collection: 'konect' or 'netrepo'")
+    parser.add_argument('-n', '--name', required=False, nargs='+', help='names of input graphs in available collections')
+    parser.add_argument('-c', '--collection', required=False, help="graphs collection: 'netrepo' or 'other'")
     parser.add_argument('-f', '--full', action='store_true', help='print full statistics value')
     parser.add_argument('-s', '--stats', required=True, nargs='+', choices=stats,
                         help='node statistics to compute')
