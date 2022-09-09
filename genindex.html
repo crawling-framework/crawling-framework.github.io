@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; CrawlingFramework 1.0.0 documentation</title>
+    <title>Index &#8212; CrawlingFramework 2.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -42,6 +42,7 @@
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#I"><strong>I</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
@@ -66,9 +67,13 @@
 </li>
         <li><a href="code.html#crawlers.cbasic.DepthFirstSearchCrawler.__init__">(crawlers.cbasic.DepthFirstSearchCrawler method)</a>
 </li>
+        <li><a href="code.html#crawlers.cbasic.InitialSeedCrawlerHelper.__init__">(crawlers.cbasic.InitialSeedCrawlerHelper method)</a>
+</li>
         <li><a href="code.html#crawlers.cbasic.MaximumExcessDegreeCrawler.__init__">(crawlers.cbasic.MaximumExcessDegreeCrawler method)</a>
 </li>
         <li><a href="code.html#crawlers.cbasic.MaximumObservedDegreeCrawler.__init__">(crawlers.cbasic.MaximumObservedDegreeCrawler method)</a>
+</li>
+        <li><a href="code.html#crawlers.cbasic.MaximumRealDegreeCrawler.__init__">(crawlers.cbasic.MaximumRealDegreeCrawler method)</a>
 </li>
         <li><a href="code.html#crawlers.cbasic.PreferentialObservedDegreeCrawler.__init__">(crawlers.cbasic.PreferentialObservedDegreeCrawler method)</a>
 </li>
@@ -78,11 +83,35 @@
 </li>
         <li><a href="code.html#crawlers.cbasic.SnowBallCrawler.__init__">(crawlers.cbasic.SnowBallCrawler method)</a>
 </li>
-        <li><a href="code.html#graph_io.temp_dir.__init__">(graph_io.temp_dir method)</a>
+        <li><a href="code.html#crawlers.declarable.Declarable.__init__">(crawlers.declarable.Declarable method)</a>
 </li>
-        <li><a href="code.html#running.history_runner.CrawlerHistoryRunner.__init__">(running.history_runner.CrawlerHistoryRunner method)</a>
+        <li><a href="code.html#running.history_runner.SmartCrawlersRunner.__init__">(running.history_runner.SmartCrawlersRunner method)</a>
 </li>
         <li><a href="code.html#running.merger.ResultsMerger.__init__">(running.merger.ResultsMerger method)</a>
+</li>
+        <li><a href="code.html#running.metrics.Metric.__init__">(running.metrics.Metric method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler.__init__">(search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler.__init__">(search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.mab.FollowLeaderMABCrawler.__init__">(search.predictor_based_crawlers.mab.FollowLeaderMABCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.mab.MABCrawler.__init__">(search.predictor_based_crawlers.mab.MABCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.mab.MultiPredictorCrawler.__init__">(search.predictor_based_crawlers.mab.MultiPredictorCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.__init__">(search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictors.gnn_predictors.GNNet.__init__">(search.predictors.gnn_predictors.GNNet method)</a>
+</li>
+        <li><a href="code.html#search.predictors.gnn_predictors.GNNPredictor.__init__">(search.predictors.gnn_predictors.GNNPredictor method)</a>
+</li>
+        <li><a href="code.html#search.predictors.simple_predictors.MaximumTargetNeighborsPredictor.__init__">(search.predictors.simple_predictors.MaximumTargetNeighborsPredictor method)</a>
+</li>
+        <li><a href="code.html#search.predictors.simple_predictors.Predictor.__init__">(search.predictors.simple_predictors.Predictor method)</a>
+</li>
+        <li><a href="code.html#search.predictors.simple_predictors.SklearnPredictor.__init__">(search.predictors.simple_predictors.SklearnPredictor method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -108,6 +137,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler">BetaDistributionMultiPredictorCrawler (class in search.predictor_based_crawlers.mab)</a>
+</li>
       <li><a href="code.html#crawlers.cbasic.BreadthFirstSearchCrawler">BreadthFirstSearchCrawler (class in crawlers.cbasic)</a>
 </li>
   </ul></td>
@@ -116,6 +147,8 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#crawlers.cbasic.InitialSeedCrawlerHelper.choose_initial_seed">choose_initial_seed() (crawlers.cbasic.InitialSeedCrawlerHelper method)</a>
+</li>
       <li><a href="code.html#base.cgraph.MyGraph.clustering">clustering() (base.cgraph.MyGraph method)</a>
 </li>
       <li><a href="code.html#base.cgraph.MyGraph.copy">copy() (base.cgraph.MyGraph method)</a>
@@ -131,11 +164,21 @@
 </li>
         <li><a href="code.html#crawlers.cbasic.MaximumObservedDegreeCrawler.crawl">(crawlers.cbasic.MaximumObservedDegreeCrawler method)</a>
 </li>
+        <li><a href="code.html#crawlers.cbasic.MaximumRealDegreeCrawler.crawl">(crawlers.cbasic.MaximumRealDegreeCrawler method)</a>
+</li>
         <li><a href="code.html#crawlers.cbasic.PreferentialObservedDegreeCrawler.crawl">(crawlers.cbasic.PreferentialObservedDegreeCrawler method)</a>
 </li>
         <li><a href="code.html#crawlers.cbasic.RandomCrawler.crawl">(crawlers.cbasic.RandomCrawler method)</a>
 </li>
         <li><a href="code.html#crawlers.cbasic.SnowBallCrawler.crawl">(crawlers.cbasic.SnowBallCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler.crawl">(search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler.crawl">(search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.mab.FollowLeaderMABCrawler.crawl">(search.predictor_based_crawlers.mab.FollowLeaderMABCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.crawl">(search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -146,20 +189,18 @@
 </li>
       <li><a href="code.html#crawlers.cbasic.Crawler">Crawler (class in crawlers.cbasic)</a>
 </li>
-      <li><a href="code.html#running.history_runner.CrawlerHistoryRunner">CrawlerHistoryRunner (class in running.history_runner)</a>
-</li>
-      <li>
-    crawlers.cadvanced
-
-      <ul>
-        <li><a href="code.html#module-crawlers.cadvanced">module</a>
-</li>
-      </ul></li>
       <li>
     crawlers.cbasic
 
       <ul>
-        <li><a href="code.html#module-0">module</a>, <a href="code.html#module-crawlers.cbasic">[1]</a>
+        <li><a href="code.html#module-crawlers.cbasic">module</a>
+</li>
+      </ul></li>
+      <li>
+    crawlers.declarable
+
+      <ul>
+        <li><a href="code.html#module-crawlers.declarable">module</a>
 </li>
       </ul></li>
   </ul></td>
@@ -168,14 +209,20 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#crawlers.declarable.Declarable">Declarable (class in crawlers.declarable)</a>
+</li>
+      <li><a href="code.html#crawlers.declarable.Declarable.declaration">declaration (crawlers.declarable.Declarable attribute)</a>
+</li>
+      <li><a href="code.html#crawlers.declarable.declaration_to_filename">declaration_to_filename() (in module crawlers.declarable)</a>
+</li>
       <li><a href="code.html#base.cgraph.MyGraph.deg">deg() (base.cgraph.MyGraph method)</a>
 </li>
       <li><a href="code.html#crawlers.cbasic.DepthFirstSearchCrawler">DepthFirstSearchCrawler (class in crawlers.cbasic)</a>
 </li>
-      <li><a href="code.html#running.merger.ResultsMerger.draw_aggregated">draw_aggregated() (running.merger.ResultsMerger method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#running.merger.ResultsMerger.draw_aggregated">draw_aggregated() (running.merger.ResultsMerger method)</a>
+</li>
       <li><a href="code.html#running.merger.ResultsMerger.draw_by_crawler">draw_by_crawler() (running.merger.ResultsMerger method)</a>
 </li>
       <li><a href="code.html#running.merger.ResultsMerger.draw_by_metric">draw_by_metric() (running.merger.ResultsMerger method)</a>
@@ -192,12 +239,48 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="code.html#base.cgraph.MyGraph.edges">edges() (base.cgraph.MyGraph method)</a>
 </li>
+      <li><a href="code.html#search.predictor_based_crawlers.mab.MABCrawler.estimate_node">estimate_node() (search.predictor_based_crawlers.mab.MABCrawler method)</a>
+
+      <ul>
+        <li><a href="code.html#search.predictor_based_crawlers.mab.MultiPredictorCrawler.estimate_node">(search.predictor_based_crawlers.mab.MultiPredictorCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.estimate_node">(search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler">ExponentialDynamicWeightsMultiPredictorCrawler (class in search.predictor_based_crawlers.mab)</a>
+</li>
+      <li><a href="code.html#crawlers.declarable.Declarable.extract_declaration">extract_declaration() (crawlers.declarable.Declarable static method)</a>
+</li>
+      <li><a href="code.html#search.predictors.gnn_predictors.GNNPredictor.extract_features">extract_features() (search.predictors.gnn_predictors.GNNPredictor method)</a>
+
+      <ul>
+        <li><a href="code.html#search.predictors.simple_predictors.MaximumTargetNeighborsPredictor.extract_features">(search.predictors.simple_predictors.MaximumTargetNeighborsPredictor method)</a>
+</li>
+        <li><a href="code.html#search.predictors.simple_predictors.Predictor.extract_features">(search.predictors.simple_predictors.Predictor method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#crawlers.declarable.filename_to_declaration">filename_to_declaration() (in module crawlers.declarable)</a>
+</li>
+      <li><a href="code.html#search.predictor_based_crawlers.mab.FollowLeaderMABCrawler">FollowLeaderMABCrawler (class in search.predictor_based_crawlers.mab)</a>
+</li>
+      <li><a href="code.html#search.predictors.gnn_predictors.GNNet.forward">forward() (search.predictors.gnn_predictors.GNNet method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#crawlers.declarable.Declarable.from_declaration">from_declaration() (crawlers.declarable.Declarable static method)</a>
+
+      <ul>
+        <li><a href="code.html#running.metrics.Metric.from_declaration">(running.metrics.Metric static method)</a>
+</li>
+      </ul></li>
       <li><a href="code.html#base.cgraph.MyGraph.full_name">full_name (base.cgraph.MyGraph attribute)</a>
 </li>
   </ul></td>
@@ -214,9 +297,13 @@
 </li>
       <li><a href="code.html#graph_io.GraphCollections.get_by_path">get_by_path() (graph_io.GraphCollections static method)</a>
 </li>
+      <li><a href="code.html#base.cgraph.MyGraph.giant_component">giant_component() (base.cgraph.MyGraph method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="code.html#base.cgraph.MyGraph.giant_component">giant_component() (base.cgraph.MyGraph method)</a>
+      <li><a href="code.html#search.predictors.gnn_predictors.GNNet">GNNet (class in search.predictors.gnn_predictors)</a>
+</li>
+      <li><a href="code.html#search.predictors.gnn_predictors.GNNPredictor">GNNPredictor (class in search.predictors.gnn_predictors)</a>
 </li>
       <li>
     graph_io
@@ -230,16 +317,36 @@
   </ul></td>
 </tr></table>
 
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#crawlers.cbasic.InitialSeedCrawlerHelper">InitialSeedCrawlerHelper (class in crawlers.cbasic)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#crawlers.declarable.Declarable.is_declaration">is_declaration() (crawlers.declarable.Declarable static method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#search.predictor_based_crawlers.mab.MABCrawler">MABCrawler (class in search.predictor_based_crawlers.mab)</a>
+</li>
       <li><a href="code.html#base.cgraph.MyGraph.max_deg">max_deg() (base.cgraph.MyGraph method)</a>
 </li>
       <li><a href="code.html#crawlers.cbasic.MaximumExcessDegreeCrawler">MaximumExcessDegreeCrawler (class in crawlers.cbasic)</a>
 </li>
       <li><a href="code.html#crawlers.cbasic.MaximumObservedDegreeCrawler">MaximumObservedDegreeCrawler (class in crawlers.cbasic)</a>
 </li>
+      <li><a href="code.html#crawlers.cbasic.MaximumRealDegreeCrawler">MaximumRealDegreeCrawler (class in crawlers.cbasic)</a>
+</li>
+      <li><a href="code.html#search.predictors.simple_predictors.MaximumTargetNeighborsPredictor">MaximumTargetNeighborsPredictor (class in search.predictors.simple_predictors)</a>
+</li>
       <li><a href="code.html#running.merger.ResultsMerger.merge_folders">merge_folders() (running.merger.ResultsMerger static method)</a>
+</li>
+      <li><a href="code.html#running.metrics.Metric">Metric (class in running.metrics)</a>
 </li>
       <li><a href="code.html#running.merger.ResultsMerger.missing_instances">missing_instances() (running.merger.ResultsMerger method)</a>
 </li>
@@ -249,9 +356,9 @@
       <ul>
         <li><a href="code.html#module-base.cgraph">base.cgraph</a>
 </li>
-        <li><a href="code.html#module-crawlers.cadvanced">crawlers.cadvanced</a>
+        <li><a href="code.html#module-crawlers.cbasic">crawlers.cbasic</a>
 </li>
-        <li><a href="code.html#module-0">crawlers.cbasic</a>, <a href="code.html#module-crawlers.cbasic">[1]</a>
+        <li><a href="code.html#module-crawlers.declarable">crawlers.declarable</a>
 </li>
         <li><a href="code.html#module-graph_io">graph_io</a>
 </li>
@@ -259,10 +366,22 @@
 </li>
         <li><a href="code.html#module-running.merger">running.merger</a>
 </li>
+        <li><a href="code.html#module-running.metrics">running.metrics</a>
+</li>
+        <li><a href="code.html#module-search.predictor_based_crawlers.mab">search.predictor_based_crawlers.mab</a>
+</li>
+        <li><a href="code.html#module-search.predictor_based_crawlers.predictor_based">search.predictor_based_crawlers.predictor_based</a>
+</li>
+        <li><a href="code.html#module-search.predictors.gnn_predictors">search.predictors.gnn_predictors</a>
+</li>
+        <li><a href="code.html#module-search.predictors.simple_predictors">search.predictors.simple_predictors</a>
+</li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="code.html#running.merger.ResultsMerger.move_folders">move_folders() (running.merger.ResultsMerger method)</a>
+</li>
+      <li><a href="code.html#search.predictor_based_crawlers.mab.MultiPredictorCrawler">MultiPredictorCrawler (class in search.predictor_based_crawlers.mab)</a>
 </li>
       <li><a href="code.html#base.cgraph.MyGraph">MyGraph (class in base.cgraph)</a>
 </li>
@@ -291,6 +410,8 @@
 </li>
         <li><a href="code.html#crawlers.cbasic.MaximumObservedDegreeCrawler.next_seed">(crawlers.cbasic.MaximumObservedDegreeCrawler method)</a>
 </li>
+        <li><a href="code.html#crawlers.cbasic.MaximumRealDegreeCrawler.next_seed">(crawlers.cbasic.MaximumRealDegreeCrawler method)</a>
+</li>
         <li><a href="code.html#crawlers.cbasic.PreferentialObservedDegreeCrawler.next_seed">(crawlers.cbasic.PreferentialObservedDegreeCrawler method)</a>
 </li>
         <li><a href="code.html#crawlers.cbasic.RandomCrawler.next_seed">(crawlers.cbasic.RandomCrawler method)</a>
@@ -298,6 +419,8 @@
         <li><a href="code.html#crawlers.cbasic.RandomWalkCrawler.next_seed">(crawlers.cbasic.RandomWalkCrawler method)</a>
 </li>
         <li><a href="code.html#crawlers.cbasic.SnowBallCrawler.next_seed">(crawlers.cbasic.SnowBallCrawler method)</a>
+</li>
+        <li><a href="code.html#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.next_seed">(search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -324,6 +447,22 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#search.predictors.gnn_predictors.GNNPredictor.predict_score">predict_score() (search.predictors.gnn_predictors.GNNPredictor method)</a>
+
+      <ul>
+        <li><a href="code.html#search.predictors.simple_predictors.MaximumTargetNeighborsPredictor.predict_score">(search.predictors.simple_predictors.MaximumTargetNeighborsPredictor method)</a>
+</li>
+        <li><a href="code.html#search.predictors.simple_predictors.Predictor.predict_score">(search.predictors.simple_predictors.Predictor method)</a>
+</li>
+        <li><a href="code.html#search.predictors.simple_predictors.SklearnPredictor.predict_score">(search.predictors.simple_predictors.SklearnPredictor method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#search.predictors.simple_predictors.Predictor">Predictor (class in search.predictors.simple_predictors)</a>
+</li>
+      <li><a href="code.html#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler">PredictorBasedCrawler (class in search.predictor_based_crawlers.predictor_based)</a>
+</li>
       <li><a href="code.html#crawlers.cbasic.PreferentialObservedDegreeCrawler">PreferentialObservedDegreeCrawler (class in crawlers.cbasic)</a>
 </li>
   </ul></td>
@@ -342,13 +481,25 @@
 </li>
       <li><a href="code.html#crawlers.cbasic.RandomWalkCrawler">RandomWalkCrawler (class in crawlers.cbasic)</a>
 </li>
+      <li><a href="code.html#search.predictor_based_crawlers.mab.MultiPredictorCrawler.re_estimate_nodes">re_estimate_nodes() (search.predictor_based_crawlers.mab.MultiPredictorCrawler method)</a>
+
+      <ul>
+        <li><a href="code.html#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.re_estimate_nodes">(search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler method)</a>
+</li>
+      </ul></li>
       <li><a href="code.html#graph_io.GraphCollections.register_new_graph">register_new_graph() (graph_io.GraphCollections static method)</a>
 </li>
+      <li><a href="code.html#search.predictors.gnn_predictors.GNNPredictor.reset">reset() (search.predictors.gnn_predictors.GNNPredictor method)</a>
+
+      <ul>
+        <li><a href="code.html#search.predictors.simple_predictors.Predictor.reset">(search.predictors.simple_predictors.Predictor method)</a>
+</li>
+        <li><a href="code.html#search.predictors.simple_predictors.SklearnPredictor.reset">(search.predictors.simple_predictors.SklearnPredictor method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="code.html#running.merger.ResultsMerger">ResultsMerger (class in running.merger)</a>
-</li>
-      <li><a href="code.html#running.history_runner.CrawlerHistoryRunner.run">run() (running.history_runner.CrawlerHistoryRunner method)</a>
 </li>
       <li>
     running.history_runner
@@ -364,6 +515,13 @@
         <li><a href="code.html#module-running.merger">module</a>
 </li>
       </ul></li>
+      <li>
+    running.metrics
+
+      <ul>
+        <li><a href="code.html#module-running.metrics">module</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -372,11 +530,43 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="code.html#base.cgraph.MyGraph.save">save() (base.cgraph.MyGraph method)</a>
 </li>
-      <li><a href="code.html#base.cgraph.MyGraph.set_attributes">set_attributes() (base.cgraph.MyGraph method)</a>
+      <li>
+    search.predictor_based_crawlers.mab
+
+      <ul>
+        <li><a href="code.html#module-search.predictor_based_crawlers.mab">module</a>
 </li>
+      </ul></li>
+      <li>
+    search.predictor_based_crawlers.predictor_based
+
+      <ul>
+        <li><a href="code.html#module-search.predictor_based_crawlers.predictor_based">module</a>
+</li>
+      </ul></li>
+      <li>
+    search.predictors.gnn_predictors
+
+      <ul>
+        <li><a href="code.html#module-search.predictors.gnn_predictors">module</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    search.predictors.simple_predictors
+
+      <ul>
+        <li><a href="code.html#module-search.predictors.simple_predictors">module</a>
+</li>
+      </ul></li>
+      <li><a href="code.html#base.cgraph.MyGraph.set_attributes">set_attributes() (base.cgraph.MyGraph method)</a>
+</li>
       <li><a href="code.html#running.merger.ResultsMerger.show_plots">show_plots() (running.merger.ResultsMerger method)</a>
+</li>
+      <li><a href="code.html#search.predictors.simple_predictors.SklearnPredictor">SklearnPredictor (class in search.predictors.simple_predictors)</a>
+</li>
+      <li><a href="code.html#running.history_runner.SmartCrawlersRunner">SmartCrawlersRunner (class in running.history_runner)</a>
 </li>
       <li><a href="code.html#crawlers.cbasic.SnowBallCrawler">SnowBallCrawler (class in crawlers.cbasic)</a>
 </li>
@@ -388,14 +578,26 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="code.html#graph_io.temp_dir">temp_dir (class in graph_io)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="code.html#base.cgraph.MyGraph.to_dgl">to_dgl() (base.cgraph.MyGraph method)</a>
 </li>
       <li><a href="code.html#base.cgraph.MyGraph.to_networkx">to_networkx() (base.cgraph.MyGraph method)</a>
 </li>
+      <li><a href="code.html#search.predictors.gnn_predictors.GNNPredictor.train">train() (search.predictors.gnn_predictors.GNNPredictor method)</a>
+
+      <ul>
+        <li><a href="code.html#search.predictors.simple_predictors.Predictor.train">(search.predictors.simple_predictors.Predictor method)</a>
+</li>
+        <li><a href="code.html#search.predictors.simple_predictors.SklearnPredictor.train">(search.predictors.simple_predictors.SklearnPredictor method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="code.html#search.predictor_based_crawlers.mab.MultiPredictorCrawler.train_predictor">train_predictor() (search.predictor_based_crawlers.mab.MultiPredictorCrawler method)</a>
+
+      <ul>
+        <li><a href="code.html#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.train_predictor">(search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -424,7 +626,7 @@
     <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="project.html">Project description</a></li>
-<li class="toctree-l1"><a class="reference internal" href="readme.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Installation and usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="code.html">Code Documentation</a></li>
 </ul>
 
@@ -444,7 +646,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov.
+      &copy;2022, TEMPORARY HIDDEN.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>

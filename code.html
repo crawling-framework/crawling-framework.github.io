@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Code Documentation &#8212; CrawlingFramework 1.0.0 documentation</title>
+    <title>Code Documentation &#8212; CrawlingFramework 2.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -15,7 +15,7 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Installation guide" href="readme.html" />
+    <link rel="prev" title="Installation and usage" href="readme.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -36,9 +36,130 @@
 <h1>Code Documentation<a class="headerlink" href="#code-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
-<section id="module-base.cgraph">
-<span id="basics"></span><h2>basics<a class="headerlink" href="#module-base.cgraph" title="Permalink to this headline">¶</a></h2>
+<section id="module-crawlers.declarable">
+<span id="basics"></span><h2>basics<a class="headerlink" href="#module-crawlers.declarable" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
+<dt class="sig sig-object py" id="crawlers.declarable.Declarable">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.declarable.</span></span><span class="sig-name descname"><span class="pre">Declarable</span></span><a class="headerlink" href="#crawlers.declarable.Declarable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subclasses of this class can be specified by their declarations.
+Each declaration uniquely corresponds to a filename.
+Allowed class parameters are: primitives (bool, int, float, str, tuple, list, set, dict) or Declarable.
+In order to pass a complex object to class constructor, it must extend Declarable or try to use
+primitive types (e.g. class name as a string and parameters as a dict).
+Subclass of Declarable can define its short name via a static variable ‘short’.</p>
+<p>For example let’s define 3 classes. Note that parameters ‘graph’ and ‘param’ in Crawler are not
+sent to superclass thus ignored (undeclared).</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Crawler</span><span class="p">(</span><span class="n">Declarable</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">,</span> <span class="n">a_list</span><span class="p">,</span> <span class="n">b_dict</span><span class="p">,</span> <span class="n">pred1</span><span class="p">,</span> <span class="n">pred2</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">graph</span>  <span class="c1"># undeclared parameter</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span>  <span class="c1"># undeclared parameter</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="nb">super</span><span class="p">(</span><span class="n">Crawler</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">a_list</span><span class="o">=</span><span class="n">a_list</span><span class="p">,</span> <span class="n">b_dict</span><span class="o">=</span><span class="n">b_dict</span><span class="p">,</span> <span class="n">pred1</span><span class="o">=</span><span class="n">pred1</span><span class="p">,</span> <span class="n">pred2</span><span class="o">=</span><span class="n">pred2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Predictor</span><span class="p">(</span><span class="n">Declarable</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span>  <span class="c1"># undeclared parameter</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="nb">super</span><span class="p">(</span><span class="n">Predictor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">GNN</span><span class="p">(</span><span class="n">Declarable</span><span class="p">):</span> <span class="k">pass</span>
+</pre></div>
+</div>
+<p>Then create an object with two Declarable parameters, where the first one has its own Declarable
+parameter. Print its declaration and filename.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;example&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">Crawler</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">g</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>            <span class="n">a_list</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>            <span class="n">b_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+<span class="gp">&gt;&gt;&gt; </span>            <span class="n">pred1</span><span class="o">=</span><span class="n">Predictor</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">gnn</span><span class="o">=</span><span class="n">GNN</span><span class="p">(</span><span class="n">conv</span><span class="o">=</span><span class="s2">&quot;SAGE&quot;</span><span class="p">)),</span>
+<span class="gp">&gt;&gt;&gt; </span>            <span class="n">pred2</span><span class="o">=</span><span class="n">Predictor</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="mi">22</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>            <span class="n">param</span><span class="o">=</span><span class="s2">&quot;this is undeclared&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">declaration</span><span class="p">)</span>
+<span class="go">(&lt;class &#39;__main__.Crawler&#39;&gt;, {&#39;a_list&#39;: [1, &#39;a&#39;], &#39;b_dict&#39;: {&#39;b&#39;: 2}, &#39;pred1&#39;: (&lt;class &#39;__main__.Predictor&#39;&gt;, {&#39;x&#39;: 100, &#39;gnn&#39;: (&lt;class &#39;__main__.GNN&#39;&gt;, {&#39;conv&#39;: &#39;SAGE&#39;})}), &#39;pred2&#39;: (&lt;class &#39;__main__.Predictor&#39;&gt;, {&#39;x&#39;: 200})})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">declaration_to_filename</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">declaration</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="go">&quot;Crawler(a_list=[1, &#39;a&#39;];b_dict={&#39;b&#39;: 2};pred1=Predictor@;pred2=Predictor@)/Predictor(gnn=GNN@;x=100)/GNN(conv=SAGE)/Predictor(x=200)&quot;</span>
+</pre></div>
+</div>
+<p>In order to construct the same object as c, we should pass undeclared arguments:
+&gt;&gt;&gt; <a href="#id11"><span class="problematic" id="id12">c_</span></a> = Declarable.from_declaration(
+&gt;&gt;&gt; filename_to_declaration(f),
+&gt;&gt;&gt; [(Crawler, {‘graph’: g, ‘param’: “redeclared”}),  # for Crawler
+&gt;&gt;&gt;  (Predictor, {‘param’: 11}),   # for ‘pred1’ parameter
+&gt;&gt;&gt;  (Predictor, {‘param’: 22})])  # for ‘pred2’ parameter
+Note that if several parameters have same type, the order in the list should corresponds to the
+order of parameters in constructor.</p>
+<p>Declaration of the object contains recursively all declarations of each Declarable parameter
+embedded.</p>
+<p>Filename is built from a complex declaration using depth-first search. Filenames of embedded
+declarations are separated with ‘/’, i.e. corresponds to subfolders. ‘&#64;’ in a parameter name
+marks an ambedded declaration.</p>
+<p>NOTE: a problem can occur if one filename is longer than allowed by OS (usually 255 symbols).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.declarable.Declarable.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.declarable.Declarable.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>List only those parameters you want to constitute filename.
+If you need to ignore parameters like ‘name’, ‘observed_set’, etc. in file naming - don’t send them.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p><a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs: parameters that will be used in file naming</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="crawlers.declarable.Declarable.declaration">
+<span class="sig-name descname"><span class="pre">declaration</span></span><a class="headerlink" href="#crawlers.declarable.Declarable.declaration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the declaration of this instance.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.declarable.Declarable.extract_declaration">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract_declaration</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.declarable.Declarable.extract_declaration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse complex object, return its structure as is replacing Declarables with their
+declarations.
+Object can be arbitrary combination of allowed types.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.declarable.Declarable.from_declaration">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_declaration</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.declarable.Declarable.from_declaration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a class object from its declaration and auxiliary undeclared parameters, e.g. graph.
+The declaration can contain inner declarations which will be converted recursively.
+For convenience, aux_kwargs are aux_declarations for outermost class.
+NOTE: aux_declarations can contain any arguments including not Declarable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>declaration</strong> – pair (class, kwargs)</p></li>
+<li><p><strong>aux_declarations</strong> – list of declarations in DFS order.</p></li>
+<li><p><strong>aux_kwargs</strong> – auxiliary keyword arguments for the outermost declaration.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.declarable.Declarable.is_declaration">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_declaration</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.declarable.Declarable.is_declaration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if object is Declaration, i.e. tuple (class, Declaration).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="crawlers.declarable.declaration_to_filename">
+<span class="sig-prename descclassname"><span class="pre">crawlers.declarable.</span></span><span class="sig-name descname"><span class="pre">declaration_to_filename</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.declarable.declaration_to_filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert crawler string declaration into filename. Uniqueness is maintained</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="crawlers.declarable.filename_to_declaration">
+<span class="sig-prename descclassname"><span class="pre">crawlers.declarable.</span></span><span class="sig-name descname"><span class="pre">filename_to_declaration</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.declarable.filename_to_declaration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert filename into crawler declaration. Uniqueness is maintained.</p>
+</dd></dl>
+
+<span class="target" id="module-base.cgraph"></span><dl class="py class">
 <dt class="sig sig-object py" id="base.cgraph.MyGraph">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base.cgraph.</span></span><span class="sig-name descname"><span class="pre">MyGraph</span></span><a class="headerlink" href="#base.cgraph.MyGraph" title="Permalink to this definition">¶</a></dt>
 <dd><p>Graph object representing nodes and undirected unweighted edges.
@@ -127,7 +248,7 @@ modification will lead to segfault</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>node</strong> – node id</p></li>
 <li><p><strong>attr</strong> – attribute name</p></li>
-<li><p><strong>keys</strong> – inner attribute keys, e.g. for VK graphs attr=’personal’, <a href="#id1"><span class="problematic" id="id2">*</span></a>keys=’alcohol’,</p></li>
+<li><p><strong>keys</strong> – inner attribute keys, e.g. for VK graphs attr=’personal’, <a href="#id3"><span class="problematic" id="id4">*</span></a>keys=’alcohol’,</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -338,23 +459,207 @@ at least one element, the last one is treated as graph name.</p>
 
 </dd></dl>
 
+</section>
+<section id="module-search.predictors.simple_predictors">
+<span id="predictors"></span><h2>predictors<a class="headerlink" href="#module-search.predictors.simple_predictors" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="graph_io.temp_dir">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">graph_io.</span></span><span class="sig-name descname"><span class="pre">temp_dir</span></span><a class="reference internal" href="_modules/graph_io.html#temp_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#graph_io.temp_dir" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a temporary directory to store some files, which will be removed by exit.
-Current working directory is also changed to this directory.</p>
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.Predictor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictors.simple_predictors.</span></span><span class="sig-name descname"><span class="pre">Predictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#Predictor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.Predictor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parent class for node property prediction based on graph neighborhood.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="graph_io.temp_dir.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_io.html#temp_dir.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#graph_io.temp_dir.__init__" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.Predictor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#Predictor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.Predictor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>List only those parameters you want to constitute filename.
+If you need to ignore parameters like ‘name’, ‘observed_set’, etc. in file naming - don’t send them.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p><a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs: parameters that will be used in file naming</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.Predictor.reset">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#Predictor.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.Predictor.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the model parameters. Makes the model untrained.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.Predictor.extract_features">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_helper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">crawlers.cadvanced.NodeFeaturesUpdatableCrawlerHelper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#Predictor.extract_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.Predictor.extract_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract feature vector for a node using NodeFeaturesUpdatableCrawlerHelper.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.Predictor.train">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#Predictor.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.Predictor.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train the model on data samples (Xs, ys).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.Predictor.predict_score">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">predict_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#Predictor.predict_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.Predictor.predict_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute score for feature vector X. It is preferred to be in interval [0; 1] and could
+be considered as the probability of target class.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.SklearnPredictor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictors.simple_predictors.</span></span><span class="sig-name descname"><span class="pre">SklearnPredictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_extractor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">search.feature_extractors.NeighborsFeatureExtractor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#SklearnPredictor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.SklearnPredictor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predictor based on a sci-kit-learn model.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.SklearnPredictor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_extractor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">search.feature_extractors.NeighborsFeatureExtractor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_train_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">model_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#SklearnPredictor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.SklearnPredictor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – name of sklearn model, e.g. ‘GradientBoostingClassifier’</p></li>
+<li><p><strong>max_train_samples</strong> – upper limit on training data (actual for XGB, RF)</p></li>
+<li><p><strong>model_kwargs</strong> – keyword args for the model</p></li>
+<li><p><strong>feature_extractor</strong> – callable (neighborhood, index, graph, oracle) -&gt; (Xs, ys)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.SklearnPredictor.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#SklearnPredictor.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.SklearnPredictor.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the model parameters. Makes the model untrained.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.SklearnPredictor.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#SklearnPredictor.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.SklearnPredictor.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train the model on data samples (Xs, ys).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.SklearnPredictor.predict_score">
+<span class="sig-name descname"><span class="pre">predict_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#SklearnPredictor.predict_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.SklearnPredictor.predict_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute score for feature vector X. It is preferred to be in interval [0; 1] and could
+be considered as the probability of target class.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.MaximumTargetNeighborsPredictor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictors.simple_predictors.</span></span><span class="sig-name descname"><span class="pre">MaximumTargetNeighborsPredictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#MaximumTargetNeighborsPredictor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.MaximumTargetNeighborsPredictor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predictor which encourages nodes with maximum number of target neighbors.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.MaximumTargetNeighborsPredictor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#MaximumTargetNeighborsPredictor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.MaximumTargetNeighborsPredictor.__init__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.MaximumTargetNeighborsPredictor.extract_features">
+<span class="sig-name descname"><span class="pre">extract_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_helper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">crawlers.cadvanced.NodeFeaturesUpdatableCrawlerHelper</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#MaximumTargetNeighborsPredictor.extract_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.MaximumTargetNeighborsPredictor.extract_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract feature vector for a node using NodeFeaturesUpdatableCrawlerHelper.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.simple_predictors.MaximumTargetNeighborsPredictor.predict_score">
+<span class="sig-name descname"><span class="pre">predict_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/simple_predictors.html#MaximumTargetNeighborsPredictor.predict_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.simple_predictors.MaximumTargetNeighborsPredictor.predict_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assume X = number target neighbors</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-search.predictors.gnn_predictors"></span><dl class="py class">
+<dt class="sig sig-object py" id="search.predictors.gnn_predictors.GNNet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictors.gnn_predictors.</span></span><span class="sig-name descname"><span class="pre">GNNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conv_class</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'torch.relu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">conv_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/gnn_predictors.html#GNNet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.gnn_predictors.GNNet" title="Permalink to this definition">¶</a></dt>
+<dd><p>GNN network based on torch.nn.Module</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.gnn_predictors.GNNet.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conv_class</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'torch.relu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">conv_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/gnn_predictors.html#GNNet.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.gnn_predictors.GNNet.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conv_class</strong> – name of convolution class, e.g. ‘SAGEConv’.</p></li>
+<li><p><strong>layer_sizes</strong> – layers’ sizes, except output (always = GNNet.out_dim).</p></li>
+<li><p><strong>activation</strong> – activation between layers, default is ‘torch.relu’.</p></li>
+<li><p><strong>conv_kwargs</strong> – additional arguments to DGL convolution layer.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.gnn_predictors.GNNet.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/gnn_predictors.html#GNNet.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.gnn_predictors.GNNet.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="search.predictors.gnn_predictors.GNNPredictor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictors.gnn_predictors.</span></span><span class="sig-name descname"><span class="pre">GNNPredictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conv_class</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'torch.relu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attributes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learn_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">conv_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/gnn_predictors.html#GNNPredictor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.gnn_predictors.GNNPredictor" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.gnn_predictors.GNNPredictor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conv_class</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_sizes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'torch.relu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attributes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learn_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">conv_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/gnn_predictors.html#GNNPredictor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.gnn_predictors.GNNPredictor.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conv_class</strong> – </p></li>
+<li><p><strong>layer_sizes</strong> – hidden layers’ sizes, except input (defined at first training step) and
+output (always = GNNet.out_dim). Empty <cite>layer_sizes</cite> corresponds to 1-layer net.</p></li>
+<li><p><strong>activation</strong> – </p></li>
+<li><p><strong>attributes</strong> – list of graph nodes attributes to include into feature vectors</p></li>
+<li><p><strong>epochs</strong> – number of training epochs</p></li>
+<li><p><strong>batch</strong> – number of dgl graphs to unite in 1 training batch</p></li>
+<li><p><strong>learn_rate</strong> – optimizer learning rate</p></li>
+<li><p><strong>name</strong> – name on plots</p></li>
+<li><p><strong>name</strong> – name for plotting</p></li>
+<li><p><strong>conv_kwargs</strong> – additional arguments to GNN convolution</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.gnn_predictors.GNNPredictor.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/gnn_predictors.html#GNNPredictor.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.gnn_predictors.GNNPredictor.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the model parameters. Makes the model untrained.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.gnn_predictors.GNNPredictor.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/gnn_predictors.html#GNNPredictor.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.gnn_predictors.GNNPredictor.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train the model on sequence of graphs with their inputs (Xs)
+and classification answers (ys).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.gnn_predictors.GNNPredictor.extract_features">
+<span class="sig-name descname"><span class="pre">extract_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_helper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">crawlers.cadvanced.NodeFeaturesUpdatableCrawlerHelper</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a></span></span><a class="reference internal" href="_modules/search/predictors/gnn_predictors.html#GNNPredictor.extract_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.gnn_predictors.GNNPredictor.extract_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract feature vector for a node using NodeFeaturesUpdatableCrawlerHelper.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictors.gnn_predictors.GNNPredictor.predict_score">
+<span class="sig-name descname"><span class="pre">predict_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictors/gnn_predictors.html#GNNPredictor.predict_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictors.gnn_predictors.GNNPredictor.predict_score" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute score for feature vector X. It is preferred to be in interval [0; 1] and could
+be considered as the probability of target class.</p>
+</dd></dl>
 
 </dd></dl>
 
 </section>
+<section id="crawlers">
+<h2>crawlers<a class="headerlink" href="#crawlers" title="Permalink to this headline">¶</a></h2>
 <section id="module-crawlers.cbasic">
-<span id="crawlers"></span><h2>crawlers<a class="headerlink" href="#module-crawlers.cbasic" title="Permalink to this headline">¶</a></h2>
-<section id="module-0">
-<span id="classic"></span><h3>classic<a class="headerlink" href="#module-0" title="Permalink to this headline">¶</a></h3>
+<span id="simple"></span><h3>simple<a class="headerlink" href="#module-crawlers.cbasic" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="crawlers.cbasic.Crawler">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">Crawler</span></span><a class="headerlink" href="#crawlers.cbasic.Crawler" title="Permalink to this definition">¶</a></dt>
@@ -455,6 +760,45 @@ Seed must be a node of the original graph.</p>
 <dt class="sig sig-object py" id="crawlers.cbasic.Crawler.observed_set">
 <span class="sig-name descname"><span class="pre">observed_set</span></span><a class="headerlink" href="#crawlers.cbasic.Crawler.observed_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get nodes’ ids of observed graph (crawled and observed).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.InitialSeedCrawlerHelper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">InitialSeedCrawlerHelper</span></span><a class="headerlink" href="#crawlers.cbasic.InitialSeedCrawlerHelper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crawler helper interface.
+Starting seed type is specified in constructor.
+Options:</p>
+<ul class="simple">
+<li><p>None - randomly chosen from original graph</p></li>
+<li><p>&lt;integer&gt; - start from this specific node</p></li>
+<li><p>&lt;string&gt; - some choosing strategy, e.g.’target’</p></li>
+</ul>
+<p>NOTE: when extending multiple Crawler helpers, this one should probably go before the others
+since it changes observed set. FIXME</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.InitialSeedCrawlerHelper.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.InitialSeedCrawlerHelper.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>initial_seed</strong> – if observed set is empty, the crawler will start from the given initial
+node or use specified strategy. (If not empty, starting seed is defined from <cite>next_seed()</cite>
+call). If None is given (which is default), a random node of original graph will be used as
+initial one.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.InitialSeedCrawlerHelper.choose_initial_seed">
+<span class="sig-name descname"><span class="pre">choose_initial_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.InitialSeedCrawlerHelper.choose_initial_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Choose an initial seed depending on specified parameter. The options are:</p>
+<ul class="simple">
+<li><p>None - randomly choose from all nodes</p></li>
+<li><p>&lt;integer&gt; - start from this specific node</p></li>
+<li><p>&lt;string&gt; - some choosing strategy, e.g.’target’, expected to be be overwritten in subclass</p></li>
+</ul>
 </dd></dl>
 
 </dd></dl>
@@ -735,56 +1079,233 @@ Seed must be a node of the original graph.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumRealDegreeCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">MaximumRealDegreeCrawler</span></span><a class="headerlink" href="#crawlers.cbasic.MaximumRealDegreeCrawler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Benchmark Crawler - greedy selection of next node with maximal real degree</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumRealDegreeCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumRealDegreeCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumRealDegreeCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumRealDegreeCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crawl specified node and update newly observed in ND_Set</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumRealDegreeCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumRealDegreeCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Next node with highest real (unknown) degree</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="module-crawlers.cadvanced">
-<span id="advanced"></span><h3>advanced<a class="headerlink" href="#module-crawlers.cadvanced" title="Permalink to this headline">¶</a></h3>
+<section id="module-search.predictor_based_crawlers.predictor_based">
+<span id="single-predictor"></span><h3>single-predictor<a class="headerlink" href="#module-search.predictor_based_crawlers.predictor_based" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictor_based_crawlers.predictor_based.</span></span><span class="sig-name descname"><span class="pre">PredictorBasedCrawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#search.predictors.simple_predictors.Predictor" title="search.predictors.simple_predictors.Predictor"><span class="pre">search.predictors.simple_predictors.Predictor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">search.oracles.Oracle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">re_estimate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'after_train'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/predictor_based.html#PredictorBasedCrawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parent class for crawlers based on a predictor that can estimate the score (probability) of an
+observed node to be target.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#search.predictors.simple_predictors.Predictor" title="search.predictors.simple_predictors.Predictor"><span class="pre">search.predictors.simple_predictors.Predictor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">search.oracles.Oracle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">re_estimate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'after_train'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/predictor_based.html#PredictorBasedCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> – </p></li>
+<li><p><strong>predictor</strong> – node predictor model (or list of predictors).</p></li>
+<li><p><strong>oracle</strong> – target node detector, returns 1/0/None.</p></li>
+<li><p><strong>training_strategy</strong> – strategy to train predictor, one of ‘boost’, ‘online’.</p></li>
+<li><p><strong>re_estimate_all</strong> – how many nodes to re-estimate after each seed crawling: if True,
+estimate all observed nodes which is precise, if False, seed’s neighbors only which is
+faster but not precise. Default True.</p></li>
+<li><p><strong>initial_seed</strong> – one of [None, &lt;integer&gt;, ‘target’]</p></li>
+<li><p><strong>kwargs</strong> – args for subclass</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.estimate_node">
+<span class="sig-name descname"><span class="pre">estimate_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/search/predictor_based_crawlers/predictor_based.html#PredictorBasedCrawler.estimate_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.estimate_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate class=1 score (probability) by the predictor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span><a class="reference internal" href="_modules/search/predictor_based_crawlers/predictor_based.html#PredictorBasedCrawler.crawl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crawl specified node. The observed graph is updated, also are crawled and observed set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>seed</strong> – node id to crawl</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vector (list) of newly seen nodes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.re_estimate_nodes">
+<span class="sig-name descname"><span class="pre">re_estimate_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/predictor_based.html#PredictorBasedCrawler.re_estimate_nodes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.re_estimate_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recompute predictor estimations for the given nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.train_predictor">
+<span class="sig-name descname"><span class="pre">train_predictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/predictor_based.html#PredictorBasedCrawler.train_predictor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.train_predictor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train predictor using the training data; update estimations for all observed nodes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/predictor_based.html#PredictorBasedCrawler.next_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.predictor_based.PredictorBasedCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Choose the next seed as one with maximal score.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="ml-crawlers">
-<h3>ml-crawlers<a class="headerlink" href="#ml-crawlers" title="Permalink to this headline">¶</a></h3>
+<section id="module-search.predictor_based_crawlers.mab">
+<span id="multi-predictor"></span><h3>multi-predictor<a class="headerlink" href="#module-search.predictor_based_crawlers.mab" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.MultiPredictorCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictor_based_crawlers.mab.</span></span><span class="sig-name descname"><span class="pre">MultiPredictorCrawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">search.predictor_based_crawlers.mab.MultiPredictor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#MultiPredictorCrawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.MultiPredictorCrawler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses several predictors and MAB strategy on them</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.MultiPredictorCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">search.predictor_based_crawlers.mab.MultiPredictor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oracle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#MultiPredictorCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.MultiPredictorCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>predictors</strong> – multi-predictor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.MultiPredictorCrawler.re_estimate_nodes">
+<span class="sig-name descname"><span class="pre">re_estimate_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nodes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#MultiPredictorCrawler.re_estimate_nodes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.MultiPredictorCrawler.re_estimate_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as in superclass, but manages both _node_score and _node_scores.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.MultiPredictorCrawler.estimate_node">
+<span class="sig-name descname"><span class="pre">estimate_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#MultiPredictorCrawler.estimate_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.MultiPredictorCrawler.estimate_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate class=1 score (probability) by the predictor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.MultiPredictorCrawler.train_predictor">
+<span class="sig-name descname"><span class="pre">train_predictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#MultiPredictorCrawler.train_predictor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.MultiPredictorCrawler.train_predictor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train predictor using the training data; update estimations for all observed nodes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.MABCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictor_based_crawlers.mab.</span></span><span class="sig-name descname"><span class="pre">MABCrawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">search.predictor_based_crawlers.mab.MultiPredictor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#MABCrawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.MABCrawler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.MABCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">search.predictor_based_crawlers.mab.MultiPredictor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#MABCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.MABCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>predictors</strong> – multi-predictor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.MABCrawler.estimate_node">
+<span class="sig-name descname"><span class="pre">estimate_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><span class="pre">float</span></a></span></span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#MABCrawler.estimate_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.MABCrawler.estimate_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate class=1 score (probability) by the predictor.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictor_based_crawlers.mab.</span></span><span class="sig-name descname"><span class="pre">ExponentialDynamicWeightsMultiPredictorCrawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniform_distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#ExponentialDynamicWeightsMultiPredictorCrawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">uniform_distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#ExponentialDynamicWeightsMultiPredictorCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>uniform_distribution</strong> – if True use uniform additive for weights at each step.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#ExponentialDynamicWeightsMultiPredictorCrawler.crawl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.ExponentialDynamicWeightsMultiPredictorCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update weights based on whether seed to be crawled is target</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.FollowLeaderMABCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictor_based_crawlers.mab.</span></span><span class="sig-name descname"><span class="pre">FollowLeaderMABCrawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#FollowLeaderMABCrawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.FollowLeaderMABCrawler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.FollowLeaderMABCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#FollowLeaderMABCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.FollowLeaderMABCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>predictors</strong> – multi-predictor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.FollowLeaderMABCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#FollowLeaderMABCrawler.crawl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.FollowLeaderMABCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update weights based on whether seed to be crawled is target</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">search.predictor_based_crawlers.mab.</span></span><span class="sig-name descname"><span class="pre">BetaDistributionMultiPredictorCrawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta_distr_param_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#BetaDistributionMultiPredictorCrawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta_distr_param_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#BetaDistributionMultiPredictorCrawler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>beta_distr_param_thr</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span><a class="reference internal" href="_modules/search/predictor_based_crawlers/mab.html#BetaDistributionMultiPredictorCrawler.crawl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#search.predictor_based_crawlers.mab.BetaDistributionMultiPredictorCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update weights based on whether seed to be crawled is target</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 <section id="module-running.history_runner">
-<span id="runners"></span><h2>runners<a class="headerlink" href="#module-running.history_runner" title="Permalink to this headline">¶</a></h2>
+<span id="running"></span><h2>running<a class="headerlink" href="#module-running.history_runner" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="running.history_runner.CrawlerHistoryRunner">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">running.history_runner.</span></span><span class="sig-name descname"><span class="pre">CrawlerHistoryRunner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omit_nones</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="running.history_runner.SmartCrawlersRunner">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">running.history_runner.</span></span><span class="sig-name descname"><span class="pre">SmartCrawlersRunner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_full_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#SmartCrawlersRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.history_runner.SmartCrawlersRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs several crawlers and measures several metrics for a given graph.
 Saves measurements history to the disk.
 Can run several instances of a crawler in parallel.
 Step sequence is exponentially growing independent of the graph.</p>
-<ul class="simple">
-<li><p>run - Run given crawlers and measure metrics. In the end, the measurements are saved to files.</p></li>
-</ul>
-<ul class="simple">
-<li><p>step sequence when metrics are computed must be the same for all runs. Otherwise the results
-would not be merged correctly</p></li>
-</ul>
 <dl class="py method">
-<dt class="sig sig-object py" id="running.history_runner.CrawlerHistoryRunner.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omit_nones</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>graph</strong> – graph to run</p></li>
-<li><p><strong>crawler_decls</strong> – list of crawler declarations to run. Crawler declarations will be
-initialized when run() is called</p></li>
-<li><p><strong>metric_decls</strong> – list of metric declarations to compute at each step. Metric should be
-callable function crawler -&gt; float, and have name</p></li>
-<li><p><strong>budget</strong> – maximal number of nodes to be crawled, by default the whole graph</p></li>
-<li><p><strong>step</strong> – compute metrics each <cite>step</cite> steps, by default exponential step</p></li>
-<li><p><strong>omit_nones</strong> – If False, metric values where all values are None will not be saved.</p></li>
-</ul>
-</dd>
-</dl>
-<p>By default save all metric values.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="running.history_runner.CrawlerHistoryRunner.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner.run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run crawlers and measure metrics. In the end, the measurements are saved.
-Note, this function can be called in parallel processes.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="running.history_runner.SmartCrawlersRunner.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_full_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#SmartCrawlersRunner.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.history_runner.SmartCrawlersRunner.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -987,7 +1508,7 @@ E.g. if folder has 0.json and 2.json, it returns path for 1.json</p>
 Name collisions resolved via assigning new smallest numbers, e.g. when 0.json is added to a
 folder with 0.json and 2.json, it becomes 1.json.</p>
 <dl class="simple">
-<dt>Args:</dt><dd><p><a href="#id3"><span class="problematic" id="id4">*</span></a>path: list of paths each of those is analog to original results/ in terms of structure.
+<dt>Args:</dt><dd><p><a href="#id7"><span class="problematic" id="id8">*</span></a>path: list of paths each of those is analog to original results/ in terms of structure.
 not_earlier_than: look for files with modify datetime not earlier than specified.
 not_later_than: look for files with modify datetime not later than specified.
 check_identical: before renaming check whether equally named files are identical.
@@ -998,15 +1519,39 @@ copy: if True, copy all moved elements.</p>
 
 </dd></dl>
 
-</section>
-<section id="demo">
-<h2>demo<a class="headerlink" href="#demo" title="Permalink to this headline">¶</a></h2>
-<section id="advanced-usage">
-<span id="demo-lbl"></span><h3>advanced usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h3>
-<p>For a more advanced usage see examples in the code.</p>
-<p>To create a <strong>custom crawler</strong> you should extend the root class Crawler from <em>base.crawlers.cbasic.py</em>. See examples in <em>base.crawlers.advanced.py</em>. For more complex algorithms using machine learning see <em>base.crawlers.ml</em>. To make it faster you could also implement your crawler in cython, see examples in <em>base.crawlers.advanced.pyx</em>.</p>
-<p>To create a <strong>custom metric</strong> take a look at <em>running.metrics_and_runner.py</em>. You should extend the root class Metric for that.</p>
-</section>
+<span class="target" id="module-running.metrics"></span><dl class="py class">
+<dt class="sig sig-object py" id="running.metrics.Metric">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">running.metrics.</span></span><span class="sig-name descname"><span class="pre">Metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_numeric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics.html#Metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.metrics.Metric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for metrics on crawling process.
+Metric has a callback function that takes a crawler and returns some value.
+Metric filename is constructed only from class name and kwargs, so they should fully identify
+the metric.
+To create a custom metric, one should implement a subclass with proper callback().
+As examples see <cite>OracleBasedMetric</cite>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.metrics.Metric.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_numeric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics.html#Metric.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.metrics.Metric.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>NOTE: is_numeric, name, and callback are not used in filename.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>is_numeric</strong> – if True, metric must return number, ResultsMerger can operate with it,</p>
+</dd>
+</dl>
+<p>the kwargs are used in folder name. If False, metric can return any structure which is
+saved in folder name as the class, ResultsMerger ignores it.
+:param name: name to use in plots
+:param callback: metric function: callback(crawler, <a href="#id9"><span class="problematic" id="id10">**</span></a>kwargs) -&gt; number
+:param kwargs: additional argument to callback function</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="running.metrics.Metric.from_declaration">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_declaration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">declaration</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">aux_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics.html#Metric.from_declaration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.metrics.Metric.from_declaration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a Metric instance from its declaration</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 
@@ -1022,20 +1567,17 @@ copy: if True, copy all moved elements.</p>
     <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="project.html">Project description</a></li>
-<li class="toctree-l1"><a class="reference internal" href="readme.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Installation and usage</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Code Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-base.cgraph">basics</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-crawlers.cbasic">crawlers</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-0">classic</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-crawlers.cadvanced">advanced</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#ml-crawlers">ml-crawlers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-crawlers.declarable">basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-search.predictors.simple_predictors">predictors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#crawlers">crawlers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-crawlers.cbasic">simple</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-search.predictor_based_crawlers.predictor_based">single-predictor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-search.predictor_based_crawlers.mab">multi-predictor</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-running.history_runner">runners</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#demo">demo</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#advanced-usage">advanced usage</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-running.history_runner">running</a></li>
 </ul>
 </li>
 </ul>
@@ -1056,7 +1598,7 @@ copy: if True, copy all moved elements.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov.
+      &copy;2022, TEMPORARY HIDDEN.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
