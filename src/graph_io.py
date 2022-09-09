@@ -1,4 +1,5 @@
 import logging
+import os
 import os.path
 import re
 import shutil
@@ -9,9 +10,14 @@ from time import time
 import patoolib
 from base.cgraph import MyGraph
 
-from utils import GRAPHS_DIR, TMP_GRAPHS_DIR
+from utils import GRAPHS_DIR
 
-netrepo_metadata_path = os.path.join(GRAPHS_DIR, 'netrepo', 'metadata')
+FORMAT = 'ij'
+TMP_GRAPHS_DIR = GRAPHS_DIR / 'tmp'
+netrepo_metadata_path = GRAPHS_DIR / 'netrepo' / 'metadata'
+
+# Graphs used in current session. Need this to avoid loading the same object several times.
+current_graphs = {}  # full_name -> MyGraph
 
 
 def parse_netrepo_page():
@@ -45,7 +51,7 @@ def parse_netrepo_page():
 if not os.path.exists(netrepo_metadata_path): parse_netrepo_page()
 
 
-netrepo_name_ref_dict = eval(open(netrepo_metadata_path, 'r').read())
+# netrepo_name_ref_dict = eval(open(netrepo_metadata_path, 'r').read())
 
 
 def reformat_graph_file(path, out_path, ignore_lines_starting_with='#%',
@@ -54,7 +60,6 @@ def reformat_graph_file(path, out_path, ignore_lines_starting_with='#%',
 
     :param path:
     :param out_path:
-    :param out_format: 'ij'
     :param ignore_lines_starting_with: lines starting with these symbols will be ignored
     :param remove_original: if True, original file will be removed
     :param self_loops: if True, self loops will be removed
@@ -62,7 +67,7 @@ def reformat_graph_file(path, out_path, ignore_lines_starting_with='#%',
     :return:
     """
     in_format = None
-    out_format = 'ij'
+    out_format = FORMAT
     renums = {}
     separators = ' |\t|,'
 
@@ -105,25 +110,29 @@ def reformat_graph_file(path, out_path, ignore_lines_starting_with='#%',
 class GraphCollections:
     """
     Manager of graph data.
-    By calling method `get(name, collection)`, it loads graph from file if any or downloads a graph from online
-    collection.
+    By calling method `get(graph_full_name)`, it loads graph from file if any or downloads a graph
+    from online graph collection.
+    `graph_full_name` is string or tuple ([collection], [subcollection], ... , name) containing at
+    least one element, the last one is treated as graph name.
+    Corresponding graph file is stored at `collection/subcollection/../name.format` file.
+
     `networkrepository <http://networkrepository.com/>`_ collection is available.
 
     Example:
-    >>> graph = GraphCollections.get(name='dolphins', collection='netrepo')
+    >>> graph = GraphCollections.get('konect', 'dolphins')
 
     """
     networkrepository_url_pattern = 'http://nrvis.com/download/data/%s/%s.zip'
 
     @staticmethod
-    def get(name, collection=None, directed=False, giant_only=True, self_loops=False, not_load=False):
+    def get(*full_name, directed=False, giant_only=True, self_loops=False, not_load=False) -> MyGraph:
         """
         Read graph from storage or download it from the specified collection. In order to apply
         giant_only and self_loops, you need to remove the file manually. #TODO maybe make a rewrite?
 
-        :param name: any of e.g. 'CL' or 'Actor collaborations' or 'actor-collaborations'
-        :param collection: 'netrepo', 'other', or any other subfolder in data/. If not
-         specified, it searches by name in 'neterepo', then 'other'.
+        :param full_name: string or sequence [collection], [subcollection], ... , name containing at
+         least one element, the last one is treated as graph name. In case of konect collection, graph
+         name could be any of e.g. 'CL' or 'Actor collaborations' or 'actor-collaborations'.
         :param directed: undirected by default
         :param giant_only: giant component instead of full graph. Component extraction is applied
          only once when the graph is downloaded.
@@ -133,22 +142,21 @@ class GraphCollections:
          modification will lead to segfault
         :return: MyGraph object
         """
-        format = 'ij'
-        if collection is None:
-            # Resolve name: search in neterpo, if no set collection to other
-            if name in netrepo_name_ref_dict:
-                collection = 'netrepo'
-            else:
-                collection = 'other'
+        if isinstance(full_name, str):
+            full_name = (full_name,)  # root data directory
 
-        path = os.path.join(GRAPHS_DIR, collection, "%s.%s" % (name, format))
+        # Check if graph was already loaded
+        if full_name in current_graphs:
+            return current_graphs[full_name]
 
-        # Download graph if absent
+        path = GraphCollections._full_name_to_path(*full_name)
+
         if not os.path.exists(path):
-            temp_path = os.path.join(GRAPHS_DIR, collection, '%s.tmp' % name)
+            # Download graph if absent
+            temp_path = path + '_tmp'
 
-            if collection == 'netrepo':
-                GraphCollections._download_netrepo(temp_path, netrepo_name_ref_dict[name])
+            if len(full_name) == 2 and full_name[0] == 'netrepo':
+                GraphCollections._download_netrepo(temp_path, netrepo_name_ref_dict[full_name[-1]])
 
             else:
                 raise FileNotFoundError("File '%s' not found. Check graph name, collection or file existence." % path)
@@ -158,11 +166,54 @@ class GraphCollections:
             if giant_only:
                 # Replace graph by its giant component
                 logging.info("Extracting giant component ...")
-                assert format == 'ij'
-                MyGraph(path, name, directed, format=format).giant_component()
+                MyGraph(path, full_name, directed, format=FORMAT).giant_component(inplace=True)
                 logging.info("done.")
 
-        return MyGraph(path, name, directed, format=format, not_load=not_load)
+        my_graph = MyGraph(path, full_name, directed, format=FORMAT, not_load=not_load)
+        current_graphs[full_name] = my_graph
+        return my_graph
+
+    @staticmethod
+    def _full_name_to_path(*full_name) -> str:
+        """ Convert MyGraph full_name into path it should be stored at"""
+        format = FORMAT
+        return os.path.join(GRAPHS_DIR, *full_name[:-1], "%s.%s" % (full_name[-1], format))
+
+    @staticmethod
+    def get_by_path(path: str, not_load=False, store=True) -> MyGraph:
+        """ Create and load graph from specified file path.
+        If the path is <GRAPHS_DIR>/a/b/name.ij the full_name will be ('a', 'b', 'name')
+        """
+        from utils import GRAPHS_DIR
+        assert str(GRAPHS_DIR) in path, "Please, put your graph file to %s" % GRAPHS_DIR
+        parts = path.split(os.path.sep)[len(GRAPHS_DIR.parts):]
+        last_dot = parts[-1].rfind('.')
+        last = parts[-1][:last_dot] if last_dot > 0 else parts[-1]
+        full_name = tuple(parts[:-1]) + (last,)
+
+        my_graph = MyGraph(path, full_name, not_load=not_load)
+        if store:
+            current_graphs[full_name] = my_graph
+        return my_graph
+
+    @staticmethod
+    def register_new_graph(*full_name) -> MyGraph:
+        """ Create a new MyGraph object, define its path corresponding to the specified full_name.
+
+        NOTE: by default the graph is not loaded, call load() if want to use this object.
+
+        :param full_name: string or sequence [collection], [subcollection], ... , name containing
+         at least one element, the last one is treated as graph name.
+        :return: new MyGraph
+        """
+        if len(full_name) == 0:  # tmp graph, not gonna save
+            path = str(TMP_GRAPHS_DIR / f"{str(time())}.{FORMAT}")
+            return GraphCollections.get_by_path(path, not_load=True, store=False)
+
+        path = GraphCollections._full_name_to_path(*full_name)
+        if os.path.exists(path):
+            raise IOError("Path corresponding to specified graph full_name %s is not free: look at ")
+        return MyGraph(path=path, full_name=full_name, not_load=True)
 
     @staticmethod
     def _download_netrepo(graph_path, url):
@@ -225,6 +276,14 @@ class GraphCollections:
         shutil.rmtree(os.path.join(graph_dir, archive_dir_name))
 
 
+def test_netrepo():
+    for name in ['soc-wiki-Vote', 'socfb-Bingham82']:
+        g = GraphCollections.get('netrepo', name, directed=False, giant_only=True, self_loops=False)
+        g = GraphCollections.get('netrepo', name, directed=False, giant_only=True, self_loops=False)
+        g = GraphCollections.get('netrepo', name, directed=False, giant_only=True, self_loops=False)
+        print("N=%s E=%s" % (g.nodes(), g.edges()))
+
+
 class temp_dir(object):
     """
     Creates a temporary directory to store some files, which will be removed by exit.
@@ -241,12 +300,6 @@ class temp_dir(object):
 
     def __exit__(self, type, value, traceback):
         shutil.rmtree(self.dir_name)
-
-
-def test_netrepo():
-    for name in ['soc-wiki-Vote', 'socfb-Bingham82']:
-        g = GraphCollections.get(name, 'netrepo', directed=False, giant_only=True, self_loops=False)
-        print("N=%s E=%s" % (g.nodes(), g.edges()))
 
 
 if __name__ == '__main__':

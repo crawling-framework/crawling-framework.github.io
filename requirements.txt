@@ -1,14 +1,8 @@
-# Obligate:
-Cython             # (works for version 0.29.21)
+Cython==0.29.21    # (works for version 0.29.21)
 patool             # for extraction of archives downloaded from online graph collection
-networkx==2.4      # for crawling process visualizing
-imageio            # for creating gifs
-matplotlib==3.3.0  # for plots drawing
-networkit==7.1     # for many graph stats computing
+matplotlib>=3.3.0  # for plots drawing
 numpy              # (works for version 0.19.4)
-scikit-learn       # (works for version 0.23.2)
+scikit-learn       # (works for version 0.23.2), 1.1.1
 tqdm               # for progress bars when runners
-bs4                # for parsing htmls from online graph collection
-lxml               # for parsing htmls from online graph collection
-# Optional:
-jupyter            # for ipython notebook demo
+torch              # for DGL. (works for version 1.10.0, GNNs can be run in parallel, 1.12.0)
+dgl>=0.6.1         # DeepGraphLib (works for 0.6.1, 0.9.0). For DGL-GPU https://www.dgl.ai/pages/start.html

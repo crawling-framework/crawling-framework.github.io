@@ -60,7 +60,7 @@ class IntPair_Set : public set<pair<int, int>>
             int degs[len];
             float cums[len];
             int i = 0; // index
-            float cum = 0; // cumulative degree FIXME may be double for more precision?
+            float cum = 0; // cumulative degree
             for (auto it = begin(); it != end(); ++it) {
                 degs[i] = it->first;
                 nodes[i] = it->second;
@@ -100,7 +100,7 @@ class IntPair_Set_With_Map : public set<pair<int, int>>
             auto it = node_deg_map.find(node);
             if (it != node_deg_map.end()) {
                 int old_deg = it->second;
-//                node_deg_map.emplace_hint(it, node, new_deg); // TODO may be faster?
+//                node_deg_map.emplace_hint(it, node, new_deg); // may be faster?
                 node_deg_map[node] = new_deg;
                 erase(pair<int, int>(old_deg, node));
                 insert(pair<int, int>(new_deg, node));

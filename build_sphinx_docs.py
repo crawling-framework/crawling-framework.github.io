@@ -1,5 +1,7 @@
 ##
 # Runs the sphinx docs and commit to gh-pages branch
+# Need to install:
+# * sphinxcontrib-fulltoc
 #
 
 import os

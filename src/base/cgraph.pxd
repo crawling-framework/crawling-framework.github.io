@@ -145,18 +145,19 @@ cdef TRnd t_random
 cdef class MyGraph:
     # cdef TUNGraph _snap_graph
     cdef PUNGraph _snap_graph_ptr  # TODO extend for directed
-    cdef char* _path
-    cdef char* _name
+    cdef _path
+    cdef _full_name
     cdef bint _directed
     cdef bint _weighted
     cdef _fingerprint
     cdef _stats_dict
+    cdef _attr_dict
 
     cdef new_snap(self, PUNGraph snap_graph_ptr, name=?)
 
-    cpdef MyGraph copy(self)
+    cpdef MyGraph copy(self, name=?)
 
-    cpdef giant_component(self)
+    cpdef giant_component(self, inplace=?)
 
     cdef PUNGraph snap_graph_ptr(self)
 
@@ -165,6 +166,10 @@ cdef class MyGraph:
     cpdef void save(self)
 
     cpdef void load(self)
+
+    cpdef _read_attributes_names(self)
+
+    cpdef _load_attribute(self, str attr)
 
     cpdef int nodes(self)
 
