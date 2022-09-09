@@ -13,29 +13,37 @@ For MacOS additional:
 
 * brew
 
-Install
--------
+Installation
+------------
 
-1. Compile C++ code
+1. Clone the repository
+::
+   git clone https://github.com/crawling-framework/crawling-framework.github.io.git
+
+
+2. Compile C++ code
 ::
    make
 
 
-2. Install python dependencies
+3. Install python dependencies
 ::
    pip install -r requirements.txt
 
-
 .. See the documentation and tutorials at https://crawling-framework.github.io/
 
-DGL with CPU/GPU https://www.dgl.ai/pages/start.html
+(By default DGL library is configured for CPU. To use it with GPU visit https://www.dgl.ai/pages/start.html)
 
-Use
----
+4. Download and unpack archive with graph data
+::
+   wget https://disk.yandex.ru/d/Z-fcweFaVtBsFA
+   unzip data.zip
+
+Usage
+-----
 
 Run 1 crawler from command line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 Run from src/ folder:
 ::
@@ -43,8 +51,8 @@ Run from src/ folder:
 
 To see available options type:: `python experiments/cmd.py -h`
 
-Reproduce experiments from the paper
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Reproduce experiments from the WSDM23 paper
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To obtain all the results from Table 4 one can run all configurations:
 ::

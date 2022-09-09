@@ -47,20 +47,29 @@
 <li><p>brew</p></li>
 </ul>
 </section>
-<section id="install">
-<h2>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h2>
-<p>1. Compile C++ code</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>1. Clone the repository</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">crawling</span><span class="o">-</span><span class="n">framework</span><span class="o">/</span><span class="n">crawling</span><span class="o">-</span><span class="n">framework</span><span class="o">.</span><span class="n">github</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+<p>2. Compile C++ code</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span>
 </pre></div>
 </div>
-<p>2. Install python dependencies</p>
+<p>3. Install python dependencies</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
 </pre></div>
 </div>
-<p>DGL with CPU/GPU <a class="reference external" href="https://www.dgl.ai/pages/start.html">https://www.dgl.ai/pages/start.html</a></p>
+<p>(By default DGL library is configured for CPU. To use it with GPU visit <a class="reference external" href="https://www.dgl.ai/pages/start.html">https://www.dgl.ai/pages/start.html</a>)</p>
+<p>4. Download and unpack archive with graph data</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">disk</span><span class="o">.</span><span class="n">yandex</span><span class="o">.</span><span class="n">ru</span><span class="o">/</span><span class="n">d</span><span class="o">/</span><span class="n">Z</span><span class="o">-</span><span class="n">fcweFaVtBsFA</span>
+<span class="n">unzip</span> <span class="n">data</span><span class="o">.</span><span class="n">zip</span>
+</pre></div>
+</div>
 </section>
-<section id="use">
-<h2>Use<a class="headerlink" href="#use" title="Permalink to this headline">¶</a></h2>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <section id="run-1-crawler-from-command-line">
 <h3>Run 1 crawler from command line<a class="headerlink" href="#run-1-crawler-from-command-line" title="Permalink to this headline">¶</a></h3>
 <p>Run from src/ folder:</p>
@@ -69,8 +78,8 @@
 </div>
 <p>To see available options type:: <cite>python experiments/cmd.py -h</cite></p>
 </section>
-<section id="reproduce-experiments-from-the-paper">
-<h3>Reproduce experiments from the paper<a class="headerlink" href="#reproduce-experiments-from-the-paper" title="Permalink to this headline">¶</a></h3>
+<section id="reproduce-experiments-from-the-wsdm23-paper">
+<h3>Reproduce experiments from the WSDM23 paper<a class="headerlink" href="#reproduce-experiments-from-the-wsdm23-paper" title="Permalink to this headline">¶</a></h3>
 <p>To obtain all the results from Table 4 one can run all configurations:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">experiments</span><span class="o">/</span><span class="n">paper_experiments</span><span class="o">.</span><span class="n">py</span>
 </pre></div>
@@ -97,10 +106,10 @@ Script <cite>python experiments/paper_plots.py</cite> will collect statistics of
 <li class="toctree-l1"><a class="reference internal" href="project.html">Project description</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation and usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#use">Use</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#run-1-crawler-from-command-line">Run 1 crawler from command line</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#reproduce-experiments-from-the-paper">Reproduce experiments from the paper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reproduce-experiments-from-the-wsdm23-paper">Reproduce experiments from the WSDM23 paper</a></li>
 </ul>
 </li>
 </ul>
