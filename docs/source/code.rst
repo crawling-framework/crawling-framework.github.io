@@ -11,86 +11,59 @@ Code Documentation
    :caption: Contents:
 
 basics
-===================
+======
+.. automodule:: crawlers.declarable
+   :members: Declarable, declaration_to_filename, filename_to_declaration
 .. automodule:: base.cgraph
    :members: 
    :special-members: __init__
 .. automodule:: graph_io
-   :members: GraphCollections, temp_dir
+   :members: GraphCollections
    :special-members: __init__
-.. automodule:: graph_stats
-   :members:
+
+
+predictors
+==========
+
+.. automodule:: search.predictors.simple_predictors
+   :members: Predictor, MaximumTargetNeighborsPredictor, SklearnPredictor
+
+.. automodule:: search.predictors.gnn_predictors
+   :members: GNNet, GNNPredictor
 
 
 crawlers
-===================
+========
 
+simple
+------
 .. automodule:: crawlers.cbasic
-   :members: definition_to_filename, filename_to_definition
-
-classic
------------
-.. automodule:: crawlers.cbasic
-   :members: Crawler, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler, MaximumExcessDegreeCrawler
+   :members: Crawler, InitialSeedCrawlerHelper, RandomCrawler, RandomWalkCrawler, BreadthFirstSearchCrawler, DepthFirstSearchCrawler, SnowBallCrawler, MaximumObservedDegreeCrawler, PreferentialObservedDegreeCrawler, MaximumExcessDegreeCrawler, MaximumRealDegreeCrawler
    :special-members: __init__
 ..   :exclude-members: definition_to_filename, filename_to_definition
 
 
-advanced
------------
-.. automodule:: crawlers.advanced
-   :members: CrawlerWithAnswer, AvrachenkovCrawler, ThreeStageCrawler, ThreeStageMODCrawler
+single-predictor
+----------------
+.. automodule:: search.predictor_based_crawlers.predictor_based
+   :members: PredictorBasedCrawler
    :special-members: __init__
-.. automodule:: crawlers.cadvanced
-   :members: DE_Crawler
+
+multi-predictor
+---------------
+.. automodule:: search.predictor_based_crawlers.mab
+   :members: MultiPredictorCrawler, MABCrawler, ExponentialDynamicWeightsMultiPredictorCrawler, FollowLeaderMABCrawler, BetaDistributionMultiPredictorCrawler
    :special-members: __init__
 
 
-ml-crawlers
------------
-.. automodule:: crawlers.ml.with_features
-   :members:
-   :special-members: __init__
-.. automodule:: crawlers.ml.regression_reward
-   :members:
-   :special-members: __init__
-.. automodule:: crawlers.ml.knn_ucb
-   :members:
-   :special-members: __init__
-
-
-runners
-===================
-.. automodule:: running.metrics_and_runner
-   :members:
-   :special-members: __init__
-.. automodule:: running.animated_runner
-   :members:
-   :special-members: __init__
-.. automodule:: running.visual_runner
-   :members:
-   :special-members: __init__
+running
+=======
 .. automodule:: running.history_runner
-   :members: CrawlerHistoryRunner
-   :special-members: __init__
+   :members: SmartCrawlersRunner
 .. automodule:: running.merger
-   :members:
+   :members: ResultsMerger
    :special-members: __init__
-
-
-demo
-===================
-.. _demo-lbl:
-.. automodule:: demo.demo
-   :members:
-
-advanced usage
--------------------
-
-For a more advanced usage see examples in the code.
-
-To create a **custom crawler** you should extend the root class Crawler from *base.crawlers.cbasic.py*. See examples in *base.crawlers.advanced.py*. For more complex algorithms using machine learning see *base.crawlers.ml*. To make it faster you could also implement your crawler in cython, see examples in *base.crawlers.advanced.pyx*.
-
-To create a **custom metric** take a look at *running.metrics_and_runner.py*. You should extend the root class Metric for that.
-
+.. automodule:: running.metrics
+   :members: Metric
+   :special-members: __init__
 

@@ -21,13 +21,15 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = 'CrawlingFramework'
-copyright = '2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov'
-author = 'Mikhail Drobyshevskiy, Danil Shaykhelislamov, Denis Aivazov, Kirill Lukyanov'
+# copyright = '2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov'
+# author = 'Mikhail Drobyshevskiy, Danil Shaykhelislamov, Denis Aivazov, Kirill Lukyanov'
+copyright = '2022, TEMPORARY HIDDEN'
+author = 'TEMPORARY HIDDEN'
 
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = '2.0.0'
 
 
 # -- General configuration ---------------------------------------------------

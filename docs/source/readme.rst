@@ -1,6 +1,6 @@
-==================
-Installation guide
-==================
+======================
+Installation and usage
+======================
 
 Requirements
 ------------
@@ -16,96 +16,42 @@ For MacOS additional:
 Install
 -------
 
-For Linux
-~~~~~~~~~
+1. Compile C++ code
+::
+   make
 
-* Install all needed python libraries (from project folder)::
 
-   pip3 install -r requirements.txt
+2. Install python dependencies
+::
+   pip install -r requirements.txt
 
-* Install `SNAP <https://snap.stanford.edu/snap/index.html>`_ C++ (to any directory)::
 
-   git clone https://github.com/snap-stanford/snap.git
-   cd snap
+.. See the documentation and tutorials at https://crawling-framework.github.io/
 
-In ``Makefile.config`` add ``-fPIC`` compiler option: find a string 
-``CXXFLAGS += -O3 -DNDEBUG -fopenmp``
-and replace it with
-``CXXFLAGS += -O3 -DNDEBUG -fopenmp -fPIC``
+DGL with CPU/GPU https://www.dgl.ai/pages/start.html
 
-Now build it (requires 5-10 mins)::
+Use
+---
 
-   make all
+Run 1 crawler from command line
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For MacOS
-~~~~~~~~~
 
-* Install all needed python libraries (from project folder)::
+Run from src/ folder:
+::
+   python experiments/cmd.py -g <GRAPH> -c <CRAWLER> -n <RUNS>
 
-   brew install -r requirements.txt
+To see available options type:: `python experiments/cmd.py -h`
 
-* Install `SNAP <https://snap.stanford.edu/snap/index.html>`_ C++ (to any directory)::
+Reproduce experiments from the paper
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   git clone https://github.com/snap-stanford/snap.git
-   cd snap
-   make all
+To obtain all the results from Table 4 one can run all configurations:
+::
+   python experiments/paper_experiments.py
 
-Set up configurations
----------------------
+but this can take very long time (up to several weeks).
+Edit the file `paper_experiments.py` to run a proper configuration.
 
-Copy the file ``config.example`` to ``config`` - this file will contain your specific
-flags and paths::
-
-  cp config.example config
-
-SNAP C++ (for cythonic crawlers)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In the ``config`` file set variables::
-
-   SNAP_DIR = "/path/to/snap"         # directory with snap built
-
-Put there your path to the installed snap root directory.
-NOTE: don't start the path from '~' or it will fail with the g++ option '-I'.
-
-The following steps are optional, they may be use to speed up computations.
-
-Networkit (for fast betweenness and closeness estimations)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Approximate centralities computing can significantly reduce computation time for large
-graphs. Set the corresponding variable to toggle `Networkit <https://networkit.github.io/>`_
-library usage (for betweenness and closeness)::
-
-   USE_NETWORKIT = True                 # Use networkit library for approximate centrality calculation
-
-Ligra (for fast eccentricity estimations)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You may install `Ligra <https://github.com/jshun/ligra>`_ framework to use approximate
-eccentricity algorithm for large graphs::
-
-   git clone https://github.com/jshun/ligra.git
-   cd ligra/apps/eccentricity
-   export CILK=" "
-   make all
-   cd ../../utils
-   make all
-
-Set corresponding variables in config file::
-
-   USE_LIGRA = True                     # Use Ligra library for approximate centrality calculation
-   LIGRA_DIR = "/path/to/ligra"         # directory with Ligra built
-
-Now when you are done, go to `demo <code.html#demo-lbl>`_ for a quick start.
-
-..
-    VK messages
-    ~~~~~~~~~~~
-
-    You may set your VK account id to get messages from crawler runner (`CrawlerHistoryRunner`).
-    It reports when computations are complete or when errors occur::
-
-       VK_ID = "00000000"                   # VK id to send info messages
-
-    You should allow the `vk_bot` to send messages to you (TODO how?).
+Once a crawler has finished its job, its result is saved to a corresponding file in `results/` folder.
+Script `python experiments/paper_plots.py` will collect statistics of all the computed results.

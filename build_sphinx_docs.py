@@ -29,7 +29,7 @@ if res != 0:
 # commit and push to github
 os.system("git add -u")
 os.system("git commit -m 'updated docs'")
-os.system("git push github gh-pages")
+os.system("git push origin gh-pages")
 
 
 
