@@ -1,6 +1,7 @@
 Cython==0.29.21    # (works for version 0.29.21)
 patool             # for extraction of archives downloaded from online graph collection
 matplotlib>=3.3.0  # for plots drawing
+pyqt5              # for matplotlib plots showing (optional)
 numpy              # (works for version 0.19.4)
 scikit-learn       # (works for version 0.23.2), 1.1.1
 tqdm               # for progress bars when runners

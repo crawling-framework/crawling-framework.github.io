@@ -23,7 +23,7 @@ sys.setrecursionlimit(1500)
 project = 'CrawlingFramework'
 # copyright = '2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov'
 # author = 'Mikhail Drobyshevskiy, Danil Shaykhelislamov, Denis Aivazov, Kirill Lukyanov'
-copyright = '2022, TEMPORARY HIDDEN'
+copyright = '2022, authors TEMPORARY HIDDEN'
 author = 'TEMPORARY HIDDEN'
 
 # The short X.Y version

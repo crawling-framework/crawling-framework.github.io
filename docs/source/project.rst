@@ -11,6 +11,5 @@ Graph Neural Networks for Selective Harvesting over Social Networks" (not publis
 
 **Features**:
 
-* Run crawlers on given graphs, calculating quality measures, saving the history, and drawing 
-plots.
+* Run crawlers on given graphs, calculating quality measures, saving the history, and drawing plots.
 

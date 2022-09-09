@@ -20,40 +20,6 @@ netrepo_metadata_path = GRAPHS_DIR / 'netrepo' / 'metadata'
 current_graphs = {}  # full_name -> MyGraph
 
 
-def parse_netrepo_page():
-    """ Parse networkrepository page and create name resolution dict: name -> url
-    """
-    from bs4 import BeautifulSoup
-
-    logging.info("Parsing networkrepository metadata...")
-    name_ref_dict = {}
-    url = 'http://networkrepository.com/networks.php'
-    try:
-        html = urllib.request.urlopen(url).read()
-    except urllib.error.URLError as e:
-        logging.error("Unfortunately, web-cite %s is unavailable. Try again later. Perhaphs the URL could change" % url)
-        return
-
-    rows = BeautifulSoup(html, "lxml").table.find_all('tr')
-    for row in rows[1:]:
-        name = row.contents[0].contents[0].text.strip()
-        ref = row.contents[-1].contents[2]['href']
-        name_ref_dict[name] = ref
-
-    if not os.path.exists(os.path.dirname(netrepo_metadata_path)):
-        os.makedirs(os.path.dirname(netrepo_metadata_path))
-    with open(netrepo_metadata_path, 'w') as f:
-        f.write(str(name_ref_dict))
-    logging.info("networkrepository metadata saved to %s" % netrepo_metadata_path)
-
-
-# Should be run before downloading any graph
-if not os.path.exists(netrepo_metadata_path): parse_netrepo_page()
-
-
-# netrepo_name_ref_dict = eval(open(netrepo_metadata_path, 'r').read())
-
-
 def reformat_graph_file(path, out_path, ignore_lines_starting_with='#%',
                         remove_original=False, self_loops=False, renumerate=False):
     """
