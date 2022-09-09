@@ -1,1412 +1,1037 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>Code Documentation &#8212; CrawlingFramework 1.0.0 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.0.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Installation guide" href="readme.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
+  
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="code-documentation">
+  <section id="code-documentation">
 <h1>Code Documentation<a class="headerlink" href="#code-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
-<div class="section" id="module-base.cgraph">
+<section id="module-base.cgraph">
 <span id="basics"></span><h2>basics<a class="headerlink" href="#module-base.cgraph" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="base.cgraph.MyGraph">
-<em class="property">class </em><code class="descclassname">base.cgraph.</code><code class="descname">MyGraph</code><a class="headerlink" href="#base.cgraph.MyGraph" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base.cgraph.</span></span><span class="sig-name descname"><span class="pre">MyGraph</span></span><a class="headerlink" href="#base.cgraph.MyGraph" title="Permalink to this definition">¶</a></dt>
 <dd><p>Graph object representing nodes and undirected unweighted edges.
 Uses <a class="reference external" href="https://github.com/snap-stanford/snap">SNAP</a> library for graph operations.
 Graph is stored in edgelist format.</p>
 <p>Fast operations via snap:</p>
 <ul class="simple">
-<li>IO operations</li>
-<li>nodes/edges addition/iteration</li>
-<li>maximal degree, clustering coefficient, extraction of giant component</li>
-<li>getting random nodes, neighbours</li>
+<li><p>IO operations</p></li>
+<li><p>nodes/edges addition/iteration</p></li>
+<li><p>maximal degree, clustering coefficient, extraction of giant component</p></li>
+<li><p>getting random nodes, neighbours</p></li>
 </ul>
 <p>Other methods:</p>
 <ul class="simple">
-<li>graph statistics are available by index access. Once computed it is saved in file.</li>
-<li>converting to <a class="reference external" href="https://networkit.github.io/">networkit</a> (for some statistics computing) and
-<a class="reference external" href="https://networkx.github.io/">networkx</a> (for drawing) graphs</li>
+<li><p>graph statistics are available by index access. Once computed it is saved in file.</p></li>
+<li><p>converting to <a class="reference external" href="https://networkit.github.io/">networkit</a> (for some statistics computing) and
+<a class="reference external" href="https://networkx.github.io/">networkx</a> (for drawing) graphs</p></li>
 </ul>
 <p>NOTES:</p>
 <ul class="simple">
-<li>When graph is modified, all computed statistics are removed. If want to keep statistics in file and modify graph,
-make a copy of it.</li>
+<li><p>When graph is modified, all computed statistics are removed. If want to keep statistics in
+file and modify graph, make a copy of it.</p></li>
 </ul>
-<dl class="attribute">
-<dt id="base.cgraph.MyGraph.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#base.cgraph.MyGraph.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>path</strong> – load from path. If None, create empty graph</li>
-<li><strong>name</strong> – name. ‘noname’ by default</li>
-<li><strong>directed</strong> – ignored: undirected only</li>
-<li><strong>weighted</strong> – ignored: unweighted only</li>
-<li><strong>format</strong> – ignored: ‘ij’ only</li>
-<li><strong>not_load</strong> – if True do not load the graph (useful for stats exploring). Note: any graph
-modification will lead to segfault</li>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> – where the graph contents is stored</p></li>
+<li><p><strong>full_name</strong> – string or tuple ([collection], [subcollection], … , name) containing at
+least one element, the last one is treated as graph name. By default, name=’noname’ which
+means graph will be stored in <cite>tmp/noname_timestamp</cite></p></li>
+<li><p><strong>directed</strong> – ignored: undirected only</p></li>
+<li><p><strong>weighted</strong> – ignored: unweighted only</p></li>
+<li><p><strong>format</strong> – ignored: ‘ij’ only</p></li>
+<li><p><strong>not_load</strong> – if True do not load the graph (useful for stats exploring). Note: any graph
+modification will lead to segfault</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.clustering">
-<code class="descname">clustering</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.clustering" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.attributes">
+<span class="sig-name descname"><span class="pre">attributes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a set of available attributes names.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.clustering">
+<span class="sig-name descname"><span class="pre">clustering</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.clustering" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get clustering of a node.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.copy">
-<code class="descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.copy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create and return a copy of this graph</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and return a copy of this graph. Attributes are ignored.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.deg">
-<code class="descname">deg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.deg" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.deg">
+<span class="sig-name descname"><span class="pre">deg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.deg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get node degree.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.edges">
-<code class="descname">edges</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.edges" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.edges">
+<span class="sig-name descname"><span class="pre">edges</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.edges" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of edges</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.giant_component">
-<code class="descname">giant_component</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.giant_component" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new graph containing the giant component of this graph.
-Note: graph file will be overwritten, all computed and saved stats will be removed.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.full_name">
+<span class="sig-name descname"><span class="pre">full_name</span></span><a class="headerlink" href="#base.cgraph.MyGraph.full_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get graph full name prepended with all collections it belongs.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.max_deg">
-<code class="descname">max_deg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.max_deg" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.get_attribute">
+<span class="sig-name descname"><span class="pre">get_attribute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.get_attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get node attribute value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> – node id</p></li>
+<li><p><strong>attr</strong> – attribute name</p></li>
+<li><p><strong>keys</strong> – inner attribute keys, e.g. for VK graphs attr=’personal’, <a href="#id1"><span class="problematic" id="id2">*</span></a>keys=’alcohol’,</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>attribute value or None if attribute is not defined for this node</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.giant_component">
+<span class="sig-name descname"><span class="pre">giant_component</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.giant_component" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new graph containing the giant component of this graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>inplace</strong> – if True, this graph is overwritten, all computed and saved stats will be removed.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>graph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.max_deg">
+<span class="sig-name descname"><span class="pre">max_deg</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.max_deg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get maximal node degree.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.neighbors">
-<code class="descname">neighbors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.neighbors" title="Permalink to this definition">¶</a></dt>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#base.cgraph.MyGraph.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get graph name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.neighbors">
+<span class="sig-name descname"><span class="pre">neighbors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.neighbors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generator of neighbors of the given node in this graph.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.networkit">
-<code class="descname">networkit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.networkit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get networkit graph, create node ids mapping (neworkit_node_id -&gt; snap_node_id) if
-node_map is specified. Some neworkit_node_id -&gt; None (those ids not present in snap graph).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="base.cgraph.MyGraph.nodes">
-<code class="descname">nodes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.nodes" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.nodes">
+<span class="sig-name descname"><span class="pre">nodes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.nodes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of nodes</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.random_neighbor">
-<code class="descname">random_neighbor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.random_neighbor" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.random_neighbor">
+<span class="sig-name descname"><span class="pre">random_neighbor</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.random_neighbor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a random neighbor of the given node in this graph.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.random_node">
-<code class="descname">random_node</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.random_node" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.random_node">
+<span class="sig-name descname"><span class="pre">random_node</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.random_node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a random node. O(1)</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.random_nodes">
-<code class="descname">random_nodes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.random_nodes" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.random_nodes">
+<span class="sig-name descname"><span class="pre">random_nodes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.random_nodes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a vector of random nodes without repetition. O(N)</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="base.cgraph.MyGraph.save">
-<code class="descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.save" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write current edge list of snap graph into file.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.set_attributes">
+<span class="sig-name descname"><span class="pre">set_attributes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.set_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set nodes attribute values. Save to file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attr</strong> – attribute name</p></li>
+<li><p><strong>attr_values</strong> – dict {node id -&gt; value}</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
-<span class="target" id="module-graph_io"></span><dl class="class">
-<dt id="graph_io.GraphCollections">
-<em class="property">class </em><code class="descclassname">graph_io.</code><code class="descname">GraphCollections</code><a class="reference internal" href="_modules/graph_io.html#GraphCollections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_io.GraphCollections" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.to_dgl">
+<span class="sig-name descname"><span class="pre">to_dgl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.to_dgl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get dgl graph representation, create node ids mapping (dgl_node_id -&gt; snap_node_id) and write it
+to node_map variable.
+:param node_map: this variable will store {dgl_node_id -&gt; snap_node_id} mapping
+:return: undirected (all edges are reciprocal) dgl graph
+TODO add attributes?</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.MyGraph.to_networkx">
+<span class="sig-name descname"><span class="pre">to_networkx</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.MyGraph.to_networkx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get networkx graph representation.
+:param with_attributes: add all attributes to networkx graph.</p>
+<blockquote>
+<div><p>Absent attributes are stored as Nones.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>undirected networkx graph</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="base.cgraph.StatDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base.cgraph.</span></span><span class="sig-name descname"><span class="pre">StatDecoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.StatDecoder" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="base.cgraph.StatDecoder.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#base.cgraph.StatDecoder.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">object_hook</span></code>, if specified, will be called with the result
+of every JSON object decoded and its return value will be used in
+place of the given <code class="docutils literal notranslate"><span class="pre">dict</span></code>.  This can be used to provide custom
+deserializations (e.g. to support JSON-RPC class hinting).</p>
+<p><code class="docutils literal notranslate"><span class="pre">object_pairs_hook</span></code>, if specified will be called with the result of
+every JSON object decoded with an ordered list of pairs.  The return
+value of <code class="docutils literal notranslate"><span class="pre">object_pairs_hook</span></code> will be used instead of the <code class="docutils literal notranslate"><span class="pre">dict</span></code>.
+This feature can be used to implement custom decoders.
+If <code class="docutils literal notranslate"><span class="pre">object_hook</span></code> is also defined, the <code class="docutils literal notranslate"><span class="pre">object_pairs_hook</span></code> takes
+priority.</p>
+<p><code class="docutils literal notranslate"><span class="pre">parse_float</span></code>, if specified, will be called with the string
+of every JSON float to be decoded. By default this is equivalent to
+float(num_str). This can be used to use another datatype or parser
+for JSON floats (e.g. decimal.Decimal).</p>
+<p><code class="docutils literal notranslate"><span class="pre">parse_int</span></code>, if specified, will be called with the string
+of every JSON int to be decoded. By default this is equivalent to
+int(num_str). This can be used to use another datatype or parser
+for JSON integers (e.g. float).</p>
+<p><code class="docutils literal notranslate"><span class="pre">parse_constant</span></code>, if specified, will be called with one of the
+following strings: -Infinity, Infinity, NaN.
+This can be used to raise an exception if invalid JSON numbers
+are encountered.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">strict</span></code> is false (true is the default), then control
+characters will be allowed inside strings.  Control characters in
+this context are those with character codes in the 0-31 range,
+including <code class="docutils literal notranslate"><span class="pre">'\t'</span></code> (tab), <code class="docutils literal notranslate"><span class="pre">'\n'</span></code>, <code class="docutils literal notranslate"><span class="pre">'\r'</span></code> and <code class="docutils literal notranslate"><span class="pre">'\0'</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-graph_io"></span><dl class="py class">
+<dt class="sig sig-object py" id="graph_io.GraphCollections">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">graph_io.</span></span><span class="sig-name descname"><span class="pre">GraphCollections</span></span><a class="reference internal" href="_modules/graph_io.html#GraphCollections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#graph_io.GraphCollections" title="Permalink to this definition">¶</a></dt>
 <dd><p>Manager of graph data.
-By calling method <cite>get(name, collection)</cite>, it loads graph from file if any or downloads a graph from online
-collection.
-<a class="reference external" href="http://networkrepository.com/">networkrepository</a> collection is available.</p>
+By calling method <cite>get(graph_full_name)</cite>, it loads graph from file if any or downloads a graph
+from online graph collection.
+<cite>graph_full_name</cite> is string or tuple ([collection], [subcollection], … , name) containing at
+least one element, the last one is treated as graph name.
+Corresponding graph file is stored at <cite>collection/subcollection/../name.format</cite> file.</p>
+<p><a class="reference external" href="http://networkrepository.com/">networkrepository</a> collection is available.</p>
 <p>Example:
-&gt;&gt;&gt; graph = GraphCollections.get(name=’dolphins’, collection=’netrepo’)</p>
-<dl class="staticmethod">
-<dt id="graph_io.GraphCollections.get">
-<em class="property">static </em><code class="descname">get</code><span class="sig-paren">(</span><em>name</em>, <em>collection=None</em>, <em>directed=False</em>, <em>giant_only=True</em>, <em>self_loops=False</em>, <em>not_load=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_io.html#GraphCollections.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_io.GraphCollections.get" title="Permalink to this definition">¶</a></dt>
+&gt;&gt;&gt; graph = GraphCollections.get(‘konect’, ‘dolphins’)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="graph_io.GraphCollections.get">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">full_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">directed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">giant_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">self_loops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_load</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></span><a class="reference internal" href="_modules/graph_io.html#GraphCollections.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#graph_io.GraphCollections.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read graph from storage or download it from the specified collection. In order to apply
 giant_only and self_loops, you need to remove the file manually. #TODO maybe make a rewrite?</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>name</strong> – any of e.g. ‘CL’ or ‘Actor collaborations’ or ‘actor-collaborations’</li>
-<li><strong>collection</strong> – ‘netrepo’, ‘other’, or any other subfolder in data/. If not
-specified, it searches by name in ‘neterepo’, then ‘other’.</li>
-<li><strong>directed</strong> – undirected by default</li>
-<li><strong>giant_only</strong> – giant component instead of full graph. Component extraction is applied
-only once when the graph is downloaded.</li>
-<li><strong>self_loops</strong> – self loops are removed by default. Applied only once when the graph is
-downloaded.</li>
-<li><strong>not_load</strong> – if True do not load the graph (useful for stats exploring). Note: any graph
-modification will lead to segfault</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>full_name</strong> – string or sequence [collection], [subcollection], … , name containing at
+least one element, the last one is treated as graph name. In case of konect collection, graph
+name could be any of e.g. ‘CL’ or ‘Actor collaborations’ or ‘actor-collaborations’.</p></li>
+<li><p><strong>directed</strong> – undirected by default</p></li>
+<li><p><strong>giant_only</strong> – giant component instead of full graph. Component extraction is applied
+only once when the graph is downloaded.</p></li>
+<li><p><strong>self_loops</strong> – self loops are removed by default. Applied only once when the graph is
+downloaded.</p></li>
+<li><p><strong>not_load</strong> – if True do not load the graph (useful for stats exploring). Note: any graph
+modification will lead to segfault</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">MyGraph object</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>MyGraph object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="graph_io.GraphCollections.get_by_path">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_by_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_load</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></span><a class="reference internal" href="_modules/graph_io.html#GraphCollections.get_by_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#graph_io.GraphCollections.get_by_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and load graph from specified file path.
+If the path is &lt;GRAPHS_DIR&gt;/a/b/name.ij the full_name will be (‘a’, ‘b’, ‘name’)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="graph_io.GraphCollections.register_new_graph">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register_new_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">full_name</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></span><a class="reference internal" href="_modules/graph_io.html#GraphCollections.register_new_graph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#graph_io.GraphCollections.register_new_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new MyGraph object, define its path corresponding to the specified full_name.</p>
+<p>NOTE: by default the graph is not loaded, call load() if want to use this object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_name</strong> – string or sequence [collection], [subcollection], … , name containing
+at least one element, the last one is treated as graph name.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>new MyGraph</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="graph_io.temp_dir">
-<em class="property">class </em><code class="descclassname">graph_io.</code><code class="descname">temp_dir</code><a class="reference internal" href="_modules/graph_io.html#temp_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_io.temp_dir" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="graph_io.temp_dir">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">graph_io.</span></span><span class="sig-name descname"><span class="pre">temp_dir</span></span><a class="reference internal" href="_modules/graph_io.html#temp_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#graph_io.temp_dir" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a temporary directory to store some files, which will be removed by exit.
 Current working directory is also changed to this directory.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="graph_io.temp_dir.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_io.html#temp_dir.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#graph_io.temp_dir.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
-<span class="target" id="module-graph_stats"></span><dl class="class">
-<dt id="graph_stats.Stat">
-<em class="property">class </em><code class="descclassname">graph_stats.</code><code class="descname">Stat</code><span class="sig-paren">(</span><em>short: str</em>, <em>description: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_stats.html#Stat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_stats.Stat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Graph statistics.
-Numeric, distributional, and other statistics are available.</p>
-<p>To add a new graph statistics, add its definition here and implement it in <cite>cyth/cstatistics.pyx</cite>.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="graph_stats.get_top_centrality_nodes">
-<code class="descclassname">graph_stats.</code><code class="descname">get_top_centrality_nodes</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>centrality</em>, <em>count=None</em>, <em>threshold=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_stats.html#get_top_centrality_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_stats.get_top_centrality_nodes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get top-count node ids of the graph sorted by centrality.
-:param graph: MyGraph
-:param centrality: centrality name, one of utils.CENTRALITIES
-:param count: number of nodes with top centrality to return. If None, return all nodes
-:param threshold # TODO make threshold cut
-:return: sorted list with top centrality</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="graph_stats.plm">
-<code class="descclassname">graph_stats.</code><code class="descname">plm</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_stats.html#plm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_stats.plm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Detect communities via PLM - Parallel Louvain Method and compute modularity.
-Set both the stats of the graph via setter.</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-crawlers.cbasic">
+</section>
+<section id="module-crawlers.cbasic">
 <span id="crawlers"></span><h2>crawlers<a class="headerlink" href="#module-crawlers.cbasic" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="crawlers.cbasic.definition_to_filename">
-<code class="descclassname">crawlers.cbasic.</code><code class="descname">definition_to_filename</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.definition_to_filename" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert crawler string definition into filename. Uniqueness is maintained</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="crawlers.cbasic.filename_to_definition">
-<code class="descclassname">crawlers.cbasic.</code><code class="descname">filename_to_definition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.filename_to_definition" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert filename into crawler string definition. Uniqueness is maintained</p>
-</dd></dl>
-
-<div class="section" id="module-crawlers.cbasic">
-<span id="classic"></span><h3>classic<a class="headerlink" href="#module-crawlers.cbasic" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="crawlers.cbasic.Crawler">
-<em class="property">class </em><code class="descclassname">crawlers.cbasic.</code><code class="descname">Crawler</code><a class="headerlink" href="#crawlers.cbasic.Crawler" title="Permalink to this definition">¶</a></dt>
+<section id="module-0">
+<span id="classic"></span><h3>classic<a class="headerlink" href="#module-0" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.Crawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">Crawler</span></span><a class="headerlink" href="#crawlers.cbasic.Crawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>The root class for all our crawlers. Keeps fields:</p>
 <ul class="simple">
-<li><cite>observed_graph</cite> - observed sample of all crawled and visible nodes and edges,</li>
-<li><cite>crawled_set</cite> - set of all crawled nodes,</li>
-<li><cite>observed_set</cite> - set of osberved but not crawled yet nodes.</li>
+<li><p><cite>observed_graph</cite> - observed sample of all crawled and visible nodes and edges,</p></li>
+<li><p><cite>crawled_set</cite> - set of all crawled nodes,</p></li>
+<li><p><cite>observed_set</cite> - set of osberved but not crawled yet nodes.</p></li>
 </ul>
 <ul class="simple">
-<li>int <cite>next_seed</cite> (self) - choose next seed among the observed ones, each crawler defines its own strategy.</li>
-<li>vector[int] <cite>crawl</cite> (self, int seed) - crawl the specified node and return a list (vector) of newly observed nodes.</li>
-<li>int <cite>crawl_budget</cite> (self, int budget) - crawl <cite>budget</cite> number of nodes according to the strategy.</li>
+<li><p>int <cite>next_seed</cite> (self) - choose next seed among the observed ones, each crawler defines its own strategy.</p></li>
+<li><p>vector[int] <cite>crawl</cite> (self, int seed) - crawl the specified node and return a list (vector) of newly observed nodes.</p></li>
+<li><p>int <cite>crawl_budget</cite> (self, int budget) - crawl <cite>budget</cite> number of nodes according to the strategy.</p></li>
 </ul>
 <p>Crawler is initialized with the original graph (which must NOT be modified) and optionally with observed_graph,
 crawled_set, and observed_set - to start with.</p>
-<p>Crawler has its <cite>definition</cite> which determines the instance. Definition can be uniquely transformed into string
+<p>Crawler has its <cite>declaration</cite> which determines the instance. Declaration can be uniquely transformed into string
 filename and back in order to store the results of measurements.</p>
-<dl class="attribute">
-<dt id="crawlers.cbasic.Crawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cbasic.Crawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>graph</strong> – original graph, must remain unchanged</li>
-<li><strong>name</strong> – specify to use in pictures, by default name == filename generated from definition</li>
-<li><strong>observed_graph</strong> – optionally use a given observed graph, NOTE: the object will be modified, make a copy if needed</li>
-<li><strong>crawled_set</strong> – optionally use a given crawled set, NOTE: the object will be modified, make a copy if needed</li>
-<li><strong>observed_set</strong> – optionally use a given observed set, NOTE: the object will be modified, make a copy if needed</li>
-<li><strong>kwargs</strong> – all additional parameters (needed in subclasses) - they will be encoded into string definition</li>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.Crawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> – original graph, must remain unchanged</p></li>
+<li><p><strong>name</strong> – specify to use in pictures, by default name == filename generated from declaration</p></li>
+<li><p><strong>observed_graph</strong> – optionally use a given observed graph, NOTE: the object will be modified, make a copy if needed</p></li>
+<li><p><strong>crawled_set</strong> – optionally use a given crawled set, NOTE: the object will be modified, make a copy if needed</p></li>
+<li><p><strong>observed_set</strong> – optionally use a given observed set, NOTE: the object will be modified, make a copy if needed</p></li>
+<li><p><strong>kwargs</strong> – all additional parameters (needed in subclasses) - they will be encoded into string declaration</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.Crawler.crawl">
-<code class="descname">crawl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.Crawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.crawl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crawl specified node. The observed graph is updated, also are crawled and observed set.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>seed</strong> – node id to crawl</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">vector (list) of newly seen nodes</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>seed</strong> – node id to crawl</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vector (list) of newly seen nodes</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.Crawler.crawl_budget">
-<code class="descname">crawl_budget</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.crawl_budget" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.Crawler.crawl_budget">
+<span class="sig-name descname"><span class="pre">crawl_budget</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.crawl_budget" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform <cite>budget</cite> number of crawls according to the algorithm.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>budget</strong> – so many nodes will be crawled. If can’t crawl any more, raise NoNextSeedError</li>
-<li><strong>args</strong> – customizable additional args for subclasses</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>budget</strong> – so many nodes will be crawled. If can’t crawl any more, raise NoNextSeedError</p></li>
+<li><p><strong>args</strong> – customizable additional args for subclasses</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="crawlers.cbasic.Crawler.crawled_set">
-<code class="descname">crawled_set</code><a class="headerlink" href="#crawlers.cbasic.Crawler.crawled_set" title="Permalink to this definition">¶</a></dt>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="crawlers.cbasic.Crawler.crawled_set">
+<span class="sig-name descname"><span class="pre">crawled_set</span></span><a class="headerlink" href="#crawlers.cbasic.Crawler.crawled_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get nodes’ ids of observed graph (crawled and observed).</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="crawlers.cbasic.Crawler.definition">
-<code class="descname">definition</code><a class="headerlink" href="#crawlers.cbasic.Crawler.definition" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get definition. Definition is the pair (class, constructor kwargs)</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="crawlers.cbasic.Crawler.from_definition">
-<em class="property">static </em><code class="descname">from_definition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.from_definition" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build a Crawler instance from its definition</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="crawlers.cbasic.Crawler.next_seed">
-<code class="descname">next_seed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.Crawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.next_seed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Core of the crawler - the algorithm to choose the next seed to be crawled.
 Seed must be a node of the original graph.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">node id as int</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>node id as int</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="crawlers.cbasic.Crawler.nodes_set">
-<code class="descname">nodes_set</code><a class="headerlink" href="#crawlers.cbasic.Crawler.nodes_set" title="Permalink to this definition">¶</a></dt>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="crawlers.cbasic.Crawler.nodes_set">
+<span class="sig-name descname"><span class="pre">nodes_set</span></span><a class="headerlink" href="#crawlers.cbasic.Crawler.nodes_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get nodes’ ids of observed graph (crawled and observed).</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.Crawler.observe">
-<code class="descname">observe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.observe" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.Crawler.observe">
+<span class="sig-name descname"><span class="pre">observe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.Crawler.observe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add the node to observed set and observed graph.</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="crawlers.cbasic.Crawler.observed_set">
-<code class="descname">observed_set</code><a class="headerlink" href="#crawlers.cbasic.Crawler.observed_set" title="Permalink to this definition">¶</a></dt>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="crawlers.cbasic.Crawler.observed_set">
+<span class="sig-name descname"><span class="pre">observed_set</span></span><a class="headerlink" href="#crawlers.cbasic.Crawler.observed_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get nodes’ ids of observed graph (crawled and observed).</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="crawlers.cbasic.RandomCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.cbasic.</code><code class="descname">RandomCrawler</code><a class="headerlink" href="#crawlers.cbasic.RandomCrawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.RandomCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">RandomCrawler</span></span><a class="headerlink" href="#crawlers.cbasic.RandomCrawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crawls a random node from the observed ones.</p>
-<dl class="attribute">
-<dt id="crawlers.cbasic.RandomCrawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cbasic.RandomCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.RandomCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.RandomCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.RandomCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.RandomCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crawl specified node. The observed graph is updated, also are crawled and observed set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>seed</strong> – node id to crawl</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vector (list) of newly seen nodes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.RandomCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.RandomCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Core of the crawler - the algorithm to choose the next seed to be crawled.
+Seed must be a node of the original graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>node id as int</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="crawlers.cbasic.RandomWalkCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.cbasic.</code><code class="descname">RandomWalkCrawler</code><a class="headerlink" href="#crawlers.cbasic.RandomWalkCrawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.RandomWalkCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">RandomWalkCrawler</span></span><a class="headerlink" href="#crawlers.cbasic.RandomWalkCrawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crawls a random neighbor of the previously crawled node.
 If cannot crawl, goes to a random neighbor and proceed there.</p>
-<dl class="attribute">
-<dt id="crawlers.cbasic.RandomWalkCrawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cbasic.RandomWalkCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.RandomWalkCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.RandomWalkCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.RandomWalkCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.RandomWalkCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Core of the crawler - the algorithm to choose the next seed to be crawled.
+Seed must be a node of the original graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>node id as int</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="crawlers.cbasic.BreadthFirstSearchCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.cbasic.</code><code class="descname">BreadthFirstSearchCrawler</code><a class="headerlink" href="#crawlers.cbasic.BreadthFirstSearchCrawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.BreadthFirstSearchCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">BreadthFirstSearchCrawler</span></span><a class="headerlink" href="#crawlers.cbasic.BreadthFirstSearchCrawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crawls in a breadth first manner.</p>
-<dl class="attribute">
-<dt id="crawlers.cbasic.BreadthFirstSearchCrawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cbasic.BreadthFirstSearchCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.BreadthFirstSearchCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.BreadthFirstSearchCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.BreadthFirstSearchCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.BreadthFirstSearchCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crawl specified node. The observed graph is updated, also are crawled and observed set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>seed</strong> – node id to crawl</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vector (list) of newly seen nodes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.BreadthFirstSearchCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.BreadthFirstSearchCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Core of the crawler - the algorithm to choose the next seed to be crawled.
+Seed must be a node of the original graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>node id as int</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="crawlers.cbasic.DepthFirstSearchCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.cbasic.</code><code class="descname">DepthFirstSearchCrawler</code><a class="headerlink" href="#crawlers.cbasic.DepthFirstSearchCrawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.DepthFirstSearchCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">DepthFirstSearchCrawler</span></span><a class="headerlink" href="#crawlers.cbasic.DepthFirstSearchCrawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crawls in a depth first manner.</p>
-<dl class="attribute">
-<dt id="crawlers.cbasic.DepthFirstSearchCrawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cbasic.DepthFirstSearchCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.DepthFirstSearchCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.DepthFirstSearchCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.DepthFirstSearchCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.DepthFirstSearchCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crawl specified node. The observed graph is updated, also are crawled and observed set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>seed</strong> – node id to crawl</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vector (list) of newly seen nodes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.DepthFirstSearchCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.DepthFirstSearchCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Core of the crawler - the algorithm to choose the next seed to be crawled.
+Seed must be a node of the original graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>node id as int</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="crawlers.cbasic.SnowBallCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.cbasic.</code><code class="descname">SnowBallCrawler</code><a class="headerlink" href="#crawlers.cbasic.SnowBallCrawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.SnowBallCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">SnowBallCrawler</span></span><a class="headerlink" href="#crawlers.cbasic.SnowBallCrawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Every step of BFS taking neighbors with probability p.
 <a class="reference external" href="http://www.soundarajan.org/papers/CrawlingAnalysis.pdf">http://www.soundarajan.org/papers/CrawlingAnalysis.pdf</a>
 <a class="reference external" href="https://arxiv.org/pdf/1004.1729.pdf">https://arxiv.org/pdf/1004.1729.pdf</a></p>
-<dl class="attribute">
-<dt id="crawlers.cbasic.SnowBallCrawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cbasic.SnowBallCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>p</strong> – probability of taking neighbor into queue</td>
-</tr>
-</tbody>
-</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.SnowBallCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.SnowBallCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>p</strong> – probability of taking neighbor into queue</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.SnowBallCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.SnowBallCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crawl specified node. The observed graph is updated, also are crawled and observed set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>seed</strong> – node id to crawl</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vector (list) of newly seen nodes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.SnowBallCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.SnowBallCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Core of the crawler - the algorithm to choose the next seed to be crawled.
+Seed must be a node of the original graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>node id as int</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="crawlers.cbasic.MaximumObservedDegreeCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.cbasic.</code><code class="descname">MaximumObservedDegreeCrawler</code><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumObservedDegreeCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">MaximumObservedDegreeCrawler</span></span><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crawls a node with maximal observed degree.</p>
-<dl class="attribute">
-<dt id="crawlers.cbasic.MaximumObservedDegreeCrawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>batch</strong> – batch size</td>
-</tr>
-</tbody>
-</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumObservedDegreeCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>batch</strong> – batch size</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.MaximumObservedDegreeCrawler.crawl">
-<code class="descname">crawl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumObservedDegreeCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler.crawl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crawl specified node and update observed ND_Set</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.MaximumObservedDegreeCrawler.next_seed">
-<code class="descname">next_seed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumObservedDegreeCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Next node with highest degree</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.MaximumObservedDegreeCrawler.update">
-<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler.update" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumObservedDegreeCrawler.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumObservedDegreeCrawler.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update priority structures with specified nodes (suggested their degrees have changed).</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="crawlers.cbasic.PreferentialObservedDegreeCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.cbasic.</code><code class="descname">PreferentialObservedDegreeCrawler</code><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.PreferentialObservedDegreeCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">PreferentialObservedDegreeCrawler</span></span><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>selects for crawling one of the observed nodes with probability proportional to the observed degree.</p>
-<dl class="attribute">
-<dt id="crawlers.cbasic.PreferentialObservedDegreeCrawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>batch</strong> – batch size</td>
-</tr>
-</tbody>
-</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.PreferentialObservedDegreeCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>batch</strong> – batch size</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.PreferentialObservedDegreeCrawler.crawl">
-<code class="descname">crawl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.PreferentialObservedDegreeCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler.crawl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crawl specified node and update observed ND_Set</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.PreferentialObservedDegreeCrawler.update">
-<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler.update" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.PreferentialObservedDegreeCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Core of the crawler - the algorithm to choose the next seed to be crawled.
+Seed must be a node of the original graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>node id as int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.PreferentialObservedDegreeCrawler.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.PreferentialObservedDegreeCrawler.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update priority structures with specified nodes (suggested their degrees have changed).</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="crawlers.cbasic.MaximumExcessDegreeCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.cbasic.</code><code class="descname">MaximumExcessDegreeCrawler</code><a class="headerlink" href="#crawlers.cbasic.MaximumExcessDegreeCrawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumExcessDegreeCrawler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">crawlers.cbasic.</span></span><span class="sig-name descname"><span class="pre">MaximumExcessDegreeCrawler</span></span><a class="headerlink" href="#crawlers.cbasic.MaximumExcessDegreeCrawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Benchmark Crawler - greedy selection of next node with maximal excess (real - observed) degree</p>
-<dl class="attribute">
-<dt id="crawlers.cbasic.MaximumExcessDegreeCrawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cbasic.MaximumExcessDegreeCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
-</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumExcessDegreeCrawler.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumExcessDegreeCrawler.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.MaximumExcessDegreeCrawler.crawl">
-<code class="descname">crawl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumExcessDegreeCrawler.crawl" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumExcessDegreeCrawler.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumExcessDegreeCrawler.crawl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Crawl specified node and update newly observed in ND_Set</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="crawlers.cbasic.MaximumExcessDegreeCrawler.next_seed">
-<code class="descname">next_seed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumExcessDegreeCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="crawlers.cbasic.MaximumExcessDegreeCrawler.next_seed">
+<span class="sig-name descname"><span class="pre">next_seed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cbasic.MaximumExcessDegreeCrawler.next_seed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Next node with highest real (unknown) degree</p>
 </dd></dl>
 
 </dd></dl>
 
-</div>
-<div class="section" id="module-crawlers.advanced">
-<span id="advanced"></span><h3>advanced<a class="headerlink" href="#module-crawlers.advanced" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="crawlers.advanced.AvrachenkovCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.advanced.</code><code class="descname">AvrachenkovCrawler</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>n: int = 1000</em>, <em>n1: int = 500</em>, <em>k: int = 100</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/advanced.html#AvrachenkovCrawler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.advanced.AvrachenkovCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Algorithm from paper “Quick Detection of High-degree Entities in Large Directed Networks” (2014)
-<a class="reference external" href="https://arxiv.org/pdf/1410.0571.pdf">https://arxiv.org/pdf/1410.0571.pdf</a></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="crawlers.advanced.ThreeStageCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.advanced.</code><code class="descname">ThreeStageCrawler</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>s: int = 500</em>, <em>n: int = 1000</em>, <em>p: float = 0.1</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/advanced.html#ThreeStageCrawler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.advanced.ThreeStageCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Algorithm from our paper
-“Three-step Algorithms for Detection of High Degree Nodes in Online Social Networks”
-TODO add ref when published</p>
-<dl class="method">
-<dt id="crawlers.advanced.ThreeStageCrawler.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>s: int = 500</em>, <em>n: int = 1000</em>, <em>p: float = 0.1</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/advanced.html#ThreeStageCrawler.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.advanced.ThreeStageCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>graph</strong> – original graph</li>
-<li><strong>s</strong> – number of initial random seed</li>
-<li><strong>n</strong> – number of nodes to be crawled, must be &gt;= seeds</li>
-<li><strong>p</strong> – fraction of target graph nodes</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="crawlers.advanced.ThreeStageMODCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.advanced.</code><code class="descname">ThreeStageMODCrawler</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>s: int = 500</em>, <em>n: int = 1000</em>, <em>p: float = 0.1</em>, <em>b: int = 10</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/advanced.html#ThreeStageMODCrawler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.advanced.ThreeStageMODCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Algorithm from our paper
-“Three-step Algorithms for Detection of High Degree Nodes in Online Social Networks”
-TODO add ref when published</p>
-<dl class="method">
-<dt id="crawlers.advanced.ThreeStageMODCrawler.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>s: int = 500</em>, <em>n: int = 1000</em>, <em>p: float = 0.1</em>, <em>b: int = 10</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/advanced.html#ThreeStageMODCrawler.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.advanced.ThreeStageMODCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>graph</strong> – original graph</li>
-<li><strong>s</strong> – number of initial random seed</li>
-<li><strong>n</strong> – number of nodes to be crawled, must be &gt;= seeds</li>
-<li><strong>p</strong> – fraction of target graph nodes</li>
-<li><strong>b</strong> – batch size</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="crawlers.advanced.ThreeStageMODCrawler.crawl">
-<code class="descname">crawl</code><span class="sig-paren">(</span><em>seed: int</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/advanced.html#ThreeStageMODCrawler.crawl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.advanced.ThreeStageMODCrawler.crawl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply MOD when time comes</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="crawlers.advanced.CrawlerWithAnswer">
-<em class="property">class </em><code class="descclassname">crawlers.advanced.</code><code class="descname">CrawlerWithAnswer</code><a class="headerlink" href="#crawlers.advanced.CrawlerWithAnswer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Crawler which makes a limited number of iterations and generates an answer as its result.</p>
-<dl class="attribute">
-<dt id="crawlers.advanced.CrawlerWithAnswer.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.advanced.CrawlerWithAnswer.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="crawlers.advanced.CrawlerWithAnswer.crawl">
-<code class="descname">crawl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.advanced.CrawlerWithAnswer.crawl" title="Permalink to this definition">¶</a></dt>
-<dd><p>NOTE: don’t forget to set _actual_answer=False when overwrite crawl(seed) in subclasses</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="crawlers.advanced.CrawlerWithAnswer.seeds_generator">
-<code class="descname">seeds_generator</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.advanced.CrawlerWithAnswer.seeds_generator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates generator of seeds according to the algorithm.</p>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-crawlers.cadvanced"></span><dl class="class">
-<dt id="crawlers.cadvanced.DE_Crawler">
-<em class="property">class </em><code class="descclassname">crawlers.cadvanced.</code><code class="descname">DE_Crawler</code><a class="headerlink" href="#crawlers.cadvanced.DE_Crawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>DE Crawler from <a class="reference external" href="http://kareekij.github.io/papers/de_crawler_asonam18.pdf">http://kareekij.github.io/papers/de_crawler_asonam18.pdf</a>
-DE-Crawler: A Densification-Expansion Algorithm for Online Data Collection</p>
-<dl class="attribute">
-<dt id="crawlers.cadvanced.DE_Crawler.__init__">
-<code class="descname">__init__</code><a class="headerlink" href="#crawlers.cadvanced.DE_Crawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="crawlers.cadvanced.DE_Crawler.crawl">
-<code class="descname">crawl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cadvanced.DE_Crawler.crawl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Crawl specified node and update observed ND_Set</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="crawlers.cadvanced.DE_Crawler.update">
-<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#crawlers.cadvanced.DE_Crawler.update" title="Permalink to this definition">¶</a></dt>
-<dd><p>Update priority structures with specified nodes (suggested their degrees have changed).</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-crawlers.ml.with_features">
-<span id="ml-crawlers"></span><h3>ml-crawlers<a class="headerlink" href="#module-crawlers.ml.with_features" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="crawlers.ml.with_features.CrawlerWithFeatures">
-<em class="property">class </em><code class="descclassname">crawlers.ml.with_features.</code><code class="descname">CrawlerWithFeatures</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph, features: list = ['OD'], tau=-1, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/ml/with_features.html#CrawlerWithFeatures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.ml.with_features.CrawlerWithFeatures" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes and stores a feature vector for each node during the crawling.</p>
-<dl class="method">
-<dt id="crawlers.ml.with_features.CrawlerWithFeatures.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph, features: list = ['OD'], tau=-1, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/ml/with_features.html#CrawlerWithFeatures.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.ml.with_features.CrawlerWithFeatures.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>features</strong> – list of feature codes to compute, default [‘OD’]</li>
-<li><strong>tau</strong> – sliding window size, number of last crawled nodes used for learning and prediction, default use all (-1)</li>
-<li><strong>kwargs</strong> – additional args for Crawler constructor including graph, name, initial_seed, etc</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="crawlers.ml.with_features.CrawlerWithFeatures.update_feature">
-<code class="descname">update_feature</code><span class="sig-paren">(</span><em>node: int</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/ml/with_features.html#CrawlerWithFeatures.update_feature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.ml.with_features.CrawlerWithFeatures.update_feature" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate and update node feature vector for specified node.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>node</strong> – the node for which the feature vector is calculated</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-crawlers.ml.regression_reward"></span><dl class="class">
-<dt id="crawlers.ml.regression_reward.RegressionRewardCrawler">
-<em class="property">class </em><code class="descclassname">crawlers.ml.regression_reward.</code><code class="descname">RegressionRewardCrawler</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph, initial_seed: int = -1, tau=-1, features: list = ['OD'], regr: str = 'LinearRegression', regr_args: dict = {}, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/ml/regression_reward.html#RegressionRewardCrawler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.ml.regression_reward.RegressionRewardCrawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Crawler uses a regression model trained on crawled nodes features to predict reward for observed nodes. The next
-seed at each step is chosen as the node with the highest reward.</p>
-<dl class="method">
-<dt id="crawlers.ml.regression_reward.RegressionRewardCrawler.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph, initial_seed: int = -1, tau=-1, features: list = ['OD'], regr: str = 'LinearRegression', regr_args: dict = {}, **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/ml/regression_reward.html#RegressionRewardCrawler.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.ml.regression_reward.RegressionRewardCrawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>graph</strong> – original graph</li>
-<li><strong>initial_seed</strong> – start node</li>
-<li><strong>tau</strong> – sliding window size, number of last crawled nodes used for learning and prediction, default use all (-1)</li>
-<li><strong>features</strong> – list of features to use (see FEATURES), default [‘OD’]</li>
-<li><strong>regr</strong> – which regressor to use for reward prediction, default LinearRegression</li>
-<li><strong>regr_args</strong> – dict of arguments for the regressor</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-crawlers.ml.knn_ucb"></span><dl class="class">
-<dt id="crawlers.ml.knn_ucb.KNN_UCB_Crawler">
-<em class="property">class </em><code class="descclassname">crawlers.ml.knn_ucb.</code><code class="descname">KNN_UCB_Crawler</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph, initial_seed: int = -1, alpha: float = 0.5, k: int = 30, n0: int = 0, tau: int = -1, features: list = ['OD'], **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/ml/knn_ucb.html#KNN_UCB_Crawler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.ml.knn_ucb.KNN_UCB_Crawler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implementation of KNN-UCB crawling strategy based on multi-armed bandit approach.
-“A multi-armed bandit approach for exploring partially observed networks” (2019)
-<a class="reference external" href="https://link.springer.com/article/10.1007/s41109-019-0145-0">https://link.springer.com/article/10.1007/s41109-019-0145-0</a></p>
-<dl class="method">
-<dt id="crawlers.ml.knn_ucb.KNN_UCB_Crawler.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph, initial_seed: int = -1, alpha: float = 0.5, k: int = 30, n0: int = 0, tau: int = -1, features: list = ['OD'], **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/crawlers/ml/knn_ucb.html#KNN_UCB_Crawler.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#crawlers.ml.knn_ucb.KNN_UCB_Crawler.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>graph</strong> – original graph</li>
-<li><strong>initial_seed</strong> – start node</li>
-<li><strong>alpha</strong> – exploration coefficient, default 0.5</li>
-<li><strong>k</strong> – number of nearest neighbors to estimate expected reward, default 30</li>
-<li><strong>n0</strong> – number of starting random nodes, default 0</li>
-<li><strong>tau</strong> – sliding window size, number of last crawled nodes used for learning and prediction, default use all (-1)</li>
-<li><strong>features</strong> – list of features to use (see FEATURES), default [‘OD’]</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-</div>
-<div class="section" id="module-running.metrics_and_runner">
-<span id="runners"></span><h2>runners<a class="headerlink" href="#module-running.metrics_and_runner" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="running.metrics_and_runner.Metric">
-<em class="property">class </em><code class="descclassname">running.metrics_and_runner.</code><code class="descname">Metric</code><span class="sig-paren">(</span><em>name</em>, <em>callback</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#Metric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.Metric" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for metrics on crawling process.
-Metric has an identifying name and a callback function which maps the crawler into a number.</p>
-<p>Example of a custom metric:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">graph</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;example&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">Metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;coverage&#39;</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span> <span class="n">crawler</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">crawler</span><span class="o">.</span><span class="n">nodes_set</span><span class="p">)</span> <span class="o">/</span> <span class="n">graph</span><span class="p">[</span><span class="n">Stat</span><span class="o">.</span><span class="n">NODES</span><span class="p">])</span>
-</pre></div>
-</div>
-<dl class="method">
-<dt id="running.metrics_and_runner.Metric.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>name</em>, <em>callback</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#Metric.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.Metric.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> – identifying name</li>
-<li><strong>callback</strong> – metric function: callback(crawler, <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs) -&gt; number</li>
-<li><strong>kwargs</strong> – additional argument to callback function</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="running.metrics_and_runner.Metric.from_definition">
-<em class="property">static </em><code class="descname">from_definition</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>definition</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#Metric.from_definition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.Metric.from_definition" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build a Metric instance from its definition</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="running.metrics_and_runner.TopCentralityMetric">
-<em class="property">class </em><code class="descclassname">running.metrics_and_runner.</code><code class="descname">TopCentralityMetric</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>top: float</em>, <em>centrality: str</em>, <em>measure='F1'</em>, <em>part='crawled'</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#TopCentralityMetric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.TopCentralityMetric" title="Permalink to this definition">¶</a></dt>
-<dd><p>Measure crawling result with respect to the top centrality fraction of nodes.
-Supports measuring precision, recall, and F1-score for various crawler parts defined: crawled,
-observed, nodes, and answer (for those crawlers that has answer).
-Centrality can be any of graph distributional statistics.</p>
-<dl class="method">
-<dt id="running.metrics_and_runner.TopCentralityMetric.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>top: float</em>, <em>centrality: str</em>, <em>measure='F1'</em>, <em>part='crawled'</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#TopCentralityMetric.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.TopCentralityMetric.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Measure crawling result with respect to top fraction of nodes by a specified centrality.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>graph</strong> – original graph</li>
-<li><strong>top</strong> – fraction of target nodes (from 0 to 1)</li>
-<li><strong>centrality</strong> – node centrality to get top (see Stat)</li>
-<li><strong>measure</strong> – ‘Pr’ (precision), ‘Re’ (recall), or ‘F1’ (F1-score)</li>
-<li><strong>part</strong> – ‘crawled’, ‘observed’, ‘nodes’ (observed+crawled), ‘answer’ (crawler must
-support getting an answer, e.g. extend CrawlerWithAnswer)</li>
-<li><strong>name</strong> – name for plotting</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="running.metrics_and_runner.exponential_batch_generator">
-<code class="descclassname">running.metrics_and_runner.</code><code class="descname">exponential_batch_generator</code><span class="sig-paren">(</span><em>budget: int = 1000000000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#exponential_batch_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.exponential_batch_generator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generator for exponentially growing batches.
-Yields batches until their sum &lt; budget; the last one fills it up to budget exactly.</p>
-<p>NOTE: magic constant 20 is used in history and should not be changed.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="running.metrics_and_runner.uniform_batch_generator">
-<code class="descclassname">running.metrics_and_runner.</code><code class="descname">uniform_batch_generator</code><span class="sig-paren">(</span><em>budget: int</em>, <em>step: int</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#uniform_batch_generator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.uniform_batch_generator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generator for uniform batches.
-Yields batches until their sum &lt; budget; the last one fills it up to budget exactly.</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="running.metrics_and_runner.CrawlerRunner">
-<em class="property">class </em><code class="descclassname">running.metrics_and_runner.</code><code class="descname">CrawlerRunner</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>crawler_defs</em>, <em>metric_defs</em>, <em>budget: int = -1</em>, <em>step: int = -1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#CrawlerRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.CrawlerRunner" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class to run configurations of several crawlers and metrics. Details in subclasses.</p>
-<dl class="method">
-<dt id="running.metrics_and_runner.CrawlerRunner.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>crawler_defs</em>, <em>metric_defs</em>, <em>budget: int = -1</em>, <em>step: int = -1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#CrawlerRunner.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.CrawlerRunner.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Setup configuration for the graph: crawler definitions, metric definitions, budget, and step.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>graph</strong> – graph to run</li>
-<li><strong>crawler_defs</strong> – list of crawler definitions to run. Crawler definitions will be
-initialized when run() is called</li>
-<li><strong>metric_defs</strong> – list of metric definitions to compute at each step. Metric should be
-callable function crawler -&gt; float, and have name</li>
-<li><strong>budget</strong> – maximal number of nodes to be crawled, by default the whole graph</li>
-<li><strong>step</strong> – compute metrics each <cite>step</cite> steps, by default exponential step</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="running.metrics_and_runner.CrawlerRunner.run">
-<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/metrics_and_runner.html#CrawlerRunner.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.metrics_and_runner.CrawlerRunner.run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run specified configurations on the given graph</p>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-running.animated_runner"></span><dl class="class">
-<dt id="running.animated_runner.AnimatedCrawlerRunner">
-<em class="property">class </em><code class="descclassname">running.animated_runner.</code><code class="descname">AnimatedCrawlerRunner</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>crawler_defs</em>, <em>metric_defs</em>, <em>budget: int = -1</em>, <em>step: int = -1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/animated_runner.html#AnimatedCrawlerRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.animated_runner.AnimatedCrawlerRunner" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs several crawlers and measures several metrics for a given graph.
-Visualizes measurements in dynamics at one plot.</p>
-<dl class="method">
-<dt id="running.animated_runner.AnimatedCrawlerRunner.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>crawler_defs</em>, <em>metric_defs</em>, <em>budget: int = -1</em>, <em>step: int = -1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/animated_runner.html#AnimatedCrawlerRunner.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.animated_runner.AnimatedCrawlerRunner.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>graph</strong> – graph to run</li>
-<li><strong>crawler_defs</strong> – list of crawler definitions to run. Crawler definitions will be
-initialized when run() is called</li>
-<li><strong>metric_defs</strong> – list of metric definitions to compute at each step. Metric should be
-callable function crawler -&gt; float, and have name</li>
-<li><strong>budget</strong> – maximal number of nodes to be crawled, by default the whole graph</li>
-<li><strong>step</strong> – compute metrics each <cite>step</cite> steps</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="running.animated_runner.AnimatedCrawlerRunner.run">
-<code class="descname">run</code><span class="sig-paren">(</span><em>ylims=None</em>, <em>xlabel='iteration</em>, <em>n'</em>, <em>ylabel='metric value'</em>, <em>swap_coloring_scheme=False</em>, <em>save_to_file=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/animated_runner.html#AnimatedCrawlerRunner.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.animated_runner.AnimatedCrawlerRunner.run" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>same_initial_seed</strong> – use the same initial seed for all crawler instances (NOT IMPLEMENTED) FIXME</li>
-<li><strong>ylims</strong> – (low, up)</li>
-<li><strong>xlabel</strong> – by default ‘iteration, n’</li>
-<li><strong>ylabel</strong> – by default ‘metric value’</li>
-<li><strong>swap_coloring_scheme</strong> – by default metrics differ in linestyle, crawlers differ in color. Set True to swap</li>
-<li><strong>save_to_file</strong> – specify the full path here to save picture</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-running.visual_runner"></span><dl class="function">
-<dt id="running.visual_runner.create_gif">
-<code class="descclassname">running.visual_runner.</code><code class="descname">create_gif</code><span class="sig-paren">(</span><em>directory</em>, <em>duration=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/visual_runner.html#create_gif"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.visual_runner.create_gif" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create gif from all .png files in directory with fixed duration between images.</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="running.visual_runner.CrawlerVisualRunner">
-<em class="property">class </em><code class="descclassname">running.visual_runner.</code><code class="descname">CrawlerVisualRunner</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>crawler_def</em>, <em>metric_def</em>, <em>budget: int = 100</em>, <em>step: int = 1</em>, <em>steps_per_pic=1</em>, <em>layout_pos=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/visual_runner.html#CrawlerVisualRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.visual_runner.CrawlerVisualRunner" title="Permalink to this definition">¶</a></dt>
-<dd><p>Visualize the crawling process step by step on a small graph.
-Graph nodes and edges are plotted in colors corresponding to their state: crawled, observed,
-target, etc.
-Saves .png pictures to the disk.</p>
-<dl class="method">
-<dt id="running.visual_runner.CrawlerVisualRunner.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>crawler_def</em>, <em>metric_def</em>, <em>budget: int = 100</em>, <em>step: int = 1</em>, <em>steps_per_pic=1</em>, <em>layout_pos=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/visual_runner.html#CrawlerVisualRunner.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.visual_runner.CrawlerVisualRunner.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>graph</strong> – graph to run</li>
-<li><strong>crawler_def</strong> – crawler definitions to run. Crawler definition will be initialized when
-run() is called</li>
-<li><strong>metric_def</strong> – metric definition to compute at each step. Metric should be callable
-function crawler -&gt; float, and have name</li>
-<li><strong>budget</strong> – maximal number of nodes to be crawled, by default 100</li>
-<li><strong>step</strong> – compute metrics each <cite>step</cite> steps, by default 1</li>
-<li><strong>steps_per_pic</strong> – plot every this number of steps, by default 1</li>
-<li><strong>layout_pos</strong> – specific layout for networkx drawer</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="running.visual_runner.CrawlerVisualRunner.run">
-<code class="descname">run</code><span class="sig-paren">(</span><em>draw_orig=True</em>, <em>target_set=set()</em>, <em>labels=False</em>, <em>bold_edges=False</em>, <em>make_gif=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/visual_runner.html#CrawlerVisualRunner.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.visual_runner.CrawlerVisualRunner.run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run crawler and plot graph with nodes colored. All plots are saved in a series of png files.
-Coloring depends on node type: unobserved (gray), observed (yellow), current (red), crawled (blue).
-Target nodes are labeled by bigger orange circles.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>draw_orig</strong> – whether to draw original graph</li>
-<li><strong>target_set</strong> – these nodes will be highlighted (bigger)</li>
-<li><strong>labels</strong> – whether to draw node labels (ids)</li>
-<li><strong>bold_edges</strong> – if True draw observed edges in bold, unobserved edges dotted</li>
-<li><strong>make_gif</strong> – whether to create gif from a png series.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-running.history_runner"></span><dl class="class">
-<dt id="running.history_runner.CrawlerHistoryRunner">
-<em class="property">class </em><code class="descclassname">running.history_runner.</code><code class="descname">CrawlerHistoryRunner</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>crawler_defs</em>, <em>metric_defs</em>, <em>budget: int = -1</em>, <em>step: int = -1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner" title="Permalink to this definition">¶</a></dt>
+</section>
+<section id="module-crawlers.cadvanced">
+<span id="advanced"></span><h3>advanced<a class="headerlink" href="#module-crawlers.cadvanced" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="ml-crawlers">
+<h3>ml-crawlers<a class="headerlink" href="#ml-crawlers" title="Permalink to this headline">¶</a></h3>
+</section>
+</section>
+<section id="module-running.history_runner">
+<span id="runners"></span><h2>runners<a class="headerlink" href="#module-running.history_runner" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="running.history_runner.CrawlerHistoryRunner">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">running.history_runner.</span></span><span class="sig-name descname"><span class="pre">CrawlerHistoryRunner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omit_nones</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs several crawlers and measures several metrics for a given graph.
 Saves measurements history to the disk.
 Can run several instances of a crawler in parallel.
 Step sequence is exponentially growing independent of the graph.</p>
 <ul class="simple">
-<li>run - Run given crawlers and measure metrics. In the end, the measurements are saved to files.</li>
-<li>run_parallel - Run the configuration  using the specified number of processes.</li>
-<li>run_parallel_adaptive - Runs parallel computations adaptively. The configuration is split such
-that not to exceed specified memory limits.</li>
-<li>run_missing - Find missing configurations and run experiments adaptively. Convenient if some
-of previous experiments failed.</li>
+<li><p>run - Run given crawlers and measure metrics. In the end, the measurements are saved to files.</p></li>
 </ul>
 <ul class="simple">
-<li>step sequence when metrics are computed must be the same for all runs. Otherwise the results
-would not be merged correctly</li>
+<li><p>step sequence when metrics are computed must be the same for all runs. Otherwise the results
+would not be merged correctly</p></li>
 </ul>
-<dl class="method">
-<dt id="running.history_runner.CrawlerHistoryRunner.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph: base.cgraph.MyGraph</em>, <em>crawler_defs</em>, <em>metric_defs</em>, <em>budget: int = -1</em>, <em>step: int = -1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>graph</strong> – graph to run</li>
-<li><strong>crawler_defs</strong> – list of crawler definitions to run. Crawler definitions will be
-initialized when run() is called</li>
-<li><strong>metric_defs</strong> – list of metric definitions to compute at each step. Metric should be
-callable function crawler -&gt; float, and have name</li>
-<li><strong>budget</strong> – maximal number of nodes to be crawled, by default the whole graph</li>
-<li><strong>step</strong> – compute metrics each <cite>step</cite> steps, by default exponential step</li>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.history_runner.CrawlerHistoryRunner.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#base.cgraph.MyGraph" title="base.cgraph.MyGraph"><span class="pre">base.cgraph.MyGraph</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omit_nones</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> – graph to run</p></li>
+<li><p><strong>crawler_decls</strong> – list of crawler declarations to run. Crawler declarations will be
+initialized when run() is called</p></li>
+<li><p><strong>metric_decls</strong> – list of metric declarations to compute at each step. Metric should be
+callable function crawler -&gt; float, and have name</p></li>
+<li><p><strong>budget</strong> – maximal number of nodes to be crawled, by default the whole graph</p></li>
+<li><p><strong>step</strong> – compute metrics each <cite>step</cite> steps, by default exponential step</p></li>
+<li><p><strong>omit_nones</strong> – If False, metric values where all values are None will not be saved.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
+<p>By default save all metric values.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.history_runner.CrawlerHistoryRunner.run">
-<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner.run" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.history_runner.CrawlerHistoryRunner.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run crawlers and measure metrics. In the end, the measurements are saved.
 Note, this function can be called in parallel processes.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.history_runner.CrawlerHistoryRunner.run_parallel">
-<code class="descname">run_parallel</code><span class="sig-paren">(</span><em>num_processes=8</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner.run_parallel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner.run_parallel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run in parallel crawlers and measure metrics. In the end, the measurements are saved.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>num_processes</strong> – number of processes to run simultaneously</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.history_runner.CrawlerHistoryRunner.run_parallel_adaptive">
-<code class="descname">run_parallel_adaptive</code><span class="sig-paren">(</span><em>n_instances: int = 10</em>, <em>max_cpus: int = 8</em>, <em>max_memory: float = 4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner.run_parallel_adaptive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner.run_parallel_adaptive" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs in parallel crawlers and measure metrics. Number of processes is chosen adaptively.
-Using magic coefficients: Mbytes of memory = A*n + B*e + C,
-where A = 0.25, B = 0.01, C = 2.5,  n - thousands of nodes in graph, e - thousands of edges.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>n_instances</strong> – total wanted number of instances to be performed</li>
-<li><strong>max_cpus</strong> – max number of CPUs to use for computation, all available by default</li>
-<li><strong>max_memory</strong> – max Gbs of operative memory to use for computation, 6 Gb by default</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="running.history_runner.CrawlerHistoryRunner.run_missing">
-<code class="descname">run_missing</code><span class="sig-paren">(</span><em>n_instances=10</em>, <em>max_cpus: int = 8</em>, <em>max_memory: float = 6</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/history_runner.html#CrawlerHistoryRunner.run_missing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.history_runner.CrawlerHistoryRunner.run_missing" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs all missing experiments for the graph. All crawlers and metrics run simultaneously, the
-number of instances is maximal among missing ones.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>n_instances</strong> – minimal wanted number of instances</li>
-<li><strong>max_cpus</strong> – max number of CPUs to use for computation, all by default</li>
-<li><strong>max_memory</strong> – max Mbytes of operative memory to use for computation, 6Gb by default</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-running.merger"></span><dl class="class">
-<dt id="running.merger.ResultsMerger">
-<em class="property">class </em><code class="descclassname">running.merger.</code><code class="descname">ResultsMerger</code><span class="sig-paren">(</span><em>graph_names</em>, <em>crawler_defs</em>, <em>metric_defs</em>, <em>n_instances=1</em>, <em>x_lims=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger" title="Permalink to this definition">¶</a></dt>
+<span class="target" id="module-running.merger"></span><dl class="py class">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">running.merger.</span></span><span class="sig-name descname"><span class="pre">ResultsMerger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_full_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_instances</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_lims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('/home/misha/workspace/crawling-framework.github.io/results')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numeric_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger" title="Permalink to this definition">¶</a></dt>
 <dd><p>ResultsMerger can aggregate and plot results saved in files.
 Process all combinations of G graphs x C crawlers x M metrics. Averages over n instances of each.
 All missed instances are just ignored.</p>
 <p>Plotting functions:</p>
 <ul class="simple">
-<li>draw_by_crawler - Draw M x G table of plots with C lines each. Ox - crawling step, Oy - metric value.</li>
-<li>draw_by_metric_crawler - Draw G plots with C x M lines each. Ox - crawling step, Oy - metric value.</li>
-<li>draw_by_metric - Draw C x G table of plots with M lines each. Ox - crawling step, Oy - metric value.</li>
-<li>draw_aucc - Draw G plots with M lines. Ox - C crawlers, Oy - (w)AUCC value (M curves with error bars).</li>
-<li>draw_winners - Draw C stacked bars (each of M elements). Ox - C crawlers, Oy - number of wins (among G) by (w)AUCC
-value.</li>
+<li><p>draw_by_crawler - Draw M x G table of plots with C lines each. Ox - crawling step, Oy - metric value.</p></li>
+<li><p>draw_by_metric_crawler - Draw G plots with C x M lines each. Ox - crawling step, Oy - metric value.</p></li>
+<li><p>draw_by_metric - Draw C x G table of plots with M lines each. Ox - crawling step, Oy - metric value.</p></li>
+<li><p>draw_aggregated - Draw G plots with M lines. Ox - C crawlers, Oy - (w)AUCC value (M curves with error bars).</p></li>
+<li><p>draw_winners - Draw C stacked bars (each of M elements). Ox - C crawlers, Oy - number of wins (among G) by (w)AUCC
+value.</p></li>
 </ul>
 <p>Additional functions:</p>
 <ul class="simple">
-<li>missing_instances - Calculate how many instances of all configurations are missing.</li>
-<li>remove_files - Remove all saved instances for current graphs, crawlers, metrics.</li>
-<li>print_results_as_table - Remove all saved instances for current graphs, crawlers, metrics.</li>
+<li><p>missing_instances - Calculate how many instances of all configurations are missing.</p></li>
+<li><p>move_folders - Move/remove/copy saved instances for current graphs, crawlers, metrics.</p></li>
 </ul>
 <p>NOTES:</p>
 <ul class="simple">
-<li>x values must be the same for all files and are the ones generated by <cite>exponential_batch_generator()</cite> from
-running/metrics_and_runner.py</li>
-<li>it is supposed that for all instances values lists are of equal lengthes (i.e. budgets). Otherwise normalisation
-and aggregation may fail. If so, use <cite>x_lims</cite> parameter for the control.</li>
+<li><p>x values must be the same for all files and are the ones generated by <cite>exponential_batch_generator()</cite> from
+running/runner.py</p></li>
+<li><p>it is supposed that for all instances values lists are of equal lengthes (i.e. budgets). Otherwise normalisation
+and aggregation may fail. If so, use <cite>x_lims</cite> parameter for the control.</p></li>
 </ul>
-<dl class="method">
-<dt id="running.merger.ResultsMerger.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>graph_names</em>, <em>crawler_defs</em>, <em>metric_defs</em>, <em>n_instances=1</em>, <em>x_lims=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>graph_names</strong> – list of graphs names</li>
-<li><strong>crawler_defs</strong> – list of crawlers definitions</li>
-<li><strong>metric_defs</strong> – list of metrics definitions</li>
-<li><strong>n_instances</strong> – number of instances to average over</li>
-<li><strong>x_lims</strong> – use only specified x-limits for all plots unless another value is specified in plotting function</li>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_full_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_decls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_instances</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_lims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('/home/misha/workspace/crawling-framework.github.io/results')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numeric_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_full_names</strong> – list of graphs full names.</p></li>
+<li><p><strong>crawler_decls</strong> – list of crawlers declarations.</p></li>
+<li><p><strong>metric_decls</strong> – list of metrics declarations. Non-numeric metrics will be ignored.</p></li>
+<li><p><strong>budget</strong> – results with this budget will be taken.</p></li>
+<li><p><strong>n_instances</strong> – number of instances to average over, None for all.</p></li>
+<li><p><strong>x_lims</strong> – use only specified x-limits for all plots unless another value is specified
+in plotting function.</p></li>
+<li><p><strong>result_dir</strong> – specify if want to use non-default directory where results are stored.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="staticmethod">
-<dt id="running.merger.ResultsMerger.names_to_path">
-<em class="property">static </em><code class="descname">names_to_path</code><span class="sig-paren">(</span><em>graph_name: str</em>, <em>crawler_name: str</em>, <em>metric_name: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.names_to_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.names_to_path" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.names_to_path">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">names_to_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_full_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.10)"><span class="pre">tuple</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">crawler_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('/home/misha/workspace/crawling-framework.github.io/results')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.names_to_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.names_to_path" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns file pattern e.g.
 ‘/home/misha/workspace/crawling/results/ego-gplus/POD(batch=1)/TopK(centrality=BtwDistr,measure=Re,part=crawled,top=0.01)/*.json’</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.merger.ResultsMerger.remove_files">
-<code class="descname">remove_files</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.remove_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.remove_files" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove all saved instances for current graphs X crawlers X metrics.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.move_folders">
+<span class="sig-name descname"><span class="pre">move_folders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.move_folders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.move_folders" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move/remove/copy all saved instances for current [graphs X crawlers X metrics].
+Specify <cite>path_to</cite> parameter to move files instead of removing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_from</strong> – this folder is root for all folders to be (re)moved,
+must be contained in path to folders</p></li>
+<li><p><strong>path_to</strong> – this folder is the destination for all folders to be moved.
+If None (which is default), all folders will be removed.</p></li>
+<li><p><strong>copy</strong> – set to True if want to copy folders</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.merger.ResultsMerger.missing_instances">
-<code class="descname">missing_instances</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; dict<a class="reference internal" href="_modules/running/merger.html#ResultsMerger.missing_instances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.missing_instances" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.missing_instances">
+<span class="sig-name descname"><span class="pre">missing_instances</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.missing_instances"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.missing_instances" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return dict of instances where computed &lt; n_instances.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">result[graph][crawler][metric] -&gt; missing count</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>result[graph][crawler][metric] -&gt; missing count</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.merger.ResultsMerger.draw_by_crawler">
-<code class="descname">draw_by_crawler</code><span class="sig-paren">(</span><em>x_lims=None</em>, <em>x_normalize=True</em>, <em>draw_error=True</em>, <em>scale=3</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_by_crawler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_by_crawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.draw_by_crawler">
+<span class="sig-name descname"><span class="pre">draw_by_crawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_lims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sharey</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_each_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'By</span> <span class="pre">crawler'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_by_crawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_by_crawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw M x G table of plots with C lines each, where
 M - num of metrics, G - num of graphs, C - num of crawlers.
 Ox - crawling step, Oy - metric value.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>x_lims</strong> – x-limits for plots. Overrides x_lims passed in constructor</li>
-<li><strong>x_normalize</strong> – if True, x values are normalized to be from 0 to 1</li>
-<li><strong>draw_error</strong> – if True, fill standard deviation area around the averaged crawling curve</li>
-<li><strong>scale</strong> – size of plots (default 3)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_lims</strong> – x-limits for plots. Overrides x_lims passed in constructor</p></li>
+<li><p><strong>x_normalize</strong> – if True, x values are normalized to be from 0 to 1</p></li>
+<li><p><strong>draw_error</strong> – if True, fill standard deviation area around the averaged crawling curve</p></li>
+<li><p><strong>draw_each_instance</strong> – if True, show each instance</p></li>
+<li><p><strong>scale</strong> – size of plots (default 3)</p></li>
+<li><p><strong>title</strong> – figure title</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.merger.ResultsMerger.draw_by_metric">
-<code class="descname">draw_by_metric</code><span class="sig-paren">(</span><em>x_lims=None</em>, <em>x_normalize=True</em>, <em>draw_error=True</em>, <em>scale=3</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_by_metric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_by_metric" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.draw_by_metric">
+<span class="sig-name descname"><span class="pre">draw_by_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_lims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sharey</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'By</span> <span class="pre">metric'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_by_metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_by_metric" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw C x G table of plots with M lines each, where
 M - num of metrics, G - num of graphs, C - num of crawlers
 Ox - crawling step, Oy - metric value.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.merger.ResultsMerger.draw_by_metric_crawler">
-<code class="descname">draw_by_metric_crawler</code><span class="sig-paren">(</span><em>x_lims=None</em>, <em>x_normalize=True</em>, <em>swap_coloring_scheme=False</em>, <em>draw_error=True</em>, <em>scale=3</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_by_metric_crawler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_by_metric_crawler" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.draw_by_metric_crawler">
+<span class="sig-name descname"><span class="pre">draw_by_metric_crawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_lims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sharey</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">swap_coloring_scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'By</span> <span class="pre">metric</span> <span class="pre">and</span> <span class="pre">crawler'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_by_metric_crawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_by_metric_crawler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw G plots with CxM lines each, where
 M - num of metrics, G - num of graphs, C - num of crawlers.
 Ox - crawling step, Oy - metric value.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>x_lims</strong> – x-limits for plots. Overrides x_lims passed in constructor</li>
-<li><strong>x_normalize</strong> – if True, x values are normalized to be from 0 to 1</li>
-<li><strong>swap_coloring_scheme</strong> – by default metrics differ in linestyle, crawlers differ in color. Set True to swap</li>
-<li><strong>draw_error</strong> – if True, fill standard deviation area around the averaged crawling curve</li>
-<li><strong>scale</strong> – size of plots (default 3)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_lims</strong> – x-limits for plots. Overrides x_lims passed in constructor</p></li>
+<li><p><strong>x_normalize</strong> – if True, x values are normalized to be from 0 to 1</p></li>
+<li><p><strong>sharey</strong> – if True, share properties among or y axes</p></li>
+<li><p><strong>swap_coloring_scheme</strong> – by default metrics differ in linestyle, crawlers differ in color. Set True to swap</p></li>
+<li><p><strong>draw_error</strong> – if True, fill standard deviation area around the averaged crawling curve</p></li>
+<li><p><strong>scale</strong> – size of plots (default 3)</p></li>
+<li><p><strong>title</strong> – figure title</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.merger.ResultsMerger.draw_aucc">
-<code class="descname">draw_aucc</code><span class="sig-paren">(</span><em>aggregator='AUCC'</em>, <em>x_lims=None</em>, <em>scale=3</em>, <em>xticks_rotation=90</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_aucc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_aucc" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.get_aggregated">
+<span class="sig-name descname"><span class="pre">get_aggregated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aggregator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AUCC'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_lims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">median</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.get_aggregated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.get_aggregated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get results according to an aggregatro (AUCC, wAUCC, TC)
+:param x_lims: x-limits passed to aggregator. Overrides x_lims passed in constructor
+:param median: if True, compute median instead of mean
+:param print_results: if True, print results
+:return: list of results as tuple (num_instances, Graph, Crawler, Metric, mean, error)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.draw_aggregated">
+<span class="sig-name descname"><span class="pre">draw_aggregated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aggregator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AUCC'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_lims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sharey</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxplot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xticks_rotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_aggregated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_aggregated" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw G plots with M lines. Ox - C crawlers, Oy - AUCC value (M curves with error bars).
 M - num of metrics, G - num of graphs, C - num of crawlers</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>aggregator</strong> – function translating crawling curve into 1 number. AUCC (default) or wAUCC</li>
-<li><strong>x_lims</strong> – x-limits passed to aggregator. Overrides x_lims passed in constructor</li>
-<li><strong>scale</strong> – size of plots (default 3)</li>
-<li><strong>xticks_rotation</strong> – rotate x-ticks (default 90 degrees)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aggregator</strong> – function translating crawling curve into 1 number. AUCC (default) or wAUCC</p></li>
+<li><p><strong>x_lims</strong> – x-limits passed to aggregator. Overrides x_lims passed in constructor</p></li>
+<li><p><strong>scale</strong> – size of plots (default 3)</p></li>
+<li><p><strong>sharey</strong> – if True, share properties among or y axes</p></li>
+<li><p><strong>xticks_rotation</strong> – rotate x-ticks (default 90 degrees)</p></li>
+<li><p><strong>title</strong> – figure title</p></li>
+<li><p><strong>draw_count</strong> – if True, prepend number of instances to label</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.merger.ResultsMerger.draw_winners">
-<code class="descname">draw_winners</code><span class="sig-paren">(</span><em>aggregator='AUCC'</em>, <em>x_lims=None</em>, <em>scale=8</em>, <em>xticks_rotation=90</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_winners"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_winners" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.draw_winners">
+<span class="sig-name descname"><span class="pre">draw_winners</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aggregator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'AUCC'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_lims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xticks_rotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.draw_winners"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.draw_winners" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw C stacked bars (each of M elements). Ox - C crawlers, Oy - number of wins (among G) by (w)AUCC value.
 Miss graphs where not all configurations are present.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>aggregator</strong> – function translating crawling curve into 1 number. AUCC (default) or wAUCC</li>
-<li><strong>x_lims</strong> – x-limits passed to aggregator. Overrides x_lims passed in constructor</li>
-<li><strong>scale</strong> – size of plots (default 8)</li>
-<li><strong>xticks_rotation</strong> – rotate x-ticks (default 90 degrees)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aggregator</strong> – function translating crawling curve into 1 number. AUCC (default) or wAUCC</p></li>
+<li><p><strong>x_lims</strong> – x-limits passed to aggregator. Overrides x_lims passed in constructor</p></li>
+<li><p><strong>scale</strong> – size of plots (default 8)</p></li>
+<li><p><strong>xticks_rotation</strong> – rotate x-ticks (default 90 degrees)</p></li>
+<li><p><strong>title</strong> – figure title</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="running.merger.ResultsMerger.show_plots">
-<code class="descname">show_plots</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.show_plots"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#running.merger.ResultsMerger.show_plots" title="Permalink to this definition">¶</a></dt>
-<dd><p>Show drawed matplotlib plots</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.show_plots">
+<span class="sig-name descname"><span class="pre">show_plots</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.show_plots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.show_plots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show drawn matplotlib plots</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.next_file">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">next_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.10)"><span class="pre">pathlib.Path</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.next_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.next_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a path with a smallest number not present in the folder.
+E.g. if folder has 0.json and 2.json, it returns path for 1.json</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="running.merger.ResultsMerger.merge_folders">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">merge_folders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_earlier_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_later_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_identical</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">copy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/running/merger.html#ResultsMerger.merge_folders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#running.merger.ResultsMerger.merge_folders" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge all results into 1 folder: path[1], path[2], etc into path[0].
+Name collisions resolved via assigning new smallest numbers, e.g. when 0.json is added to a
+folder with 0.json and 2.json, it becomes 1.json.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p><a href="#id3"><span class="problematic" id="id4">*</span></a>path: list of paths each of those is analog to original results/ in terms of structure.
+not_earlier_than: look for files with modify datetime not earlier than specified.
+not_later_than: look for files with modify datetime not later than specified.
+check_identical: before renaming check whether equally named files are identical.
+copy: if True, copy all moved elements.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
-</div>
-<div class="section" id="demo">
+</section>
+<section id="demo">
 <h2>demo<a class="headerlink" href="#demo" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-demo.demo"><span id="demo-lbl"></span></span><dl class="function">
-<dt id="demo.demo.graph_handing">
-<code class="descclassname">demo.demo.</code><code class="descname">graph_handing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/demo/demo.html#graph_handing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#demo.demo.graph_handing" title="Permalink to this definition">¶</a></dt>
-<dd><ol class="arabic simple">
-<li>Automatic graph downloading</li>
-</ol>
-</dd></dl>
-
-<dl class="function">
-<dt id="demo.demo.stats_computing">
-<code class="descclassname">demo.demo.</code><code class="descname">stats_computing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/demo/demo.html#stats_computing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#demo.demo.stats_computing" title="Permalink to this definition">¶</a></dt>
-<dd><ol class="arabic simple" start="2">
-<li>Statistics computation</li>
-</ol>
-</dd></dl>
-
-<dl class="function">
-<dt id="demo.demo.visualize_crawling">
-<code class="descclassname">demo.demo.</code><code class="descname">visualize_crawling</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/demo/demo.html#visualize_crawling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#demo.demo.visualize_crawling" title="Permalink to this definition">¶</a></dt>
-<dd><ol class="arabic simple" start="3">
-<li>Visualize crawler</li>
-</ol>
-</dd></dl>
-
-<dl class="function">
-<dt id="demo.demo.animated_crawler_runner">
-<code class="descclassname">demo.demo.</code><code class="descname">animated_crawler_runner</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/demo/demo.html#animated_crawler_runner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#demo.demo.animated_crawler_runner" title="Permalink to this definition">¶</a></dt>
-<dd><ol class="arabic simple" start="4">
-<li>Animated crawler runner</li>
-</ol>
-</dd></dl>
-
-<dl class="function">
-<dt id="demo.demo.parallel_crawler_runner">
-<code class="descclassname">demo.demo.</code><code class="descname">parallel_crawler_runner</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/demo/demo.html#parallel_crawler_runner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#demo.demo.parallel_crawler_runner" title="Permalink to this definition">¶</a></dt>
-<dd><ol class="arabic simple" start="5">
-<li>Run series of experiments in parallel. For every crawling method calculates every metric.</li>
-</ol>
-</dd></dl>
-
-<dl class="function">
-<dt id="demo.demo.run_missing">
-<code class="descclassname">demo.demo.</code><code class="descname">run_missing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/demo/demo.html#run_missing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#demo.demo.run_missing" title="Permalink to this definition">¶</a></dt>
-<dd><ol class="arabic simple" start="6">
-<li>Run missing configurations</li>
-</ol>
-</dd></dl>
-
-<dl class="function">
-<dt id="demo.demo.merge_and_visualize">
-<code class="descclassname">demo.demo.</code><code class="descname">merge_and_visualize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/demo/demo.html#merge_and_visualize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#demo.demo.merge_and_visualize" title="Permalink to this definition">¶</a></dt>
-<dd><ol class="arabic simple" start="7">
-<li>Merge and visualize results of a series of experiments</li>
-</ol>
-</dd></dl>
-
-<div class="section" id="advanced-usage">
-<h3>advanced usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h3>
+<section id="advanced-usage">
+<span id="demo-lbl"></span><h3>advanced usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h3>
 <p>For a more advanced usage see examples in the code.</p>
 <p>To create a <strong>custom crawler</strong> you should extend the root class Crawler from <em>base.crawlers.cbasic.py</em>. See examples in <em>base.crawlers.advanced.py</em>. For more complex algorithms using machine learning see <em>base.crawlers.ml</em>. To make it faster you could also implement your crawler in cython, see examples in <em>base.crawlers.advanced.pyx</em>.</p>
 <p>To create a <strong>custom metric</strong> take a look at <em>running.metrics_and_runner.py</em>. You should extend the root class Metric for that.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <p class="caption"><span class="caption-text">Contents:</span></p>
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="project.html">Project description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="readme.html">Installation guide</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Code Documentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-base.cgraph">basics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-crawlers.cbasic">crawlers</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-crawlers.cbasic">classic</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-crawlers.advanced">advanced</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-crawlers.ml.with_features">ml-crawlers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-0">classic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-crawlers.cadvanced">advanced</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ml-crawlers">ml-crawlers</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-running.metrics_and_runner">runners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-running.history_runner">runners</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#demo">demo</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#advanced-usage">advanced usage</a></li>
 </ul>
@@ -1415,16 +1040,17 @@ Miss graphs where not all configurations are present.</p>
 </li>
 </ul>
 
+  </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -1433,8 +1059,8 @@ Miss graphs where not all configurations are present.</p>
       &copy;2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/code.rst.txt"

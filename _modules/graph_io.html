@@ -1,45 +1,38 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>graph_io &#8212; CrawlingFramework 1.0.0 documentation</title>
-    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../',
-        VERSION:     '1.0.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
+  
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <h1>Source code for graph_io</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">os.path</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
@@ -50,9 +43,14 @@
 <span class="kn">import</span> <span class="nn">patoolib</span>
 <span class="kn">from</span> <span class="nn">base.cgraph</span> <span class="kn">import</span> <span class="n">MyGraph</span>
 
-<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="n">TMP_GRAPHS_DIR</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">GRAPHS_DIR</span>
 
-<span class="n">netrepo_metadata_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="s1">&#39;netrepo&#39;</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">)</span>
+<span class="n">FORMAT</span> <span class="o">=</span> <span class="s1">&#39;ij&#39;</span>
+<span class="n">TMP_GRAPHS_DIR</span> <span class="o">=</span> <span class="n">GRAPHS_DIR</span> <span class="o">/</span> <span class="s1">&#39;tmp&#39;</span>
+<span class="n">netrepo_metadata_path</span> <span class="o">=</span> <span class="n">GRAPHS_DIR</span> <span class="o">/</span> <span class="s1">&#39;netrepo&#39;</span> <span class="o">/</span> <span class="s1">&#39;metadata&#39;</span>
+
+<span class="c1"># Graphs used in current session. Need this to avoid loading the same object several times.</span>
+<span class="n">current_graphs</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># full_name -&gt; MyGraph</span>
 
 
 <span class="k">def</span> <span class="nf">parse_netrepo_page</span><span class="p">():</span>
@@ -86,7 +84,7 @@
 <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">):</span> <span class="n">parse_netrepo_page</span><span class="p">()</span>
 
 
-<span class="n">netrepo_name_ref_dict</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="c1"># netrepo_name_ref_dict = eval(open(netrepo_metadata_path, &#39;r&#39;).read())</span>
 
 
 <span class="k">def</span> <span class="nf">reformat_graph_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">out_path</span><span class="p">,</span> <span class="n">ignore_lines_starting_with</span><span class="o">=</span><span class="s1">&#39;#%&#39;</span><span class="p">,</span>
@@ -95,7 +93,6 @@
 
 <span class="sd">    :param path:</span>
 <span class="sd">    :param out_path:</span>
-<span class="sd">    :param out_format: &#39;ij&#39;</span>
 <span class="sd">    :param ignore_lines_starting_with: lines starting with these symbols will be ignored</span>
 <span class="sd">    :param remove_original: if True, original file will be removed</span>
 <span class="sd">    :param self_loops: if True, self loops will be removed</span>
@@ -103,7 +100,7 @@
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">in_format</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">out_format</span> <span class="o">=</span> <span class="s1">&#39;ij&#39;</span>
+    <span class="n">out_format</span> <span class="o">=</span> <span class="n">FORMAT</span>
     <span class="n">renums</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">separators</span> <span class="o">=</span> <span class="s1">&#39; |</span><span class="se">\t</span><span class="s1">|,&#39;</span>
 
@@ -146,25 +143,29 @@
 <div class="viewcode-block" id="GraphCollections"><a class="viewcode-back" href="../code.html#graph_io.GraphCollections">[docs]</a><span class="k">class</span> <span class="nc">GraphCollections</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Manager of graph data.</span>
-<span class="sd">    By calling method `get(name, collection)`, it loads graph from file if any or downloads a graph from online</span>
-<span class="sd">    collection.</span>
+<span class="sd">    By calling method `get(graph_full_name)`, it loads graph from file if any or downloads a graph</span>
+<span class="sd">    from online graph collection.</span>
+<span class="sd">    `graph_full_name` is string or tuple ([collection], [subcollection], ... , name) containing at</span>
+<span class="sd">    least one element, the last one is treated as graph name.</span>
+<span class="sd">    Corresponding graph file is stored at `collection/subcollection/../name.format` file.</span>
+
 <span class="sd">    `networkrepository &lt;http://networkrepository.com/&gt;`_ collection is available.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">    &gt;&gt;&gt; graph = GraphCollections.get(name=&#39;dolphins&#39;, collection=&#39;netrepo&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; graph = GraphCollections.get(&#39;konect&#39;, &#39;dolphins&#39;)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">networkrepository_url_pattern</span> <span class="o">=</span> <span class="s1">&#39;http://nrvis.com/download/data/</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">.zip&#39;</span>
 
 <div class="viewcode-block" id="GraphCollections.get"><a class="viewcode-back" href="../code.html#graph_io.GraphCollections.get">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="o">*</span><span class="n">full_name</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MyGraph</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Read graph from storage or download it from the specified collection. In order to apply</span>
 <span class="sd">        giant_only and self_loops, you need to remove the file manually. #TODO maybe make a rewrite?</span>
 
-<span class="sd">        :param name: any of e.g. &#39;CL&#39; or &#39;Actor collaborations&#39; or &#39;actor-collaborations&#39;</span>
-<span class="sd">        :param collection: &#39;netrepo&#39;, &#39;other&#39;, or any other subfolder in data/. If not</span>
-<span class="sd">         specified, it searches by name in &#39;neterepo&#39;, then &#39;other&#39;.</span>
+<span class="sd">        :param full_name: string or sequence [collection], [subcollection], ... , name containing at</span>
+<span class="sd">         least one element, the last one is treated as graph name. In case of konect collection, graph</span>
+<span class="sd">         name could be any of e.g. &#39;CL&#39; or &#39;Actor collaborations&#39; or &#39;actor-collaborations&#39;.</span>
 <span class="sd">        :param directed: undirected by default</span>
 <span class="sd">        :param giant_only: giant component instead of full graph. Component extraction is applied</span>
 <span class="sd">         only once when the graph is downloaded.</span>
@@ -174,22 +175,21 @@
 <span class="sd">         modification will lead to segfault</span>
 <span class="sd">        :return: MyGraph object</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">format</span> <span class="o">=</span> <span class="s1">&#39;ij&#39;</span>
-        <span class="k">if</span> <span class="n">collection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># Resolve name: search in neterpo, if no set collection to other</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">netrepo_name_ref_dict</span><span class="p">:</span>
-                <span class="n">collection</span> <span class="o">=</span> <span class="s1">&#39;netrepo&#39;</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">collection</span> <span class="o">=</span> <span class="s1">&#39;other&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">full_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">full_name</span> <span class="o">=</span> <span class="p">(</span><span class="n">full_name</span><span class="p">,)</span>  <span class="c1"># root data directory</span>
 
-        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="n">collection</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">format</span><span class="p">))</span>
+        <span class="c1"># Check if graph was already loaded</span>
+        <span class="k">if</span> <span class="n">full_name</span> <span class="ow">in</span> <span class="n">current_graphs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">current_graphs</span><span class="p">[</span><span class="n">full_name</span><span class="p">]</span>
 
-        <span class="c1"># Download graph if absent</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">_full_name_to_path</span><span class="p">(</span><span class="o">*</span><span class="n">full_name</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
-            <span class="n">temp_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="n">collection</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">.tmp&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+            <span class="c1"># Download graph if absent</span>
+            <span class="n">temp_path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="s1">&#39;_tmp&#39;</span>
 
-            <span class="k">if</span> <span class="n">collection</span> <span class="o">==</span> <span class="s1">&#39;netrepo&#39;</span><span class="p">:</span>
-                <span class="n">GraphCollections</span><span class="o">.</span><span class="n">_download_netrepo</span><span class="p">(</span><span class="n">temp_path</span><span class="p">,</span> <span class="n">netrepo_name_ref_dict</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">full_name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">full_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;netrepo&#39;</span><span class="p">:</span>
+                <span class="n">GraphCollections</span><span class="o">.</span><span class="n">_download_netrepo</span><span class="p">(</span><span class="n">temp_path</span><span class="p">,</span> <span class="n">netrepo_name_ref_dict</span><span class="p">[</span><span class="n">full_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;File &#39;</span><span class="si">%s</span><span class="s2">&#39; not found. Check graph name, collection or file existence.&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">)</span>
@@ -199,11 +199,54 @@
             <span class="k">if</span> <span class="n">giant_only</span><span class="p">:</span>
                 <span class="c1"># Replace graph by its giant component</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Extracting giant component ...&quot;</span><span class="p">)</span>
-                <span class="k">assert</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;ij&#39;</span>
-                <span class="n">MyGraph</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">directed</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">)</span><span class="o">.</span><span class="n">giant_component</span><span class="p">()</span>
+                <span class="n">MyGraph</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">full_name</span><span class="p">,</span> <span class="n">directed</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">FORMAT</span><span class="p">)</span><span class="o">.</span><span class="n">giant_component</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;done.&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">MyGraph</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">directed</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="n">not_load</span><span class="p">)</span></div>
+        <span class="n">my_graph</span> <span class="o">=</span> <span class="n">MyGraph</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">full_name</span><span class="p">,</span> <span class="n">directed</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">FORMAT</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="n">not_load</span><span class="p">)</span>
+        <span class="n">current_graphs</span><span class="p">[</span><span class="n">full_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">my_graph</span>
+        <span class="k">return</span> <span class="n">my_graph</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_full_name_to_path</span><span class="p">(</span><span class="o">*</span><span class="n">full_name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Convert MyGraph full_name into path it should be stored at&quot;&quot;&quot;</span>
+        <span class="nb">format</span> <span class="o">=</span> <span class="n">FORMAT</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="p">,</span> <span class="o">*</span><span class="n">full_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">full_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="nb">format</span><span class="p">))</span>
+
+<div class="viewcode-block" id="GraphCollections.get_by_path"><a class="viewcode-back" href="../code.html#graph_io.GraphCollections.get_by_path">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MyGraph</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Create and load graph from specified file path.</span>
+<span class="sd">        If the path is &lt;GRAPHS_DIR&gt;/a/b/name.ij the full_name will be (&#39;a&#39;, &#39;b&#39;, &#39;name&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">GRAPHS_DIR</span>
+        <span class="k">assert</span> <span class="nb">str</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="p">)</span> <span class="ow">in</span> <span class="n">path</span><span class="p">,</span> <span class="s2">&quot;Please, put your graph file to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">GRAPHS_DIR</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">GRAPHS_DIR</span><span class="o">.</span><span class="n">parts</span><span class="p">):]</span>
+        <span class="n">last_dot</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="n">last_dot</span><span class="p">]</span> <span class="k">if</span> <span class="n">last_dot</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">full_name</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">parts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="p">(</span><span class="n">last</span><span class="p">,)</span>
+
+        <span class="n">my_graph</span> <span class="o">=</span> <span class="n">MyGraph</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">full_name</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="n">not_load</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">store</span><span class="p">:</span>
+            <span class="n">current_graphs</span><span class="p">[</span><span class="n">full_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">my_graph</span>
+        <span class="k">return</span> <span class="n">my_graph</span></div>
+
+<div class="viewcode-block" id="GraphCollections.register_new_graph"><a class="viewcode-back" href="../code.html#graph_io.GraphCollections.register_new_graph">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">register_new_graph</span><span class="p">(</span><span class="o">*</span><span class="n">full_name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MyGraph</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Create a new MyGraph object, define its path corresponding to the specified full_name.</span>
+
+<span class="sd">        NOTE: by default the graph is not loaded, call load() if want to use this object.</span>
+
+<span class="sd">        :param full_name: string or sequence [collection], [subcollection], ... , name containing</span>
+<span class="sd">         at least one element, the last one is treated as graph name.</span>
+<span class="sd">        :return: new MyGraph</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">full_name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># tmp graph, not gonna save</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">TMP_GRAPHS_DIR</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="p">())</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">FORMAT</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get_by_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">_full_name_to_path</span><span class="p">(</span><span class="o">*</span><span class="n">full_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s2">&quot;Path corresponding to specified graph full_name </span><span class="si">%s</span><span class="s2"> is not free: look at &quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MyGraph</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">full_name</span><span class="o">=</span><span class="n">full_name</span><span class="p">,</span> <span class="n">not_load</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_download_netrepo</span><span class="p">(</span><span class="n">graph_path</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
@@ -266,15 +309,23 @@
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">graph_dir</span><span class="p">,</span> <span class="n">archive_dir_name</span><span class="p">))</span></div>
 
 
+<span class="k">def</span> <span class="nf">test_netrepo</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;soc-wiki-Vote&#39;</span><span class="p">,</span> <span class="s1">&#39;socfb-Bingham82&#39;</span><span class="p">]:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;netrepo&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;netrepo&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;netrepo&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;N=</span><span class="si">%s</span><span class="s2"> E=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()))</span>
+
+
 <div class="viewcode-block" id="temp_dir"><a class="viewcode-back" href="../code.html#graph_io.temp_dir">[docs]</a><span class="k">class</span> <span class="nc">temp_dir</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates a temporary directory to store some files, which will be removed by exit.</span>
 <span class="sd">    Current working directory is also changed to this directory.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="temp_dir.__init__"><a class="viewcode-back" href="../code.html#graph_io.temp_dir.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">TMP_GRAPHS_DIR</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="p">()))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span><span class="p">):</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span><span class="p">)</span>
@@ -282,12 +333,6 @@
 
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir_name</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">test_netrepo</span><span class="p">():</span>
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;soc-wiki-Vote&#39;</span><span class="p">,</span> <span class="s1">&#39;socfb-Bingham82&#39;</span><span class="p">]:</span>
-        <span class="n">g</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;netrepo&#39;</span><span class="p">,</span> <span class="n">directed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">giant_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;N=</span><span class="si">%s</span><span class="s2"> E=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">(),</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">()))</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
@@ -299,28 +344,31 @@
 </pre></div>
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table Of Contents</a></h3>
-  <p class="caption"><span class="caption-text">Contents:</span></p>
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../project.html">Project description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../readme.html">Installation guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../code.html">Code Documentation</a></li>
 </ul>
 
+  </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -329,8 +377,8 @@
       &copy;2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

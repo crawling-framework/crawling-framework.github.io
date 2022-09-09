@@ -1,41 +1,33 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>running.merger &#8212; CrawlingFramework 1.0.0 documentation</title>
-    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../',
-        VERSION:     '1.0.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
   <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
   
+  
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <h1>Source code for running.merger</h1><div class="highlight"><pre>
@@ -43,19 +35,19 @@
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">from</span> <span class="nn">bisect</span> <span class="kn">import</span> <span class="n">bisect_left</span><span class="p">,</span> <span class="n">bisect_right</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">ceil</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span> <span class="nn">running.metrics_and_runner</span> <span class="kn">import</span> <span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="n">Metric</span><span class="p">,</span> <span class="n">exponential_batch_generator</span>
-<span class="kn">from</span> <span class="nn">graph_io</span> <span class="kn">import</span> <span class="n">GraphCollections</span>
-<span class="kn">from</span> <span class="nn">graph_stats</span> <span class="kn">import</span> <span class="n">Stat</span>
-
-<span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="kn">import</span> <span class="n">Crawler</span><span class="p">,</span> <span class="n">definition_to_filename</span><span class="p">,</span> <span class="n">filename_to_definition</span>
+<span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="kn">import</span> <span class="n">Crawler</span>
+<span class="kn">from</span> <span class="nn">crawlers.declarable</span> <span class="kn">import</span> <span class="n">declaration_to_filename</span>
+<span class="kn">from</span> <span class="nn">running.metrics</span> <span class="kn">import</span> <span class="n">Metric</span>
 <span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">RESULT_DIR</span>
 
 
@@ -82,9 +74,21 @@
     <span class="k">return</span> <span class="n">res</span> <span class="o">/</span> <span class="n">norm</span>
 
 
-<span class="c1"># A graph needed just to generate pretty short crawlers and metrics names for ResultsMerger.</span>
-<span class="n">example_graph</span> <span class="o">=</span> <span class="n">GraphCollections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;example&#39;</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="s1">&#39;other&#39;</span><span class="p">)</span>  <span class="c1"># petster-hamster with 2000 nodes</span>
-<span class="c1"># FIXME will fail for MultiCrawler with count &gt; g.nodes()</span>
+<span class="k">def</span> <span class="nf">compute_targets_crawled</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">ys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">average</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">median</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span> <span class="k">if</span> <span class="n">median</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)(</span><span class="n">array</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <span class="n">LINESTYLES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;-.&#39;</span><span class="p">]</span>
@@ -104,84 +108,115 @@
 <span class="sd">    * draw_by_crawler - Draw M x G table of plots with C lines each. Ox - crawling step, Oy - metric value.</span>
 <span class="sd">    * draw_by_metric_crawler - Draw G plots with C x M lines each. Ox - crawling step, Oy - metric value.</span>
 <span class="sd">    * draw_by_metric - Draw C x G table of plots with M lines each. Ox - crawling step, Oy - metric value.</span>
-<span class="sd">    * draw_aucc - Draw G plots with M lines. Ox - C crawlers, Oy - (w)AUCC value (M curves with error bars).</span>
+<span class="sd">    * draw_aggregated - Draw G plots with M lines. Ox - C crawlers, Oy - (w)AUCC value (M curves with error bars).</span>
 <span class="sd">    * draw_winners - Draw C stacked bars (each of M elements). Ox - C crawlers, Oy - number of wins (among G) by (w)AUCC</span>
 <span class="sd">      value.</span>
 
 <span class="sd">    Additional functions:</span>
 
 <span class="sd">    * missing_instances - Calculate how many instances of all configurations are missing.</span>
-<span class="sd">    * remove_files - Remove all saved instances for current graphs, crawlers, metrics.</span>
-<span class="sd">    * print_results_as_table - Remove all saved instances for current graphs, crawlers, metrics.</span>
+<span class="sd">    * move_folders - Move/remove/copy saved instances for current graphs, crawlers, metrics.</span>
 
 <span class="sd">    NOTES:</span>
 
 <span class="sd">    * x values must be the same for all files and are the ones generated by `exponential_batch_generator()` from</span>
-<span class="sd">      running/metrics_and_runner.py</span>
+<span class="sd">      running/runner.py</span>
 <span class="sd">    * it is supposed that for all instances values lists are of equal lengthes (i.e. budgets). Otherwise normalisation</span>
 <span class="sd">      and aggregation may fail. If so, use `x_lims` parameter for the control.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-<div class="viewcode-block" id="ResultsMerger.__init__"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph_names</span><span class="p">,</span> <span class="n">crawler_defs</span><span class="p">,</span> <span class="n">metric_defs</span><span class="p">,</span> <span class="n">n_instances</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="ResultsMerger.__init__"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph_full_names</span><span class="p">,</span> <span class="n">crawler_decls</span><span class="p">,</span> <span class="n">metric_decls</span><span class="p">,</span> <span class="n">budget</span><span class="p">,</span>
+                 <span class="n">n_instances</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">result_dir</span><span class="o">=</span><span class="n">RESULT_DIR</span><span class="p">,</span> <span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param graph_names: list of graphs names</span>
-<span class="sd">        :param crawler_defs: list of crawlers definitions</span>
-<span class="sd">        :param metric_defs: list of metrics definitions</span>
-<span class="sd">        :param n_instances: number of instances to average over</span>
-<span class="sd">        :param x_lims: use only specified x-limits for all plots unless another value is specified in plotting function</span>
+<span class="sd">        :param graph_full_names: list of graphs full names.</span>
+<span class="sd">        :param crawler_decls: list of crawlers declarations.</span>
+<span class="sd">        :param metric_decls: list of metrics declarations. Non-numeric metrics will be ignored.</span>
+<span class="sd">        :param budget: results with this budget will be taken.</span>
+<span class="sd">        :param n_instances: number of instances to average over, None for all.</span>
+<span class="sd">        :param x_lims: use only specified x-limits for all plots unless another value is specified</span>
+<span class="sd">         in plotting function.</span>
+<span class="sd">        :param result_dir: specify if want to use non-default directory where results are stored.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span> <span class="o">=</span> <span class="n">graph_names</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list(map(definition_to_filename, crawler_defs))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list(map(definition_to_filename, metric_defs))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span> <span class="o">=</span> <span class="n">graph_full_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list(map(declaration_to_filename, crawler_decls))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list(map(declaration_to_filename, metric_decls))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># pretty short names to draw in plots</span>
 
         <span class="c1"># Generate pretty names for crawlers and metrics for plots</span>
-        <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="n">metric_defs</span><span class="p">:</span>
-            <span class="n">m</span> <span class="o">=</span> <span class="n">Metric</span><span class="o">.</span><span class="n">from_definition</span><span class="p">(</span><span class="n">example_graph</span><span class="p">,</span> <span class="n">md</span><span class="p">)</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">definition_to_filename</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">definition</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="n">metric_decls</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">Metric</span><span class="o">.</span><span class="n">from_declaration</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">numeric_only</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="n">is_numeric</span><span class="p">:</span>
+                <span class="c1"># Ignore non-numeric metrics</span>
+                <span class="k">continue</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">declaration_to_filename</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">declaration</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">for</span> <span class="n">cd</span> <span class="ow">in</span> <span class="n">crawler_defs</span><span class="p">:</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="n">Crawler</span><span class="o">.</span><span class="n">from_definition</span><span class="p">(</span><span class="n">example_graph</span><span class="p">,</span> <span class="n">cd</span><span class="p">)</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">definition_to_filename</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">definition</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">cd</span> <span class="ow">in</span> <span class="n">crawler_decls</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">Crawler</span><span class="o">.</span><span class="n">from_declaration</span><span class="p">(</span><span class="n">cd</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">declaration_to_filename</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">declaration</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span>
-        <span class="c1"># print(self.labels)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">budget</span> <span class="o">=</span> <span class="n">budget</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_instances</span> <span class="o">=</span> <span class="n">n_instances</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span> <span class="o">=</span> <span class="n">x_lims</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">instances</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># instances[graph][crawler][metric] -&gt; count</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># contents[graph][crawler][metric]: &#39;x&#39; -&gt; [], &#39;ys&#39; -&gt; [[]*n_instances], &#39;avy&#39; -&gt; []</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">auccs</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># auccs[graph][crawler][metric]: &#39;AUCC&#39; -&gt; [AUCC], &#39;wAUCC&#39; -&gt; [wAUCC]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instances</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># instances[graph][crawler][metric] -&gt; count of instances</span>
+        <span class="c1"># contents[graph][crawler][metric]:</span>
+        <span class="c1"># &#39;x&#39; -&gt; [nums of steps],</span>
+        <span class="c1"># &#39;ys&#39; -&gt; [[y for each step] for each instance],</span>
+        <span class="c1"># &#39;avy&#39; -&gt; [avg y for each step]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># auccs[graph][crawler][metric]:</span>
+        <span class="c1"># &#39;AUCC&#39; -&gt; [AUCC for each instance],</span>
+        <span class="c1"># &#39;wAUCC&#39; -&gt; [wAUCC for each instance]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auccs</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">()</span></div>
-        <span class="c1"># missing = self.missing_instances()</span>
-        <span class="c1"># if len(missing) &gt; 0:</span>
-        <span class="c1">#     logging.warning(&quot;Missing instances, will not be plotted:\n%s&quot; % json.dumps(missing, indent=2))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result_dir</span> <span class="o">=</span> <span class="n">result_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;seaborn&#39;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ResultsMerger.names_to_path"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.names_to_path">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">names_to_path</span><span class="p">(</span><span class="n">graph_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">crawler_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">names_to_path</span><span class="p">(</span><span class="n">graph_full_name</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">crawler_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">budget</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                      <span class="n">result_dir</span><span class="o">=</span><span class="n">RESULT_DIR</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Returns file pattern e.g.</span>
 <span class="sd">        &#39;/home/misha/workspace/crawling/results/ego-gplus/POD(batch=1)/TopK(centrality=BtwDistr,measure=Re,part=crawled,top=0.01)/\*.json&#39;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">RESULT_DIR</span><span class="p">,</span> <span class="n">graph_name</span><span class="p">,</span> <span class="n">crawler_name</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">,</span> <span class="s2">&quot;*.json&quot;</span><span class="p">)</span>
+        <span class="c1"># TODO apply</span>
+        <span class="c1"># path = Path(</span>
+        <span class="c1">#     result_dir, *graph_full_name, crawler_name, metric_name, f&quot;budget={budget}&quot;, &quot;*.json&quot;)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">result_dir</span><span class="p">,</span> <span class="o">*</span><span class="n">graph_full_name</span><span class="p">,</span> <span class="n">crawler_name</span><span class="p">,</span> <span class="n">metric_name</span><span class="p">,</span> <span class="s2">&quot;*.json&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">path</span></div>
 
     <span class="k">def</span> <span class="nf">_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
         <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Reading history&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="c1"># self.contents.clear()</span>
-        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">:</span>
-                    <span class="n">path_pattern</span> <span class="o">=</span> <span class="n">ResultsMerger</span><span class="o">.</span><span class="n">names_to_path</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
-                    <span class="n">path_pattern</span> <span class="o">=</span> <span class="n">path_pattern</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;[&#39;</span><span class="p">,</span> <span class="s1">&#39;[[]&#39;</span><span class="p">)</span>  <span class="c1"># workaround for glob since &#39;[&#39; is a special symbol for it</span>
-                    <span class="n">paths</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">path_pattern</span><span class="p">)</span>
+                    <span class="c1"># TODO apply</span>
+                    <span class="c1"># path = ResultsMerger.names_to_path(g, c, m, self.budget, self.result_dir)</span>
+                    <span class="c1"># fn_pattern = re.compile(f&#39;(\d+)\.json&#39;)</span>
+                    <span class="c1"># paths = []</span>
+                    <span class="c1"># for file in path.parent.iterdir():</span>
+                    <span class="c1">#     m = re.findall(fn_pattern, file.name)</span>
+                    <span class="c1">#     if m:</span>
+                    <span class="c1">#         print(file.name, m[0][0])</span>
+                    <span class="c1">#         paths.append(file)</span>
+                    <span class="c1"># paths = sorted(paths)[:self.n_instances]</span>
+
+                    <span class="n">path_pattern</span> <span class="o">=</span> <span class="n">ResultsMerger</span><span class="o">.</span><span class="n">names_to_path</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_dir</span><span class="p">)</span>
+                    <span class="c1"># FIXME workaround for glob since &#39;[&#39; is a special symbol for it</span>
+                    <span class="n">path_pattern</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path_pattern</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;[&#39;</span><span class="p">,</span> <span class="s1">&#39;[[]&#39;</span><span class="p">)</span>
+                    <span class="n">paths</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">path_pattern</span><span class="p">)[:</span><span class="bp">self</span><span class="o">.</span><span class="n">n_instances</span><span class="p">]</span>
+                    <span class="n">paths</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+
                     <span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">contents</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -190,61 +225,82 @@
                     <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ys</span> <span class="o">=</span> <span class="p">[[]]</span><span class="o">*</span><span class="n">count</span>
                     <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-                    <span class="n">xvalues</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
-                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">exponential_batch_generator</span><span class="p">():</span>
-                        <span class="n">total</span> <span class="o">+=</span> <span class="n">b</span>
-                        <span class="n">xvalues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span><span class="p">:</span>
-                        <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span>
-                        <span class="n">i0</span> <span class="o">=</span> <span class="n">bisect_right</span><span class="p">(</span><span class="n">xvalues</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
-                        <span class="n">i1</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">xvalues</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">i0</span> <span class="o">=</span> <span class="mi">0</span>
-                        <span class="n">i1</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xvalues</span><span class="p">)</span>
-
+                    <span class="n">i0</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="n">i1</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="k">for</span> <span class="n">inst</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">paths</span><span class="p">):</span>
                         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                             <span class="n">imported</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
                         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                             <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">sorted</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">imported</span><span class="o">.</span><span class="n">keys</span><span class="p">())]))[</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">]</span>
-                            <span class="c1"># xs = xs / xs[-1]</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span><span class="p">:</span>  <span class="c1"># Cut over x_lims</span>
+                                <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span>
+                                <span class="n">i0</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+                                <span class="n">i1</span> <span class="o">=</span> <span class="n">bisect_right</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span>
                             <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xs</span>
                         <span class="k">if</span> <span class="n">inst</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                             <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">))</span>
-                        <span class="n">ys</span><span class="p">[</span><span class="n">inst</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">imported</span><span class="o">.</span><span class="n">values</span><span class="p">())])[</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">]</span>
-                        <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ys</span><span class="p">[</span><span class="n">inst</span><span class="p">])</span> <span class="o">/</span> <span class="n">count</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="c1"># Convert to float and compute average if possible</span>
+                            <span class="n">ys</span><span class="p">[</span><span class="n">inst</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">imported</span><span class="o">.</span><span class="n">values</span><span class="p">())])[</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">]</span>
+                            <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ys</span><span class="p">[</span><span class="n">inst</span><span class="p">])</span> <span class="o">/</span> <span class="n">count</span>
+                        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                            <span class="c1"># Non-numeric values - as is</span>
+                            <span class="n">ys</span><span class="p">[</span><span class="n">inst</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">imported</span><span class="o">.</span><span class="n">values</span><span class="p">()))[</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">]</span>
 
                     <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-<div class="viewcode-block" id="ResultsMerger.remove_files"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.remove_files">[docs]</a>    <span class="k">def</span> <span class="nf">remove_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Remove all saved instances for current graphs X crawlers X metrics.</span>
+<div class="viewcode-block" id="ResultsMerger.move_folders"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.move_folders">[docs]</a>    <span class="k">def</span> <span class="nf">move_folders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_from</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Move/remove/copy all saved instances for current [graphs X crawlers X metrics].</span>
+<span class="sd">        Specify `path_to` parameter to move files instead of removing.</span>
+
+<span class="sd">        :param path_from: this folder is root for all folders to be (re)moved,</span>
+<span class="sd">         must be contained in path to folders</span>
+<span class="sd">        :param path_to: this folder is the destination for all folders to be moved.</span>
+<span class="sd">         If None (which is default), all folders will be removed.</span>
+<span class="sd">        :param copy: set to True if want to copy folders</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
-        <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Removing history&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path_from</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">path_from</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_dir</span>
+        <span class="n">path_from</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path_from</span><span class="p">)</span>
+        <span class="n">path_to</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path_to</span><span class="p">)</span>
+        <span class="n">move_or_copy</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span> <span class="k">if</span> <span class="n">copy</span> <span class="k">else</span> <span class="n">shutil</span><span class="o">.</span><span class="n">move</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;(Re)moving history&#39;</span><span class="p">)</span>
         <span class="n">folder</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">removed</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">removed_empty</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">moved</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">dirname</span> <span class="k">as</span> <span class="n">parent</span>
         <span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">exists</span> <span class="k">as</span> <span class="n">exist</span>
-        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">:</span>
-                    <span class="n">folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">ResultsMerger</span><span class="o">.</span><span class="n">names_to_path</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
-                    <span class="k">if</span> <span class="n">exist</span><span class="p">(</span><span class="n">folder</span><span class="p">):</span>
+                    <span class="n">folder</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ResultsMerger</span><span class="o">.</span><span class="n">names_to_path</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">budget</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_dir</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">exist</span><span class="p">(</span><span class="n">folder</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">path_to</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># remove</span>
+                        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                         <span class="n">removed</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>  <span class="c1"># move</span>
+                        <span class="k">assert</span> <span class="n">path_from</span> <span class="ow">in</span> <span class="n">folder</span>
+                        <span class="n">dst</span> <span class="o">=</span> <span class="n">folder</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">path_from</span><span class="p">,</span> <span class="n">path_to</span><span class="p">)</span>
+                        <span class="n">move_or_copy</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+                        <span class="n">moved</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
                 <span class="c1"># Remove parent folder if exists and empty</span>
                 <span class="k">if</span> <span class="n">exist</span><span class="p">(</span><span class="n">parent</span><span class="p">(</span><span class="n">folder</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">parent</span><span class="p">(</span><span class="n">folder</span><span class="p">)):</span>
                     <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">parent</span><span class="p">(</span><span class="n">folder</span><span class="p">))</span>
+                    <span class="n">removed_empty</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="c1"># Remove parent folder if exists and empty</span>
             <span class="k">if</span> <span class="n">exist</span><span class="p">(</span><span class="n">parent</span><span class="p">(</span><span class="n">parent</span><span class="p">(</span><span class="n">folder</span><span class="p">)))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">parent</span><span class="p">(</span><span class="n">parent</span><span class="p">(</span><span class="n">folder</span><span class="p">))):</span>
                 <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">parent</span><span class="p">(</span><span class="n">parent</span><span class="p">(</span><span class="n">folder</span><span class="p">)))</span>
+                <span class="n">removed_empty</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Removed </span><span class="si">%s</span><span class="s2"> folders&quot;</span> <span class="o">%</span> <span class="n">removed</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Moved </span><span class="si">%s</span><span class="s2"> folders, removed </span><span class="si">%s</span><span class="s2"> folders including </span><span class="si">%s</span><span class="s2"> empty ones&quot;</span> <span class="o">%</span>
+              <span class="p">(</span><span class="n">moved</span><span class="p">,</span> <span class="n">removed</span><span class="p">,</span> <span class="n">removed_empty</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
@@ -254,7 +310,7 @@
 <span class="sd">        :return: result[graph][crawler][metric] -&gt; missing count</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">missing</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">:</span>
             <span class="n">missing</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">:</span>
                 <span class="n">missing</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -272,7 +328,8 @@
         <span class="c1"># print(json.dumps(missing, indent=2))</span>
         <span class="k">return</span> <span class="n">missing</span></div>
 
-<div class="viewcode-block" id="ResultsMerger.draw_by_crawler"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_by_crawler">[docs]</a>    <span class="k">def</span> <span class="nf">draw_by_crawler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">draw_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<div class="viewcode-block" id="ResultsMerger.draw_by_crawler"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_by_crawler">[docs]</a>    <span class="k">def</span> <span class="nf">draw_by_crawler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">draw_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">draw_each_instance</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;By crawler&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Draw M x G table of plots with C lines each, where</span>
 <span class="sd">        M - num of metrics, G - num of graphs, C - num of crawlers.</span>
@@ -281,11 +338,13 @@
 <span class="sd">        :param x_lims: x-limits for plots. Overrides x_lims passed in constructor</span>
 <span class="sd">        :param x_normalize: if True, x values are normalized to be from 0 to 1</span>
 <span class="sd">        :param draw_error: if True, fill standard deviation area around the averaged crawling curve</span>
+<span class="sd">        :param draw_each_instance: if True, show each instance</span>
 <span class="sd">        :param scale: size of plots (default 3)</span>
+<span class="sd">        :param title: figure title</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x_lims</span> <span class="o">=</span> <span class="n">x_lims</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span>
 
-        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span>
         <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
         <span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span> <span class="o">=</span> <span class="n">M</span><span class="p">,</span> <span class="n">G</span>
         <span class="k">if</span> <span class="n">M</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -294,13 +353,13 @@
         <span class="k">if</span> <span class="n">G</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">nrows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">M</span><span class="p">))</span>
             <span class="n">ncols</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">M</span> <span class="o">/</span> <span class="n">nrows</span><span class="p">)</span>
-        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="n">x_normalize</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="s2">&quot;By crawler&quot;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">))</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="n">x_normalize</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="n">sharey</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">))</span>
 
-        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
         <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Plotting by crawler&#39;</span><span class="p">)</span>
         <span class="n">aix</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">nrows</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">ncols</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">plt</span><span class="o">.</span><span class="n">sca</span><span class="p">(</span><span class="n">axs</span><span class="p">[</span><span class="n">aix</span> <span class="o">//</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">aix</span> <span class="o">%</span> <span class="n">ncols</span><span class="p">])</span>
                 <span class="k">elif</span> <span class="n">nrows</span> <span class="o">*</span> <span class="n">ncols</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -308,7 +367,7 @@
                 <span class="k">if</span> <span class="n">aix</span> <span class="o">%</span> <span class="n">G</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">aix</span> <span class="o">//</span> <span class="n">ncols</span> <span class="o">==</span> <span class="n">nrows</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
                     <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Nodes fraction crawled&#39;</span> <span class="k">if</span> <span class="n">x_normalize</span> <span class="k">else</span> <span class="s1">&#39;Nodes crawled&#39;</span><span class="p">)</span>
                 <span class="n">aix</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -318,22 +377,26 @@
                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">):</span>
                     <span class="n">contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">]</span>
                     <span class="c1"># Draw each instance</span>
-                    <span class="c1"># for inst in range(len(contents[&#39;ys&#39;])):</span>
-                    <span class="c1">#     plt.plot(contents[&#39;x&#39;], contents[&#39;ys&#39;][inst], color=colors[k % len(colors)], linewidth=0.5, linestyle=&#39;:&#39;)</span>
+                    <span class="k">if</span> <span class="n">draw_each_instance</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">inst</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">])):</span>
+                            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">],</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">][</span><span class="n">inst</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
                     <span class="c1"># Draw variance</span>
                     <span class="n">xs</span> <span class="o">=</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
                     <span class="k">if</span> <span class="n">x_normalize</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                         <span class="n">xs</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">/</span> <span class="n">xs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">draw_error</span><span class="p">:</span>
-                        <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+                        <span class="n">error</span> <span class="o">=</span> <span class="n">variance</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
                         <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">error</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">error</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="n">label</span><span class="o">=</span><span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">]))</span>
+
                     <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ResultsMerger.draw_by_metric"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_by_metric">[docs]</a>    <span class="k">def</span> <span class="nf">draw_by_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">draw_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<div class="viewcode-block" id="ResultsMerger.draw_by_metric"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_by_metric">[docs]</a>    <span class="k">def</span> <span class="nf">draw_by_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">draw_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                       <span class="n">title</span><span class="o">=</span><span class="s2">&quot;By metric&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Draw C x G table of plots with M lines each, where</span>
 <span class="sd">        M - num of metrics, G - num of graphs, C - num of crawlers</span>
@@ -341,7 +404,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x_lims</span> <span class="o">=</span> <span class="n">x_lims</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span>
 
-        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span>
         <span class="n">C</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span>
         <span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span> <span class="o">=</span> <span class="n">C</span><span class="p">,</span> <span class="n">G</span>
         <span class="k">if</span> <span class="n">C</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -350,13 +413,13 @@
         <span class="k">if</span> <span class="n">G</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">nrows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">C</span><span class="p">))</span>
             <span class="n">ncols</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">C</span> <span class="o">/</span> <span class="n">nrows</span><span class="p">)</span>
-        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="n">x_normalize</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="s2">&quot;By metric&quot;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">))</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="n">x_normalize</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="n">sharey</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">))</span>
 
-        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
         <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Plotting by crawler&#39;</span><span class="p">)</span>
         <span class="n">aix</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">nrows</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">ncols</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">plt</span><span class="o">.</span><span class="n">sca</span><span class="p">(</span><span class="n">axs</span><span class="p">[</span><span class="n">aix</span> <span class="o">//</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">aix</span> <span class="o">%</span> <span class="n">ncols</span><span class="p">])</span>
                 <span class="k">elif</span> <span class="n">nrows</span> <span class="o">*</span> <span class="n">ncols</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -364,7 +427,7 @@
                 <span class="k">if</span> <span class="n">aix</span> <span class="o">%</span> <span class="n">G</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">aix</span> <span class="o">//</span> <span class="n">ncols</span> <span class="o">==</span> <span class="n">nrows</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
                     <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Nodes fraction crawled&#39;</span> <span class="k">if</span> <span class="n">x_normalize</span> <span class="k">else</span> <span class="s1">&#39;Nodes crawled&#39;</span><span class="p">)</span>
                 <span class="n">aix</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -381,15 +444,18 @@
                     <span class="k">if</span> <span class="n">x_normalize</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                         <span class="n">xs</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">/</span> <span class="n">xs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">draw_error</span><span class="p">:</span>
-                        <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+                        <span class="n">error</span> <span class="o">=</span> <span class="n">variance</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
                         <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">error</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">error</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                             <span class="n">label</span><span class="o">=</span><span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">]))</span>
                     <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ResultsMerger.draw_by_metric_crawler"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_by_metric_crawler">[docs]</a>    <span class="k">def</span> <span class="nf">draw_by_metric_crawler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">swap_coloring_scheme</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">draw_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<div class="viewcode-block" id="ResultsMerger.draw_by_metric_crawler"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_by_metric_crawler">[docs]</a>    <span class="k">def</span> <span class="nf">draw_by_metric_crawler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">x_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                               <span class="n">swap_coloring_scheme</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">draw_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                               <span class="n">title</span><span class="o">=</span><span class="s2">&quot;By metric and crawler&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Draw G plots with CxM lines each, where</span>
 <span class="sd">        M - num of metrics, G - num of graphs, C - num of crawlers.</span>
@@ -397,28 +463,31 @@
 
 <span class="sd">        :param x_lims: x-limits for plots. Overrides x_lims passed in constructor</span>
 <span class="sd">        :param x_normalize: if True, x values are normalized to be from 0 to 1</span>
+<span class="sd">        :param sharey: if True, share properties among or y axes</span>
 <span class="sd">        :param swap_coloring_scheme: by default metrics differ in linestyle, crawlers differ in color. Set True to swap</span>
 <span class="sd">        :param draw_error: if True, fill standard deviation area around the averaged crawling curve</span>
 <span class="sd">        :param scale: size of plots (default 3)</span>
+<span class="sd">        :param title: figure title</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x_lims</span> <span class="o">=</span> <span class="n">x_lims</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span>
 
-        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span>
         <span class="n">nrows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">G</span><span class="p">))</span>
         <span class="n">ncols</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">G</span> <span class="o">/</span> <span class="n">nrows</span><span class="p">)</span>
-        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="n">x_normalize</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="s2">&quot;By metric and crawler&quot;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">))</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="n">x_normalize</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="n">sharey</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                                <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">))</span>
 
-        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
         <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">total</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Plotting by metric crawler&#39;</span><span class="p">)</span>
         <span class="n">aix</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">nrows</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">ncols</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">sca</span><span class="p">(</span><span class="n">axs</span><span class="p">[</span><span class="n">aix</span> <span class="o">//</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">aix</span> <span class="o">%</span> <span class="n">ncols</span><span class="p">])</span>
             <span class="k">elif</span> <span class="n">nrows</span> <span class="o">*</span> <span class="n">ncols</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">sca</span><span class="p">(</span><span class="n">axs</span><span class="p">[</span><span class="n">aix</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">aix</span> <span class="o">%</span> <span class="n">ncols</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Metrics value&#39;</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">aix</span> <span class="o">//</span> <span class="n">ncols</span> <span class="o">==</span> <span class="n">nrows</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Nodes fraction crawled&#39;</span> <span class="k">if</span> <span class="n">x_normalize</span> <span class="k">else</span> <span class="s1">&#39;Nodes crawled&#39;</span><span class="p">)</span>
             <span class="n">aix</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -434,19 +503,19 @@
                     <span class="k">if</span> <span class="n">x_normalize</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                         <span class="n">xs</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">/</span> <span class="n">xs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">draw_error</span><span class="p">:</span>
-                        <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+                        <span class="n">error</span> <span class="o">=</span> <span class="n">variance</span><span class="p">(</span><span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
                         <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">error</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">error</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
                                          <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">col</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)])</span>
                     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;avy&#39;</span><span class="p">],</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                              <span class="n">linestyle</span><span class="o">=</span><span class="n">LINESTYLES</span><span class="p">[</span><span class="n">ls</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">LINESTYLES</span><span class="p">)],</span>
                              <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">col</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)],</span>
-                             <span class="n">label</span><span class="o">=</span><span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_instances</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">]))</span>
+                             <span class="n">label</span><span class="o">=</span><span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instances</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">]))</span>
                     <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
 
-    <span class="k">def</span> <span class="nf">_compute_auccs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_compute_aggregated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param x_lims: if specified as (x_from, x_to), compute AUCC for an interval containing the specified one</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -454,12 +523,12 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="c1"># Compute AUCCs</span>
-        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span>
         <span class="n">C</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span>
         <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">G</span><span class="o">*</span><span class="n">C</span><span class="o">*</span><span class="n">M</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Computing AUCCs&#39;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -468,20 +537,50 @@
                     <span class="n">contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">]</span>
                     <span class="n">xs</span> <span class="o">=</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span>
                     <span class="n">ys</span> <span class="o">=</span> <span class="n">contents</span><span class="p">[</span><span class="s1">&#39;ys&#39;</span><span class="p">]</span>
+                    <span class="n">i0</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="n">i1</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="k">if</span> <span class="n">x_lims</span><span class="p">:</span>
-                        <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="n">x_lims</span>
-                        <span class="n">i0</span> <span class="o">=</span> <span class="n">bisect_right</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
-                        <span class="n">i1</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">i0</span> <span class="o">=</span> <span class="mi">0</span>
-                        <span class="n">i1</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+                        <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span>
+                        <span class="n">i0</span> <span class="o">=</span> <span class="n">bisect_left</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+                        <span class="n">i1</span> <span class="o">=</span> <span class="n">bisect_right</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
 
                     <span class="n">aucc</span><span class="p">[</span><span class="s1">&#39;AUCC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">compute_aucc</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">],</span> <span class="n">ys</span><span class="p">[</span><span class="n">inst</span><span class="p">][</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">])</span> <span class="k">for</span> <span class="n">inst</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ys</span><span class="p">))]</span>
                     <span class="n">aucc</span><span class="p">[</span><span class="s1">&#39;wAUCC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">compute_waucc</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">],</span> <span class="n">ys</span><span class="p">[</span><span class="n">inst</span><span class="p">][</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">])</span> <span class="k">for</span> <span class="n">inst</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ys</span><span class="p">))]</span>
+                    <span class="n">aucc</span><span class="p">[</span><span class="s1">&#39;TC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">compute_targets_crawled</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">],</span> <span class="n">ys</span><span class="p">[</span><span class="n">inst</span><span class="p">][</span><span class="n">i0</span><span class="p">:</span> <span class="n">i1</span><span class="p">])</span> <span class="k">for</span> <span class="n">inst</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ys</span><span class="p">))]</span>
                     <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-<div class="viewcode-block" id="ResultsMerger.draw_aucc"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_aucc">[docs]</a>    <span class="k">def</span> <span class="nf">draw_aucc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggregator</span><span class="o">=</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">xticks_rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">):</span>
+<div class="viewcode-block" id="ResultsMerger.get_aggregated"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.get_aggregated">[docs]</a>    <span class="k">def</span> <span class="nf">get_aggregated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggregator</span><span class="o">=</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">median</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_results</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get results according to an aggregatro (AUCC, wAUCC, TC)</span>
+<span class="sd">        :param x_lims: x-limits passed to aggregator. Overrides x_lims passed in constructor</span>
+<span class="sd">        :param median: if True, compute median instead of mean</span>
+<span class="sd">        :param print_results: if True, print results</span>
+<span class="sd">        :return: list of results as tuple (num_instances, Graph, Crawler, Metric, mean, error)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">aggregator</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="s1">&#39;wAUCC&#39;</span><span class="p">,</span> <span class="s1">&#39;TC&#39;</span><span class="p">]</span>
+        <span class="n">x_lims</span> <span class="o">=</span> <span class="n">x_lims</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_aggregated</span><span class="p">(</span><span class="n">x_lims</span><span class="o">=</span><span class="n">x_lims</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">):</span>
+                <span class="n">errors</span> <span class="o">=</span> <span class="p">[</span><span class="n">variance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">aggregator</span><span class="p">])</span> <span class="o">**</span> <span class="mf">0.5</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
+                <span class="n">avgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">average</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">aggregator</span><span class="p">],</span> <span class="n">median</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">ix</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">):</span>
+                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;ys&#39;</span><span class="p">]),</span>
+                         <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">g</span><span class="p">),</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">],</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">avgs</span><span class="p">[</span><span class="n">ix</span><span class="p">],</span> <span class="n">errors</span><span class="p">[</span><span class="n">ix</span><span class="p">]))</span>
+
+        <span class="k">if</span> <span class="n">print_results</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">avg</span><span class="p">,</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+                <span class="n">string</span> <span class="o">=</span> <span class="s2">&quot;[</span><span class="si">%s</span><span class="s2">] &quot;</span> <span class="o">%</span> <span class="n">n</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">g</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">+-</span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">avg</span><span class="p">,</span> <span class="n">err</span><span class="p">)])</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+<div class="viewcode-block" id="ResultsMerger.draw_aggregated"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_aggregated">[docs]</a>    <span class="k">def</span> <span class="nf">draw_aggregated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggregator</span><span class="o">=</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">boxplot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xticks_rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">draw_count</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Draw G plots with M lines. Ox - C crawlers, Oy - AUCC value (M curves with error bars).</span>
 <span class="sd">        M - num of metrics, G - num of graphs, C - num of crawlers</span>
@@ -489,44 +588,70 @@
 <span class="sd">        :param aggregator: function translating crawling curve into 1 number. AUCC (default) or wAUCC</span>
 <span class="sd">        :param x_lims: x-limits passed to aggregator. Overrides x_lims passed in constructor</span>
 <span class="sd">        :param scale: size of plots (default 3)</span>
+<span class="sd">        :param sharey: if True, share properties among or y axes</span>
 <span class="sd">        :param xticks_rotation: rotate x-ticks (default 90 degrees)</span>
+<span class="sd">        :param title: figure title</span>
+<span class="sd">        :param draw_count: if True, prepend number of instances to label</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="n">aggregator</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="s1">&#39;wAUCC&#39;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">aggregator</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="s1">&#39;wAUCC&#39;</span><span class="p">,</span> <span class="s1">&#39;TC&#39;</span><span class="p">]</span>
         <span class="n">x_lims</span> <span class="o">=</span> <span class="n">x_lims</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_auccs</span><span class="p">(</span><span class="n">x_lims</span><span class="o">=</span><span class="n">x_lims</span><span class="p">)</span>
-        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_aggregated</span><span class="p">(</span><span class="n">x_lims</span><span class="o">=</span><span class="n">x_lims</span><span class="p">)</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span>
         <span class="n">C</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span>
         <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">M</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">boxplot</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="c1"># Draw</span>
         <span class="n">nrows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">G</span><span class="p">))</span>
         <span class="n">ncols</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="n">G</span> <span class="o">/</span> <span class="n">nrows</span><span class="p">)</span>
-        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">aggregator</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">ncols</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">))</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="n">sharey</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+                                <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">ncols</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">))</span>
         <span class="n">aix</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">pbar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">G</span><span class="o">*</span><span class="n">M</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;Plotting </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">aggregator</span><span class="p">)</span>
         <span class="n">xs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">C</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">nrows</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">ncols</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">sca</span><span class="p">(</span><span class="n">axs</span><span class="p">[</span><span class="n">aix</span> <span class="o">//</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">aix</span> <span class="o">%</span> <span class="n">ncols</span><span class="p">])</span>
             <span class="k">elif</span> <span class="n">nrows</span> <span class="o">*</span> <span class="n">ncols</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">sca</span><span class="p">(</span><span class="n">axs</span><span class="p">[</span><span class="n">aix</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">aix</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> value&#39;</span> <span class="o">%</span> <span class="n">aggregator</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">g</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
+            <span class="c1"># for each crawler a list of instances for each metris</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">):</span>
-                <span class="n">errors</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">aggregator</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
-                <span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">aggregator</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
-                <span class="n">plt</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">capsize</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)])</span>
+                <span class="n">errors</span> <span class="o">=</span> <span class="p">[</span><span class="n">variance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">aggregator</span><span class="p">])</span> <span class="o">**</span> <span class="mf">0.5</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
+
+                <span class="n">ys</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">aggregator</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
+                <span class="n">means</span> <span class="o">=</span> <span class="p">[</span><span class="n">average</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">aggregator</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
+                <span class="c1"># meds = [np.median(self.auccs[g][c][m][aggregator]) for c in self.crawler_names]</span>
+                <span class="k">if</span> <span class="n">boxplot</span><span class="p">:</span>
+                    <span class="n">box_plot</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">boxplot</span><span class="p">(</span><span class="n">ys</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">median</span> <span class="ow">in</span> <span class="n">box_plot</span><span class="p">[</span><span class="s1">&#39;medians&#39;</span><span class="p">]:</span>
+                        <span class="n">median</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">plt</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">capsize</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                                 <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)])</span>
+
+                <span class="k">for</span> <span class="n">ix</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;ys&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">],</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">+-</span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">means</span><span class="p">[</span><span class="n">ix</span><span class="p">],</span> <span class="n">errors</span><span class="p">[</span><span class="n">ix</span><span class="p">]))</span>
+                <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">):</span>
+                    <span class="n">labels</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="s1">&#39;ys&#39;</span><span class="p">]))</span>
                 <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">],</span> <span class="n">rotation</span><span class="o">=</span><span class="n">xticks_rotation</span><span class="p">)</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="p">[(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">ls</span><span class="p">)</span><span class="si">}</span><span class="s2">] &quot;</span> <span class="k">if</span> <span class="n">draw_count</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>
+                      <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">ls</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">,</span> <span class="n">labels</span><span class="p">)]</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="n">xticks_rotation</span><span class="p">)</span>
             <span class="n">aix</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">pbar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">boxplot</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ResultsMerger.draw_winners"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_winners">[docs]</a>    <span class="k">def</span> <span class="nf">draw_winners</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggregator</span><span class="o">=</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">xticks_rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">):</span>
+<div class="viewcode-block" id="ResultsMerger.draw_winners"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.draw_winners">[docs]</a>    <span class="k">def</span> <span class="nf">draw_winners</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggregator</span><span class="o">=</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="n">x_lims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">xticks_rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Draw C stacked bars (each of M elements). Ox - C crawlers, Oy - number of wins (among G) by (w)AUCC value.</span>
 <span class="sd">        Miss graphs where not all configurations are present.</span>
@@ -535,12 +660,13 @@
 <span class="sd">        :param x_lims: x-limits passed to aggregator. Overrides x_lims passed in constructor</span>
 <span class="sd">        :param scale: size of plots (default 8)</span>
 <span class="sd">        :param xticks_rotation: rotate x-ticks (default 90 degrees)</span>
+<span class="sd">        :param title: figure title</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="n">aggregator</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="s1">&#39;wAUCC&#39;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">aggregator</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;AUCC&#39;</span><span class="p">,</span> <span class="s1">&#39;wAUCC&#39;</span><span class="p">,</span> <span class="s1">&#39;TC&#39;</span><span class="p">]</span>
         <span class="n">x_lims</span> <span class="o">=</span> <span class="n">x_lims</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_lims</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_auccs</span><span class="p">(</span><span class="n">x_lims</span><span class="o">=</span><span class="n">x_lims</span><span class="p">)</span>
-        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_aggregated</span><span class="p">(</span><span class="n">x_lims</span><span class="o">=</span><span class="n">x_lims</span><span class="p">)</span>
+        <span class="n">G</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">)</span>
         <span class="n">C</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">)</span>
         <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">)</span>
 
@@ -552,15 +678,15 @@
                 <span class="n">winners</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_names</span><span class="p">:</span>
-                <span class="n">ca</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">aggregator</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_full_names</span><span class="p">:</span>
+                <span class="n">ca</span> <span class="o">=</span> <span class="p">[</span><span class="n">average</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">auccs</span><span class="p">[</span><span class="n">g</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="n">m</span><span class="p">][</span><span class="n">aggregator</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">]</span>
                 <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">ca</span><span class="p">)):</span>
                     <span class="k">continue</span>
                 <span class="n">winner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ca</span><span class="p">)]</span>
                 <span class="n">winners</span><span class="p">[</span><span class="n">winner</span><span class="p">][</span><span class="n">m</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
         <span class="c1"># Draw</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">num</span><span class="o">=</span><span class="s2">&quot;Winners by </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">aggregator</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span><span class="p">,</span> <span class="n">scale</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">num</span><span class="o">=</span><span class="n">title</span> <span class="ow">or</span> <span class="s2">&quot;Winners by </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">aggregator</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">scale</span><span class="p">,</span> <span class="n">scale</span><span class="p">))</span>
         <span class="n">xs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">C</span><span class="p">))</span>
         <span class="n">prev_bottom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_names</span><span class="p">):</span>
@@ -568,82 +694,125 @@
             <span class="n">plt</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="n">prev_bottom</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">COLORS</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">COLORS</span><span class="p">)],</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">m</span><span class="p">])</span>
             <span class="n">prev_bottom</span> <span class="o">+=</span> <span class="n">h</span>
 
-        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> value&#39;</span> <span class="o">%</span> <span class="n">aggregator</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Wins by </span><span class="si">%s</span><span class="s1"> value&#39;</span> <span class="o">%</span> <span class="n">aggregator</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">crawler_names</span><span class="p">],</span> <span class="n">rotation</span><span class="o">=</span><span class="n">xticks_rotation</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="ResultsMerger.show_plots"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.show_plots">[docs]</a>    <span class="k">def</span> <span class="nf">show_plots</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Show drawed matplotlib plots &quot;&quot;&quot;</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div></div>
+        <span class="sd">&quot;&quot;&quot; Show drawn matplotlib plots &quot;&quot;&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
 
+<div class="viewcode-block" id="ResultsMerger.next_file"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.next_file">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">next_file</span><span class="p">(</span><span class="n">folder</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a path with a smallest number not present in the folder.</span>
+<span class="sd">        E.g. if folder has 0.json and 2.json, it returns path for 1.json</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ix</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">folder</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ix</span><span class="si">}</span><span class="s2">.json&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>  <span class="c1"># if name exists, adding number to it</span>
+                <span class="k">return</span> <span class="n">path</span>
+            <span class="n">ix</span> <span class="o">+=</span> <span class="mi">1</span></div>
 
-<span class="k">def</span> <span class="nf">test_merger</span><span class="p">():</span>
-    <span class="kn">from</span> <span class="nn">crawlers.cbasic</span> <span class="kn">import</span> <span class="n">filename_to_definition</span>
+<div class="viewcode-block" id="ResultsMerger.merge_folders"><a class="viewcode-back" href="../../code.html#running.merger.ResultsMerger.merge_folders">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">merge_folders</span><span class="p">(</span><span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="n">not_earlier_than</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">not_later_than</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">check_identical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                      <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Merge all results into 1 folder: path[1], path[2], etc into path[0].</span>
+<span class="sd">        Name collisions resolved via assigning new smallest numbers, e.g. when 0.json is added to a</span>
+<span class="sd">        folder with 0.json and 2.json, it becomes 1.json.</span>
 
-    <span class="n">graphs</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s1">&#39;douban&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;ego-gplus&#39;</span><span class="p">,</span>
-    <span class="p">]</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="mf">0.01</span>
-    <span class="n">crawler_defs</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">filename_to_definition</span><span class="p">(</span><span class="s1">&#39;RW()&#39;</span><span class="p">),</span>
-        <span class="n">filename_to_definition</span><span class="p">(</span><span class="s1">&#39;RC()&#39;</span><span class="p">),</span>
-        <span class="n">filename_to_definition</span><span class="p">(</span><span class="s1">&#39;BFS()&#39;</span><span class="p">),</span>
-        <span class="n">filename_to_definition</span><span class="p">(</span><span class="s1">&#39;DFS()&#39;</span><span class="p">),</span>
-        <span class="n">filename_to_definition</span><span class="p">(</span><span class="s1">&#39;SBS(p=0.1)&#39;</span><span class="p">),</span>
-        <span class="n">filename_to_definition</span><span class="p">(</span><span class="s1">&#39;SBS(p=0.25)&#39;</span><span class="p">),</span>
-        <span class="n">filename_to_definition</span><span class="p">(</span><span class="s1">&#39;SBS(p=0.5)&#39;</span><span class="p">),</span>
-    <span class="p">]</span>
-    <span class="n">metric_defs</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">DEGREE_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
-        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">PAGERANK_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
-        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">BETWEENNESS_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
-        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">ECCENTRICITY_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
-        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">CLOSENESS_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
-        <span class="p">(</span><span class="n">TopCentralityMetric</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;top&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;measure&#39;</span><span class="p">:</span> <span class="s1">&#39;Re&#39;</span><span class="p">,</span> <span class="s1">&#39;part&#39;</span><span class="p">:</span> <span class="s1">&#39;crawled&#39;</span><span class="p">,</span> <span class="s1">&#39;centrality&#39;</span><span class="p">:</span> <span class="n">Stat</span><span class="o">.</span><span class="n">K_CORENESS_DISTR</span><span class="o">.</span><span class="n">short</span><span class="p">}),</span>
-    <span class="p">]</span>
-    <span class="n">crm</span> <span class="o">=</span> <span class="n">ResultsMerger</span><span class="p">(</span><span class="n">graphs</span><span class="p">,</span> <span class="n">crawler_defs</span><span class="p">,</span> <span class="n">metric_defs</span><span class="p">,</span> <span class="n">n_instances</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
-    <span class="kn">import</span> <span class="nn">sys</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Missing instances:&quot;</span><span class="p">)</span>
-    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">crm</span><span class="o">.</span><span class="n">missing_instances</span><span class="p">(),</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">crm</span><span class="o">.</span><span class="n">draw_by_crawler</span><span class="p">()</span>
-    <span class="c1"># crm.draw_aucc(&#39;AUCC&#39;)</span>
-    <span class="n">crm</span><span class="o">.</span><span class="n">draw_winners</span><span class="p">(</span><span class="s1">&#39;AUCC&#39;</span><span class="p">)</span>
-    <span class="n">crm</span><span class="o">.</span><span class="n">show_plots</span><span class="p">()</span>
+<span class="sd">        Args:</span>
+<span class="sd">            *path: list of paths each of those is analog to original results/ in terms of structure.</span>
+<span class="sd">            not_earlier_than: look for files with modify datetime not earlier than specified.</span>
+<span class="sd">            not_later_than: look for files with modify datetime not later than specified.</span>
+<span class="sd">            check_identical: before renaming check whether equally named files are identical.</span>
+<span class="sd">            copy: if True, copy all moved elements.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Specify more than 1 paths to be merged&quot;</span><span class="p">)</span>
 
+        <span class="kn">import</span> <span class="nn">filecmp</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(levelname)s</span><span class="s1">:</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;matplotlib.font_manager&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">not_earlier_than</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">not_earlier_than</span> <span class="o">=</span> <span class="n">not_earlier_than</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
 
-    <span class="n">test_merger</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">not_later_than</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">not_later_than</span> <span class="o">=</span> <span class="n">not_later_than</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">check_datetime</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot; Check modify time &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">not_earlier_than</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span> <span class="o">&lt;</span> <span class="n">not_earlier_than</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">not_later_than</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span> <span class="o">&gt;</span> <span class="n">not_later_than</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">dst_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">src_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
+            <span class="n">src_content</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">src_path</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">src_content</span><span class="p">:</span>
+                <span class="n">src_subpath</span> <span class="o">=</span> <span class="n">src_path</span> <span class="o">/</span> <span class="n">name</span>
+                <span class="n">dst_subpath</span> <span class="o">=</span> <span class="n">dst_path</span> <span class="o">/</span> <span class="n">name</span>
+                <span class="k">if</span> <span class="n">src_subpath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>  <span class="c1"># file</span>
+                    <span class="k">if</span> <span class="n">check_datetime</span><span class="p">(</span><span class="n">src_subpath</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">dst_subpath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>  <span class="c1"># Rename</span>
+                            <span class="k">if</span> <span class="n">check_identical</span> <span class="ow">and</span> <span class="n">filecmp</span><span class="o">.</span><span class="n">cmp</span><span class="p">(</span><span class="n">src_subpath</span><span class="p">,</span> <span class="n">dst_subpath</span><span class="p">):</span>
+                                <span class="c1"># If files are the same, avoid duplication</span>
+                                <span class="n">rname_move_dirmove_ident</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                                <span class="k">if</span> <span class="ow">not</span> <span class="n">copy</span><span class="p">:</span>
+                                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">src_subpath</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">new_path</span> <span class="o">=</span> <span class="n">ResultsMerger</span><span class="o">.</span><span class="n">next_file</span><span class="p">(</span><span class="n">dst_subpath</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+                                <span class="p">(</span><span class="n">shutil</span><span class="o">.</span><span class="n">copy</span> <span class="k">if</span> <span class="n">copy</span> <span class="k">else</span> <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">)(</span><span class="n">src_subpath</span><span class="p">,</span> <span class="n">new_path</span><span class="p">)</span>
+                                <span class="n">rname_move_dirmove_ident</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                        <span class="k">else</span><span class="p">:</span>  <span class="c1"># just move</span>
+                            <span class="n">dst_subpath</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                            <span class="p">(</span><span class="n">shutil</span><span class="o">.</span><span class="n">copy</span> <span class="k">if</span> <span class="n">copy</span> <span class="k">else</span> <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">)(</span><span class="n">src_subpath</span><span class="p">,</span> <span class="n">dst_subpath</span><span class="p">)</span>
+                            <span class="n">rname_move_dirmove_ident</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># directory</span>
+                    <span class="n">merge</span><span class="p">(</span><span class="n">dst_subpath</span><span class="p">,</span> <span class="n">src_subpath</span><span class="p">)</span>
+
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Merging&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s2">&quot;-&gt;&quot;</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+            <span class="n">rname_move_dirmove_ident</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">merge</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">rname_move_dirmove_ident</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;files renamed&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">rname_move_dirmove_ident</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;files as is&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">rname_move_dirmove_ident</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;directories as is&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">rname_move_dirmove_ident</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;files coincide&quot;</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../../index.html">Table Of Contents</a></h3>
-  <p class="caption"><span class="caption-text">Contents:</span></p>
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../project.html">Project description</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../readme.html">Installation guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../code.html">Code Documentation</a></li>
 </ul>
 
+  </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -652,8 +821,8 @@
       &copy;2020, M. Drobyshevskiy, D. Shaykhelislamov, D. Aivazov, K. Lukyanov.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 
