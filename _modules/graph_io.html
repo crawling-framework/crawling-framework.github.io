@@ -53,40 +53,6 @@
 <span class="n">current_graphs</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># full_name -&gt; MyGraph</span>
 
 
-<span class="k">def</span> <span class="nf">parse_netrepo_page</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot; Parse networkrepository page and create name resolution dict: name -&gt; url</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span>
-
-    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Parsing networkrepository metadata...&quot;</span><span class="p">)</span>
-    <span class="n">name_ref_dict</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;http://networkrepository.com/networks.php&#39;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">html</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-    <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unfortunately, web-cite </span><span class="si">%s</span><span class="s2"> is unavailable. Try again later. Perhaphs the URL could change&quot;</span> <span class="o">%</span> <span class="n">url</span><span class="p">)</span>
-        <span class="k">return</span>
-
-    <span class="n">rows</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="s2">&quot;lxml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;tr&#39;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">ref</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">contents</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="s1">&#39;href&#39;</span><span class="p">]</span>
-        <span class="n">name_ref_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">)):</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">))</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name_ref_dict</span><span class="p">))</span>
-    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;networkrepository metadata saved to </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">netrepo_metadata_path</span><span class="p">)</span>
-
-
-<span class="c1"># Should be run before downloading any graph</span>
-<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">netrepo_metadata_path</span><span class="p">):</span> <span class="n">parse_netrepo_page</span><span class="p">()</span>
-
-
-<span class="c1"># netrepo_name_ref_dict = eval(open(netrepo_metadata_path, &#39;r&#39;).read())</span>
-
-
 <span class="k">def</span> <span class="nf">reformat_graph_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">out_path</span><span class="p">,</span> <span class="n">ignore_lines_starting_with</span><span class="o">=</span><span class="s1">&#39;#%&#39;</span><span class="p">,</span>
                         <span class="n">remove_original</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">self_loops</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">renumerate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -374,7 +340,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2022, TEMPORARY HIDDEN.
+      &copy;2022, authors TEMPORARY HIDDEN.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
