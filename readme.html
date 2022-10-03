@@ -1,25 +1,25 @@
 
-<!DOCTYPE html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Installation and usage &#8212; CrawlingFramework 2.0.0 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Code Documentation" href="code.html" />
     <link rel="prev" title="Project description" href="project.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
@@ -29,25 +29,23 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          
-
           <div class="body" role="main">
             
-  <section id="installation-and-usage">
+  <div class="section" id="installation-and-usage">
 <h1>Installation and usage<a class="headerlink" href="#installation-and-usage" title="Permalink to this headline">¶</a></h1>
-<section id="requirements">
+<div class="section" id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>python version 3</p></li>
-<li><p>GCC compiler</p></li>
-<li><p>cmake</p></li>
+<li>python version 3</li>
+<li>GCC compiler</li>
+<li>cmake</li>
 </ul>
 <p>For MacOS additional:</p>
 <ul class="simple">
-<li><p>brew</p></li>
+<li>brew</li>
 </ul>
-</section>
-<section id="installation">
+</div>
+<div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>1. Clone the repository</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">crawling</span><span class="o">-</span><span class="n">framework</span><span class="o">/</span><span class="n">crawling</span><span class="o">-</span><span class="n">framework</span><span class="o">.</span><span class="n">github</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">git</span>
@@ -63,19 +61,18 @@
 </pre></div>
 </div>
 <p>(By default DGL library is configured for CPU. To use it with GPU visit <a class="reference external" href="https://www.dgl.ai/pages/start.html">https://www.dgl.ai/pages/start.html</a>)</p>
-<p>4. Download and unpack archive with graph data</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">disk</span><span class="o">.</span><span class="n">yandex</span><span class="o">.</span><span class="n">ru</span><span class="o">/</span><span class="n">d</span><span class="o">/</span><span class="n">Z</span><span class="o">-</span><span class="n">fcweFaVtBsFA</span>
-<span class="n">unzip</span> <span class="n">data</span><span class="o">.</span><span class="n">zip</span>
-</pre></div>
+<ol class="arabic simple" start="4">
+<li>Download and unpack archive with graph data</li>
+</ol>
+<p>Manually download the <a class="reference external" href="ttps://disk.yandex.ru/d/Z-fcweFaVtBsFA">archive</a>  and unzip it.</p>
 </div>
-</section>
-<section id="usage">
+<div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <p>The first step is to add <cite>src</cite> directory to the python path:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">src</span>
 </pre></div>
 </div>
-<section id="run-1-crawler-from-command-line">
+<div class="section" id="run-1-crawler-from-command-line">
 <h3>Run 1 crawler from command line<a class="headerlink" href="#run-1-crawler-from-command-line" title="Permalink to this headline">¶</a></h3>
 <p>Run from project folder:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">src</span><span class="o">/</span><span class="n">experiments</span><span class="o">/</span><span class="n">cmd</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">g</span> <span class="o">&lt;</span><span class="n">GRAPH</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">c</span> <span class="o">&lt;</span><span class="n">CRAWLER</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">n</span> <span class="o">&lt;</span><span class="n">RUNS</span><span class="o">&gt;</span>
@@ -83,8 +80,8 @@
 </div>
 <p>At the very first run it takes some time to compile cython code.</p>
 <p>To see available options type:: <cite>python experiments/cmd.py -h</cite></p>
-</section>
-<section id="reproduce-experiments-from-the-wsdm23-paper">
+</div>
+<div class="section" id="reproduce-experiments-from-the-wsdm23-paper">
 <h3>Reproduce experiments from the WSDM23 paper<a class="headerlink" href="#reproduce-experiments-from-the-wsdm23-paper" title="Permalink to this headline">¶</a></h3>
 <p>To obtain all the results from Table 4 one can run all configurations:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">src</span><span class="o">/</span><span class="n">experiments</span><span class="o">/</span><span class="n">paper_experiments</span><span class="o">.</span><span class="n">py</span>
@@ -94,20 +91,18 @@
 Edit the file <cite>paper_experiments.py</cite> to run a proper configuration.</p>
 <p>Once a crawler has finished its job, its result is saved to a corresponding file in <cite>results/</cite> folder.
 Script <cite>python src/experiments/paper_plots.py</cite> will collect statistics of all the computed results.</p>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
           </div>
-          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <div>
-    <h3><a href="index.html">Table of Contents</a></h3>
-    <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="project.html">Project description</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation and usage</a><ul>
@@ -123,17 +118,18 @@ Script <cite>python src/experiments/paper_plots.py</cite> will collect statistic
 <li class="toctree-l1"><a class="reference internal" href="code.html">Code Documentation</a></li>
 </ul>
 
-  </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
+  <h3>Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="text" name="q" />
       <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -142,8 +138,8 @@ Script <cite>python src/experiments/paper_plots.py</cite> will collect statistic
       &copy;2022, authors TEMPORARY HIDDEN.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
       
       |
       <a href="_sources/readme.rst.txt"

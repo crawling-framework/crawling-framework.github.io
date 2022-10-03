@@ -36,9 +36,8 @@ Installation
 (By default DGL library is configured for CPU. To use it with GPU visit https://www.dgl.ai/pages/start.html)
 
 4. Download and unpack archive with graph data
-::
-   wget https://disk.yandex.ru/d/Z-fcweFaVtBsFA
-   unzip data.zip
+
+Manually download the `archive <ttps://disk.yandex.ru/d/Z-fcweFaVtBsFA>`_  and unzip it.
 
 Usage
 -----
