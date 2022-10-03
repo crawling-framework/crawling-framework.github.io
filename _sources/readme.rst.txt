@@ -37,7 +37,7 @@ Installation
 
 4. Download and unpack archive with graph data
 
-Manually download the `archive <ttps://disk.yandex.ru/d/Z-fcweFaVtBsFA>`_  and unzip it.
+Manually download the `archive <https://disk.yandex.ru/d/Z-fcweFaVtBsFA>`_  and unzip it.
 
 Usage
 -----
